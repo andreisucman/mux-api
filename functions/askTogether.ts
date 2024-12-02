@@ -1,0 +1,70 @@
+import * as dotenv from "dotenv";
+dotenv.config();
+
+import { ObjectId } from "mongodb";
+import addErrorLog from "functions/addErrorLog.js";
+import doWithRetries from "helpers/doWithRetries.js";
+import { RoleEnum } from "@/types/askOpenaiTypes.js";
+import { db, together } from "init.js";
+
+type AskTogetherProps = {
+  userId: string;
+  seed?: number;
+  model: string;
+  messages: { role: RoleEnum; content: string }[];
+  isJson?: boolean;
+  meta?: string;
+};
+
+async function askTogether({
+  messages,
+  model,
+  meta,
+  userId,
+}: AskTogetherProps) {
+  try {
+    if (!model) throw new Error("Model is missing");
+
+    const options: { [key: string]: any } = {
+      messages,
+      model,
+      temperature: 0,
+    };
+
+    const completion = await doWithRetries({
+      functionName: "askTogether",
+      maxAttempts: 5,
+      functionToExecute: async () =>
+        together.chat.completions.create(options as any),
+    });
+
+    const update: { [key: string]: any } = {
+      $set: {},
+      $inc: {
+        [model]: completion.usage.total_tokens,
+      },
+    };
+
+    if (meta) update.$set.meta = meta;
+
+    doWithRetries({
+      functionName: "askTogether - record expenditure",
+      functionToExecute: async () =>
+        db
+          .collection("Spend")
+          .updateOne({ userId: new ObjectId(userId) }, update, {
+            upsert: true,
+          }),
+    });
+
+    return {
+      result: completion.choices[0].message.content,
+      tokens: completion.usage.total_tokens,
+    };
+  } catch (error) {
+    addErrorLog({ functionName: "askTogether", message: error.message });
+    throw error;
+  }
+}
+
+export default askTogether;

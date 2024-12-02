@@ -1,0 +1,117 @@
+import { ObjectId } from "mongodb";
+import { db } from "init.js";
+import addErrorLog from "functions/addErrorLog.js";
+import doWithRetries from "helpers/doWithRetries.js";
+import calculateDifferenceInPrivacies from "helpers/calculateDifferenceInPrivacies.js";
+import { PrivacyType } from "types.js";
+
+type Props = {
+  userId: string;
+  newPrivacy: PrivacyType[];
+};
+
+export default async function updateContentPublicity({
+  userId,
+  newPrivacy,
+}: Props) {
+  try {
+    const userInfo = await doWithRetries({
+      functionName: "handleConnectWebhook - update user",
+      functionToExecute: async () =>
+        db
+          .collection("User")
+          .findOne({ _id: new ObjectId(userId) }, { projection: { club: 1 } }),
+    });
+
+    if (!userInfo) throw new Error("No userInfo");
+
+    const { club } = userInfo;
+    const { privacy: currentPrivacy } = club;
+
+    const difference = calculateDifferenceInPrivacies(
+      currentPrivacy,
+      newPrivacy
+    );
+
+    const toUpdateProgresProofBa = difference
+      .filter((typePrivacyObj) => typePrivacyObj.name !== "style")
+      .map((obj: { name: string; type: string; value: boolean }) => ({
+        updateOne: {
+          filter: {
+            userId: new ObjectId(userId),
+            part: obj.name,
+            type: obj.type,
+          },
+          update: {
+            $set: {
+              isPublic: obj.value,
+              clubName: club.name,
+              avatar: club.avatar,
+            },
+          },
+        },
+      }));
+
+    const toUpdateStyle = difference
+      .filter((typePrivacyObj) => typePrivacyObj.name === "style")
+      .map((obj: { name: string; type: string; value: boolean }) => ({
+        updateOne: {
+          filter: {
+            userId: new ObjectId(userId),
+          },
+          update: {
+            $set: {
+              isPublic: obj.value,
+              clubName: club.name,
+              avatar: club.avatar,
+            },
+          },
+        },
+      }));
+
+    if (toUpdateProgresProofBa.length > 0)
+      await doWithRetries({
+        functionName: "updateContentPublicity - update proof publicity",
+        functionToExecute: async () =>
+          db.collection("Proof").bulkWrite(toUpdateProgresProofBa),
+      });
+
+    if (toUpdateProgresProofBa.length > 0)
+      await doWithRetries({
+        functionName: "updateContentPublicity - update progress publicity",
+        functionToExecute: async () =>
+          db.collection("Progress").bulkWrite(toUpdateProgresProofBa),
+      });
+
+    if (toUpdateProgresProofBa.length > 0)
+      await doWithRetries({
+        functionName: "updateContentPublicity - update before after publicity",
+        functionToExecute: async () =>
+          db.collection("BeforeAfter").bulkWrite(toUpdateProgresProofBa),
+      });
+
+    if (toUpdateStyle.length > 0)
+      await doWithRetries({
+        functionName: "updateContentPublicity - update style publicity",
+        functionToExecute: async () =>
+          db.collection("StyleAnalysis").bulkWrite(toUpdateStyle),
+      });
+
+    await doWithRetries({
+      functionName: "updateClubPrivacy",
+      functionToExecute: async () =>
+        db
+          .collection("User")
+          .updateOne(
+            { _id: new ObjectId(userId) },
+            { $set: { "club.privacy": newPrivacy } }
+          ),
+    });
+  } catch (err) {
+    addErrorLog({
+      functionName: "updateContentPublicity",
+      message: err.message,
+    });
+    throw err;
+  }
+}

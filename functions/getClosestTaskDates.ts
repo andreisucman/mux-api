@@ -1,0 +1,62 @@
+import { ObjectId } from "mongodb";
+import { db } from "init.js";
+import addErrorLog from "functions/addErrorLog.js";
+import doWithRetries from "helpers/doWithRetries.js";
+
+type Props = {
+  userId: string;
+};
+
+export default async function getClosestTaskDates({ userId }: Props) {
+  try {
+    const closestTasks = await doWithRetries({
+      functionName: "getClosestTaskDates - aggregation",
+      functionToExecute: async () =>
+        db
+          .collection("Task")
+          .aggregate([
+            {
+              $match: {
+                userId: new ObjectId(userId),
+                $or: [
+                  {
+                    status: "active",
+                    expiresAt: { $gte: new Date() },
+                  },
+                  {
+                    status: "completed",
+                    expiresAt: { $gte: new Date() },
+                  },
+                ],
+              },
+            },
+            { $sort: { startsAt: 1 } },
+            {
+              $group: {
+                _id: "$part",
+                routineId: { $first: "$routineId" },
+                startsAt: { $first: "$startsAt" },
+              },
+            },
+            { $limit: 1 },
+            {
+              $project: {
+                _id: 0,
+                routineId: 1,
+                startsAt: 1,
+                part: "$_id",
+              },
+            },
+          ])
+          .toArray(),
+    });
+
+    return closestTasks;
+  } catch (error) {
+    addErrorLog({
+      functionName: "getClosestTaskDates",
+      message: error.message,
+    });
+    throw error;
+  }
+}

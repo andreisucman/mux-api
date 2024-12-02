@@ -1,0 +1,403 @@
+import * as dotenv from "dotenv";
+dotenv.config();
+
+import { z } from "zod";
+import { ObjectId } from "mongodb";
+import { generateRandomPastelColor } from "make-random-color";
+import { Router, Response } from "express";
+import { zodResponseFormat } from "openai/helpers/zod";
+import { RunType } from "@/types/askOpenaiTypes.js";
+import {
+  CustomRequest,
+  RoutineStatusEnum,
+  RoutineType,
+  TaskType,
+} from "types.js";
+import askRepeatedly from "functions/askRepeatedly.js";
+import moderateText from "functions/moderateText.js";
+import addErrorLog from "functions/addErrorLog.js";
+import findRelevantSolutions from "functions/findRelevantSolutions.js";
+import setUtcMidnight from "@/helpers/setUtcMidnight.js";
+import distributeSubmissions from "@/helpers/distributeSubmissions.js";
+import sortTasksInScheduleByDate from "@/helpers/sortTasksInScheduleByDate.js";
+import { daysFrom, toSnakeCase } from "helpers/utils.js";
+import doWithRetries from "helpers/doWithRetries.js";
+import createTextEmbedding from "functions/createTextEmbedding.js";
+import checkIfTaskIsRelated from "functions/checkIfTaskIsRelated.js";
+import findEmoji from "helpers/findEmoji.js";
+import generateImage from "functions/generateImage.js";
+import statusIncrementCallback from "helpers/statusIncrementCallback.js";
+import filterRelevantProductTypes from "@/functions/filterRelevantTypes.js";
+import addAnalysisStatusError from "helpers/addAnalysisStatusError.js";
+import { db } from "init.js";
+
+const route = Router();
+
+route.post("/", async (req: CustomRequest, res: Response) => {
+  const {
+    sex,
+    type,
+    description,
+    instruction,
+    startDate,
+    frequency,
+    timeZone = "America/New_York",
+  } = req.body;
+
+  if (
+    !description ||
+    !instruction ||
+    !startDate ||
+    !frequency ||
+    !sex ||
+    !type
+  ) {
+    res.status(400).json({ error: "Bad request" });
+    return;
+  }
+
+  try {
+    const text = `Description: ${description}.<-->Instruction: ${instruction}.`;
+
+    const { isHarmful, explanation } = await moderateText({
+      userId: req.userId,
+      text,
+    });
+
+    if (isHarmful) {
+      await doWithRetries({
+        functionName: "saveTaskFromDescription route - add harmful record",
+        functionToExecute: async () =>
+          db.collection("HarmfulTaskDescriptions").insertOne({
+            userId: new ObjectId(req.userId),
+            response: explanation,
+            type: "create",
+            text,
+          }),
+      });
+      res.status(200).json({
+        error: `This task is rejected for violating ToS.`,
+      });
+      return;
+    }
+
+    const { satisfies, condition } = await checkIfTaskIsRelated({
+      userId: req.userId,
+      text,
+      type,
+    });
+
+    if (!satisfies) {
+      res.status(200).json({ error: condition });
+      return;
+    }
+
+    await doWithRetries({
+      functionName: "saveTaskFromDescription - update analysis status",
+      functionToExecute: async () =>
+        db.collection("AnalysisStatus").updateOne(
+          { userId: new ObjectId(req.userId), type },
+          {
+            $set: { isRunning: true, progress: 1 },
+            $unset: { isError: "" },
+          },
+          { upsert: true }
+        ),
+    });
+
+    res.status(200).end();
+
+    const listOfRelevantConcerns = await doWithRetries({
+      functionName: "saveTaskFromDescription route - get relevant concerns",
+      functionToExecute: async () =>
+        db
+          .collection("Concern")
+          .find(
+            {
+              types: { $in: [type] },
+              $or: [{ sex }, { sex: "all" }],
+            },
+            { projection: { key: 1 } }
+          )
+          .toArray(),
+    });
+
+    const latestRelevantRoutine = (await doWithRetries({
+      functionName: "createTaskFromDescription route - get latest routine",
+      functionToExecute: async () =>
+        db.collection("Routine").findOne({ type, status: "active" }),
+    })) || { _id: new ObjectId() };
+
+    const systemContent = `The user gives you the description and instruction of an activity and a list of concerns. Your goal is to create a task based on this info.
+    Here is what you should to:
+    1. Come up with a short name for the task in imperative form.
+    2. Come up with one word from node-emoji that best suits the task.
+    3. Choose one the most relevant concern for the task from the list of concerns provided.
+    4. Choose all related concerns for the task from the list of concerns provided.
+    5. Describe what requisite the user has to provide to prove the completion of the activity.
+    6. How many days the user should rest before repeating this activity?
+    7. Which part of the body the task is related to the most?`;
+
+    const TaskType = z.object({
+      name: z.string(),
+      concern: z.string(),
+      nearestConcerns: z.array(z.string()),
+      word: z.string(),
+      requisite: z.string(),
+      restDays: z.number(),
+      part: z.enum(["face", "mouth", "scalp", "body", "health"]),
+    });
+
+    const runs = [
+      {
+        isMini: false,
+        content: [
+          {
+            type: "text",
+            text: `Activity description: ${description}.<-->Activity instruction: ${instruction}.<-->List of concerns: ${JSON.stringify(
+              listOfRelevantConcerns.map((obj) => obj.key)
+            )}`,
+          },
+        ],
+        model:
+          "ft:gpt-4o-mini-2024-07-18:personal:save-task-from-description:AIx7makF",
+        responseFormat: zodResponseFormat(TaskType, "task"),
+      },
+    ];
+
+    const response = await askRepeatedly({
+      systemContent: systemContent,
+      runs: runs as RunType[],
+      userId: req.userId,
+    });
+
+    await statusIncrementCallback({ type, userId: req.userId, increment: 10 });
+
+    const { word, ...otherResponse } = response || {};
+
+    const color = generateRandomPastelColor();
+    const image = await generateImage({ description, userId: req.userId });
+
+    const generalTaskInfo: TaskType = {
+      ...otherResponse,
+      userId: new ObjectId(req.userId),
+      routineId: new ObjectId(latestRelevantRoutine._id),
+      example: { type: "image", url: image },
+      productsPersonalized: false,
+      proofEnabled: true,
+      status: "active",
+      key: toSnakeCase(otherResponse.name),
+      description,
+      instruction,
+      isCreated: true,
+      color,
+      type,
+      revisionDate: daysFrom({ date: otherResponse.startsAt, days: 30 }),
+    };
+
+    const info = `${description}.${instruction}`;
+    const embedding = await createTextEmbedding(info);
+
+    await statusIncrementCallback({ type, userId: req.userId, increment: 25 });
+    await doWithRetries({
+      functionName: "saveTaskFromDescription - update analysis status 2",
+      functionToExecute: async () =>
+        db.collection("AnalysisStatus").updateOne(
+          { userId: new ObjectId(req.userId), type },
+          {
+            $inc: { progress: 25 },
+          }
+        ),
+    });
+
+    const relevantSolutions = await findRelevantSolutions(embedding);
+
+    if (relevantSolutions.length > 0) {
+      const filteredProductTypes = await filterRelevantProductTypes({
+        userId: req.userId,
+        info,
+        productTypes: relevantSolutions.map((s) => s.prouductTypes),
+      });
+
+      generalTaskInfo.productTypes = filteredProductTypes;
+
+      if (filteredProductTypes.length > 0) {
+        const relevantSuggestionObjects = relevantSolutions.filter((solution) =>
+          solution.productTypes.some((productType: string) =>
+            filteredProductTypes.includes(productType)
+          )
+        );
+
+        const relevantSuggestions = relevantSuggestionObjects
+          .flatMap((obj) => obj.suggestions)
+          .filter((suggestionObject) =>
+            filteredProductTypes.includes(suggestionObject?.suggestion)
+          );
+
+        const relevantDefaultSuggestions = relevantSuggestionObjects
+          .flatMap((obj) => obj.defaultSuggestions)
+          .filter((suggestionObject) =>
+            filteredProductTypes.includes(suggestionObject?.suggestion)
+          );
+
+        generalTaskInfo.suggestions = relevantSuggestions;
+        generalTaskInfo.defaultSuggestions = relevantDefaultSuggestions;
+      }
+    }
+
+    const moderatedFrequency = Math.min(frequency, 70);
+
+    const submissions = distributeSubmissions(
+      moderatedFrequency,
+      7,
+      generalTaskInfo.name
+    );
+
+    const distanceInDays = Math.round(Math.max(7 / moderatedFrequency, 1));
+
+    const draftTasks: TaskType[] = [];
+
+    const latestDateOfWeeek = daysFrom({ days: 6 });
+    const finalStartDate =
+      new Date(startDate) > latestDateOfWeeek ? latestDateOfWeeek : startDate;
+
+    const icon = relevantSolutions?.[0]?.icon || findEmoji(word) || "🙌";
+
+    generalTaskInfo.icon = icon;
+
+    for (let i = 0; i < Math.min(moderatedFrequency, 7); i++) {
+      const starts = daysFrom({
+        date: setUtcMidnight({
+          date: new Date(finalStartDate),
+          timeZone,
+        }),
+        days: distanceInDays * i,
+      });
+
+      const expires = daysFrom({
+        date: new Date(starts),
+        days: 1,
+      });
+
+      draftTasks.push({
+        ...generalTaskInfo,
+        startsAt: starts,
+        expiresAt: expires,
+        requiredSubmissions: submissions[i],
+      });
+    }
+
+    let {
+      finalSchedule = {},
+      concerns = [],
+      allTasks = [],
+      createdAt,
+    } = latestRelevantRoutine;
+
+    /* update final schedule */
+    for (let i = 0; i < draftTasks.length; i++) {
+      const task = draftTasks[i];
+      const dateString = new Date(task.startsAt).toDateString();
+
+      const simpleTaskContent = {
+        key: task.key,
+        concern: task.concern,
+      };
+
+      if (finalSchedule[dateString]) {
+        finalSchedule[dateString].push(simpleTaskContent);
+      } else {
+        finalSchedule[dateString] = [simpleTaskContent];
+      }
+    }
+
+    finalSchedule = sortTasksInScheduleByDate(finalSchedule);
+
+    /* update concerns */
+    const concernExists = concerns.find(
+      (obj: { name: string }) => obj.name === generalTaskInfo.concern
+    );
+
+    if (!concernExists) {
+      concerns.push({ name: generalTaskInfo.concern, isDisabled: false });
+    }
+
+    /* update all tasks */
+    allTasks.push({
+      name: generalTaskInfo.name,
+      icon: generalTaskInfo.icon,
+      color: generalTaskInfo.color,
+      key: generalTaskInfo.key,
+      concern: generalTaskInfo.concern,
+      total: moderatedFrequency,
+      description,
+      instruction,
+      completed: 0,
+      unknown: 0,
+    });
+
+    const dates = Object.keys(finalSchedule);
+    const lastRoutineDate = dates[dates.length - 1];
+
+    await statusIncrementCallback({ type, userId: req.userId, increment: 20 });
+
+    const payload: Partial<RoutineType> = {
+      ...latestRelevantRoutine,
+      userId: new ObjectId(req.userId),
+      type,
+      concerns,
+      allTasks,
+      finalSchedule,
+      status: "active" as RoutineStatusEnum,
+      lastDate: new Date(lastRoutineDate),
+    };
+
+    if (!createdAt) {
+      payload.createdAt = new Date();
+    }
+
+    await statusIncrementCallback({ type, userId: req.userId, increment: 15 });
+
+    await doWithRetries({
+      functionName: "saveTaskFromDescription route - update routine",
+      functionToExecute: async () =>
+        db.collection("Routine").updateOne(
+          { _id: new ObjectId(latestRelevantRoutine._id) },
+          {
+            $set: payload,
+          },
+          { upsert: true }
+        ),
+    });
+
+    await doWithRetries({
+      functionName: "saveTaskFromDescription route - insert tasks",
+      functionToExecute: async () =>
+        db.collection("Task").insertMany(draftTasks),
+    });
+
+    await doWithRetries({
+      functionName: "saveTaskFromDescription - update analysis status",
+      functionToExecute: async () =>
+        db.collection("AnalysisStatus").updateOne(
+          { userId: new ObjectId(req.userId), type },
+          {
+            $set: { isRunning: false, progress: 0 },
+            $unset: { isError: "" },
+          }
+        ),
+    });
+  } catch (err) {
+    addErrorLog({
+      functionName: "saveTaskFromDescription route",
+      message: err.message,
+    });
+    await addAnalysisStatusError({
+      userId: req.userId,
+      message: err.message,
+      type,
+    });
+  }
+});
+
+export default route;

@@ -1,0 +1,70 @@
+import * as dotenv from "dotenv";
+dotenv.config();
+
+import { ObjectId } from "mongodb";
+import { Router, Response } from "express";
+import doWithRetries from "helpers/doWithRetries.js";
+import addErrorLog from "functions/addErrorLog.js";
+import { CustomRequest } from "types.js";
+import { db } from "init.js";
+
+const route = Router();
+
+route.get("/", async (req: CustomRequest, res: Response) => {
+  const { type } = req.query;
+  try {
+    const filter: { [key: string]: any } = {
+      userId: new ObjectId(req.userId),
+      expiresAt: { $gt: new Date() },
+      status: { $ne: "inactive" },
+    };
+
+    if (type) filter.type = type;
+
+    const distinctTasks = await doWithRetries({
+      functionName: "getTasksProducts",
+      functionToExecute: async () =>
+        db
+          .collection("Task")
+          .aggregate([
+            { $match: filter },
+            { $sort: { startsAt: 1 } },
+            {
+              $group: {
+                _id: "$key",
+                tempId: { $first: "$_id" },
+                name: { $first: "$name" },
+                key: { $first: "$key" },
+                color: { $first: "$color" },
+                icon: { $first: "$icon" },
+                startsAt: { $first: "$startsAt" },
+                suggestions: { $first: "$suggestions" },
+                defaultSuggestions: { $first: "$defaultSuggestions" },
+                productsPersonalized: { $first: "$productsPersonalized" },
+              },
+            },
+            {
+              $project: {
+                _id: "$tempId",
+                name: 1,
+                key: 1,
+                color: 1,
+                icon: 1,
+                startsAt: 1,
+                suggestions: 1,
+                defaultSuggestions: 1,
+                productsPersonalized: 1,
+              },
+            },
+            { $sort: { startsAt: 1, key: 1 } },
+          ])
+          .toArray(),
+    });
+
+    res.status(200).json({ message: distinctTasks });
+  } catch (error) {
+    addErrorLog({ functionName: "getTasksProducts", message: error.message });
+  }
+});
+
+export default route;
