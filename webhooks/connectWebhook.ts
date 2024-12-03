@@ -13,7 +13,7 @@ route.post(
   (req: Request, res: Response, next: NextFunction) => {
     try {
       if (req.method !== "POST") {
-        throw httpError("Method not allowed", true, 405);
+        throw httpError("Method not allowed", 405);
       }
 
       const signature = req.headers["stripe-signature"];

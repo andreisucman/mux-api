@@ -83,8 +83,7 @@ async function checkAccess(
     if (!expired) req.userId = session.userId;
     next();
   } catch (err) {
-    console.error("An error occurred:", err);
-    res.status(500).json({ error: "An internal error occurred" });
+    next(err);
   }
 }
 

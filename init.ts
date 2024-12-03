@@ -8,10 +8,12 @@ import { MongoClient } from "mongodb";
 import { SESClient } from "@aws-sdk/client-ses";
 import Stripe from "stripe";
 import { S3Client } from "@aws-sdk/client-s3";
+import * as promClient from "prom-client";
 import { fileURLToPath } from "url";
 
 const client = new MongoClient(process.env.DATABASE_URI);
 const db = client.db(process.env.DATABASE_NAME);
+const promClientRegister = new promClient.Registry();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -54,4 +56,5 @@ export {
   __dirname,
   replicate,
   stripe,
+  promClientRegister,
 };

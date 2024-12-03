@@ -1,11 +1,12 @@
-import { HttpError } from "@/helpers/httpError.js";
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 
-export default function errorHandler(
-  err: HttpError,
+const errorHandler = (
+  err: any,
   req: Request,
-  res: Response
-): void {
+  res: Response,
+  next: NextFunction
+): void => {
+  
   req.log.error({
     err,
     server: "api",
@@ -16,7 +17,9 @@ export default function errorHandler(
   });
 
   res.status(err.status || 500).json({
-    message: err.forward ? err.message : "Server error",
+    message: err.message || "Server error",
     status: err.status || 500,
   });
-}
+};
+
+export default errorHandler;
