@@ -61,37 +61,31 @@ export default async function analyzePart({
       type,
     });
 
-    const appearanceAnalysisResults = await doWithRetries({
-      functionName: "analyzePart - head",
-      functionToExecute: async () =>
-        Promise.all(
-          featuresToAnalyze.map((feature: string) =>
-            doWithRetries({
-              functionName: "analyzeFeature",
-              functionToExecute: async () =>
-                analyzeFeature({
-                  type,
-                  part,
-                  userId,
-                  feature,
-                  sex: demographics.sex,
-                  toAnalyzeObjects: partToAnalyzeObjects,
-                }),
+    const appearanceAnalysisResults = await doWithRetries(async () =>
+      Promise.all(
+        featuresToAnalyze.map((feature: string) =>
+          doWithRetries(async () =>
+            analyzeFeature({
+              type,
+              part,
+              userId,
+              feature,
+              sex: demographics.sex,
+              toAnalyzeObjects: partToAnalyzeObjects,
             })
           )
-        ),
-    });
+        )
+      )
+    );
 
-    await doWithRetries({
-      functionName: "analyzePart - increment analysis status",
-      functionToExecute: async () =>
-        db
-          .collection("AnalysisStatus")
-          .updateOne(
-            { userId: new ObjectId(userId), type },
-            { $inc: { progress: 2 } }
-          ),
-    });
+    await doWithRetries(async () =>
+      db
+        .collection("AnalysisStatus")
+        .updateOne(
+          { userId: new ObjectId(userId), type },
+          { $inc: { progress: 2 } }
+        )
+    );
 
     const newConcerns = await analyzeConcerns({
       type,
@@ -128,16 +122,14 @@ export default async function analyzePart({
         analysisResults: appearanceAnalysisResults,
       });
 
-      await doWithRetries({
-        functionName: "analyzePart - increment post potential status",
-        functionToExecute: async () =>
-          db
-            .collection("AnalysisStatus")
-            .updateOne(
-              { userId: new ObjectId(userId), type },
-              { $inc: { progress: 6 } }
-            ),
-      });
+      await doWithRetries(async () =>
+        db
+          .collection("AnalysisStatus")
+          .updateOne(
+            { userId: new ObjectId(userId), type },
+            { $inc: { progress: 6 } }
+          )
+      );
 
       partResult.potential = scoresAndExplanations;
     }
@@ -161,20 +153,18 @@ export default async function analyzePart({
     partResult.potentiallyHigherThan = partPotentiallyHigherThan;
 
     /* calculate the progress so far */
-    let initialProgress = (await doWithRetries({
-      functionName: "analyzePart - get the first progress record",
-      functionToExecute: async () =>
-        db
-          .collection("Progress")
-          .find({
-            userId: new ObjectId(userId),
-            type,
-            part,
-          })
-          .project({ scores: 1, images: 1, createdAt: 1 })
-          .sort({ createdAt: 1 })
-          .next(),
-    })) as unknown as {
+    let initialProgress = (await doWithRetries(async () =>
+      db
+        .collection("Progress")
+        .find({
+          userId: new ObjectId(userId),
+          type,
+          part,
+        })
+        .project({ scores: 1, images: 1, createdAt: 1 })
+        .sort({ createdAt: 1 })
+        .next()
+    )) as unknown as {
       _id: ObjectId;
       scores: { [key: string]: number };
       images: ProgressImageType[];
@@ -254,23 +244,19 @@ export default async function analyzePart({
       beforeAfterUpdate.clubName = club.name;
     }
 
-    await doWithRetries({
-      functionName: "analyzePart - insert progress",
-      functionToExecute: async () =>
-        db.collection("Progress").insertOne(recordOfProgress),
-    });
+    await doWithRetries(async () =>
+      db.collection("Progress").insertOne(recordOfProgress)
+    );
 
-    await doWithRetries({
-      functionName: "analyzePart - update before after",
-      functionToExecute: async () =>
-        db
-          .collection("BeforeAfter")
-          .updateOne(
-            { userId: new ObjectId(userId), type, part },
-            { $set: beforeAfterUpdate },
-            { upsert: true }
-          ),
-    });
+    await doWithRetries(async () =>
+      db
+        .collection("BeforeAfter")
+        .updateOne(
+          { userId: new ObjectId(userId), type, part },
+          { $set: beforeAfterUpdate },
+          { upsert: true }
+        )
+    );
 
     partResult.latestScores = scores;
     partResult.scoresDifference = newScoresDifference;

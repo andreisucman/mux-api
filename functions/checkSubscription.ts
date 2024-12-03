@@ -13,16 +13,14 @@ type Props = {
 
 async function checkSubscriptionStatus({ userId, subscriptionType }: Props) {
   try {
-    const userInfo = await doWithRetries({
-      functionName: "checkSubscriptionStatus",
-      functionToExecute: async () =>
-        db
-          .collection("User")
-          .findOne(
-            { _id: new ObjectId(userId) },
-            { projection: { subscriptions: 1 } }
-          ),
-    });
+    const userInfo = await doWithRetries(async () =>
+      db
+        .collection("User")
+        .findOne(
+          { _id: new ObjectId(userId) },
+          { projection: { subscriptions: 1 } }
+        )
+    );
 
     if (!userInfo) throw httpError(`User ${userId} not found`);
 

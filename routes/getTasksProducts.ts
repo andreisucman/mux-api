@@ -22,45 +22,43 @@ route.get(
 
       if (type) filter.type = type;
 
-      const distinctTasks = await doWithRetries({
-        functionName: "getTasksProducts",
-        functionToExecute: async () =>
-          db
-            .collection("Task")
-            .aggregate([
-              { $match: filter },
-              { $sort: { startsAt: 1 } },
-              {
-                $group: {
-                  _id: "$key",
-                  tempId: { $first: "$_id" },
-                  name: { $first: "$name" },
-                  key: { $first: "$key" },
-                  color: { $first: "$color" },
-                  icon: { $first: "$icon" },
-                  startsAt: { $first: "$startsAt" },
-                  suggestions: { $first: "$suggestions" },
-                  defaultSuggestions: { $first: "$defaultSuggestions" },
-                  productsPersonalized: { $first: "$productsPersonalized" },
-                },
+      const distinctTasks = await doWithRetries(async () =>
+        db
+          .collection("Task")
+          .aggregate([
+            { $match: filter },
+            { $sort: { startsAt: 1 } },
+            {
+              $group: {
+                _id: "$key",
+                tempId: { $first: "$_id" },
+                name: { $first: "$name" },
+                key: { $first: "$key" },
+                color: { $first: "$color" },
+                icon: { $first: "$icon" },
+                startsAt: { $first: "$startsAt" },
+                suggestions: { $first: "$suggestions" },
+                defaultSuggestions: { $first: "$defaultSuggestions" },
+                productsPersonalized: { $first: "$productsPersonalized" },
               },
-              {
-                $project: {
-                  _id: "$tempId",
-                  name: 1,
-                  key: 1,
-                  color: 1,
-                  icon: 1,
-                  startsAt: 1,
-                  suggestions: 1,
-                  defaultSuggestions: 1,
-                  productsPersonalized: 1,
-                },
+            },
+            {
+              $project: {
+                _id: "$tempId",
+                name: 1,
+                key: 1,
+                color: 1,
+                icon: 1,
+                startsAt: 1,
+                suggestions: 1,
+                defaultSuggestions: 1,
+                productsPersonalized: 1,
               },
-              { $sort: { startsAt: 1, key: 1 } },
-            ])
-            .toArray(),
-      });
+            },
+            { $sort: { startsAt: 1, key: 1 } },
+          ])
+          .toArray()
+      );
 
       res.status(200).json({ message: distinctTasks });
     } catch (err) {

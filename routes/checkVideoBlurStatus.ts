@@ -12,27 +12,25 @@ route.post(
     const { hash, blurType } = req.body;
 
     try {
-      const job = await doWithRetries({
-        functionName: "checkVideoBlurStatus - check analysis",
-        functionToExecute: async () =>
-          db.collection("BlurProcessingStatus").findOne(
-            {
-              hash,
-              blurType,
+      const job = await doWithRetries(async () =>
+        db.collection("BlurProcessingStatus").findOne(
+          {
+            hash,
+            blurType,
+          },
+          {
+            projection: {
+              _id: 0,
+              url: 1,
+              updatedAt: 1,
+              thumbnail: 1,
+              progress: 1,
+              blurType: 1,
+              isRunning: 1,
             },
-            {
-              projection: {
-                _id: 0,
-                url: 1,
-                updatedAt: 1,
-                thumbnail: 1,
-                progress: 1,
-                blurType: 1,
-                isRunning: 1,
-              },
-            }
-          ),
-      });
+          }
+        )
+      );
 
       if (!job) {
         res.status(200).json({
@@ -58,16 +56,14 @@ route.post(
         return;
       }
 
-      const proofRecord = await doWithRetries({
-        functionName: "checkVideoBlurStatus - get proof record",
-        functionToExecute: async () =>
-          db.collection("Proof").findOne(
-            {
-              hash: job.hash,
-            },
-            { projection: { _id: 0, urls: 1 } }
-          ),
-      });
+      const proofRecord = await doWithRetries(async () =>
+        db.collection("Proof").findOne(
+          {
+            hash: job.hash,
+          },
+          { projection: { _id: 0, urls: 1 } }
+        )
+      );
 
       let newMainUrl = { name: job.blurType, url: job.url };
       let newMainThumbnail = { name: job.blurType, url: job.thumbnail };
@@ -80,23 +76,21 @@ route.post(
           (thumbnail: BlurredUrlType) =>
             thumbnail.name === job.blurType ? newMainThumbnail : thumbnail
         );
-        await doWithRetries({
-          functionName: "checkVideoBlurStatus - update proof record",
-          functionToExecute: async () =>
-            db.collection("Proof").updateOne(
-              {
-                _id: new ObjectId(proofRecord._id),
+        await doWithRetries(async () =>
+          db.collection("Proof").updateOne(
+            {
+              _id: new ObjectId(proofRecord._id),
+            },
+            {
+              $set: {
+                mainUrl: newMainUrl,
+                urls: newUrls,
+                mainThumbnail: newMainThumbnail,
+                thumbnails: newThumbnails,
               },
-              {
-                $set: {
-                  mainUrl: newMainUrl,
-                  urls: newUrls,
-                  mainThumbnail: newMainThumbnail,
-                  thumbnails: newThumbnails,
-                },
-              }
-            ),
-        });
+            }
+          )
+        );
       }
 
       res.status(200).json({

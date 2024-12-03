@@ -11,9 +11,8 @@ type Props = {
 
 export default async function getLatestRoutinesAndTasks({ userId }: Props) {
   try {
-    const routines = await doWithRetries({
-      functionName: "getLatestRoutinesAndTasks - get routines",
-      functionToExecute: async () =>
+    const routines = await doWithRetries(
+      async () =>
         await db
           .collection("Routine")
           .aggregate([
@@ -41,8 +40,8 @@ export default async function getLatestRoutinesAndTasks({ userId }: Props) {
               },
             },
           ])
-          .toArray(),
-    });
+          .toArray()
+    );
 
     if (!routines || routines.length === 0) {
       return { routines: [] as RoutineType[], tasks: [] as TaskType[] };
@@ -139,9 +138,8 @@ export default async function getLatestRoutinesAndTasks({ userId }: Props) {
       return { routines: [] as RoutineType[], tasks: [] as TaskType[] };
     }
 
-    const tasks = await doWithRetries({
-      functionName: "getLatestRoutinesAndTasks - get tasks",
-      functionToExecute: async () =>
+    const tasks = await doWithRetries(
+      async () =>
         await db
           .collection("Task")
           .aggregate([
@@ -169,8 +167,8 @@ export default async function getLatestRoutinesAndTasks({ userId }: Props) {
               },
             },
           ])
-          .toArray(),
-    });
+          .toArray()
+    );
 
     return { routines, tasks };
   } catch (err) {

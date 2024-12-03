@@ -5,14 +5,12 @@ export default async function isMajorityOfImagesIdentical(...urls: string[]) {
   try {
     const responses = await Promise.all(
       urls.map((url) =>
-        doWithRetries({
-          functionName: "isMajorityIdentical",
-          functionToExecute: async () =>
-            fetch(url).then((res) => {
-              if (!res.ok) throw httpError("Network error");
-              return res;
-            }),
-        })
+        doWithRetries(async () =>
+          fetch(url).then((res) => {
+            if (!res.ok) throw httpError("Network error");
+            return res;
+          })
+        )
       )
     );
     const buffers = await Promise.all(

@@ -16,20 +16,18 @@ route.get(
     const { skip } = aqp(req.query);
 
     try {
-      const pastFollowers = await doWithRetries({
-        functionName: "getFollowHistory",
-        functionToExecute: async () =>
-          db
-            .collection("FollowHistory")
-            .find(
-              { userId: new ObjectId(req.userId) },
-              { projection: { trackedUserId: 1, avatar: 1, name: 1 } }
-            )
-            .sort({ updatedAt: -1 })
-            .skip(skip || 0)
-            .limit(7)
-            .toArray(),
-      });
+      const pastFollowers = await doWithRetries(async () =>
+        db
+          .collection("FollowHistory")
+          .find(
+            { userId: new ObjectId(req.userId) },
+            { projection: { trackedUserId: 1, avatar: 1, name: 1 } }
+          )
+          .sort({ updatedAt: -1 })
+          .skip(skip || 0)
+          .limit(7)
+          .toArray()
+      );
 
       if (pastFollowers.length === 0) {
         res.status(200).json({ message: [] });

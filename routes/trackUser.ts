@@ -41,20 +41,18 @@ route.post(
         return;
       }
 
-      const userInfo = (await doWithRetries({
-        functionName: "trackUser - get user info",
-        functionToExecute: async () =>
-          db.collection("User").findOne(
-            { _id: new ObjectId(trackedUserId) },
-            {
-              projection: {
-                "club.privacy": 1,
-                "club.avatar": 1,
-                "club.name": 1,
-              },
-            }
-          ),
-      })) as unknown as {
+      const userInfo = (await doWithRetries(async () =>
+        db.collection("User").findOne(
+          { _id: new ObjectId(trackedUserId) },
+          {
+            projection: {
+              "club.privacy": 1,
+              "club.avatar": 1,
+              "club.name": 1,
+            },
+          }
+        )
+      )) as unknown as {
         club: {
           privacy: PrivacyType[];
           avatar: { [key: string]: any };
@@ -78,28 +76,24 @@ route.post(
         return;
       }
 
-      await doWithRetries({
-        functionName: "trackUser",
-        functionToExecute: async () =>
-          db
-            .collection("User")
-            .updateOne(
-              { _id: new ObjectId(req.userId) },
-              { $set: { "club.trackedUserId": trackedUserId } }
-            ),
-      });
+      await doWithRetries(async () =>
+        db
+          .collection("User")
+          .updateOne(
+            { _id: new ObjectId(req.userId) },
+            { $set: { "club.trackedUserId": trackedUserId } }
+          )
+      );
 
-      await doWithRetries({
-        functionName: "trackUser",
-        functionToExecute: async () =>
-          db
-            .collection("FollowHistory")
-            .updateOne(
-              { _id: new ObjectId(req.userId) },
-              { $set: { trackedUserId, name, avatar, updatedAt: new Date() } },
-              { upsert: true }
-            ),
-      });
+      await doWithRetries(async () =>
+        db
+          .collection("FollowHistory")
+          .updateOne(
+            { _id: new ObjectId(req.userId) },
+            { $set: { trackedUserId, name, avatar, updatedAt: new Date() } },
+            { upsert: true }
+          )
+      );
 
       res.status(200).end();
     } catch (err) {

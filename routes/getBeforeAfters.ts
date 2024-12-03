@@ -37,11 +37,9 @@ route.get("/", async (req: CustomRequest, res, next: NextFunction) => {
       { $limit: 21 }
     );
 
-    const beforeAfters = await doWithRetries({
-      functionName: "getBeforeAfters",
-      functionToExecute: async () =>
-        db.collection("BeforeAfter").aggregate(pipeline).toArray(),
-    });
+    const beforeAfters = await doWithRetries(async () =>
+      db.collection("BeforeAfter").aggregate(pipeline).toArray()
+    );
 
     res.status(200).json({ message: beforeAfters });
   } catch (err) {

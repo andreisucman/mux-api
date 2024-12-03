@@ -9,15 +9,13 @@ type Props = {
 };
 
 const incrementProgress = async ({ type, increment, userId }: Props) =>
-  doWithRetries({
-    functionName: "incrementProgress",
-    functionToExecute: async () =>
-      db
-        .collection("AnalysisStatus")
-        .updateOne(
-          { userId: new ObjectId(userId), type },
-          { $inc: { progress: increment } }
-        ),
-  }).catch();
+  doWithRetries(async () =>
+    db
+      .collection("AnalysisStatus")
+      .updateOne(
+        { userId: new ObjectId(userId), type },
+        { $inc: { progress: increment } }
+      )
+  ).catch();
 
 export default incrementProgress;

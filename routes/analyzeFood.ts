@@ -74,16 +74,14 @@ route.post(
       let userAbout = "";
 
       if (req.userId) {
-        const userInfo = (await doWithRetries({
-          functionName: "analyzeFood - get userInfo",
-          functionToExecute: async () =>
-            db
-              .collection("User")
-              .findOne(
-                { _id: new ObjectId(req.userId) },
-                { projection: { specialConsiderations: 1, concerns: 1 } }
-              ),
-        })) as unknown as {
+        const userInfo = (await doWithRetries(async () =>
+          db
+            .collection("User")
+            .findOne(
+              { _id: new ObjectId(req.userId) },
+              { projection: { specialConsiderations: 1, concerns: 1 } }
+            )
+        )) as unknown as {
           specialConsiderations: string;
           concerns: UserConcernType[];
         };
@@ -115,11 +113,9 @@ route.post(
 
       if (req.userId) newRecord.userId = new ObjectId(req.userId);
 
-      doWithRetries({
-        functionName: "analyzeFood - add a record",
-        functionToExecute: async () =>
-          db.collection("FoodAnalysis").insertOne(newRecord),
-      }).catch();
+      doWithRetries(async () =>
+        db.collection("FoodAnalysis").insertOne(newRecord)
+      ).catch();
 
       res.status(200).json({ message: analysis });
     } catch (err) {

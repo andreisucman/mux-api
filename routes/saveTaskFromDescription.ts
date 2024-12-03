@@ -66,16 +66,14 @@ route.post(
       });
 
       if (isHarmful) {
-        await doWithRetries({
-          functionName: "saveTaskFromDescription route - add harmful record",
-          functionToExecute: async () =>
-            db.collection("HarmfulTaskDescriptions").insertOne({
-              userId: new ObjectId(req.userId),
-              response: explanation,
-              type: "create",
-              text,
-            }),
-        });
+        await doWithRetries(async () =>
+          db.collection("HarmfulTaskDescriptions").insertOne({
+            userId: new ObjectId(req.userId),
+            response: explanation,
+            type: "create",
+            text,
+          })
+        );
         res.status(200).json({
           error: `This task violates our ToS.`,
         });
@@ -93,41 +91,35 @@ route.post(
         return;
       }
 
-      await doWithRetries({
-        functionName: "saveTaskFromDescription - update analysis status",
-        functionToExecute: async () =>
-          db.collection("AnalysisStatus").updateOne(
-            { userId: new ObjectId(req.userId), type },
-            {
-              $set: { isRunning: true, progress: 1 },
-              $unset: { isError: "" },
-            },
-            { upsert: true }
-          ),
-      });
+      await doWithRetries(async () =>
+        db.collection("AnalysisStatus").updateOne(
+          { userId: new ObjectId(req.userId), type },
+          {
+            $set: { isRunning: true, progress: 1 },
+            $unset: { isError: "" },
+          },
+          { upsert: true }
+        )
+      );
 
       res.status(200).end();
 
-      const listOfRelevantConcerns = await doWithRetries({
-        functionName: "saveTaskFromDescription route - get relevant concerns",
-        functionToExecute: async () =>
-          db
-            .collection("Concern")
-            .find(
-              {
-                types: { $in: [type] },
-                $or: [{ sex }, { sex: "all" }],
-              },
-              { projection: { key: 1 } }
-            )
-            .toArray(),
-      });
+      const listOfRelevantConcerns = await doWithRetries(async () =>
+        db
+          .collection("Concern")
+          .find(
+            {
+              types: { $in: [type] },
+              $or: [{ sex }, { sex: "all" }],
+            },
+            { projection: { key: 1 } }
+          )
+          .toArray()
+      );
 
-      const latestRelevantRoutine = (await doWithRetries({
-        functionName: "createTaskFromDescription route - get latest routine",
-        functionToExecute: async () =>
-          db.collection("Routine").findOne({ type, status: "active" }),
-      })) || { _id: new ObjectId() };
+      const latestRelevantRoutine = (await doWithRetries(async () =>
+        db.collection("Routine").findOne({ type, status: "active" })
+      )) || { _id: new ObjectId() };
 
       const systemContent = `The user gives you the description and instruction of an activity and a list of concerns. Your goal is to create a task based on this info.
     Here is what you should to:
@@ -200,16 +192,14 @@ route.post(
       const embedding = await createTextEmbedding(info);
 
       await incrementProgress({ type, userId: req.userId, increment: 25 });
-      await doWithRetries({
-        functionName: "saveTaskFromDescription - update analysis status 2",
-        functionToExecute: async () =>
-          db.collection("AnalysisStatus").updateOne(
-            { userId: new ObjectId(req.userId), type },
-            {
-              $inc: { progress: 25 },
-            }
-          ),
-      });
+      await doWithRetries(async () =>
+        db.collection("AnalysisStatus").updateOne(
+          { userId: new ObjectId(req.userId), type },
+          {
+            $inc: { progress: 25 },
+          }
+        )
+      );
 
       const relevantSolutions = await findRelevantSolutions(embedding);
 
@@ -360,35 +350,29 @@ route.post(
 
       await incrementProgress({ type, userId: req.userId, increment: 15 });
 
-      await doWithRetries({
-        functionName: "saveTaskFromDescription route - update routine",
-        functionToExecute: async () =>
-          db.collection("Routine").updateOne(
-            { _id: new ObjectId(latestRelevantRoutine._id) },
-            {
-              $set: payload,
-            },
-            { upsert: true }
-          ),
-      });
+      await doWithRetries(async () =>
+        db.collection("Routine").updateOne(
+          { _id: new ObjectId(latestRelevantRoutine._id) },
+          {
+            $set: payload,
+          },
+          { upsert: true }
+        )
+      );
 
-      await doWithRetries({
-        functionName: "saveTaskFromDescription route - insert tasks",
-        functionToExecute: async () =>
-          db.collection("Task").insertMany(draftTasks),
-      });
+      await doWithRetries(async () =>
+        db.collection("Task").insertMany(draftTasks)
+      );
 
-      await doWithRetries({
-        functionName: "saveTaskFromDescription - update analysis status",
-        functionToExecute: async () =>
-          db.collection("AnalysisStatus").updateOne(
-            { userId: new ObjectId(req.userId), type },
-            {
-              $set: { isRunning: false, progress: 0 },
-              $unset: { isError: "" },
-            }
-          ),
-      });
+      await doWithRetries(async () =>
+        db.collection("AnalysisStatus").updateOne(
+          { userId: new ObjectId(req.userId), type },
+          {
+            $set: { isRunning: false, progress: 0 },
+            $unset: { isError: "" },
+          }
+        )
+      );
     } catch (err) {
       await addAnalysisStatusError({
         userId: req.userId,

@@ -16,29 +16,22 @@ route.post(
     const { taskId, proofEnabled } = req.body;
 
     try {
-      const taskInfo = await doWithRetries({
-        functionName: "updateProofUpload - find",
-        functionToExecute: async () =>
-          db
-            .collection("Task")
-            .findOne(
-              { _id: new ObjectId(taskId), userId: new ObjectId(req.userId) },
-              { projection: { userId: 1 } }
-            ),
-      });
+      const taskInfo = await doWithRetries(async () =>
+        db
+          .collection("Task")
+          .findOne(
+            { _id: new ObjectId(taskId), userId: new ObjectId(req.userId) },
+            { projection: { userId: 1 } }
+          )
+      );
 
       if (!taskInfo) throw httpError(`Task ${taskId} not found`);
 
-      await doWithRetries({
-        functionName: "updateProofUpload - update",
-        functionToExecute: async () =>
-          db
-            .collection("Task")
-            .updateOne(
-              { _id: new ObjectId(taskId) },
-              { $set: { proofEnabled } }
-            ),
-      });
+      await doWithRetries(async () =>
+        db
+          .collection("Task")
+          .updateOne({ _id: new ObjectId(taskId) }, { $set: { proofEnabled } })
+      );
 
       res.status(200).end();
     } catch (err) {

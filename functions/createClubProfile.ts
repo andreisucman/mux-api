@@ -14,16 +14,14 @@ type Props = {
 
 export default async function createClubProfile({ userId, avatar }: Props) {
   try {
-    const userInfo = await doWithRetries({
-      functionName: "createClubProfile",
-      functionToExecute: async () =>
-        db
-          .collection("User")
-          .findOne(
-            { _id: new ObjectId(userId) },
-            { projection: { demographics: 1 } }
-          ),
-    });
+    const userInfo = await doWithRetries(async () =>
+      db
+        .collection("User")
+        .findOne(
+          { _id: new ObjectId(userId) },
+          { projection: { demographics: 1 } }
+        )
+    );
 
     if (!userInfo)
       throw httpError(`No user ${userId} found for checking club plan`);
@@ -108,16 +106,14 @@ export default async function createClubProfile({ userId, avatar }: Props) {
       nextNameUpdateAt: null,
     };
 
-    await doWithRetries({
-      functionName: "createClubProfile",
-      functionToExecute: async () =>
-        db
-          .collection("User")
-          .updateOne(
-            { _id: new ObjectId(userId) },
-            { $set: { club: defaultClubData } }
-          ),
-    });
+    await doWithRetries(async () =>
+      db
+        .collection("User")
+        .updateOne(
+          { _id: new ObjectId(userId) },
+          { $set: { club: defaultClubData } }
+        )
+    );
 
     return defaultClubData;
   } catch (err) {

@@ -14,16 +14,14 @@ type Props = {
 
 export default async function moderateText({ userId, text }: Props) {
   try {
-    const userInfo = await doWithRetries({
-      functionName: "",
-      functionToExecute: async () =>
-        db
-          .collection("User")
-          .findOne(
-            { _id: new ObjectId(userId) },
-            { projection: { specialConsiderations: 1 } }
-          ),
-    });
+    const userInfo = await doWithRetries(async () =>
+      db
+        .collection("User")
+        .findOne(
+          { _id: new ObjectId(userId) },
+          { projection: { specialConsiderations: 1 } }
+        )
+    );
 
     const { specialConsiderations } = userInfo;
 

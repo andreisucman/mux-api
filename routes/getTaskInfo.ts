@@ -10,15 +10,13 @@ route.get("/:taskId", async (req: CustomRequest, res, next: NextFunction) => {
   const { taskId } = req.params;
 
   try {
-    const taskInfo = await doWithRetries({
-      functionName: "getTaskInfo",
-      functionToExecute: async () =>
-        db.collection("Task").findOne({ _id: new ObjectId(taskId as string) }),
-    });
+    const taskInfo = await doWithRetries(async () =>
+      db.collection("Task").findOne({ _id: new ObjectId(taskId as string) })
+    );
 
     res.status(200).json({ message: taskInfo });
   } catch (err) {
-    next(err)
+    next(err);
   }
 });
 

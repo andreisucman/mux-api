@@ -17,16 +17,14 @@ route.post(
     const { privacy } = req.body;
 
     try {
-      const userInfo = await doWithRetries({
-        functionName: "updateClubPrivacy",
-        functionToExecute: async () =>
-          db
-            .collection("User")
-            .findOne(
-              { _id: new ObjectId(req.userId) },
-              { projection: { club: 1 } }
-            ),
-      });
+      const userInfo = await doWithRetries(async () =>
+        db
+          .collection("User")
+          .findOne(
+            { _id: new ObjectId(req.userId) },
+            { projection: { club: 1 } }
+          )
+      );
 
       if (!userInfo) throw httpError(`User ${req.userId} not found`);
       if (!userInfo.club)

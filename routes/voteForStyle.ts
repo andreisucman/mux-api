@@ -28,42 +28,35 @@ route.post(
 
     try {
       /* see what for the user voted last for this style */
-      const lastVote = await doWithRetries({
-        functionName: "voteForStyle - add analysis status",
-        functionToExecute: async () =>
-          db.collection("StyleAnalysis").findOne(
-            {
-              styleId: new ObjectId(styleId),
-              userId: new ObjectId(req.userId),
-            },
-            { projection: { voteType: 1 } }
-          ),
-      });
+      const lastVote = await doWithRetries(async () =>
+        db.collection("StyleAnalysis").findOne(
+          {
+            styleId: new ObjectId(styleId),
+            userId: new ObjectId(req.userId),
+          },
+          { projection: { voteType: 1 } }
+        )
+      );
 
       if (!lastVote) {
-        await doWithRetries({
-          functionName: "voteForStyle - update last vote",
-          functionToExecute: async () =>
-            db.collection("StyleVote").insertOne({
-              styleId: new ObjectId(styleId),
-              userId: new ObjectId(req.userId),
-              voteType,
-            }),
-        });
+        await doWithRetries(async () =>
+          db.collection("StyleVote").insertOne({
+            styleId: new ObjectId(styleId),
+            userId: new ObjectId(req.userId),
+            voteType,
+          })
+        );
 
-        await doWithRetries({
-          functionName: "voteForStyle - increment the vote",
-          functionToExecute: async () =>
-            db.collection("StyleAnalysis").updateOne(
-              {
-                _id: new ObjectId(styleId),
-              },
-              {
-                $inc:
-                  voteType === "current" ? { votes: 1 } : { compareVotes: 1 },
-              }
-            ),
-        });
+        await doWithRetries(async () =>
+          db.collection("StyleAnalysis").updateOne(
+            {
+              _id: new ObjectId(styleId),
+            },
+            {
+              $inc: voteType === "current" ? { votes: 1 } : { compareVotes: 1 },
+            }
+          )
+        );
       } else {
         const { voteType: lastVoteType } = lastVote;
 
@@ -71,34 +64,30 @@ route.post(
           res.status(200).json({ error: "Already voted for that photo" });
           return;
         } else {
-          await doWithRetries({
-            functionName: "voteForStyle - update last vote",
-            functionToExecute: async () =>
-              db.collection("StyleVote").updateOne(
-                {
-                  styleId: new ObjectId(styleId),
-                  userId: new ObjectId(req.userId),
-                },
-                { $set: { voteType } },
-                { upsert: true }
-              ),
-          });
+          await doWithRetries(async () =>
+            db.collection("StyleVote").updateOne(
+              {
+                styleId: new ObjectId(styleId),
+                userId: new ObjectId(req.userId),
+              },
+              { $set: { voteType } },
+              { upsert: true }
+            )
+          );
 
-          await doWithRetries({
-            functionName: "voteForStyle - increment the vote",
-            functionToExecute: async () =>
-              db.collection("StyleAnalysis").updateOne(
-                {
-                  _id: new ObjectId(styleId),
-                },
-                {
-                  $inc:
-                    voteType === "current"
-                      ? { votes: 1, compareVotes: -1 }
-                      : { compareVotes: 1, votes: -1 },
-                }
-              ),
-          });
+          await doWithRetries(async () =>
+            db.collection("StyleAnalysis").updateOne(
+              {
+                _id: new ObjectId(styleId),
+              },
+              {
+                $inc:
+                  voteType === "current"
+                    ? { votes: 1, compareVotes: -1 }
+                    : { compareVotes: 1, votes: -1 },
+              }
+            )
+          );
         }
       }
 

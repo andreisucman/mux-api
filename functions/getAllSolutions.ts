@@ -74,11 +74,9 @@ route.get("/", async (req: CustomRequest, res: Response) => {
       { $limit: 7 }
     );
 
-    const solutions = await doWithRetries({
-      functionName: "getAllSolutions",
-      functionToExecute: async () =>
-        db.collection("Solution").aggregate(pipeline).toArray(),
-    });
+    const solutions = await doWithRetries(async () =>
+      db.collection("Solution").aggregate(pipeline).toArray()
+    );
 
     res.status(200).json({ message: solutions });
   } catch (err) {

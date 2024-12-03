@@ -40,9 +40,8 @@ route.get("/:userId?", async (req: CustomRequest, res) => {
       userId: 1,
     };
 
-    const progress = await doWithRetries({
-      functionName: "getUsersProgressRecords",
-      functionToExecute: async () =>
+    const progress = await doWithRetries(
+      async () =>
         await db
           .collection("Progress")
           .find(filter, {
@@ -51,8 +50,8 @@ route.get("/:userId?", async (req: CustomRequest, res) => {
           .sort({ createdAt: -1 })
           .skip(Number(skip) || 0)
           .limit(7)
-          .toArray(),
-    });
+          .toArray()
+    );
 
     res.status(200).json({ message: progress });
   } catch (err) {

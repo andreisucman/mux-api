@@ -64,10 +64,7 @@ async function askRepeatedly({
       if (runs[i].model) payload.model = runs[i].model;
       if (finalResponseFormat) payload.responseFormat = finalResponseFormat;
 
-      const response = await doWithRetries({
-        functionName: "askRepeatedly - askOpenai",
-        functionToExecute: async () => askOpenai(payload),
-      });
+      const response = await doWithRetries(async () => askOpenai(payload));
 
       result = response.result;
 

@@ -14,36 +14,30 @@ export default async function removeFromClub({ userId }: Props) {
   try {
     await updateContentPublicity({ userId, newPrivacy: defaultClubPrivacy });
 
-    await doWithRetries({
-      functionName: "removeFromClub - unset club",
-      functionToExecute: async () =>
-        db
-          .collection("User")
-          .updateOne({ _id: new ObjectId(userId) }, { $unset: { club: null } }),
-    });
+    await doWithRetries(async () =>
+      db
+        .collection("User")
+        .updateOne({ _id: new ObjectId(userId) }, { $unset: { club: null } })
+    );
 
-    await doWithRetries({
-      functionName: "removeFromClub - remove from tracking",
-      functionToExecute: async () =>
-        db
-          .collection("User")
-          .updateMany(
-            { "club.trackedUserId": userId },
-            { $unset: { "club.trackedUserId": "" } }
-          ),
-    });
+    await doWithRetries(async () =>
+      db
+        .collection("User")
+        .updateMany(
+          { "club.trackedUserId": userId },
+          { $unset: { "club.trackedUserId": "" } }
+        )
+    );
 
     /* cancel the peek subscription */
-    const userInfo = (await doWithRetries({
-      functionName: "removeFromClub - unset club",
-      functionToExecute: async () =>
-        db
-          .collection("User")
-          .updateOne(
-            { _id: new ObjectId(userId) },
-            { projection: { subscriptions: 1 } }
-          ),
-    })) as any;
+    const userInfo = (await doWithRetries(async () =>
+      db
+        .collection("User")
+        .updateOne(
+          { _id: new ObjectId(userId) },
+          { projection: { subscriptions: 1 } }
+        )
+    )) as any;
 
     if (!userInfo) throw httpError(`User: ${userId} not found.`);
 
@@ -56,11 +50,9 @@ export default async function removeFromClub({ userId }: Props) {
       { deleteMany: { filter: { userId: new ObjectId(userId) } } },
     ];
 
-    doWithRetries({
-      functionName: "removeFromClub - remove from follow history",
-      functionToExecute: async () =>
-        db.collection("FollowHistory").bulkWrite(removeFromFollowHistoryBatch),
-    }).catch();
+    doWithRetries(async () =>
+      db.collection("FollowHistory").bulkWrite(removeFromFollowHistoryBatch)
+    ).catch();
   } catch (err) {
     throw httpError(err);
   }

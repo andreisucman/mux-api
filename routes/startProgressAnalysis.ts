@@ -45,32 +45,30 @@ route.post(
       //   return;
       // }
 
-      const userInfo = (await doWithRetries({
-        functionToExecute: async () =>
-          db.collection("User").findOne(
-            { _id: new ObjectId(finalUserId) },
-            {
-              projection: {
-                toAnalyze: 1,
-                demographics: 1,
-                concerns: 1,
-                potential: 1,
-                city: 1,
-                country: 1,
-                timeZone: 1,
-                nextScan: 1,
-                latestProgress: 1,
-                specialConsiderations: 1,
-                latestScoresDifference: 1,
-                currentlyHigherThan: 1,
-                potentiallyHigherThan: 1,
-                latestScores: 1,
-                club: 1,
-              },
-            }
-          ),
-        functionName: "startAnalysis",
-      })) as unknown as UploadProgressUserInfo;
+      const userInfo = (await doWithRetries(async () =>
+        db.collection("User").findOne(
+          { _id: new ObjectId(finalUserId) },
+          {
+            projection: {
+              toAnalyze: 1,
+              demographics: 1,
+              concerns: 1,
+              potential: 1,
+              city: 1,
+              country: 1,
+              timeZone: 1,
+              nextScan: 1,
+              latestProgress: 1,
+              specialConsiderations: 1,
+              latestScoresDifference: 1,
+              currentlyHigherThan: 1,
+              potentiallyHigherThan: 1,
+              latestScores: 1,
+              club: 1,
+            },
+          }
+        )
+      )) as unknown as UploadProgressUserInfo;
 
       let {
         toAnalyze,
@@ -98,17 +96,15 @@ route.post(
       //   return;
       // }
 
-      await doWithRetries({
-        functionName: "startAnalysis - add analysis status",
-        functionToExecute: async () =>
-          db
-            .collection("AnalysisStatus")
-            .updateOne(
-              { userId: new ObjectId(finalUserId), type },
-              { $set: { isRunning: true, progress: 1, isError: null } },
-              { upsert: true }
-            ),
-      });
+      await doWithRetries(async () =>
+        db
+          .collection("AnalysisStatus")
+          .updateOne(
+            { userId: new ObjectId(finalUserId), type },
+            { $set: { isRunning: true, progress: 1, isError: null } },
+            { upsert: true }
+          )
+      );
 
       res.status(200).end();
 

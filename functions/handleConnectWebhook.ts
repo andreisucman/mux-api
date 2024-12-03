@@ -27,28 +27,24 @@ export default async function handleConnectWebhook(event: any) {
         updatePayload["club.privacy"] = defaultClubPrivacy;
       }
 
-      await doWithRetries({
-        functionName: "handleConnectWebhook - update user",
-        functionToExecute: async () =>
-          db.collection("User").updateOne(
-            { "club.payouts.connectId": object.id },
-            {
-              $set: updatePayload,
-            }
-          ),
-      });
+      await doWithRetries(async () =>
+        db.collection("User").updateOne(
+          { "club.payouts.connectId": object.id },
+          {
+            $set: updatePayload,
+          }
+        )
+      );
 
       if (!payouts_enabled) {
-        const userInfo = await doWithRetries({
-          functionName: "handleConnectWebhook - update user",
-          functionToExecute: async () =>
-            db
-              .collection("User")
-              .findOne(
-                { "club.payouts.connectId": object.id },
-                { projection: { _id: 1 } }
-              ),
-        });
+        const userInfo = await doWithRetries(async () =>
+          db
+            .collection("User")
+            .findOne(
+              { "club.payouts.connectId": object.id },
+              { projection: { _id: 1 } }
+            )
+        );
 
         await updateContentPublicity({
           userId: String(userInfo._id),
@@ -78,18 +74,16 @@ export default async function handleConnectWebhook(event: any) {
       if (available.length !== 0)
         sum = available.reduce((a, c) => a + c.amount, 0);
 
-      await doWithRetries({
-        functionName: "handleConnectWebhook - update user",
-        functionToExecute: async () =>
-          db.collection("User").updateOne(
-            { "club.payouts.connectId": object.id },
-            {
-              $set: {
-                "club.payouts.balance": Number((sum / 100).toFixed(2)),
-              },
-            }
-          ),
-      });
+      await doWithRetries(async () =>
+        db.collection("User").updateOne(
+          { "club.payouts.connectId": object.id },
+          {
+            $set: {
+              "club.payouts.balance": Number((sum / 100).toFixed(2)),
+            },
+          }
+        )
+      );
     } catch (err) {
       throw httpError(err);
     }

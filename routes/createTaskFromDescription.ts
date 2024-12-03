@@ -29,16 +29,14 @@ route.post(
 
     try {
       /* check if scanned */
-      const userInfo = (await doWithRetries({
-        functionName: "saveTaskFromDescription - get created tasks",
-        functionToExecute: async () =>
-          db.collection("User").findOne(
-            {
-              _id: new ObjectId(req.userId),
-            },
-            { projection: { nextScan: 1 } }
-          ),
-      })) as unknown as { nextScan: NextActionType };
+      const userInfo = (await doWithRetries(async () =>
+        db.collection("User").findOne(
+          {
+            _id: new ObjectId(req.userId),
+          },
+          { projection: { nextScan: 1 } }
+        )
+      )) as unknown as { nextScan: NextActionType };
 
       const finalType = type === "head" ? type : "body";
 
@@ -61,14 +59,12 @@ route.post(
         days: -7,
       });
 
-      const tasksCount = await doWithRetries({
-        functionName: "saveTaskFromDescription - get created tasks",
-        functionToExecute: async () =>
-          db.collection("Task").countDocuments({
-            isCreated: true,
-            startsAt: { $gte: lastWeekStart },
-          }),
-      });
+      const tasksCount = await doWithRetries(async () =>
+        db.collection("Task").countDocuments({
+          isCreated: true,
+          startsAt: { $gte: lastWeekStart },
+        })
+      );
 
       if (tasksCount > 70) {
         res.status(200).json({
@@ -83,16 +79,14 @@ route.post(
       });
 
       if (isHarmful) {
-        await doWithRetries({
-          functionName: "createTaskFromDescription route - add harmful record",
-          functionToExecute: async () =>
-            db.collection("HarmfulTaskDescriptions").insertOne({
-              userId: new ObjectId(req.userId),
-              response: explanation,
-              text: description,
-              type: "create",
-            }),
-        });
+        await doWithRetries(async () =>
+          db.collection("HarmfulTaskDescriptions").insertOne({
+            userId: new ObjectId(req.userId),
+            response: explanation,
+            text: description,
+            type: "create",
+          })
+        );
         res.status(200).json({
           error: `This task violates our ToS.`,
         });

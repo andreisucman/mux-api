@@ -36,16 +36,14 @@ route.get(
         projection["club.bio.intro"] = 1;
       }
 
-      const userInfo = (await doWithRetries({
-        functionName: "getClubYouTrack",
-        functionToExecute: async () =>
-          db.collection("User").findOne(
-            { _id: new ObjectId(trackedUserId) },
-            {
-              projection,
-            }
-          ),
-      })) as unknown as GetClubYouTrackUserType;
+      const userInfo = (await doWithRetries(async () =>
+        db.collection("User").findOne(
+          { _id: new ObjectId(trackedUserId) },
+          {
+            projection,
+          }
+        )
+      )) as unknown as GetClubYouTrackUserType;
 
       if (!userInfo) throw new Error(`User ${trackedUserId} not found`);
 

@@ -31,22 +31,18 @@ route.post(
         createdAt: new Date(),
       };
 
-      await doWithRetries({
-        functionName: "saveAboutResponse - add about record",
-        functionToExecute: async () =>
-          db.collection("About").insertOne(newAboutRecord),
-      });
+      await doWithRetries(async () =>
+        db.collection("About").insertOne(newAboutRecord)
+      );
 
-      const userInfo = await doWithRetries({
-        functionName: "saveAboutResponse - get user info",
-        functionToExecute: async () =>
-          db.collection("User").findOne(
-            {
-              _id: new ObjectId(req.userId),
-            },
-            { projection: { club: 1 } }
-          ),
-      });
+      const userInfo = await doWithRetries(async () =>
+        db.collection("User").findOne(
+          {
+            _id: new ObjectId(req.userId),
+          },
+          { projection: { club: 1 } }
+        )
+      );
 
       const { club } = userInfo;
       const { bio } = club;
@@ -81,16 +77,14 @@ route.post(
         };
       }
 
-      await doWithRetries({
-        functionName: "saveAboutResponse - update user",
-        functionToExecute: async () =>
-          db.collection("User").updateOne(
-            {
-              _id: new ObjectId(req.userId),
-            },
-            { $set: { club: toUpdate } }
-          ),
-      });
+      await doWithRetries(async () =>
+        db.collection("User").updateOne(
+          {
+            _id: new ObjectId(req.userId),
+          },
+          { $set: { club: toUpdate } }
+        )
+      );
 
       res.status(200).json({ message: toUpdate });
     } catch (err) {

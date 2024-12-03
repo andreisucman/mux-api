@@ -19,37 +19,33 @@ route.post("/", async (req: CustomRequest, res: Response) => {
   if (!userId) userId = String(new ObjectId());
 
   try {
-    await doWithRetries({
-      functionName: "startStyleAnalysis - add analysis status",
-      functionToExecute: async () =>
-        db
-          .collection("AnalysisStatus")
-          .updateOne(
-            { userId: new ObjectId(userId), type: `style-${type}` },
-            { $set: { isRunning: true, progress: 1, isError: null } },
-            { upsert: true }
-          ),
-    });
+    await doWithRetries(async () =>
+      db
+        .collection("AnalysisStatus")
+        .updateOne(
+          { userId: new ObjectId(userId), type: `style-${type}` },
+          { $set: { isRunning: true, progress: 1, isError: null } },
+          { upsert: true }
+        )
+    );
 
     res.status(200).json({ message: userId });
 
-    const userInfo = (await doWithRetries({
-      functionName: "startStyleAnalysis - find the user",
-      functionToExecute: async () =>
-        db.collection("User").findOne(
-          { _id: new ObjectId(req.userId) },
-          {
-            projection: {
-              latestStyleAnalysis: 1,
-              latestScoresDifference: 1,
-              demographics: 1,
-              "club.name": 1,
-              "club.avatar": 1,
-              "club.privacy": 1,
-            },
-          }
-        ),
-    })) as unknown as StartStyleAnalysisUserInfoType;
+    const userInfo = (await doWithRetries(async () =>
+      db.collection("User").findOne(
+        { _id: new ObjectId(req.userId) },
+        {
+          projection: {
+            latestStyleAnalysis: 1,
+            latestScoresDifference: 1,
+            demographics: 1,
+            "club.name": 1,
+            "club.avatar": 1,
+            "club.privacy": 1,
+          },
+        }
+      )
+    )) as unknown as StartStyleAnalysisUserInfoType;
 
     const { club, latestStyleAnalysis, latestScoresDifference } = userInfo || {
       club: {},
@@ -130,11 +126,9 @@ route.post("/", async (req: CustomRequest, res: Response) => {
       styleAnalysis.isPublic = somePartEnabled;
     }
 
-    await doWithRetries({
-      functionName: "startStyleAnalysis - insert one style analysis",
-      functionToExecute: async () =>
-        db.collection("StyleAnalysis").insertOne(styleAnalysis),
-    });
+    await doWithRetries(async () =>
+      db.collection("StyleAnalysis").insertOne(styleAnalysis)
+    );
 
     if (userInfo) {
       const newLatestAnalysis: {
@@ -146,28 +140,24 @@ route.post("/", async (req: CustomRequest, res: Response) => {
       };
 
       if (req.userId)
-        await doWithRetries({
-          functionName: "startStyleAnalysis - update the latest analysis",
-          functionToExecute: async () =>
-            db
-              .collection("User")
-              .updateOne(
-                { _id: new ObjectId(req.userId) },
-                { $set: { latestStyleAnalysis: newLatestAnalysis } }
-              ),
-        });
+        await doWithRetries(async () =>
+          db
+            .collection("User")
+            .updateOne(
+              { _id: new ObjectId(req.userId) },
+              { $set: { latestStyleAnalysis: newLatestAnalysis } }
+            )
+        );
     }
 
-    await doWithRetries({
-      functionName: "startStyleAnalysis - complete analysis progress",
-      functionToExecute: async () =>
-        db
-          .collection("AnalysisStatus")
-          .updateOne(
-            { userId: new ObjectId(userId), type: `style-${type}` },
-            { $set: { isRunning: false, progress: 0, isError: null } }
-          ),
-    });
+    await doWithRetries(async () =>
+      db
+        .collection("AnalysisStatus")
+        .updateOne(
+          { userId: new ObjectId(userId), type: `style-${type}` },
+          { $set: { isRunning: false, progress: 0, isError: null } }
+        )
+    );
   } catch (error) {
     await addAnalysisStatusError({
       userId: String(userId),

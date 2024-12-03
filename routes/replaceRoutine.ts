@@ -30,54 +30,43 @@ route.post(
     }
 
     try {
-      const userInfo = await doWithRetries({
-        functionName: "replaceRoutine - get user info",
-        functionToExecute: async () =>
-          db.collection("User").findOne(
-            {
-              _id: new ObjectId(req.userId),
-            },
-            { projection: { timeZone: 1 } }
-          ),
-      });
+      const userInfo = await doWithRetries(async () =>
+        db.collection("User").findOne(
+          {
+            _id: new ObjectId(req.userId),
+          },
+          { projection: { timeZone: 1 } }
+        )
+      );
 
       if (!userInfo) throw httpError(`User ${req.userId} not found`);
 
       const { timeZone } = userInfo;
 
-      const replacementRoutine = await doWithRetries({
-        functionName: "replaceRoutine - get routine to replace",
-        functionToExecute: async () =>
-          db
-            .collection("Routine")
-            .findOne(
-              { _id: new ObjectId(routineId) },
-              { projection: { _id: 0 } }
-            ),
-      });
+      const replacementRoutine = await doWithRetries(async () =>
+        db
+          .collection("Routine")
+          .findOne({ _id: new ObjectId(routineId) }, { projection: { _id: 0 } })
+      );
 
       /* get the user's current routine */
-      const currentRoutine = await doWithRetries({
-        functionName: "replaceRoutine - get current routine",
-        functionToExecute: async () =>
-          db
-            .collection("Routine")
-            .find(
-              { userId: new ObjectId(req.userId), type, status: "active" },
-              { projection: { _id: 1 } }
-            )
-            .next(),
-      });
+      const currentRoutine = await doWithRetries(async () =>
+        db
+          .collection("Routine")
+          .find(
+            { userId: new ObjectId(req.userId), type, status: "active" },
+            { projection: { _id: 1 } }
+          )
+          .next()
+      );
 
-      let replacementTasks = await doWithRetries({
-        functionName: "replaceRoutine - get replacement tasks",
-        functionToExecute: async () =>
-          db
-            .collection("Task")
-            .find({ routineId: new ObjectId(routineId) })
-            .sort({ expiresAt: -1 })
-            .toArray(),
-      });
+      let replacementTasks = await doWithRetries(async () =>
+        db
+          .collection("Task")
+          .find({ routineId: new ObjectId(routineId) })
+          .sort({ expiresAt: -1 })
+          .toArray()
+      );
 
       if (replacementTasks.length === 0) throw httpError(`No tasks to add`);
 
@@ -216,16 +205,14 @@ route.post(
       const dates = Object.keys(finalSchedule);
       const lastRoutineDate = dates[dates.length - 1];
 
-      await doWithRetries({
-        functionName: "replaceRoutine - deactivate current routine",
-        functionToExecute: async () =>
-          db
-            .collection("Routine")
-            .updateOne(
-              { _id: new ObjectId(currentRoutine._id) },
-              { $set: { status: "replaced" } }
-            ),
-      });
+      await doWithRetries(async () =>
+        db
+          .collection("Routine")
+          .updateOne(
+            { _id: new ObjectId(currentRoutine._id) },
+            { $set: { status: "replaced" } }
+          )
+      );
 
       const newRoutine = {
         ...replacementRoutine,
@@ -239,28 +226,22 @@ route.post(
         status: "active",
       };
 
-      await doWithRetries({
-        functionName: "saveTaskFromDescription route - update routine",
-        functionToExecute: async () =>
-          db.collection("Routine").insertOne(newRoutine),
-      });
+      await doWithRetries(async () =>
+        db.collection("Routine").insertOne(newRoutine)
+      );
 
-      await doWithRetries({
-        functionName: "replaceRoutine - delete current tasks",
-        functionToExecute: async () =>
-          db
-            .collection("Task")
-            .updateMany(
-              { routineId: new ObjectId(currentRoutine._id) },
-              { $set: { status: "canceled" } }
-            ),
-      });
+      await doWithRetries(async () =>
+        db
+          .collection("Task")
+          .updateMany(
+            { routineId: new ObjectId(currentRoutine._id) },
+            { $set: { status: "canceled" } }
+          )
+      );
 
-      await doWithRetries({
-        functionName: "replaceRoutine - insert new tasks",
-        functionToExecute: async () =>
-          db.collection("Task").insertMany(replacementTaskWithDates),
-      });
+      await doWithRetries(async () =>
+        db.collection("Task").insertMany(replacementTaskWithDates)
+      );
 
       const { routines, tasks } = await getLatestRoutinesAndTasks({
         userId: req.userId,

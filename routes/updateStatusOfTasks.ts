@@ -16,17 +16,15 @@ route.post(
     const { taskIds, newStatus } = req.body;
 
     try {
-      await doWithRetries({
-        functionName: "updateStatusOfTasks",
-        functionToExecute: async () =>
-          db.collection("Task").updateMany(
-            {
-              _id: { $in: taskIds.map((id: string) => new ObjectId(id)) },
-              userId: new ObjectId(req.userId),
-            },
-            { $set: { status: newStatus } }
-          ),
-      });
+      await doWithRetries(async () =>
+        db.collection("Task").updateMany(
+          {
+            _id: { $in: taskIds.map((id: string) => new ObjectId(id)) },
+            userId: new ObjectId(req.userId),
+          },
+          { $set: { status: newStatus } }
+        )
+      );
 
       const response = await getLatestRoutineAndTasks({ userId: req.userId });
 

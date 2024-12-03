@@ -31,9 +31,8 @@ export default async function generateImage({ description, userId }: Props) {
 
     const { result: prompt } = promptResponse;
 
-    const imageResponse: any = await doWithRetries({
-      functionName: "generateImage",
-      functionToExecute: async () =>
+    const imageResponse: any = await doWithRetries(
+      async () =>
         await together.images.create({
           model: "black-forest-labs/FLUX.1-pro",
           prompt,
@@ -42,8 +41,8 @@ export default async function generateImage({ description, userId }: Props) {
           width: 480,
           height: 288,
           negative_prompt: "deformed, scary, blurred, unrealistic",
-        }),
-    });
+        })
+    );
 
     const image = imageResponse.data[0].url;
 

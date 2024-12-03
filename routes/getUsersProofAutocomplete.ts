@@ -61,11 +61,9 @@ route.get(
         }
       );
 
-      const autocompleteData = await doWithRetries({
-        functionName: "getProofAutocomplete - aggregate",
-        functionToExecute: async () =>
-          db.collection("Proof").aggregate(pipeline).toArray(),
-      });
+      const autocompleteData = await doWithRetries(async () =>
+        db.collection("Proof").aggregate(pipeline).toArray()
+      );
 
       res.status(200).json({ message: autocompleteData });
     } catch (err) {

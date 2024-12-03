@@ -34,12 +34,9 @@ async function askOpenAi({
     if (isJson) options.response_format = { type: "json_object" };
     if (responseFormat) options.response_format = responseFormat;
 
-    const completion = await doWithRetries({
-      functionName: "askOpenAi",
-      maxAttempts: 5,
-      functionToExecute: async () =>
-        openai.chat.completions.create(options as any),
-    });
+    const completion = await doWithRetries(async () =>
+      openai.chat.completions.create(options as any)
+    );
 
     const update: { [key: string]: any } = {
       $set: {},
@@ -50,15 +47,13 @@ async function askOpenAi({
 
     if (meta) update.$set.meta = meta;
 
-    doWithRetries({
-      functionName: "askOpenAi - record expenditure",
-      functionToExecute: async () =>
-        db
-          .collection("Spend")
-          .updateOne({ userId: new ObjectId(userId) }, update, {
-            upsert: true,
-          }),
-    });
+    doWithRetries(async () =>
+      db
+        .collection("Spend")
+        .updateOne({ userId: new ObjectId(userId) }, update, {
+          upsert: true,
+        })
+    );
 
     return {
       result: isJson

@@ -26,32 +26,30 @@ route.get(
 
     try {
       const response =
-        (await doWithRetries({
-          functionName: "getUsersStyleNames - add analysis status",
-          functionToExecute: async () =>
-            db
-              .collection("StyleVote")
-              .aggregate([
-                {
-                  $match: {
-                    userId: new ObjectId(userId),
-                  },
+        (await doWithRetries(async () =>
+          db
+            .collection("StyleVote")
+            .aggregate([
+              {
+                $match: {
+                  userId: new ObjectId(userId),
                 },
-                {
-                  $group: {
-                    _id: null,
-                    styleNames: { $addToSet: "$styleName" },
-                  },
+              },
+              {
+                $group: {
+                  _id: null,
+                  styleNames: { $addToSet: "$styleName" },
                 },
-                {
-                  $project: {
-                    styleNames: 1,
-                    _id: 0,
-                  },
+              },
+              {
+                $project: {
+                  styleNames: 1,
+                  _id: 0,
                 },
-              ])
-              .next(),
-        })) || {};
+              },
+            ])
+            .next()
+        )) || {};
 
       res.status(200).json({ message: response.styleNames || [] });
     } catch (err) {

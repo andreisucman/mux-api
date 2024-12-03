@@ -31,12 +31,9 @@ async function askTogether({
       temperature: 0,
     };
 
-    const completion = await doWithRetries({
-      functionName: "askTogether",
-      maxAttempts: 5,
-      functionToExecute: async () =>
-        together.chat.completions.create(options as any),
-    });
+    const completion = await doWithRetries(async () =>
+      together.chat.completions.create(options as any)
+    );
 
     const update: { [key: string]: any } = {
       $set: {},
@@ -47,15 +44,13 @@ async function askTogether({
 
     if (meta) update.$set.meta = meta;
 
-    doWithRetries({
-      functionName: "askTogether - record expenditure",
-      functionToExecute: async () =>
-        db
-          .collection("Spend")
-          .updateOne({ userId: new ObjectId(userId) }, update, {
-            upsert: true,
-          }),
-    });
+    doWithRetries(async () =>
+      db
+        .collection("Spend")
+        .updateOne({ userId: new ObjectId(userId) }, update, {
+          upsert: true,
+        })
+    );
 
     return {
       result: completion.choices[0].message.content,

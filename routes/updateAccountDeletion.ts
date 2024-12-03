@@ -26,13 +26,11 @@ route.post(
       }
       payload.club = { isActive: isActivate };
 
-      await doWithRetries({
-        functionName: "updateAccountDeletion",
-        functionToExecute: async () =>
-          db
-            .collection("User")
-            .updateOne({ _id: new ObjectId(req.userId) }, { $set: payload }),
-      });
+      await doWithRetries(async () =>
+        db
+          .collection("User")
+          .updateOne({ _id: new ObjectId(req.userId) }, { $set: payload })
+      );
 
       res.status(200).json({ deleteOn: payload.deleteOn });
     } catch (err) {

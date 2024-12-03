@@ -11,15 +11,13 @@ export default async function createTextEmbedding(
   if (!text) throw httpError("Text not provided");
 
   try {
-    const embeddingObject = await doWithRetries({
-      functionName: "createTextEmbedding",
-      functionToExecute: async () =>
-        openai.embeddings.create({
-          model: "text-embedding-3-small",
-          input: text,
-          encoding_format: "float",
-        }),
-    });
+    const embeddingObject = await doWithRetries(async () =>
+      openai.embeddings.create({
+        model: "text-embedding-3-small",
+        input: text,
+        encoding_format: "float",
+      })
+    );
 
     return embeddingObject.data[0].embedding;
   } catch (err) {

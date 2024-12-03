@@ -24,22 +24,20 @@ route.post(
     try {
       const userId = new ObjectId(req.userId);
       /* find user info */
-      const userInfo = await doWithRetries({
-        functionName: "findProducts - get user info",
-        functionToExecute: async () =>
-          db.collection("User").findOne(
-            { _id: userId },
-            {
-              projection: {
-                specialConsiderations: 1,
-                subscriptions: 1,
-                demographics: 1,
-                timeZone: 1,
-                concerns: 1,
-              },
-            }
-          ),
-      });
+      const userInfo = await doWithRetries(async () =>
+        db.collection("User").findOne(
+          { _id: userId },
+          {
+            projection: {
+              specialConsiderations: 1,
+              subscriptions: 1,
+              demographics: 1,
+              timeZone: 1,
+              concerns: 1,
+            },
+          }
+        )
+      );
 
       const { subscriptions } = userInfo;
       const { analyst } = subscriptions;
@@ -53,37 +51,33 @@ route.post(
       }
 
       /* find task info */
-      const taskData = await doWithRetries({
-        functionName: "findProducts - taskInfo",
-        functionToExecute: async () =>
-          db.collection("Task").findOne(
-            { key: taskKey, expiresAt: { $gt: new Date() } },
-            {
-              projection: {
-                description: 1,
-                productTypes: 1,
-                concern: 1,
-                key: 1,
-              },
-            }
-          ),
-      });
+      const taskData = await doWithRetries(async () =>
+        db.collection("Task").findOne(
+          { key: taskKey, expiresAt: { $gt: new Date() } },
+          {
+            projection: {
+              description: 1,
+              productTypes: 1,
+              concern: 1,
+              key: 1,
+            },
+          }
+        )
+      );
 
       if (!taskData) return next(httpError(`Task ${taskKey} not not found`));
 
       /* update analysis */
-      await doWithRetries({
-        functionName: "createRoutineRoute - update analysis status",
-        functionToExecute: async () =>
-          db.collection("AnalysisStatus").updateOne(
-            { userId, type: taskKey },
-            {
-              $set: { isRunning: true, progress: 1 },
-              $unset: { isError: "" },
-            },
-            { upsert: true }
-          ),
-      });
+      await doWithRetries(async () =>
+        db.collection("AnalysisStatus").updateOne(
+          { userId, type: taskKey },
+          {
+            $set: { isRunning: true, progress: 1 },
+            $unset: { isError: "" },
+          },
+          { upsert: true }
+        )
+      );
 
       res.status(200).end();
 
@@ -103,34 +97,30 @@ route.post(
         criteria,
       });
 
-      await doWithRetries({
-        functionName: "createTasks - updateTask",
-        functionToExecute: async () =>
-          db.collection("Task").updateMany(
-            { key: taskKey, expiresAt: { $gt: new Date() } },
-            {
-              $set: {
-                suggestions: suggestedProducts,
-                productsPersonalized: true,
-              },
-            }
-          ),
-      });
+      await doWithRetries(async () =>
+        db.collection("Task").updateMany(
+          { key: taskKey, expiresAt: { $gt: new Date() } },
+          {
+            $set: {
+              suggestions: suggestedProducts,
+              productsPersonalized: true,
+            },
+          }
+        )
+      );
 
       /* update analysis */
-      await doWithRetries({
-        functionName: "createRoutineRoute - update analysis status",
-        functionToExecute: async () =>
-          db.collection("AnalysisStatus").updateOne(
-            { userId, type: taskKey },
-            {
-              $set: { isRunning: false, progress: 0 },
-              $unset: { isError: "" },
-            }
-          ),
-      });
+      await doWithRetries(async () =>
+        db.collection("AnalysisStatus").updateOne(
+          { userId, type: taskKey },
+          {
+            $set: { isRunning: false, progress: 0 },
+            $unset: { isError: "" },
+          }
+        )
+      );
     } catch (error) {
-      // this is async}
+      // this is async
     }
   }
 );

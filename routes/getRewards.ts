@@ -12,23 +12,21 @@ route.get(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
-      const rewards = await doWithRetries({
-        functionName: "getRewards",
-        functionToExecute: async () =>
-          db
-            .collection("Reward")
-            .find(
-              { isActive: true },
-              {
-                projection: {
-                  _id: 1,
-                  rewards: 0,
-                },
-              }
-            )
-            .sort({ startsAt: 1 })
-            .toArray(),
-      });
+      const rewards = await doWithRetries(async () =>
+        db
+          .collection("Reward")
+          .find(
+            { isActive: true },
+            {
+              projection: {
+                _id: 1,
+                rewards: 0,
+              },
+            }
+          )
+          .sort({ startsAt: 1 })
+          .toArray()
+      );
 
       res.status(200).json({ message: rewards });
     } catch (err) {

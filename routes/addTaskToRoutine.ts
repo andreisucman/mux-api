@@ -19,161 +19,155 @@ import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
-route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { taskKey, routineId, total, trackedUserId, type } = req.body;
+route.post(
+  "/",
+  async (req: CustomRequest, res: Response, next: NextFunction) => {
+    const { taskKey, routineId, total, trackedUserId, type } = req.body;
 
-  try {
-    if (!taskKey || !routineId || !total || !trackedUserId || !type) {
-      res.status(400).json({ error: "Bad request" });
-      return;
-    }
+    try {
+      if (!taskKey || !routineId || !total || !trackedUserId || !type) {
+        res.status(400).json({ error: "Bad request" });
+        return;
+      }
 
-    const userInfo = await doWithRetries({
-      functionName: "addTaskToRoutine - get user info",
-      functionToExecute: async () =>
+      const userInfo = await doWithRetries(async () =>
         db.collection("User").findOne(
           {
             _id: new ObjectId(req.userId),
           },
           { projection: { timeZone: 1 } }
-        ),
-    });
+        )
+      );
 
-    if (!userInfo) throw httpError(`User ${req.userId} not found`);
+      if (!userInfo) throw httpError(`User ${req.userId} not found`);
 
-    const { timeZone } = userInfo;
+      const { timeZone } = userInfo;
 
-    let taskToAdd = await doWithRetries({
-      functionName: "addTaskToRoutine - find task to add",
-      functionToExecute: async () =>
+      let taskToAdd = await doWithRetries(async () =>
         db
           .collection("Task")
           .find({ routineId: new ObjectId(routineId), key: taskKey })
           .sort({ expiresAt: -1 })
-          .next(),
-    });
-
-    if (!taskToAdd)
-      throw httpError(
-        `No task to add from user ${trackedUserId} to user ${req.userId} found.`
+          .next()
       );
 
-    /* get the user's current routine */
-    const currentRoutine = await doWithRetries({
-      functionName: "addTaskToRoutine - get current routine",
-      functionToExecute: async () =>
+      if (!taskToAdd)
+        throw httpError(
+          `No task to add from user ${trackedUserId} to user ${req.userId} found.`
+        );
+
+      /* get the user's current routine */
+      const currentRoutine = await doWithRetries(async () =>
         db
           .collection("Routine")
           .find({ userId: new ObjectId(req.userId), type, status: "active" })
-          .next(),
-    });
+          .next()
+      );
 
-    /* reset personalized fields */
-    taskToAdd = {
-      ...taskToAdd,
-      _id: new ObjectId(),
-      routineId: new ObjectId(currentRoutine._id),
-      suggestions: taskToAdd.defaultSuggestions,
-      proofEnabled: true,
-      productsPersonalized: false,
-      requiredSubmissions: taskToAdd.requiredSubmissions.map(
-        (submission: RequiredSubmissionType) => ({
-          _id: nanoid(),
-          proofId: "",
-          ...submission,
-          isSubmitted: false,
-        })
-      ),
-    } as unknown as TaskType;
+      /* reset personalized fields */
+      taskToAdd = {
+        ...taskToAdd,
+        _id: new ObjectId(),
+        routineId: new ObjectId(currentRoutine._id),
+        suggestions: taskToAdd.defaultSuggestions,
+        proofEnabled: true,
+        productsPersonalized: false,
+        requiredSubmissions: taskToAdd.requiredSubmissions.map(
+          (submission: RequiredSubmissionType) => ({
+            _id: nanoid(),
+            proofId: "",
+            ...submission,
+            isSubmitted: false,
+          })
+        ),
+      } as unknown as TaskType;
 
-    const draftTasks: TaskType[] = [];
+      const draftTasks: TaskType[] = [];
 
-    /* get the updated start and expiry dates */
-    const distanceInDays = Math.round(Math.max(7 / total, 1));
+      /* get the updated start and expiry dates */
+      const distanceInDays = Math.round(Math.max(7 / total, 1));
 
-    for (let j = 0; j < Math.min(total, 7); j++) {
-      const starts = daysFrom({
-        date: setUtcMidnight({
-          date: new Date(),
-          timeZone,
-        }),
-        days: distanceInDays * j,
-      });
+      for (let j = 0; j < Math.min(total, 7); j++) {
+        const starts = daysFrom({
+          date: setUtcMidnight({
+            date: new Date(),
+            timeZone,
+          }),
+          days: distanceInDays * j,
+        });
 
-      const expires = daysFrom({
-        date: new Date(starts),
-        days: 1,
-      });
+        const expires = daysFrom({
+          date: new Date(starts),
+          days: 1,
+        });
 
-      draftTasks.push({
-        ...(taskToAdd as TaskType),
-        startsAt: starts,
-        expiresAt: expires,
-      });
-    }
-
-    let { finalSchedule, concerns, allTasks } = currentRoutine;
-
-    /* update final schedule */
-    for (let i = 0; i < draftTasks.length; i++) {
-      const task = draftTasks[i];
-      const dateString = new Date(task.startsAt).toDateString();
-
-      const simpleTaskContent = {
-        key: task.key,
-        concern: task.concern,
-      };
-
-      if (finalSchedule[dateString]) {
-        finalSchedule[dateString].push(simpleTaskContent);
-      } else {
-        finalSchedule[dateString] = [simpleTaskContent];
+        draftTasks.push({
+          ...(taskToAdd as TaskType),
+          startsAt: starts,
+          expiresAt: expires,
+        });
       }
-    }
 
-    finalSchedule = sortTasksInScheduleByDate(finalSchedule);
+      let { finalSchedule, concerns, allTasks } = currentRoutine;
 
-    /* update concerns */
-    const currentConcerns = concerns.map((c: UserConcernType) => c.name);
-    const newConcerns = draftTasks
-      .filter((obj: TaskType) => !currentConcerns.includes(obj.concern))
-      .map((t) => ({
-        type,
-        name: t.concern,
-        isDisabled: false,
-        imported: true,
-      }));
+      /* update final schedule */
+      for (let i = 0; i < draftTasks.length; i++) {
+        const task = draftTasks[i];
+        const dateString = new Date(task.startsAt).toDateString();
 
-    if (newConcerns.length > 0) {
-      concerns.push(...newConcerns);
-    }
+        const simpleTaskContent = {
+          key: task.key,
+          concern: task.concern,
+        };
 
-    /* update allTasks */
-    const newAllTasks = draftTasks.map((t) => {
-      const { name, key, icon, color, description, instruction, concern } = t;
+        if (finalSchedule[dateString]) {
+          finalSchedule[dateString].push(simpleTaskContent);
+        } else {
+          finalSchedule[dateString] = [simpleTaskContent];
+        }
+      }
 
-      return {
-        name,
-        key,
-        icon,
-        color,
-        concern,
-        total,
-        completed: 0,
-        unknown: 0,
-        description,
-        instruction,
-      };
-    });
+      finalSchedule = sortTasksInScheduleByDate(finalSchedule);
 
-    allTasks.push(...newAllTasks);
+      /* update concerns */
+      const currentConcerns = concerns.map((c: UserConcernType) => c.name);
+      const newConcerns = draftTasks
+        .filter((obj: TaskType) => !currentConcerns.includes(obj.concern))
+        .map((t) => ({
+          type,
+          name: t.concern,
+          isDisabled: false,
+          imported: true,
+        }));
 
-    const dates = Object.keys(finalSchedule);
-    const lastRoutineDate = dates[dates.length - 1];
+      if (newConcerns.length > 0) {
+        concerns.push(...newConcerns);
+      }
 
-    await doWithRetries({
-      functionName: "addTaskToRoutine route - update routine",
-      functionToExecute: async () =>
+      /* update allTasks */
+      const newAllTasks = draftTasks.map((t) => {
+        const { name, key, icon, color, description, instruction, concern } = t;
+
+        return {
+          name,
+          key,
+          icon,
+          color,
+          concern,
+          total,
+          completed: 0,
+          unknown: 0,
+          description,
+          instruction,
+        };
+      });
+
+      allTasks.push(...newAllTasks);
+
+      const dates = Object.keys(finalSchedule);
+      const lastRoutineDate = dates[dates.length - 1];
+
+      await doWithRetries(async () =>
         db.collection("Routine").updateOne(
           { _id: new ObjectId(currentRoutine._id) },
           {
@@ -184,30 +178,29 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
               lastDate: new Date(lastRoutineDate),
             },
           }
-        ),
-    });
+        )
+      );
 
-    await doWithRetries({
-      functionName: "addTaskToRoutine - insert tasks",
-      functionToExecute: async () =>
-        db.collection("Task").insertMany(draftTasks),
-    });
+      await doWithRetries(async () =>
+        db.collection("Task").insertMany(draftTasks)
+      );
 
-    res.status(200).json({
-      message: {
-        routine: {
-          ...currentRoutine,
-          finalSchedule,
-          allTasks,
-          concerns,
-          lastDate: new Date(lastRoutineDate),
+      res.status(200).json({
+        message: {
+          routine: {
+            ...currentRoutine,
+            finalSchedule,
+            allTasks,
+            concerns,
+            lastDate: new Date(lastRoutineDate),
+          },
+          tasks: draftTasks,
         },
-        tasks: draftTasks,
-      },
-    });
-  } catch (err) {
-    next(err);
+      });
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 export default route;

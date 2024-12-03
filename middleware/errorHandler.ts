@@ -6,10 +6,8 @@ const errorHandler = (
   res: Response,
   next: NextFunction
 ): void => {
-  
   req.log.error({
     err,
-    server: "api",
     stack: err.stack,
     query: req.query,
     params: req.params,

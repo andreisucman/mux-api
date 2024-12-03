@@ -64,10 +64,9 @@ route.post(
           city,
         };
 
-        const registerResponse = await doWithRetries({
-          functionToExecute: async () => await registerUser(payload),
-          functionName: "authenticate",
-        });
+        const registerResponse = await doWithRetries(
+          async () => await registerUser(payload)
+        );
 
         userId = registerResponse._id;
       } else if (localUserId) {
@@ -79,16 +78,14 @@ route.post(
           payload.email = email;
           payload.stripeUserId = stripeUser.id;
 
-          await doWithRetries({
-            functionToExecute: async () =>
-              db.collection("User").updateOne(
-                { _id: new ObjectId(userId) },
-                {
-                  $set: payload,
-                }
-              ),
-            functionName: "authenticate - update referredById",
-          });
+          await doWithRetries(async () =>
+            db.collection("User").updateOne(
+              { _id: new ObjectId(userId) },
+              {
+                $set: payload,
+              }
+            )
+          );
         }
       } else {
         // normal login drops here
@@ -96,16 +93,15 @@ route.post(
 
       const sessionExpiry = daysFrom({ days: 720 });
 
-      await doWithRetries({
-        functionToExecute: async () =>
+      await doWithRetries(
+        async () =>
           await db.collection("Session").insertOne({
             userId: new ObjectId(userId),
             createdAt: new Date(),
             accessToken: accessToken,
             expiresOn: sessionExpiry,
-          }),
-        functionName: "authenticate - add session",
-      });
+          })
+      );
 
       const userData = await getUserData({ userId });
 

@@ -46,82 +46,74 @@ route.post(
     }
 
     try {
-      await doWithRetries({
-        functionName: "uploadProof - update analysis status",
-        functionToExecute: async () =>
-          db.collection("AnalysisStatus").updateOne(
-            { userId: new ObjectId(req.userId), type: taskId },
-            {
-              $set: { isRunning: true, progress: 1 },
-              $unset: { isError: "", message: "" },
-            },
-            { upsert: true }
-          ),
-      });
+      await doWithRetries(async () =>
+        db.collection("AnalysisStatus").updateOne(
+          { userId: new ObjectId(req.userId), type: taskId },
+          {
+            $set: { isRunning: true, progress: 1 },
+            $unset: { isError: "", message: "" },
+          },
+          { upsert: true }
+        )
+      );
 
       res.status(200).end();
 
-      const userInfo = (await doWithRetries({
-        functionName: "uploadProof - get user",
-        functionToExecute: async () =>
-          db.collection("User").findOne(
-            { _id: new ObjectId(req.userId) },
-            {
-              projection: {
-                streakDates: 1,
-                club: 1,
-                demographics: 1,
-                latestScoresDifference: 1,
-                dailyCalorieGoal: 1,
-              },
-            }
-          ),
-      })) as unknown as UploadProofUserType;
+      const userInfo = (await doWithRetries(async () =>
+        db.collection("User").findOne(
+          { _id: new ObjectId(req.userId) },
+          {
+            projection: {
+              streakDates: 1,
+              club: 1,
+              demographics: 1,
+              latestScoresDifference: 1,
+              dailyCalorieGoal: 1,
+            },
+          }
+        )
+      )) as unknown as UploadProofUserType;
 
       if (!userInfo) throw httpError(`User ${req.userId} not found`);
 
-      const taskInfo = (await doWithRetries({
-        functionName: "uploadProof - get task",
-        functionToExecute: async () =>
-          db.collection("Task").findOne(
-            { _id: new ObjectId(taskId), status: "active" },
-            {
-              projection: {
-                name: 1,
-                key: 1,
-                color: 1,
-                part: 1,
-                type: 1,
-                icon: 1,
-                concern: 1,
-                requisite: 1,
-                routineId: 1,
-                requiredSubmissions: 1,
-                restDays: 1,
-                isRecipe: 1,
-              },
-            }
-          ),
-      })) as unknown as UploadProofTaskType;
+      const taskInfo = (await doWithRetries(async () =>
+        db.collection("Task").findOne(
+          { _id: new ObjectId(taskId), status: "active" },
+          {
+            projection: {
+              name: 1,
+              key: 1,
+              color: 1,
+              part: 1,
+              type: 1,
+              icon: 1,
+              concern: 1,
+              requisite: 1,
+              routineId: 1,
+              requiredSubmissions: 1,
+              restDays: 1,
+              isRecipe: 1,
+            },
+          }
+        )
+      )) as unknown as UploadProofTaskType;
 
       if (!taskInfo) throw httpError(`Task ${taskId} not found`);
 
       /* get the previous images of the same routine */
-      const oldProofsArray = await doWithRetries({
-        functionName: "uploadProof - get previous submissions",
-        functionToExecute: async () =>
-          db
-            .collection("Proof")
-            .find(
-              { taskKey: taskInfo.key },
-              {
-                projection: { proofImages: 1 },
-              }
-            )
-            .sort({ createdAt: -1 })
-            .limit(2)
-            .toArray(),
-      });
+      const oldProofsArray = await doWithRetries(async () =>
+        db
+          .collection("Proof")
+          .find(
+            { taskKey: taskInfo.key },
+            {
+              projection: { proofImages: 1 },
+            }
+          )
+          .sort({ createdAt: -1 })
+          .limit(2)
+          .toArray()
+      );
 
       const oldProofImages = oldProofsArray
         .flatMap((proof) => proof.proofImages)
@@ -304,11 +296,9 @@ route.post(
       newProof.latestHeadScoreDifference = latestHeadScoreDifference;
       newProof.latestBodyScoreDifference = latestBodyScoreDifference;
 
-      await doWithRetries({
-        functionName: "uploadProof - add a new proof",
-        functionToExecute: async () =>
-          db.collection("Proof").insertOne(newProof),
-      });
+      await doWithRetries(async () =>
+        db.collection("Proof").insertOne(newProof)
+      );
 
       const relevantSubmission = taskInfo.requiredSubmissions.find(
         (s) => s.submissionId === submissionId
@@ -358,47 +348,39 @@ route.post(
         userUpdatePayload.$inc.dailyCalorieGoal = newDailyCalorieGoal;
       }
 
-      await doWithRetries({
-        functionName: "uploadProof - update user",
-        functionToExecute: async () =>
-          db
-            .collection("User")
-            .updateOne({ _id: new ObjectId(req.userId) }, userUpdatePayload),
-      });
+      await doWithRetries(async () =>
+        db
+          .collection("User")
+          .updateOne({ _id: new ObjectId(req.userId) }, userUpdatePayload)
+      );
 
-      await doWithRetries({
-        functionName: "uploadProof - update the task",
-        functionToExecute: async () =>
-          db
-            .collection("Task")
-            .updateOne({ _id: new ObjectId(taskId) }, taskUpdate),
-      });
+      await doWithRetries(async () =>
+        db
+          .collection("Task")
+          .updateOne({ _id: new ObjectId(taskId) }, taskUpdate)
+      );
 
-      await doWithRetries({
-        functionName: "uploadProof - update routine",
-        functionToExecute: async () =>
-          db.collection("Routine").updateOne(
-            { _id: new ObjectId(routineId), "allTasks.key": key },
-            {
-              $inc: {
-                [`allTasks.$.completed`]: 1,
-                [`allTasks.$.unknown`]: -1,
-              },
-            }
-          ),
-      });
+      await doWithRetries(async () =>
+        db.collection("Routine").updateOne(
+          { _id: new ObjectId(routineId), "allTasks.key": key },
+          {
+            $inc: {
+              [`allTasks.$.completed`]: 1,
+              [`allTasks.$.unknown`]: -1,
+            },
+          }
+        )
+      );
 
-      await doWithRetries({
-        functionName: "uploadProof - update analysis status",
-        functionToExecute: async () =>
-          db.collection("AnalysisStatus").updateOne(
-            { userId: new ObjectId(req.userId), type: taskId },
-            {
-              $set: { isRunning: false, progress: 0 },
-              $unset: { isError: "", message: "" },
-            }
-          ),
-      });
+      await doWithRetries(async () =>
+        db.collection("AnalysisStatus").updateOne(
+          { userId: new ObjectId(req.userId), type: taskId },
+          {
+            $set: { isRunning: false, progress: 0 },
+            $unset: { isError: "", message: "" },
+          }
+        )
+      );
     } catch (err) {
       await addAnalysisStatusError({
         userId: String(req.userId),

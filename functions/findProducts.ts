@@ -33,16 +33,14 @@ export default async function findProducts({
 
   try {
     /* find the related variants */
-    const variants = (await doWithRetries({
-      functionName: "findProducts - find related variants",
-      functionToExecute: async () =>
-        db
-          .collection("SuggestionVariant")
-          .find({
-            suggestion: { $in: productTypes },
-          })
-          .toArray(),
-    })) as unknown as SuggestionVariant[];
+    const variants = (await doWithRetries(async () =>
+      db
+        .collection("SuggestionVariant")
+        .find({
+          suggestion: { $in: productTypes },
+        })
+        .toArray()
+    )) as unknown as SuggestionVariant[];
 
     let allVariants = variants.flatMap((v) =>
       v.links
@@ -55,27 +53,23 @@ export default async function findProducts({
     ) as ProductType[];
 
     const productCheckPromises = allVariants.map((v) =>
-      doWithRetries({
-        functionName: "findProducts - isTheProductValid",
-        functionToExecute: async () =>
-          isTheProductValid({
-            userId: String(userId),
-            taskDescription,
-            variantData: v as ProductType,
-          }),
-      })
+      doWithRetries(async () =>
+        isTheProductValid({
+          userId: String(userId),
+          taskDescription,
+          variantData: v as ProductType,
+        })
+      )
     ) as Promise<ValidProductType>[];
 
-    await doWithRetries({
-      functionName: "findProducts - increment analysis status 1",
-      functionToExecute: async () =>
-        db
-          .collection("AnalysisStatus")
-          .updateOne(
-            { userId: new ObjectId(userId), type: analysisType },
-            { $inc: { progress: 2 } }
-          ),
-    });
+    await doWithRetries(async () =>
+      db
+        .collection("AnalysisStatus")
+        .updateOne(
+          { userId: new ObjectId(userId), type: analysisType },
+          { $inc: { progress: 2 } }
+        )
+    );
 
     const productCheckObjectsArray: ValidProductType[] = await Promise.all(
       productCheckPromises
@@ -114,32 +108,28 @@ export default async function findProducts({
         extractFeaturesPromises
       );
 
-      await doWithRetries({
-        functionName: "findProducts - increment analysis status 1",
-        functionToExecute: async () =>
-          db
-            .collection("AnalysisStatus")
-            .updateOne(
-              { userId: new ObjectId(userId), type: analysisType },
-              { $inc: { progress: 3 } }
-            ),
-      });
+      await doWithRetries(async () =>
+        db
+          .collection("AnalysisStatus")
+          .updateOne(
+            { userId: new ObjectId(userId), type: analysisType },
+            { $inc: { progress: 3 } }
+          )
+      );
 
       const commonListOfFeatures = await createACommonTableOfProductFeatures({
         userId: String(userId),
         extractedVariantFeatures: extractedFeaturesObjectsArray,
       });
 
-      await doWithRetries({
-        functionName: "findProducts - increment analysis status 1",
-        functionToExecute: async () =>
-          db
-            .collection("AnalysisStatus")
-            .updateOne(
-              { userId: new ObjectId(userId), type: analysisType },
-              { $inc: { progress: 15 } }
-            ),
-      });
+      await doWithRetries(async () =>
+        db
+          .collection("AnalysisStatus")
+          .updateOne(
+            { userId: new ObjectId(userId), type: analysisType },
+            { $inc: { progress: 15 } }
+          )
+      );
 
       const resultArray = await findTheBestVariant({
         commonListOfFeatures,

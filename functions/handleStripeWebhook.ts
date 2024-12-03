@@ -16,24 +16,21 @@ async function handleStripeWebhook(event: any) {
 
   if (!customerId) return;
 
-  const userInfo = await doWithRetries({
-    functionName: "handleStripeWebhook",
-    functionToExecute: async () =>
-      db
-        .collection("User")
-        .findOne(
-          { stripeUserId: customerId },
-          { projection: { subscriptions: 1, club: 1 } }
-        ),
-  });
+  const userInfo = await doWithRetries(async () =>
+    db
+      .collection("User")
+      .findOne(
+        { stripeUserId: customerId },
+        { projection: { subscriptions: 1, club: 1 } }
+      )
+  );
 
   if (!userInfo)
     throw httpError(`User with customerId ${customerId} not found.`);
 
-  const plans = await doWithRetries({
-    functionName: "handleStripeWebhook",
-    functionToExecute: async () => db.collection("Plan").find({}).toArray(),
-  });
+  const plans = await doWithRetries(async () =>
+    db.collection("Plan").find({}).toArray()
+  );
 
   const { subscriptions = {}, club } = userInfo;
 
@@ -139,11 +136,9 @@ async function handleStripeWebhook(event: any) {
       }
     }
 
-    await doWithRetries({
-      functionName: "handleWebhook - update user's plans",
-      functionToExecute: async () =>
-        await db.collection("User").bulkWrite(toUpdate),
-    });
+    await doWithRetries(
+      async () => await db.collection("User").bulkWrite(toUpdate)
+    );
   }
 }
 

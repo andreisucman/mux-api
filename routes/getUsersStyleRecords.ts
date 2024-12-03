@@ -43,9 +43,8 @@ route.get("/:userId?", async (req: CustomRequest, res, next: NextFunction) => {
       initialLikes: 1,
     };
 
-    const styles = await doWithRetries({
-      functionName: "getUsersStyleRecords",
-      functionToExecute: async () =>
+    const styles = await doWithRetries(
+      async () =>
         await db
           .collection("StyleAnalysis")
           .find(filter, {
@@ -54,8 +53,8 @@ route.get("/:userId?", async (req: CustomRequest, res, next: NextFunction) => {
           .sort({ createdAt: -1 })
           .skip(Number(skip) || 0)
           .limit(21)
-          .toArray(),
-    });
+          .toArray()
+    );
 
     res.status(200).json({ message: styles });
   } catch (err) {

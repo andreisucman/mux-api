@@ -31,21 +31,19 @@ export default async function analyzeConcerns({
   toAnalyzeObjects,
 }: Props) {
   try {
-    const concernsObjects = (await doWithRetries({
-      functionName: "analyzeConcerns - concerns",
-      functionToExecute: async () =>
-        db
-          .collection("Concern")
-          .find(
-            {
-              types: { $in: [type] },
-              parts: { $in: [part] },
-              $or: [{ sex }, { sex: "all" }],
-            },
-            { projection: { key: 1 } }
-          )
-          .toArray(),
-    })) as unknown as ConcernType[];
+    const concernsObjects = (await doWithRetries(async () =>
+      db
+        .collection("Concern")
+        .find(
+          {
+            types: { $in: [type] },
+            parts: { $in: [part] },
+            $or: [{ sex }, { sex: "all" }],
+          },
+          { projection: { key: 1 } }
+        )
+        .toArray()
+    )) as unknown as ConcernType[];
 
     const concerns = concernsObjects.map((obj) => obj.key);
 

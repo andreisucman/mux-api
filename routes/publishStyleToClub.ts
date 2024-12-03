@@ -20,23 +20,21 @@ route.post(
         return;
       }
 
-      const userInfo = (await doWithRetries({
-        functionName: "publishStyleToClub - find the user",
-        functionToExecute: async () =>
-          db.collection("User").findOne(
-            { _id: new ObjectId(req.userId) },
-            {
-              projection: {
-                club: 1,
-                "demographics.sex": 1,
-                latestStyleAnalysis: 1,
-                latestProgress: 1,
-                "latestScoresDifference.head.overall": 1,
-                "latestScoresDifference.body.overall": 1,
-              },
-            }
-          ),
-      })) as unknown as PublishToClubUserInfoType;
+      const userInfo = (await doWithRetries(async () =>
+        db.collection("User").findOne(
+          { _id: new ObjectId(req.userId) },
+          {
+            projection: {
+              club: 1,
+              "demographics.sex": 1,
+              latestStyleAnalysis: 1,
+              latestProgress: 1,
+              "latestScoresDifference.head.overall": 1,
+              "latestScoresDifference.body.overall": 1,
+            },
+          }
+        )
+      )) as unknown as PublishToClubUserInfoType;
 
       const { club, latestScoresDifference } = userInfo || {
         club: {},
@@ -50,17 +48,15 @@ route.post(
         return;
       }
 
-      const relevantStyle = await doWithRetries({
-        functionName: "pubishStyleToClub - get existing analysis",
-        functionToExecute: async () =>
-          db.collection("StyleAnalysis").findOne(
-            {
-              _id: new ObjectId(styleAnalysisId),
-              userId: new ObjectId(req.userId),
-            },
-            { projection: { image: 1, type: 1, isPublic: 1 } }
-          ),
-      });
+      const relevantStyle = await doWithRetries(async () =>
+        db.collection("StyleAnalysis").findOne(
+          {
+            _id: new ObjectId(styleAnalysisId),
+            userId: new ObjectId(req.userId),
+          },
+          { projection: { image: 1, type: 1, isPublic: 1 } }
+        )
+      );
 
       if (!relevantStyle) {
         throw httpError(`Style object ${styleAnalysisId} not found`);
@@ -109,22 +105,20 @@ route.post(
         return;
       }
 
-      await doWithRetries({
-        functionName: "publishStyleToClub - update style analysis",
-        functionToExecute: async () =>
-          db.collection("StyleAnalysis").updateOne(
-            { _id: new ObjectId(styleAnalysisId) },
-            {
-              $set: {
-                isPublic: true,
-                clubName: club.name,
-                avatar: club.avatar,
-                latestHeadScoreDifference: headScoreDifference.overall,
-                latestBodyScoreDifference: bodyScoreDifference.overall,
-              },
-            }
-          ),
-      });
+      await doWithRetries(async () =>
+        db.collection("StyleAnalysis").updateOne(
+          { _id: new ObjectId(styleAnalysisId) },
+          {
+            $set: {
+              isPublic: true,
+              clubName: club.name,
+              avatar: club.avatar,
+              latestHeadScoreDifference: headScoreDifference.overall,
+              latestBodyScoreDifference: bodyScoreDifference.overall,
+            },
+          }
+        )
+      );
 
       res.status(200).end();
     } catch (err) {

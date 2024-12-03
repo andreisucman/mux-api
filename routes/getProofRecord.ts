@@ -20,25 +20,23 @@ route.get(
     }
 
     try {
-      const record = await doWithRetries({
-        functionName: "getProofRecord",
-        functionToExecute: async () =>
-          db.collection("Proof").findOne(
-            { taskId: new ObjectId(taskId) },
-            {
-              projection: {
-                contentType: 1,
-                mainUrl: 1,
-                urls: 1,
-                createdAt: 1,
-                hash: 1,
-                isPublic: 1,
-                mainThumbnail: 1,
-                thumbnails: 1,
-              },
-            }
-          ),
-      });
+      const record = await doWithRetries(async () =>
+        db.collection("Proof").findOne(
+          { taskId: new ObjectId(taskId) },
+          {
+            projection: {
+              contentType: 1,
+              mainUrl: 1,
+              urls: 1,
+              createdAt: 1,
+              hash: 1,
+              isPublic: 1,
+              mainThumbnail: 1,
+              thumbnails: 1,
+            },
+          }
+        )
+      );
 
       res.status(200).json({ message: record });
     } catch (err) {

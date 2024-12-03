@@ -18,11 +18,9 @@ route.post(
     const { name, avatar, intro, bio } = req.body;
 
     try {
-      const userInfo = await doWithRetries({
-        functionName: "updateClubData - get user info",
-        functionToExecute: async () =>
-          db.collection("User").findOne({ _id: new ObjectId(req.userId) }),
-      });
+      const userInfo = await doWithRetries(async () =>
+        db.collection("User").findOne({ _id: new ObjectId(req.userId) })
+      );
 
       if (!userInfo) throw httpError(`User ${req.userId} not found`);
 
@@ -66,13 +64,11 @@ route.post(
         }
       }
 
-      await doWithRetries({
-        functionName: "updateClubData",
-        functionToExecute: async () =>
-          db
-            .collection("User")
-            .updateOne({ _id: new ObjectId(req.userId) }, { $set: payload }),
-      });
+      await doWithRetries(async () =>
+        db
+          .collection("User")
+          .updateOne({ _id: new ObjectId(req.userId) }, { $set: payload })
+      );
 
       res.status(200).end();
     } catch (err) {

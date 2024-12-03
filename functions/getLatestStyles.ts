@@ -10,9 +10,8 @@ type Props = {
 
 export default async function getLatestStyles({ userId }: Props) {
   try {
-    const styles = await doWithRetries({
-      functionName: "getLatestStyles - get styles",
-      functionToExecute: async () =>
+    const styles = await doWithRetries(
+      async () =>
         await db
           .collection("StyleAnalysis")
           .aggregate([
@@ -51,8 +50,8 @@ export default async function getLatestStyles({ userId }: Props) {
               },
             },
           ])
-          .toArray(),
-    });
+          .toArray()
+    );
 
     if (!styles || styles.length === 0) {
       return { head: {} as StyleAnalysisType, body: {} as StyleAnalysisType };

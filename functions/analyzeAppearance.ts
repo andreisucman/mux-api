@@ -108,16 +108,14 @@ export default async function analyzeAppearance({
 
       demographics = { ...(demographics || {}), ...newDemographics };
 
-      await doWithRetries({
-        functionName: "analyzeAppearance - increment analysis status",
-        functionToExecute: async () =>
-          db
-            .collection("AnalysisStatus")
-            .updateOne(
-              { userId: new ObjectId(userId), type },
-              { $inc: { progress: 3 } }
-            ),
-      });
+      await doWithRetries(async () =>
+        db
+          .collection("AnalysisStatus")
+          .updateOne(
+            { userId: new ObjectId(userId), type },
+            { $inc: { progress: 3 } }
+          )
+      );
 
       console.timeEnd("analyzeAppearance - getDemographics");
       toUpdateUser.$set.demographics = demographics;
@@ -131,21 +129,19 @@ export default async function analyzeAppearance({
     toUpdateUser.$set.nextScan = updateNextScan({ nextScan, toAnalyze, type });
 
     const analyzePartPromises = parts.map((part) => {
-      return doWithRetries({
-        functionName: "analyzeAppearance - analyzePart",
-        functionToExecute: async () =>
-          analyzePart({
-            club,
-            type,
-            part,
-            userId,
-            concerns,
-            blurType,
-            demographics,
-            toAnalyzeObjects,
-            specialConsiderations: rephrasedSpecialConsiderations,
-          }),
-      });
+      return doWithRetries(async () =>
+        analyzePart({
+          club,
+          type,
+          part,
+          userId,
+          concerns,
+          blurType,
+          demographics,
+          toAnalyzeObjects,
+          specialConsiderations: rephrasedSpecialConsiderations,
+        })
+      );
     });
 
     const analysesResults = await Promise.all(analyzePartPromises);
@@ -185,16 +181,14 @@ export default async function analyzeAppearance({
       newTypeLatestScoresDifference.overall / analysesResults.length
     );
 
-    await doWithRetries({
-      functionName: "updateProgress - Increment analysis status final",
-      functionToExecute: async () =>
-        db
-          .collection("AnalysisStatus")
-          .updateOne(
-            { userId: new ObjectId(userId), type },
-            { $set: { isRunning: true, progress: 99 } }
-          ),
-    });
+    await doWithRetries(async () =>
+      db
+        .collection("AnalysisStatus")
+        .updateOne(
+          { userId: new ObjectId(userId), type },
+          { $set: { isRunning: true, progress: 99 } }
+        )
+    );
 
     const newTypePotential = analysesResults.reduce(
       (a: { [key: string]: any }, c) => {
@@ -229,11 +223,9 @@ export default async function analyzeAppearance({
       },
     }));
 
-    await doWithRetries({
-      functionName: "analyzeAppearance - updateProgress",
-      functionToExecute: async () =>
-        db.collection("Progress").bulkWrite(toUpdateProgress),
-    });
+    await doWithRetries(async () =>
+      db.collection("Progress").bulkWrite(toUpdateProgress)
+    );
 
     const { typeCurrentlyHigherThan, typePotentiallyHigherThan } =
       await calculateHigherThanType({
@@ -323,24 +315,20 @@ export default async function analyzeAppearance({
 
     toUpdateUser.$set.toAnalyze[type] = [];
 
-    await doWithRetries({
-      functionToExecute: async () =>
-        db
-          .collection("User")
-          .updateOne({ _id: new ObjectId(userId) }, toUpdateUser),
-      functionName: "analyzeAppearance - update user data",
-    });
+    await doWithRetries(async () =>
+      db
+        .collection("User")
+        .updateOne({ _id: new ObjectId(userId) }, toUpdateUser)
+    );
 
-    await doWithRetries({
-      functionName: "analyzeAppearance - add analysis status last",
-      functionToExecute: async () =>
-        db
-          .collection("AnalysisStatus")
-          .updateOne(
-            { userId: new ObjectId(userId), type },
-            { $set: { isRunning: false, progress: 0 } }
-          ),
-    });
+    await doWithRetries(async () =>
+      db
+        .collection("AnalysisStatus")
+        .updateOne(
+          { userId: new ObjectId(userId), type },
+          { $set: { isRunning: false, progress: 0 } }
+        )
+    );
   } catch (err) {
     throw httpError(err);
   }

@@ -9,47 +9,45 @@ type Props = {
 
 export default async function getClosestTaskDates({ userId }: Props) {
   try {
-    const closestTasks = await doWithRetries({
-      functionName: "getClosestTaskDates - aggregation",
-      functionToExecute: async () =>
-        db
-          .collection("Task")
-          .aggregate([
-            {
-              $match: {
-                userId: new ObjectId(userId),
-                $or: [
-                  {
-                    status: "active",
-                    expiresAt: { $gte: new Date() },
-                  },
-                  {
-                    status: "completed",
-                    expiresAt: { $gte: new Date() },
-                  },
-                ],
-              },
+    const closestTasks = await doWithRetries(async () =>
+      db
+        .collection("Task")
+        .aggregate([
+          {
+            $match: {
+              userId: new ObjectId(userId),
+              $or: [
+                {
+                  status: "active",
+                  expiresAt: { $gte: new Date() },
+                },
+                {
+                  status: "completed",
+                  expiresAt: { $gte: new Date() },
+                },
+              ],
             },
-            { $sort: { startsAt: 1 } },
-            {
-              $group: {
-                _id: "$part",
-                routineId: { $first: "$routineId" },
-                startsAt: { $first: "$startsAt" },
-              },
+          },
+          { $sort: { startsAt: 1 } },
+          {
+            $group: {
+              _id: "$part",
+              routineId: { $first: "$routineId" },
+              startsAt: { $first: "$startsAt" },
             },
-            { $limit: 1 },
-            {
-              $project: {
-                _id: 0,
-                routineId: 1,
-                startsAt: 1,
-                part: "$_id",
-              },
+          },
+          { $limit: 1 },
+          {
+            $project: {
+              _id: 0,
+              routineId: 1,
+              startsAt: 1,
+              part: "$_id",
             },
-          ])
-          .toArray(),
-    });
+          },
+        ])
+        .toArray()
+    );
 
     return closestTasks;
   } catch (err) {

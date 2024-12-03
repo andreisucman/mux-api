@@ -57,11 +57,9 @@ route.get("/", async (req: CustomRequest, res: Response) => {
 
     pipeline.push({ $sort: { createdAt: -1 } }, { $limit: 21 });
 
-    const proof = await doWithRetries({
-      functionName: "getAllProofRecords",
-      functionToExecute: async () =>
-        db.collection("Proof").aggregate(pipeline).toArray(),
-    });
+    const proof = await doWithRetries(async () =>
+      db.collection("Proof").aggregate(pipeline).toArray()
+    );
 
     res.status(200).json({ message: proof });
   } catch (err) {

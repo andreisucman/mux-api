@@ -35,16 +35,14 @@ export default async function moderateImages({
     }
 
     if (!userImage) {
-      const userInfo = (await doWithRetries({
-        functionName: "",
-        functionToExecute: async () =>
-          db
-            .collection("User")
-            .findOne(
-              { _id: new ObjectId(userId) },
-              { projection: { latestProgress: 1 } }
-            ),
-      })) as unknown as { latestProgress: UserProgressRecordType };
+      const userInfo = (await doWithRetries(async () =>
+        db
+          .collection("User")
+          .findOne(
+            { _id: new ObjectId(userId) },
+            { projection: { latestProgress: 1 } }
+          )
+      )) as unknown as { latestProgress: UserProgressRecordType };
 
       const { latestProgress } = userInfo || {};
       const { head } = latestProgress || {};

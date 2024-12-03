@@ -100,17 +100,15 @@ export default async function updateAboutBio({
     const keys = Object.keys(currentBio);
 
     const promises = keys.map((key) =>
-      doWithRetries({
-        functionName: "updateAboutBio - updateBioPart",
-        functionToExecute: async () =>
-          updateBioPart({
-            reply,
-            question,
-            userId,
-            partName: key,
-            currentPart: currentBio[key as "philosophy"],
-          }),
-      })
+      doWithRetries(async () =>
+        updateBioPart({
+          reply,
+          question,
+          userId,
+          partName: key,
+          currentPart: currentBio[key as "philosophy"],
+        })
+      )
     );
 
     const responses = await Promise.all(promises);

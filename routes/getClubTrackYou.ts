@@ -14,26 +14,24 @@ route.get(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
-      const trackers = (await doWithRetries({
-        functionName: "getClubTrackYou",
-        functionToExecute: async () =>
-          db
-            .collection("User")
-            .find(
-              { "club.trackedUserId": new ObjectId(req.userId) },
-              {
-                projection: {
-                  "club.intro": 1,
-                  "club.name": 1,
-                  "club.privacy": 1,
-                  "club.avatar": 1,
-                  latestScores: 1,
-                  latestScoresDifference: 1,
-                },
-              }
-            )
-            .toArray(),
-      })) as unknown as TrackerType[];
+      const trackers = (await doWithRetries(async () =>
+        db
+          .collection("User")
+          .find(
+            { "club.trackedUserId": new ObjectId(req.userId) },
+            {
+              projection: {
+                "club.intro": 1,
+                "club.name": 1,
+                "club.privacy": 1,
+                "club.avatar": 1,
+                latestScores: 1,
+                latestScoresDifference: 1,
+              },
+            }
+          )
+          .toArray()
+      )) as unknown as TrackerType[];
 
       const results = trackers.map((rec) => {
         const { club, latestScores, latestScoresDifference } = rec;

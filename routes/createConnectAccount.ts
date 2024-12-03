@@ -14,16 +14,14 @@ route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
-      const userInfo = await doWithRetries({
-        functionName: "createConnectAccount",
-        functionToExecute: async () =>
-          db
-            .collection("User")
-            .findOne(
-              { _id: new ObjectId(req.userId) },
-              { projection: { email: 1, country: 1, "club.connectId": 1 } }
-            ),
-      });
+      const userInfo = await doWithRetries(async () =>
+        db
+          .collection("User")
+          .findOne(
+            { _id: new ObjectId(req.userId) },
+            { projection: { email: 1, country: 1, "club.connectId": 1 } }
+          )
+      );
 
       const { email, club, country } = userInfo;
       const { payouts } = club || {};
@@ -68,16 +66,14 @@ route.post(
           type: "account_onboarding",
         });
 
-        await doWithRetries({
-          functionName: "createConnectAccount - save connectId",
-          functionToExecute: async () =>
-            db
-              .collection("User")
-              .updateOne(
-                { _id: new ObjectId(req.userId) },
-                { $set: { "club.payouts.connectId": account.id } }
-              ),
-        });
+        await doWithRetries(async () =>
+          db
+            .collection("User")
+            .updateOne(
+              { _id: new ObjectId(req.userId) },
+              { $set: { "club.payouts.connectId": account.id } }
+            )
+        );
 
         res.status(200).json({ message: accLink.url });
         return;

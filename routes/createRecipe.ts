@@ -48,56 +48,50 @@ route.post(
       });
 
       if (isHarmful) {
-        await doWithRetries({
-          functionName: "saveTaskFromDescription route - add harmful record",
-          functionToExecute: async () =>
-            db.collection("HarmfulTaskDescriptions").insertOne({
-              userId: new ObjectId(req.userId),
-              response: explanation,
-              type: "createRecipe",
-              text: constraints,
-            }),
-        });
+        await doWithRetries(async () =>
+          db.collection("HarmfulTaskDescriptions").insertOne({
+            userId: new ObjectId(req.userId),
+            response: explanation,
+            type: "createRecipe",
+            text: constraints,
+          })
+        );
         res.status(200).json({
           error: `This task violates our ToS.`,
         });
         return;
       }
 
-      const userInfo = (await doWithRetries({
-        functionName: "createRecipe - get userInfo",
-        functionToExecute: async () =>
-          db.collection("User").findOne(
-            { _id: new ObjectId(req.userId) },
-            {
-              projection: {
-                concern: 1,
-                timeZone: 1,
-                demographics: 1,
-                specialConsiderations: 1,
-              },
-            }
-          ),
-      })) as unknown as UserInfoType;
+      const userInfo = (await doWithRetries(async () =>
+        db.collection("User").findOne(
+          { _id: new ObjectId(req.userId) },
+          {
+            projection: {
+              concern: 1,
+              timeZone: 1,
+              demographics: 1,
+              specialConsiderations: 1,
+            },
+          }
+        )
+      )) as unknown as UserInfoType;
 
       const { specialConsiderations } = userInfo;
 
-      const taskInfo = await doWithRetries({
-        functionName: "createRecipe - get taskInfo",
-        functionToExecute: async () =>
-          db.collection("Task").findOne(
-            { _id: new ObjectId(taskId) },
-            {
-              projection: {
-                key: 1,
-                recipe: 1,
-                concern: 1,
-                instruction: 1,
-                requiredSubmissions: 1,
-              },
-            }
-          ),
-      });
+      const taskInfo = await doWithRetries(async () =>
+        db.collection("Task").findOne(
+          { _id: new ObjectId(taskId) },
+          {
+            projection: {
+              key: 1,
+              recipe: 1,
+              concern: 1,
+              instruction: 1,
+              requiredSubmissions: 1,
+            },
+          }
+        )
+      );
 
       if (!taskInfo) throw httpError(`Task ${taskId} not found`);
 
@@ -114,18 +108,16 @@ route.post(
 
       const analysisType = `createRecipe-${taskId}`;
 
-      await doWithRetries({
-        functionName: "createRoutineRoute - update analysis status",
-        functionToExecute: async () =>
-          db.collection("AnalysisStatus").updateOne(
-            { userId: new ObjectId(req.userId), type: analysisType },
-            {
-              $set: { isRunning: true, progress: 1 },
-              $unset: { isError: "" },
-            },
-            { upsert: true }
-          ),
-      });
+      await doWithRetries(async () =>
+        db.collection("AnalysisStatus").updateOne(
+          { userId: new ObjectId(req.userId), type: analysisType },
+          {
+            $set: { isRunning: true, progress: 1 },
+            $unset: { isError: "" },
+          },
+          { upsert: true }
+        )
+      );
 
       /* generate recipe */
       let systemContent = `You are an experienced cook. Your goal is to come up with a simple recipe with up to 5 steps, that satisfies the following default instruction: <-->Default instruction: ${instruction}.`;
@@ -310,39 +302,35 @@ route.post(
         analysisType,
       });
 
-      await doWithRetries({
-        functionName: "createRoutineRoute - update analysis status",
-        functionToExecute: async () =>
-          db.collection("AnalysisStatus").updateOne(
-            { userId: new ObjectId(req.userId), type: analysisType },
-            {
-              $set: { isRunning: false, progress: 0 },
-              $unset: { isError: "" },
-            }
-          ),
-      });
+      await doWithRetries(async () =>
+        db.collection("AnalysisStatus").updateOne(
+          { userId: new ObjectId(req.userId), type: analysisType },
+          {
+            $set: { isRunning: false, progress: 0 },
+            $unset: { isError: "" },
+          }
+        )
+      );
 
-      await doWithRetries({
-        functionName: "createRecipe - update Task",
-        functionToExecute: async () =>
-          db.collection("Task").updateOne(
-            { _id: new ObjectId(taskId) },
-            {
-              $set: {
-                recipe: {
-                  image,
-                  canPersonalize: false,
-                  name: response.name,
-                  description: response.description,
-                  instruction: response.instruction,
-                  calories: response.calories,
-                },
-                productTypes: response.productTypes,
-                defaultSuggestions,
+      await doWithRetries(async () =>
+        db.collection("Task").updateOne(
+          { _id: new ObjectId(taskId) },
+          {
+            $set: {
+              recipe: {
+                image,
+                canPersonalize: false,
+                name: response.name,
+                description: response.description,
+                instruction: response.instruction,
+                calories: response.calories,
               },
-            }
-          ),
-      });
+              productTypes: response.productTypes,
+              defaultSuggestions,
+            },
+          }
+        )
+      );
 
       res.status(200).end();
     } catch (err) {

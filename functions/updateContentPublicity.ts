@@ -15,13 +15,11 @@ export default async function updateContentPublicity({
   newPrivacy,
 }: Props) {
   try {
-    const userInfo = await doWithRetries({
-      functionName: "handleConnectWebhook - update user",
-      functionToExecute: async () =>
-        db
-          .collection("User")
-          .findOne({ _id: new ObjectId(userId) }, { projection: { club: 1 } }),
-    });
+    const userInfo = await doWithRetries(async () =>
+      db
+        .collection("User")
+        .findOne({ _id: new ObjectId(userId) }, { projection: { club: 1 } })
+    );
 
     if (!userInfo) throw httpError("No userInfo");
 
@@ -70,43 +68,33 @@ export default async function updateContentPublicity({
       }));
 
     if (toUpdateProgresProofBa.length > 0)
-      await doWithRetries({
-        functionName: "updateContentPublicity - update proof publicity",
-        functionToExecute: async () =>
-          db.collection("Proof").bulkWrite(toUpdateProgresProofBa),
-      });
+      await doWithRetries(async () =>
+        db.collection("Proof").bulkWrite(toUpdateProgresProofBa)
+      );
 
     if (toUpdateProgresProofBa.length > 0)
-      await doWithRetries({
-        functionName: "updateContentPublicity - update progress publicity",
-        functionToExecute: async () =>
-          db.collection("Progress").bulkWrite(toUpdateProgresProofBa),
-      });
+      await doWithRetries(async () =>
+        db.collection("Progress").bulkWrite(toUpdateProgresProofBa)
+      );
 
     if (toUpdateProgresProofBa.length > 0)
-      await doWithRetries({
-        functionName: "updateContentPublicity - update before after publicity",
-        functionToExecute: async () =>
-          db.collection("BeforeAfter").bulkWrite(toUpdateProgresProofBa),
-      });
+      await doWithRetries(async () =>
+        db.collection("BeforeAfter").bulkWrite(toUpdateProgresProofBa)
+      );
 
     if (toUpdateStyle.length > 0)
-      await doWithRetries({
-        functionName: "updateContentPublicity - update style publicity",
-        functionToExecute: async () =>
-          db.collection("StyleAnalysis").bulkWrite(toUpdateStyle),
-      });
+      await doWithRetries(async () =>
+        db.collection("StyleAnalysis").bulkWrite(toUpdateStyle)
+      );
 
-    await doWithRetries({
-      functionName: "updateClubPrivacy",
-      functionToExecute: async () =>
-        db
-          .collection("User")
-          .updateOne(
-            { _id: new ObjectId(userId) },
-            { $set: { "club.privacy": newPrivacy } }
-          ),
-    });
+    await doWithRetries(async () =>
+      db
+        .collection("User")
+        .updateOne(
+          { _id: new ObjectId(userId) },
+          { $set: { "club.privacy": newPrivacy } }
+        )
+    );
   } catch (err) {
     throw httpError(err);
   }

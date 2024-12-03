@@ -22,26 +22,24 @@ route.get(
 
       if (type) payload.type = type;
 
-      const completedTasks = await doWithRetries({
-        functionName: "getCompletedTasks",
-        functionToExecute: async () =>
-          db
-            .collection("Task")
-            .find(payload, {
-              projection: {
-                _id: 1,
-                name: 1,
-                key: 1,
-                icon: 1,
-                color: 1,
-                type: 1,
-                description: 1,
-                completedAt: 1,
-              },
-            })
-            .skip(Number(skip) || 0)
-            .toArray(),
-      });
+      const completedTasks = await doWithRetries(async () =>
+        db
+          .collection("Task")
+          .find(payload, {
+            projection: {
+              _id: 1,
+              name: 1,
+              key: 1,
+              icon: 1,
+              color: 1,
+              type: 1,
+              description: 1,
+              completedAt: 1,
+            },
+          })
+          .skip(Number(skip) || 0)
+          .toArray()
+      );
 
       res.status(200).json({ message: completedTasks });
     } catch (err) {

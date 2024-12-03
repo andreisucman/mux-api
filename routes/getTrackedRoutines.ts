@@ -29,16 +29,14 @@ route.get(
         userProjection: { subsciptions: 1 },
       });
 
-      const userInfo = await doWithRetries({
-        functionName: "getTrackedRoutines - get user",
-        functionToExecute: async () =>
-          db
-            .collection("User")
-            .findOne(
-              { _id: new ObjectId(trackedUserId) },
-              { projection: { subscriptions: 1 } }
-            ),
-      });
+      const userInfo = await doWithRetries(async () =>
+        db
+          .collection("User")
+          .findOne(
+            { _id: new ObjectId(trackedUserId) },
+            { projection: { subscriptions: 1 } }
+          )
+      );
 
       if (!userInfo) throw httpError(`User ${trackedUserId} not found`);
 
@@ -53,17 +51,15 @@ route.get(
         return;
       }
 
-      const routines = await doWithRetries({
-        functionName: "getTrackedRoutines",
-        functionToExecute: async () =>
-          db
-            .collection("Routine")
-            .find({ userId: new ObjectId(trackedUserId), type })
-            .sort({ createdAt: -1 })
-            .skip(Number(skip) || 0)
-            .limit(9)
-            .toArray(),
-      });
+      const routines = await doWithRetries(async () =>
+        db
+          .collection("Routine")
+          .find({ userId: new ObjectId(trackedUserId), type })
+          .sort({ createdAt: -1 })
+          .skip(Number(skip) || 0)
+          .limit(9)
+          .toArray()
+      );
 
       res.status(200).json({
         message: routines,

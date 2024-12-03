@@ -20,25 +20,23 @@ route.post(
     }
 
     try {
-      const taskInfo = await doWithRetries({
-        functionName: "getTaskProducts",
-        functionToExecute: async () =>
-          db.collection("Task").findOne(
-            { _id: new ObjectId(taskId) },
-            {
-              projection: {
-                key: 1,
-                name: 1,
-                icon: 1,
-                color: 1,
-                startsAt: 1,
-                suggestions: 1,
-                defaultSuggestions: 1,
-                productsPersonalized: 1,
-              },
-            }
-          ),
-      });
+      const taskInfo = await doWithRetries(async () =>
+        db.collection("Task").findOne(
+          { _id: new ObjectId(taskId) },
+          {
+            projection: {
+              key: 1,
+              name: 1,
+              icon: 1,
+              color: 1,
+              startsAt: 1,
+              suggestions: 1,
+              defaultSuggestions: 1,
+              productsPersonalized: 1,
+            },
+          }
+        )
+      );
 
       res.status(200).json({ message: taskInfo });
     } catch (err) {

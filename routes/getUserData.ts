@@ -9,11 +9,9 @@ route.get(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
-      const userData = await doWithRetries({
-        functionName: "getUserData",
-        functionToExecute: async () =>
-          await getUserData({ userId: req.userId }),
-      });
+      const userData = await doWithRetries(
+        async () => await getUserData({ userId: req.userId })
+      );
 
       res.status(200).json({ message: userData });
     } catch (err) {

@@ -21,16 +21,14 @@ route.post(
     }
 
     try {
-      const userInfo = await doWithRetries({
-        functionName: "createCheckoutSession - get user",
-        functionToExecute: async () =>
-          db
-            .collection("User")
-            .findOne(
-              { _id: new ObjectId(req.userId) },
-              { projection: { stripeUserId: 1, subscriptions: 1 } }
-            ),
-      });
+      const userInfo = await doWithRetries(async () =>
+        db
+          .collection("User")
+          .findOne(
+            { _id: new ObjectId(req.userId) },
+            { projection: { stripeUserId: 1, subscriptions: 1 } }
+          )
+      );
 
       const { stripeUserId } = userInfo;
 

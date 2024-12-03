@@ -13,16 +13,14 @@ route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
-      const userInfo = await doWithRetries({
-        functionName: "createBillingPortalSession - get user",
-        functionToExecute: async () =>
-          db
-            .collection("User")
-            .findOne(
-              { _id: new ObjectId(req.userId) },
-              { projection: { stripeUserId: 1 } }
-            ),
-      });
+      const userInfo = await doWithRetries(async () =>
+        db
+          .collection("User")
+          .findOne(
+            { _id: new ObjectId(req.userId) },
+            { projection: { stripeUserId: 1 } }
+          )
+      );
 
       const { stripeUserId } = userInfo;
 

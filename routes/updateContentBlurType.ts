@@ -134,22 +134,20 @@ route.post(
         : "Proof";
 
     try {
-      const relevantRecord = await doWithRetries({
-        functionName: "updateContentBlurType - find record",
-        functionToExecute: async () =>
-          db.collection(collection).findOne(
-            { _id: new ObjectId(contentId), userId: new ObjectId(req.userId) },
-            {
-              projection: {
-                images: 1,
-                mainUrl: 1,
-                urls: 1,
-                thumbnails: 1,
-                initialImages: 1,
-              },
-            }
-          ),
-      });
+      const relevantRecord = await doWithRetries(async () =>
+        db.collection(collection).findOne(
+          { _id: new ObjectId(contentId), userId: new ObjectId(req.userId) },
+          {
+            projection: {
+              images: 1,
+              mainUrl: 1,
+              urls: 1,
+              thumbnails: 1,
+              initialImages: 1,
+            },
+          }
+        )
+      );
 
       let message: { [key: string]: any } = {};
 
@@ -223,13 +221,11 @@ route.post(
         }
       }
 
-      await doWithRetries({
-        functionName: "updateContentBlurType - update",
-        functionToExecute: async () =>
-          db
-            .collection(collection)
-            .updateOne({ _id: new ObjectId(contentId) }, { $set: message }),
-      });
+      await doWithRetries(async () =>
+        db
+          .collection(collection)
+          .updateOne({ _id: new ObjectId(contentId) }, { $set: message })
+      );
 
       res.status(200).json({ message });
     } catch (err) {

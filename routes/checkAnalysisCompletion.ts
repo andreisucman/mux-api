@@ -20,17 +20,15 @@ route.post(
         return;
       }
 
-      const job = await doWithRetries({
-        functionName: "checkAnalysisCompletion - find job",
-        functionToExecute: async () =>
-          db.collection("AnalysisStatus").findOne(
-            {
-              userId: new ObjectId(userId),
-              operationKey,
-            },
-            { projection: { _id: 0 } }
-          ),
-      });
+      const job = await doWithRetries(async () =>
+        db.collection("AnalysisStatus").findOne(
+          {
+            userId: new ObjectId(userId),
+            operationKey,
+          },
+          { projection: { _id: 0 } }
+        )
+      );
 
       if (!job) {
         res.status(200).json({

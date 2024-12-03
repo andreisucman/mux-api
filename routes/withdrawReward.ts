@@ -14,19 +14,17 @@ route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
-      const userInfo = await doWithRetries({
-        functionName: "withrawReward",
-        functionToExecute: async () =>
-          db.collection("User").findOne(
-            { _id: new ObjectId(req.userId) },
-            {
-              projection: {
-                "club.payouts.connectId": 1,
-                "club.payouts.rewardEarned": 1,
-              },
-            }
-          ),
-      });
+      const userInfo = await doWithRetries(async () =>
+        db.collection("User").findOne(
+          { _id: new ObjectId(req.userId) },
+          {
+            projection: {
+              "club.payouts.connectId": 1,
+              "club.payouts.rewardEarned": 1,
+            },
+          }
+        )
+      );
 
       const { club } = userInfo;
       const { payouts } = club || {};
@@ -45,26 +43,22 @@ route.post(
         return;
       }
 
-      await doWithRetries({
-        functionName: "withdrawReward - transfer",
-        functionToExecute: async () =>
-          stripe.transfers.create({
-            currency: "usd",
-            destination: connectId,
-            amount: formatAmountForStripe(rewardEarned, "usd"),
-          }),
-      });
+      await doWithRetries(async () =>
+        stripe.transfers.create({
+          currency: "usd",
+          destination: connectId,
+          amount: formatAmountForStripe(rewardEarned, "usd"),
+        })
+      );
 
-      await doWithRetries({
-        functionName: "withrawReward - update user",
-        functionToExecute: async () =>
-          db
-            .collection("User")
-            .updateOne(
-              { _id: new ObjectId(req.userId) },
-              { $set: { "club.payouts.rewardEarned": 0 } }
-            ),
-      });
+      await doWithRetries(async () =>
+        db
+          .collection("User")
+          .updateOne(
+            { _id: new ObjectId(req.userId) },
+            { $set: { "club.payouts.rewardEarned": 0 } }
+          )
+      );
 
       res.status(200).json({
         message: `You have initiated a withdrawal of $${rewardEarned} to your wallet.`,

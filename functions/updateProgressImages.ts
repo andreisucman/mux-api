@@ -30,15 +30,13 @@ export default async function updateProgressImages({
           urls: newUrls,
         });
       } else {
-        const blurredImage = await doWithRetries({
-          functionName: "updateProgressImages",
-          functionToExecute: async () =>
-            blurContent({
-              originalUrl: currentImageObject.mainUrl.url,
-              blurType,
-              endpoint: "blurImage",
-            }),
-        });
+        const blurredImage = await doWithRetries(async () =>
+          blurContent({
+            originalUrl: currentImageObject.mainUrl.url,
+            blurType,
+            endpoint: "blurImage",
+          })
+        );
 
         if (blurredImage) {
           const mainUrl = {

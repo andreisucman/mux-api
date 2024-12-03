@@ -41,37 +41,33 @@ route.post(
       });
 
       if (isHarmful) {
-        await doWithRetries({
-          functionName: "saveTaskFromDescription route - add harmful record",
-          functionToExecute: async () =>
-            db.collection("HarmfulTaskDescriptions").insertOne({
-              userId: new ObjectId(req.userId),
-              response: explanation,
-              type: "edit",
-              text,
-            }),
-        });
+        await doWithRetries(async () =>
+          db.collection("HarmfulTaskDescriptions").insertOne({
+            userId: new ObjectId(req.userId),
+            response: explanation,
+            type: "edit",
+            text,
+          })
+        );
         res.status(200).json({
           error: `This task violates our ToS.`,
         });
         return;
       }
 
-      const currentTask = await doWithRetries({
-        functionName: "editTask - get current task",
-        functionToExecute: async () =>
-          db.collection("Task").findOne(
-            { _id: new ObjectId(taskId) },
-            {
-              projection: {
-                description: 1,
-                instruction: 1,
-                routineId: 1,
-                startsAt: 1,
-              },
-            }
-          ),
-      });
+      const currentTask = await doWithRetries(async () =>
+        db.collection("Task").findOne(
+          { _id: new ObjectId(taskId) },
+          {
+            projection: {
+              description: 1,
+              instruction: 1,
+              routineId: 1,
+              startsAt: 1,
+            },
+          }
+        )
+      );
 
       if (!currentTask) throw httpError(`Task ${taskId} not found`);
 
@@ -112,24 +108,20 @@ route.post(
         instruction: updatedInstruction,
       };
 
-      await doWithRetries({
-        functionName: "saveTaskFromDescription route - insert tasks",
-        functionToExecute: async () =>
-          db
-            .collection("Task")
-            .updateOne({ _id: new ObjectId(taskId) }, { $set: updateTask }),
-      });
+      await doWithRetries(async () =>
+        db
+          .collection("Task")
+          .updateOne({ _id: new ObjectId(taskId) }, { $set: updateTask })
+      );
 
-      const relevantRoutine = await doWithRetries({
-        functionName: "editTask - get relevant routine",
-        functionToExecute: async () =>
-          db
-            .collection("Routine")
-            .findOne(
-              { _id: new ObjectId(routineId) },
-              { projection: { finalSchedule: 1 } }
-            ),
-      });
+      const relevantRoutine = await doWithRetries(async () =>
+        db
+          .collection("Routine")
+          .findOne(
+            { _id: new ObjectId(routineId) },
+            { projection: { finalSchedule: 1 } }
+          )
+      );
 
       let { finalSchedule } = relevantRoutine;
 
@@ -146,19 +138,17 @@ route.post(
       const dates = Object.keys(finalSchedule);
       const lastRoutineDate = dates[dates.length - 1];
 
-      await doWithRetries({
-        functionName: "saveTaskFromDescription route - update routine",
-        functionToExecute: async () =>
-          db.collection("Routine").updateOne(
-            { _id: new ObjectId(routineId) },
-            {
-              $set: {
-                finalSchedule,
-                lastDate: new Date(lastRoutineDate),
-              },
-            }
-          ),
-      });
+      await doWithRetries(async () =>
+        db.collection("Routine").updateOne(
+          { _id: new ObjectId(routineId) },
+          {
+            $set: {
+              finalSchedule,
+              lastDate: new Date(lastRoutineDate),
+            },
+          }
+        )
+      );
 
       res.status(200).end();
     } catch (err) {

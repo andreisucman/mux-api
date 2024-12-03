@@ -31,37 +31,33 @@ export default async function analyzePotential({
   listOfFeatures,
 }: Props) {
   try {
-    const results = await doWithRetries({
-      functionName: `analyzePotential - results`,
-      functionToExecute: async () =>
-        Promise.all(
-          listOfFeatures.map((feature) => {
-            const currentScore = analysisResults.find(
-              (record) => record.type === type && record.feature === feature
-            ).score;
+    const results = await doWithRetries(async () =>
+      Promise.all(
+        listOfFeatures.map((feature) => {
+          const currentScore = analysisResults.find(
+            (record) => record.type === type && record.feature === feature
+          ).score;
 
-            const filteredImages = filterImagesByFeature(
-              toAnalyzeObjects,
+          const filteredImages = filterImagesByFeature(
+            toAnalyzeObjects,
+            type,
+            feature
+          );
+
+          return doWithRetries(async () =>
+            rateFeaturePotential({
+              userId,
+              sex,
               type,
-              feature
-            );
-
-            return doWithRetries({
-              functionName: "analyzePotential - rate",
-              functionToExecute: async () =>
-                rateFeaturePotential({
-                  userId,
-                  sex,
-                  type,
-                  feature,
-                  currentScore,
-                  ageInterval,
-                  images: filteredImages,
-                }),
-            });
-          })
-        ),
-    });
+              feature,
+              currentScore,
+              ageInterval,
+              images: filteredImages,
+            })
+          );
+        })
+      )
+    );
 
     const rating: FormattedRatingType = formatRatings(results);
 

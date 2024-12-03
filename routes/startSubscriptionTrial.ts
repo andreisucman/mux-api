@@ -25,16 +25,14 @@ route.post(
     }
 
     try {
-      const userInfo = await doWithRetries({
-        functionName: "startSubscriptionTrial - get userInfo",
-        functionToExecute: async () =>
-          db
-            .collection("User")
-            .findOne(
-              { _id: new ObjectId(req.userId) },
-              { projection: { subscriptions: 1 } }
-            ),
-      });
+      const userInfo = await doWithRetries(async () =>
+        db
+          .collection("User")
+          .findOne(
+            { _id: new ObjectId(req.userId) },
+            { projection: { subscriptions: 1 } }
+          )
+      );
 
       const { subscriptions } = userInfo;
 
@@ -57,16 +55,14 @@ route.post(
         [subscriptionName]: updatedSubscription,
       };
 
-      await doWithRetries({
-        functionName: "startSubscriptionTrial - update userInfo",
-        functionToExecute: async () =>
-          db
-            .collection("User")
-            .updateOne(
-              { _id: new ObjectId(req.userId) },
-              { $set: { subscriptions: updatedSubscriptions } }
-            ),
-      });
+      await doWithRetries(async () =>
+        db
+          .collection("User")
+          .updateOne(
+            { _id: new ObjectId(req.userId) },
+            { $set: { subscriptions: updatedSubscriptions } }
+          )
+      );
 
       res.status(200).end();
     } catch (err) {

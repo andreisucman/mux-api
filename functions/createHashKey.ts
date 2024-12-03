@@ -5,22 +5,19 @@ import httpError from "@/helpers/httpError.js";
 
 export async function createHashKey(url: string) {
   try {
-    const arrayBuffer = await doWithRetries({
-      functionName: "createHashKey - promises",
-      functionToExecute: async () => {
-        if (url.startsWith("http")) {
-          const res = await fetch(url);
+    const arrayBuffer = await doWithRetries(async () => {
+      if (url.startsWith("http")) {
+        const res = await fetch(url);
 
-          if (!res.ok) {
-            throw httpError(
-              `Failed to fetch ${url}: ${res.status} ${res.statusText}`
-            );
-          }
-          return await res.arrayBuffer();
-        } else {
-          return await fs.promises.readFile(url);
+        if (!res.ok) {
+          throw httpError(
+            `Failed to fetch ${url}: ${res.status} ${res.statusText}`
+          );
         }
-      },
+        return await res.arrayBuffer();
+      } else {
+        return await fs.promises.readFile(url);
+      }
     });
 
     const base64String = Buffer.from(arrayBuffer).toString("base64");

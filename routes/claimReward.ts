@@ -14,105 +14,97 @@ import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
-route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { rewardId } = req.body;
+route.post(
+  "/",
+  async (req: CustomRequest, res: Response, next: NextFunction) => {
+    const { rewardId } = req.body;
 
-  try {
-    const cooldownObject = await doWithRetries({
-      functionName: "claimReward - get cooldown",
-      functionToExecute: async () =>
+    try {
+      const cooldownObject = await doWithRetries(async () =>
         db.collection("RewardCooldown").findOne(
           {
             userId: new ObjectId(req.userId),
             rewardId: new ObjectId(rewardId),
           },
           { projection: { availableFrom: 1 } }
-        ),
-    });
+        )
+      );
 
-    const { availableFrom } = cooldownObject || { availableFrom: null };
+      const { availableFrom } = cooldownObject || { availableFrom: null };
 
-    if (availableFrom) {
-      if (new Date() < new Date(availableFrom)) {
-        const formattedDate = formatDate({
-          date: availableFrom,
-        });
+      if (availableFrom) {
+        if (new Date() < new Date(availableFrom)) {
+          const formattedDate = formatDate({
+            date: availableFrom,
+          });
 
-        res.status(200).json({
-          error: `You have already claimed this reward. Please retry after ${formattedDate}`,
-        });
+          res.status(200).json({
+            error: `You have already claimed this reward. Please retry after ${formattedDate}`,
+          });
 
-        return;
+          return;
+        }
       }
-    }
 
-    const relevantReward = await doWithRetries({
-      functionName: "claimReward - find reward",
-      functionToExecute: async () =>
+      const relevantReward = await doWithRetries(async () =>
         db
           .collection("Reward")
           .findOne(
             { _id: new ObjectId(rewardId) },
             { projection: { requisite: 1, value: 1, key: 1 } }
-          ),
-    });
+          )
+      );
 
-    if (!relevantReward) throw httpError(`Reward ${rewardId} not found`);
+      if (!relevantReward) throw httpError(`Reward ${rewardId} not found`);
 
-    const { requisite, value: rewardValue, key: rewardKey } = relevantReward;
+      const { requisite, value: rewardValue, key: rewardKey } = relevantReward;
 
-    const userInfo = await doWithRetries({
-      functionName: "claimReward - find user",
-      functionToExecute: async () =>
-        db.collection("User").findOne({ _id: new ObjectId(req.userId) }),
-    });
+      const userInfo = await doWithRetries(async () =>
+        db.collection("User").findOne({ _id: new ObjectId(req.userId) })
+      );
 
-    if (!userInfo) throw httpError(`User not found`);
+      if (!userInfo) throw httpError(`User not found`);
 
-    const userKeyLocations = rewardKeyConditionsMap[rewardKey];
+      const userKeyLocations = rewardKeyConditionsMap[rewardKey];
 
-    const userConditions = userKeyLocations.reduce(
-      (acc: { [key: string]: number }, cur) => {
-        const parts = cur.split(".");
-        const lastPart = parts[parts.length - 1];
+      const userConditions = userKeyLocations.reduce(
+        (acc: { [key: string]: number }, cur) => {
+          const parts = cur.split(".");
+          const lastPart = parts[parts.length - 1];
 
-        const value = parts.reduce(
-          (a, key) => (a ? a[key] : undefined),
-          userInfo
-        );
+          const value = parts.reduce(
+            (a, key) => (a ? a[key] : undefined),
+            userInfo
+          );
 
-        acc[lastPart] = value;
-        return acc;
-      },
-      {}
-    );
+          acc[lastPart] = value;
+          return acc;
+        },
+        {}
+      );
 
-    const percentage = calculateRewardTaskCompletion({
-      userConditions,
-      requisite,
-    });
-
-    if (percentage !== 100) {
-      res.status(200).json({
-        error: `This task is not completed.`,
+      const percentage = calculateRewardTaskCompletion({
+        userConditions,
+        requisite,
       });
-      return;
-    }
 
-    await doWithRetries({
-      functionName: "claimReward - increment reward",
-      functionToExecute: async () =>
+      if (percentage !== 100) {
+        res.status(200).json({
+          error: `This task is not completed.`,
+        });
+        return;
+      }
+
+      await doWithRetries(async () =>
         db
           .collection("User")
           .updateOne(
             { _id: new ObjectId(req.userId) },
             { $inc: { "club.payouts.rewardEarned": rewardValue } }
-          ),
-    });
+          )
+      );
 
-    await doWithRetries({
-      functionName: "claimReward - add cooldown record",
-      functionToExecute: async () =>
+      await doWithRetries(async () =>
         db.collection("RewardCooldown").updateOne(
           {
             userId: new ObjectId(req.userId),
@@ -120,27 +112,26 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
           },
           { $set: { availableFrom: daysFrom({ days: 30 }) } },
           { upsert: true }
-        ),
-    });
+        )
+      );
 
-    await doWithRetries({
-      functionName: "claimReward - update reward object",
-      functionToExecute: async () =>
+      await doWithRetries(async () =>
         db.collection("Reward").updateOne(
           {
             rewardId: new ObjectId(rewardId),
             left: { $gt: 0 },
           },
           { $inc: { left: -1 } }
-        ),
-    });
+        )
+      );
 
-    res.status(200).json({
-      message: `The reward of $${rewardValue} has been added to your Club balance.`,
-    });
-  } catch (err) {
-    next(err)
+      res.status(200).json({
+        message: `The reward of $${rewardValue} has been added to your Club balance.`,
+      });
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 export default route;

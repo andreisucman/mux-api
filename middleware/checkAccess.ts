@@ -57,16 +57,15 @@ async function checkAccess(
   }
 
   try {
-    const session = await doWithRetries({
-      functionName: "checkAccess",
-      functionToExecute: async () =>
+    const session = await doWithRetries(
+      async () =>
         await db.collection("Session").findOne(
           {
             accessToken,
           },
           { projection: { userId: 1, expiresOn: 1 } }
-        ),
-    });
+        )
+    );
 
     if (!session && rejectUnauthorized) {
       signOut(res, 403, "Invalid access token");

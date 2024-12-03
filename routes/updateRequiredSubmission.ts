@@ -21,22 +21,20 @@ route.post(
     const { taskId, submissionId, isSubmitted } = req.body;
 
     try {
-      const taskInfo = (await doWithRetries({
-        functionName: "updateRequiredSubmission - find",
-        functionToExecute: async () =>
-          db.collection("Task").findOne(
-            { _id: new ObjectId(taskId), userId: new ObjectId(req.userId) },
-            {
-              projection: {
-                requiredSubmissions: 1,
-                userId: 1,
-                key: 1,
-                routineId: 1,
-                proofEnabled: 1,
-              },
-            }
-          ),
-      })) as unknown as TaskType;
+      const taskInfo = (await doWithRetries(async () =>
+        db.collection("Task").findOne(
+          { _id: new ObjectId(taskId), userId: new ObjectId(req.userId) },
+          {
+            projection: {
+              requiredSubmissions: 1,
+              userId: 1,
+              key: 1,
+              routineId: 1,
+              proofEnabled: 1,
+            },
+          }
+        )
+      )) as unknown as TaskType;
 
       if (!taskInfo) throw httpError(`Task ${taskId} not found`);
 
@@ -65,19 +63,17 @@ route.post(
 
       if (!isSubmitted) payload.status = "active" as TaskStatusEnum; // if reset
 
-      await doWithRetries({
-        functionName: "updateRequiredSubmission",
-        functionToExecute: async () =>
-          db.collection("Routine").updateOne(
-            { _id: new ObjectId(routineId), "allTasks.key": key },
-            {
-              $inc: {
-                [`allTasks.$.completed`]: isSubmitted ? -1 : 1,
-                [`allTasks.$.unknown`]: isSubmitted ? 1 : -1,
-              },
-            }
-          ),
-      });
+      await doWithRetries(async () =>
+        db.collection("Routine").updateOne(
+          { _id: new ObjectId(routineId), "allTasks.key": key },
+          {
+            $inc: {
+              [`allTasks.$.completed`]: isSubmitted ? -1 : 1,
+              [`allTasks.$.unknown`]: isSubmitted ? 1 : -1,
+            },
+          }
+        )
+      );
 
       const allCompleted = updatedSubmissions.every(
         (s) => s.isSubmitted === true
@@ -85,16 +81,14 @@ route.post(
 
       if (allCompleted) payload.status = "completed" as TaskStatusEnum;
 
-      await doWithRetries({
-        functionName: "updateRequiredSubmission - update",
-        functionToExecute: async () =>
-          db.collection("Task").updateOne(
-            { _id: new ObjectId(taskId) },
-            {
-              $set: payload,
-            }
-          ),
-      });
+      await doWithRetries(async () =>
+        db.collection("Task").updateOne(
+          { _id: new ObjectId(taskId) },
+          {
+            $set: payload,
+          }
+        )
+      );
 
       res.status(200).json({
         message: {

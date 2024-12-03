@@ -10,16 +10,15 @@ type Props = {
 
 async function getUserData({ userId }: Props) {
   try {
-    const userInfo = await doWithRetries({
-      functionToExecute: async () =>
+    const userInfo = await doWithRetries(
+      async () =>
         await db
           .collection("User")
           .findOne(
             { _id: new ObjectId(userId) },
             { projection: { password: 0 } }
-          ),
-      functionName: "getUserData function - getUser",
-    });
+          )
+    );
 
     if (!userInfo) return null;
 

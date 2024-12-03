@@ -88,33 +88,31 @@ route.post(
       //   return;
       // }
 
-      const userInfo = (await doWithRetries({
-        functionToExecute: async () =>
-          db.collection("User").findOne(
-            { _id: new ObjectId(finalUserId) },
-            {
-              projection: {
-                requiredProgress: 1,
-                toAnalyze: 1,
-                demographics: 1,
-                concerns: 1,
-                potential: 1,
-                city: 1,
-                country: 1,
-                timeZone: 1,
-                nextScan: 1,
-                latestProgress: 1,
-                specialConsiderations: 1,
-                latestScoresDifference: 1,
-                currentlyHigherThan: 1,
-                potentiallyHigherThan: 1,
-                latestScores: 1,
-                club: 1,
-              },
-            }
-          ),
-        functionName: "uploadProgress",
-      })) as unknown as UploadProgressUserInfo;
+      const userInfo = (await doWithRetries(async () =>
+        db.collection("User").findOne(
+          { _id: new ObjectId(finalUserId) },
+          {
+            projection: {
+              requiredProgress: 1,
+              toAnalyze: 1,
+              demographics: 1,
+              concerns: 1,
+              potential: 1,
+              city: 1,
+              country: 1,
+              timeZone: 1,
+              nextScan: 1,
+              latestProgress: 1,
+              specialConsiderations: 1,
+              latestScoresDifference: 1,
+              currentlyHigherThan: 1,
+              potentiallyHigherThan: 1,
+              latestScores: 1,
+              club: 1,
+            },
+          }
+        )
+      )) as unknown as UploadProgressUserInfo;
 
       if (!userInfo) throw httpError(`User ${finalUserId} not found`);
 
@@ -193,17 +191,15 @@ route.post(
 
       /* when all required info is uploaded start the analysis */
       if (requiredProgress[type as "head"].length === 1) {
-        await doWithRetries({
-          functionName: "uploadProgress - add analysis status",
-          functionToExecute: async () =>
-            db
-              .collection("AnalysisStatus")
-              .updateOne(
-                { userId: new ObjectId(finalUserId), type },
-                { $set: { isRunning: true, progress: 1, isError: null } },
-                { upsert: true }
-              ),
-        });
+        await doWithRetries(async () =>
+          db
+            .collection("AnalysisStatus")
+            .updateOne(
+              { userId: new ObjectId(finalUserId), type },
+              { $set: { isRunning: true, progress: 1, isError: null } },
+              { upsert: true }
+            )
+        );
 
         res.status(200).json({
           message: {
@@ -231,13 +227,11 @@ route.post(
           newSpecialConsiderations,
         });
       } else {
-        await doWithRetries({
-          functionToExecute: async () =>
-            db
-              .collection("User")
-              .updateOne({ _id: new ObjectId(finalUserId) }, toUpdate),
-          functionName: "uploadProgress - update user data",
-        });
+        await doWithRetries(async () =>
+          db
+            .collection("User")
+            .updateOne({ _id: new ObjectId(finalUserId) }, toUpdate)
+        );
 
         res.status(200).json({
           message: {

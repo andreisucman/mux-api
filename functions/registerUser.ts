@@ -51,28 +51,25 @@ async function registerUser({
 
       if (Object.keys(payload).length === 0) return { _id: userId };
 
-      await doWithRetries({
-        functionToExecute: async () =>
+      await doWithRetries(
+        async () =>
           await db.collection("User").updateOne(
             { _id: new ObjectId(userId) },
             {
               $set: payload,
             },
             { upsert: true }
-          ),
-        functionName: "registerUser",
-      });
+          )
+      );
 
       return { _id: userId };
     } else {
       let response: Partial<UserType> = {};
 
       if (fingerprint) {
-        const user = await doWithRetries({
-          functionToExecute: async () =>
-            await db.collection("User").findOne({ fingerprint }),
-          functionName: "registerUser",
-        });
+        const user = await doWithRetries(
+          async () => await db.collection("User").findOne({ fingerprint })
+        );
 
         if (user) {
           response = user;
@@ -90,11 +87,9 @@ async function registerUser({
           fingerprint,
         };
 
-        const user = await doWithRetries({
-          functionToExecute: async () =>
-            await db.collection("User").insertOne(newUser),
-          functionName: "registerUser",
-        });
+        const user = await doWithRetries(
+          async () => await db.collection("User").insertOne(newUser)
+        );
 
         response = { ...newUser, _id: user.insertedId };
       }

@@ -15,16 +15,14 @@ route.post(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { avatar } = req.body;
     try {
-      const userInfo = await doWithRetries({
-        functionName: "joinClub - get user info",
-        functionToExecute: async () =>
-          db.collection("User").findOne(
-            {
-              _id: new ObjectId(req.userId),
-            },
-            { projection: { club: 1 } }
-          ),
-      });
+      const userInfo = await doWithRetries(async () =>
+        db.collection("User").findOne(
+          {
+            _id: new ObjectId(req.userId),
+          },
+          { projection: { club: 1 } }
+        )
+      );
 
       let clubData = userInfo.club;
 

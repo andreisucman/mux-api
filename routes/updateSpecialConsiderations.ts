@@ -20,16 +20,14 @@ route.post(
     }
 
     try {
-      await doWithRetries({
-        functionName: "updateSpecialConsiderations",
-        functionToExecute: async () =>
-          db
-            .collection("User")
-            .updateOne(
-              { _id: new ObjectId(req.userId) },
-              { $set: { specialConsiderations: text.slice(0, 300) } }
-            ),
-      });
+      await doWithRetries(async () =>
+        db
+          .collection("User")
+          .updateOne(
+            { _id: new ObjectId(req.userId) },
+            { $set: { specialConsiderations: text.slice(0, 300) } }
+          )
+      );
 
       res.status(200).end();
     } catch (err) {

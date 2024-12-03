@@ -15,8 +15,8 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { country, city } = await getUsersCountry(req);
 
-    const registrationResponse = await doWithRetries({
-      functionToExecute: async () =>
+    const registrationResponse = await doWithRetries(
+      async () =>
         await registerUser({
           userId,
           city,
@@ -24,15 +24,12 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
           timeZone,
           tosAccepted,
           fingerprint,
-        }),
-      functionName: "startTheFlow",
-    });
+        })
+    );
 
-    const userData = (await doWithRetries({
-      functionName: "startTheFlow - getUserData",
-      functionToExecute: async () =>
-        getUserData({ userId: String(registrationResponse._id) }),
-    })) as unknown as UserType;
+    const userData = (await doWithRetries(async () =>
+      getUserData({ userId: String(registrationResponse._id) })
+    )) as unknown as UserType;
 
     let result = { ...registrationResponse, ...userData };
 

@@ -38,26 +38,24 @@ route.get(
         };
       }
 
-      const tasks = await doWithRetries({
-        functionName: "getCalendarTasks",
-        functionToExecute: async () =>
-          db
-            .collection("Task")
-            .find(filter, {
-              projection: {
-                _id: 1,
-                name: 1,
-                key: 1,
-                color: 1,
-                status: 1,
-                icon: 1,
-                expiresAt: 1,
-                startsAt: 1,
-              },
-            })
-            .sort({ startsAt: 1 })
-            .toArray(),
-      });
+      const tasks = await doWithRetries(async () =>
+        db
+          .collection("Task")
+          .find(filter, {
+            projection: {
+              _id: 1,
+              name: 1,
+              key: 1,
+              color: 1,
+              status: 1,
+              icon: 1,
+              expiresAt: 1,
+              startsAt: 1,
+            },
+          })
+          .sort({ startsAt: 1 })
+          .toArray()
+      );
 
       res.status(200).json({ message: tasks });
     } catch (err) {

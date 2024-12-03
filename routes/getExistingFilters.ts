@@ -39,11 +39,9 @@ route.get(
     const { collection } = req.params;
 
     try {
-      const object = await doWithRetries({
-        functionName: "getExistingFilters",
-        functionToExecute: async () =>
-          db.collection("ExistingFilters").findOne({ collection }),
-      });
+      const object = await doWithRetries(async () =>
+        db.collection("ExistingFilters").findOne({ collection })
+      );
 
       let result = emptyFilters;
 

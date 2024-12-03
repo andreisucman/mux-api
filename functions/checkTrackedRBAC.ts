@@ -30,11 +30,9 @@ export default async function checkTrackedRBAC({
         ...targetProjection,
       };
 
-    const targetUserInfo = await doWithRetries({
-      functionName: "checkTrackedRBAC - isInClub",
-      functionToExecute: async () =>
-        db.collection("User").findOne(targetFilter, targetOptions),
-    });
+    const targetUserInfo = await doWithRetries(async () =>
+      db.collection("User").findOne(targetFilter, targetOptions)
+    );
 
     if (!targetUserInfo)
       throw httpError(
@@ -50,11 +48,9 @@ export default async function checkTrackedRBAC({
         ...userProjection,
       };
 
-    const userInfo = await doWithRetries({
-      functionName: "checkTrackedRBAC - isCorrectTracker",
-      functionToExecute: async () =>
-        db.collection("User").findOne(userFilter, userOptions),
-    });
+    const userInfo = await doWithRetries(async () =>
+      db.collection("User").findOne(userFilter, userOptions)
+    );
 
     const { club } = (userInfo as unknown as Partial<UserType>) || {};
 

@@ -21,11 +21,9 @@ export default async function checkImageSimilarity({
   const projection = { embedding: 0, hash: 0 };
 
   try {
-    const duplicateCheckResult = await doWithRetries({
-      functionName: "checkImageSimilarity - check",
-      functionToExecute: async () =>
-        db.collection(collection).findOne({ hash }, { projection }),
-    });
+    const duplicateCheckResult = await doWithRetries(async () =>
+      db.collection(collection).findOne({ hash }, { projection })
+    );
 
     if (duplicateCheckResult) {
       return { status: false, record: duplicateCheckResult };
@@ -50,11 +48,9 @@ export default async function checkImageSimilarity({
       },
     ];
 
-    const closestDocument = await doWithRetries({
-      functionName: "checkImageSimilarity - find",
-      functionToExecute: async () =>
-        db.collection(collection).aggregate(pipeline).next(),
-    });
+    const closestDocument = await doWithRetries(async () =>
+      db.collection(collection).aggregate(pipeline).next()
+    );
 
     if (closestDocument) {
       if (closestDocument.score >= 90) {

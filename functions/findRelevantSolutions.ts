@@ -26,11 +26,9 @@ export default async function findRelevantSolutions(embedding: number[]) {
       },
     ];
 
-    const closestDocuments = await doWithRetries({
-      functionName: "findRelevantSolutions",
-      functionToExecute: async () =>
-        db.collection("Solution").aggregate(pipeline).toArray(),
-    });
+    const closestDocuments = await doWithRetries(async () =>
+      db.collection("Solution").aggregate(pipeline).toArray()
+    );
 
     return closestDocuments;
   } catch (err) {
