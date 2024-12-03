@@ -8,9 +8,9 @@ type Props = {
   userId: string;
 };
 
-const statusIncrementCallback = async ({ type, increment, userId }: Props) =>
+const incrementProgress = async ({ type, increment, userId }: Props) =>
   doWithRetries({
-    functionName: "uploadProgress - increment analysis status",
+    functionName: "incrementProgress",
     functionToExecute: async () =>
       db
         .collection("AnalysisStatus")
@@ -18,6 +18,6 @@ const statusIncrementCallback = async ({ type, increment, userId }: Props) =>
           { userId: new ObjectId(userId), type },
           { $inc: { progress: increment } }
         ),
-  });
+  }).catch();
 
-export default statusIncrementCallback;
+export default incrementProgress;

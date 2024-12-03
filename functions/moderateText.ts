@@ -4,8 +4,8 @@ import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import askRepeatedly from "functions/askRepeatedly.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
+import httpError from "@/helpers/httpError.js";
 import { db } from "init.js";
-import addErrorLog from "functions/addErrorLog.js";
 
 type Props = {
   text: string;
@@ -85,7 +85,6 @@ export default async function moderateText({ userId, text }: Props) {
 
     return response;
   } catch (err) {
-    addErrorLog({ message: err.message, functionName: "moderateText" });
-    throw err;
+    throw httpError(err);
   }
 }

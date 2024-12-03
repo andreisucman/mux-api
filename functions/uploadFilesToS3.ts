@@ -4,17 +4,22 @@ dotenv.config();
 import { nanoid } from "nanoid";
 import { PutObjectCommand, ObjectCannedACL } from "@aws-sdk/client-s3";
 import { mimeTypeMap } from "data/mimeTypeMap.js";
-import addErrorLog from "functions/addErrorLog.js";
 import { s3Client } from "init.js";
+import httpError from "@/helpers/httpError.js";
 
 async function getFileBufferFromUrl(url: string) {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch the file from URL: ${url}`);
+  try {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw httpError(`Failed to fetch the file from URL: ${url}`);
+    }
+    const contentType = response.headers.get("content-type");
+    const buffer = await response.arrayBuffer();
+    return { buffer: Buffer.from(buffer), contentType };
+  } catch (err) {
+    throw httpError(err);
   }
-  const contentType = response.headers.get("content-type");
-  const buffer = await response.arrayBuffer();
-  return { buffer: Buffer.from(buffer), contentType };
 }
 
 export default async function uploadFilesToS3(filesOrUrls: string[] | any) {
@@ -62,7 +67,6 @@ export default async function uploadFilesToS3(filesOrUrls: string[] | any) {
 
     return uploadedUrls;
   } catch (err) {
-    addErrorLog({ functionName: "uploadFilesToS3", message: err.message });
-    throw err;
+    throw httpError(err);
   }
 }

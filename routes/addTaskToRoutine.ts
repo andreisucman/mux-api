@@ -3,7 +3,7 @@ dotenv.config();
 
 import { ObjectId } from "mongodb";
 import { nanoid } from "nanoid";
-import { Router, Response } from "express";
+import { Router, Response, NextFunction } from "express";
 import doWithRetries from "../helpers/doWithRetries.js";
 import setUtcMidnight from "helpers/setUtcMidnight.js";
 import { daysFrom } from "helpers/utils.js";
@@ -14,17 +14,20 @@ import {
   TaskType,
   UserConcernType,
 } from "types.js";
-import addErrorLog from "functions/addErrorLog.js";
 import { db } from "init.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
-route.post("/", async (req: CustomRequest, res: Response) => {
+route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
   const { taskKey, routineId, total, trackedUserId, type } = req.body;
 
-  if (!taskKey || !routineId || !total || !trackedUserId || !type) return;
-
   try {
+    if (!taskKey || !routineId || !total || !trackedUserId || !type) {
+      res.status(400).json({ error: "Bad request" });
+      return;
+    }
+
     const userInfo = await doWithRetries({
       functionName: "addTaskToRoutine - get user info",
       functionToExecute: async () =>
@@ -36,7 +39,7 @@ route.post("/", async (req: CustomRequest, res: Response) => {
         ),
     });
 
-    if (!userInfo) throw new Error(`User ${req.userId} not found`);
+    if (!userInfo) throw httpError(`User ${req.userId} not found`);
 
     const { timeZone } = userInfo;
 
@@ -51,7 +54,7 @@ route.post("/", async (req: CustomRequest, res: Response) => {
     });
 
     if (!taskToAdd)
-      throw new Error(
+      throw httpError(
         `No task to add from user ${trackedUserId} to user ${req.userId} found.`
       );
 
@@ -202,12 +205,8 @@ route.post("/", async (req: CustomRequest, res: Response) => {
         tasks: draftTasks,
       },
     });
-  } catch (error) {
-    addErrorLog({
-      functionName: "addTaskToRoutine",
-      message: error.message,
-    });
-    res.status(500).json({ error: "Server error" });
+  } catch (err) {
+    next(err);
   }
 });
 

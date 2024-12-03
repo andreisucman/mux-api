@@ -1,8 +1,8 @@
 import z from "zod";
 import askRepeatedly from "@/functions/askRepeatedly.js";
-import addErrorLog from "functions/addErrorLog.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
@@ -48,7 +48,6 @@ export default async function checkTaskSimilar({
 
     return response.satisfies;
   } catch (err) {
-    addErrorLog({ message: err.message, functionName: "checkTaskSimilar" });
-    throw err;
+    throw httpError(err);
   }
 }

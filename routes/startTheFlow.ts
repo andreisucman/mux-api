@@ -1,8 +1,7 @@
 import * as dotenv from "dotenv";
 dotenv.config();
-import { Router, Request, Response } from "express";
+import { Router, Request, Response, NextFunction } from "express";
 import getUserData from "functions/getUserData.js";
-import addErrorLog from "functions/addErrorLog.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import registerUser from "functions/registerUser.js";
 import getUsersCountry from "functions/getUsersCountry.js";
@@ -10,7 +9,7 @@ import { UserType } from "types.js";
 
 const route = Router();
 
-route.post("/", async (req: Request, res: Response) => {
+route.post("/", async (req: Request, res: Response, next: NextFunction) => {
   const { userId, tosAccepted, timeZone, fingerprint } = req.body;
 
   try {
@@ -40,9 +39,8 @@ route.post("/", async (req: Request, res: Response) => {
     res.status(200).json({
       message: result,
     });
-  } catch (error) {
-    addErrorLog({ functionName: "startTheFlow", message: error.message });
-    res.status(500).json({ error: "An unexpected error occurred" });
+  } catch (err) {
+    next(err);
   }
 });
 

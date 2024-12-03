@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import addErrorLog from "functions/addErrorLog.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
@@ -29,10 +29,6 @@ export default async function getStyleCompareRecord({ userId }: Props) {
 
     return highestVotedStyleRecord;
   } catch (err) {
-    addErrorLog({
-      functionName: "getStyleCompareRecord",
-      message: err.message,
-    });
-    throw err;
+    throw httpError(err);
   }
 }

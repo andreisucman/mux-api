@@ -1,6 +1,6 @@
 import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import addErrorLog from "functions/addErrorLog.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   email: string;
@@ -17,15 +17,13 @@ async function checkIfUserExists({ email, auth }: Props) {
           .findOne({ email, auth }, { projection: { _id: 1, password: 1 } }),
     });
 
+    const { _id: userId } = result || {};
+
     return {
-      userId: result?._id,
+      userId,
     };
-  } catch (error) {
-    addErrorLog({
-      functionName: "checkIfUserExists",
-      message: error.message,
-    });
-    throw error;
+  } catch (err) {
+    throw httpError(err);
   }
 }
 

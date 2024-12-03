@@ -6,7 +6,7 @@ import { db } from "init.js";
 import aqp from "api-query-params";
 import { CustomRequest } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import addErrorLog from "functions/addErrorLog.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -81,9 +81,8 @@ route.get("/", async (req: CustomRequest, res: Response) => {
     });
 
     res.status(200).json({ message: solutions });
-  } catch (error) {
-    addErrorLog({ functionName: "getAllSolutions", message: error.message });
-    res.status(500).json({ message: "Server error" });
+  } catch (err) {
+    throw httpError(err);
   }
 });
 

@@ -1,8 +1,8 @@
 import { ObjectId } from "mongodb";
 import doWithRetries from "helpers/doWithRetries.js";
-import addErrorLog from "functions/addErrorLog.js";
 import { SexEnum, PartEnum, TypeEnum } from "types.js";
 import { db } from "init.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
@@ -132,11 +132,7 @@ export default async function calculateHigherThanPart({
       partCurrentlyHigherThan: partAnalysis.lowerThanCurrent,
       partPotentiallyHigherThan: partAnalysis.lowerThanPotential,
     };
-  } catch (error) {
-    addErrorLog({
-      message: error.message,
-      functionName: "calculateHigherThanPart",
-    });
-    throw error;
+  } catch (err) {
+    throw httpError(err);
   }
 }

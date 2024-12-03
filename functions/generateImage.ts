@@ -1,9 +1,9 @@
 import uploadFilesToS3 from "functions/uploadFilesToS3.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import askTogether from "functions/askTogether.js";
-import addErrorLog from "functions/addErrorLog.js";
 import { RoleEnum } from "@/types/askOpenaiTypes.js";
 import { together } from "init.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   description: string;
@@ -31,8 +31,6 @@ export default async function generateImage({ description, userId }: Props) {
 
     const { result: prompt } = promptResponse;
 
-    console.log("prompt", prompt);
-
     const imageResponse: any = await doWithRetries({
       functionName: "generateImage",
       functionToExecute: async () =>
@@ -53,7 +51,6 @@ export default async function generateImage({ description, userId }: Props) {
 
     return spacesUrls[0];
   } catch (err) {
-    addErrorLog({ functionName: "generateImage", message: err.message });
-    throw err;
+    throw httpError(err);
   }
 }

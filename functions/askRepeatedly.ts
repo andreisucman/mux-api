@@ -4,13 +4,13 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import askOpenai from "functions/askOpenAi.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import addErrorLog from "functions/addErrorLog.js";
 import {
   AskOpenaiProps,
   MessageType,
   RoleEnum,
   RunType,
 } from "types/askOpenaiTypes.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   runs: RunType[];
@@ -35,7 +35,7 @@ async function askRepeatedly({
 }: Props) {
   try {
     if (!ObjectId.isValid(userId) && !meta)
-      throw new Error("Invalid userId format and no meta");
+      throw httpError("Invalid userId format and no meta");
 
     let result;
     let conversation: MessageType[] = [
@@ -87,9 +87,8 @@ async function askRepeatedly({
     }
 
     return result;
-  } catch (error) {
-    addErrorLog({ functionName: "askRepeatedly", message: error.message });
-    throw error;
+  } catch (err) {
+    throw httpError(err);
   }
 }
 

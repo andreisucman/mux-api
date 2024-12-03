@@ -1,6 +1,6 @@
 import askRepeatedly from "functions/askRepeatedly.js";
-import addErrorLog from "functions/addErrorLog.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
@@ -37,10 +37,6 @@ export default async function isTheProductValid({
       verdict: response.verdict,
     };
   } catch (err) {
-    addErrorLog({
-      functionName: "isTheProductValid",
-      message: err.message,
-    });
-    throw err;
+    throw httpError(err);
   }
 }

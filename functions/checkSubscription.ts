@@ -4,7 +4,7 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import addErrorLog from "functions/addErrorLog.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
@@ -24,25 +24,19 @@ async function checkSubscriptionStatus({ userId, subscriptionType }: Props) {
           ),
     });
 
-    if (!userInfo) throw new Error("User not found");
+    if (!userInfo) throw httpError(`User ${userId} not found`);
 
     const { subscriptions } = userInfo;
 
     const relevant = subscriptions[subscriptionType];
 
-    if (!relevant) {
-      if (!relevant.validUntil) return false;
-    }
+    const { validUntil } = relevant || {};
 
-    const valid = new Date() < new Date(relevant.validUntil);
+    if (!relevant || !validUntil) return false;
 
-    return valid;
-  } catch (error) {
-    addErrorLog({
-      functionName: "checkSubscriptionStatus",
-      message: error.message,
-    });
-    throw error;
+    return new Date() < new Date(relevant.validUntil);
+  } catch (err) {
+    throw httpError(err);
   }
 }
 

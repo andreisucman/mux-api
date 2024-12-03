@@ -45,8 +45,8 @@ const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export {
-  client,
   db,
+  client,
   s3Client,
   sesClient,
   together,

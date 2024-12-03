@@ -1,8 +1,7 @@
 import z from "zod";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import doWithRetries from "helpers/doWithRetries.js";
-import addErrorLog from "functions/addErrorLog.js";
-import statusIncrementCallback from "helpers/statusIncrementCallback.js";
+import incrementProgress from "@/helpers/incrementProgress.js";
 import askRepeatedly from "functions/askRepeatedly.js";
 import {
   ToAnalyzeType,
@@ -14,6 +13,7 @@ import {
 } from "types.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import { db } from "init.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
@@ -81,7 +81,7 @@ export default async function analyzeConcerns({
           ConcernsResponseType,
           "concerns_response_type"
         ),
-        callback: () => statusIncrementCallback({ userId, type, increment: 3 }),
+        callback: () => incrementProgress({ userId, type, increment: 3 }),
       },
     ];
 
@@ -103,8 +103,7 @@ export default async function analyzeConcerns({
     );
 
     return combined;
-  } catch (error) {
-    addErrorLog({ message: error.message, functionName: "analyzeConcerns" });
-    throw error;
+  } catch (err) {
+    httpError(err);
   }
 }

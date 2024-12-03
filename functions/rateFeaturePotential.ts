@@ -2,11 +2,11 @@ import z from "zod";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import askRepeatedly from "functions/askRepeatedly.js";
 import criteria from "data/featureCriteria.js";
-import addErrorLog from "functions/addErrorLog.js";
-import statusIncrementCallback from "helpers/statusIncrementCallback.js";
+import incrementProgress from "@/helpers/incrementProgress.js";
 import { SexEnum, TypeEnum } from "types.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import { FeaturePotentialAnalysisType } from "@/types/rateFeaturePotentialTypes.js";
+import httpError from "@/helpers/httpError.js";
 
 type RateFeaturePotentialProps = {
   userId: string;
@@ -27,8 +27,6 @@ export default async function rateFeaturePotential({
   ageInterval,
   images,
 }: RateFeaturePotentialProps) {
-  const callback = () =>
-    statusIncrementCallback({ type, userId, increment: 1 });
   try {
     const initialSystemContent =
       type === "body"
@@ -62,7 +60,7 @@ export default async function rateFeaturePotential({
             }.`,
           },
         ],
-        callback,
+        callback: () => incrementProgress({ type, userId, increment: 1 }),
       },
     ];
 
@@ -99,7 +97,7 @@ export default async function rateFeaturePotential({
           FormatResponseAsRateAndExplanationType,
           "rateFeaturePotentialRephraseOne"
         ),
-        callback,
+        callback: () => incrementProgress({ type, userId, increment: 1 }),
       },
     ];
 
@@ -122,7 +120,6 @@ export default async function rateFeaturePotential({
 
     return updated;
   } catch (err) {
-    addErrorLog({ functionName: "rateFeaturePotential", message: err.message });
-    throw err;
+    throw httpError(err);
   }
 }

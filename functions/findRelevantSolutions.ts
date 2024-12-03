@@ -1,6 +1,6 @@
 import { db } from "init.js";
-import addErrorLog from "functions/addErrorLog.js";
 import doWithRetries from "helpers/doWithRetries.js";
+import httpError from "@/helpers/httpError.js";
 
 export default async function findRelevantSolutions(embedding: number[]) {
   try {
@@ -34,10 +34,6 @@ export default async function findRelevantSolutions(embedding: number[]) {
 
     return closestDocuments;
   } catch (err) {
-    addErrorLog({
-      functionName: "findRelevantSolutions",
-      message: err.message,
-    });
-    throw err;
+    throw httpError(err);
   }
 }

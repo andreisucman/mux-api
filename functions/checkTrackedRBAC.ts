@@ -1,8 +1,8 @@
 import { ObjectId } from "mongodb";
 import doWithRetries from "helpers/doWithRetries.js";
 import { UserType } from "types.js";
-import addErrorLog from "functions/addErrorLog.js";
 import { db } from "init.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
@@ -37,7 +37,7 @@ export default async function checkTrackedRBAC({
     });
 
     if (!targetUserInfo)
-      throw new Error(
+      throw httpError(
         `User ${userId} is trying to access user ${trackedUserId} who is not in the club.`
       );
 
@@ -58,14 +58,15 @@ export default async function checkTrackedRBAC({
 
     const { club } = (userInfo as unknown as Partial<UserType>) || {};
 
-    if (trackedUserId !== club?.trackedUserId)
-      throw new Error(
+    const { trackedUserId: clubTrackedUserId } = club || {};
+
+    if (trackedUserId !== clubTrackedUserId)
+      throw httpError(
         `User ${userId} is trying to access user ${trackedUserId} who is not their tracking.`
       );
 
     return { userInfo, targetUserInfo };
   } catch (err) {
-    addErrorLog({ functionName: "checkTrackedRBAC", message: err.message });
-    throw err;
+    throw httpError(err);
   }
 }

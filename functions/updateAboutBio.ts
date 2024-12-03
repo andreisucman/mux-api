@@ -1,10 +1,10 @@
 import z from "zod";
 import askRepeatedly from "functions/askRepeatedly.js";
-import addErrorLog from "functions/addErrorLog.js";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import { RunType } from "types/askOpenaiTypes.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { upperFirst } from "helpers/utils.js";
+import httpError from "@/helpers/httpError.js";
 
 type UpdateAboutBioProps = {
   userId: string;
@@ -124,8 +124,7 @@ export default async function updateAboutBio({
     }
 
     return newBio;
-  } catch (error) {
-    addErrorLog({ functionName: "updateAboutBio", message: error.message });
-    throw error;
+  } catch (err) {
+    throw httpError(err);
   }
 }

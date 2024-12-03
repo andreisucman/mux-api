@@ -1,10 +1,9 @@
-import { Router } from "express";
+import { Router, NextFunction } from "express";
 import { google } from "googleapis";
-import addErrorLog from "functions/addErrorLog.js";
 
 const route = Router();
 
-route.get("/", async (req, res) => {
+route.get("/", async (req, res, next: NextFunction) => {
   const { state } = req.query;
 
   try {
@@ -39,9 +38,8 @@ route.get("/", async (req, res) => {
     const loginLink = oauth2Client.generateAuthUrl(loginPayload);
 
     res.status(200).json({ message: loginLink });
-  } catch (error) {
-    addErrorLog({ functionName: "authorize", message: error.message });
-    res.status(500).json({ error: "Server error" });
+  } catch (err) {
+    next(err)
   }
 });
 

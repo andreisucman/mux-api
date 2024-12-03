@@ -7,47 +7,42 @@ type Props = {
 };
 
 export default function checkCanScan({ nextScan, toAnalyze, type }: Props) {
-  try {
-    const typeToAnalyze = toAnalyze[type as "head"];
-    const typeScan = nextScan.find((obj) => obj.type === type);
+  const typeToAnalyze = toAnalyze[type as "head"];
+  const typeScan = nextScan.find((obj) => obj.type === type);
 
-    if (typeToAnalyze.length === 0) {
-      if (typeScan.date > new Date()) {
-        return {
-          canScan: false,
-          canScanDate: typeScan.date,
-        };
-      }
-    }
-
-    if (!typeScan.parts) {
+  if (typeToAnalyze.length === 0) {
+    if (typeScan.date > new Date()) {
       return {
-        canScan: true,
-        canScanDate: new Date(),
+        canScan: false,
+        canScanDate: typeScan.date,
       };
     }
-
-    let earliestCanScanDate = new Date();
-
-    for (const analysis of typeToAnalyze) {
-      const relevantPart = typeScan.parts.find(
-        (obj) => obj.part === analysis.part
-      );
-      if (
-        relevantPart.date > new Date() &&
-        relevantPart.date < earliestCanScanDate
-      ) {
-        earliestCanScanDate = relevantPart.date;
-      }
-    }
-
-    if (earliestCanScanDate > new Date()) {
-      return { canScan: false, canScanDate: earliestCanScanDate };
-    }
-
-    return { canScan: true, canScanDate: new Date() };
-  } catch (err) {
-    console.log("Error in checkCanScan: ", err);
-    throw err;
   }
+
+  if (!typeScan.parts) {
+    return {
+      canScan: true,
+      canScanDate: new Date(),
+    };
+  }
+
+  let earliestCanScanDate = new Date();
+
+  for (const analysis of typeToAnalyze) {
+    const relevantPart = typeScan.parts.find(
+      (obj) => obj.part === analysis.part
+    );
+    if (
+      relevantPart.date > new Date() &&
+      relevantPart.date < earliestCanScanDate
+    ) {
+      earliestCanScanDate = relevantPart.date;
+    }
+  }
+
+  if (earliestCanScanDate > new Date()) {
+    return { canScan: false, canScanDate: earliestCanScanDate };
+  }
+
+  return { canScan: true, canScanDate: new Date() };
 }

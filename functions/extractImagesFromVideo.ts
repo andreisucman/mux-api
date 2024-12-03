@@ -1,5 +1,5 @@
+import httpError from "@/helpers/httpError.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import addErrorLog from "functions/addErrorLog.js";
 
 export default async function extractImagesFromVideo(url: string) {
   try {
@@ -18,10 +18,6 @@ export default async function extractImagesFromVideo(url: string) {
 
     return await response.json();
   } catch (err) {
-    addErrorLog({
-      message: err.message,
-      functionName: `uploadProof - extractImagesFromVideo`,
-    });
-    throw err;
+    throw httpError(err);
   }
 }

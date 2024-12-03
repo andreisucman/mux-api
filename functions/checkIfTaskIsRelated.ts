@@ -1,9 +1,9 @@
 import z from "zod";
 import askRepeatedly from "functions/askRepeatedly.js";
-import addErrorLog from "functions/addErrorLog.js";
 import { TypeEnum } from "types.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   text: string;
@@ -49,7 +49,6 @@ export default async function checkIfTaskIsRelated({
 
     return { satisfies: response.satisfies, condition };
   } catch (err) {
-    addErrorLog({ message: err.message, functionName: "checkIfTaskIsRelated" });
-    throw err;
+    throw httpError(err);
   }
 }

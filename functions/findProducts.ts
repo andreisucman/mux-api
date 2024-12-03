@@ -5,10 +5,10 @@ import doWithRetries from "helpers/doWithRetries.js";
 import findTheBestVariant from "functions/findTheBestVariant.js";
 import isTheProductValid from "functions/isTheProductValid.js";
 import { ProductType, SuggestionVariant } from "@/types/findTheBestVariant.js";
-import addAnalysisStatusError from "helpers/addAnalysisStatusError.js";
-import addErrorLog from "functions/addErrorLog.js";
+import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import { UserInfoType } from "types.js";
 import { db } from "init.js";
+import httpError from "@/helpers/httpError.js";
 
 interface ValidProductType extends ProductType {
   verdict: boolean;
@@ -163,7 +163,6 @@ export default async function findProducts({
       message: err.message,
     });
 
-    addErrorLog({ functionName: "findProducts", message: err.message });
-    throw err;
+    throw httpError(err);
   }
 }

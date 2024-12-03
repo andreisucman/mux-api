@@ -1,9 +1,9 @@
 import z from "zod";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import askRepeatedly from "functions/askRepeatedly.js";
-import addErrorLog from "functions/addErrorLog.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import { validateImagePositionRequirements } from "data/validateImagePositionRequirements.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
@@ -73,10 +73,6 @@ export default async function validateImagePosition({
 
     return { verdict: response.verdict, message: requirement.message };
   } catch (err) {
-    addErrorLog({
-      message: err.message,
-      functionName: "validateImagePosition",
-    });
-    throw err;
+    throw httpError(err);
   }
 }

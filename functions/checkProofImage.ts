@@ -2,6 +2,7 @@ import z from "zod";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import askRepeatedly from "functions/askRepeatedly.js";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   image: string;
@@ -48,7 +49,6 @@ export default async function checkProofImage({
 
     return { verdict, message: explanation };
   } catch (err) {
-    console.log("Error in checkProofImage: ", err);
-    throw err;
+    throw httpError(err);
   }
 }

@@ -1,5 +1,5 @@
+import httpError from "@/helpers/httpError.js";
 import { google } from "googleapis";
-import addErrorLog from "functions/addErrorLog.js";
 
 async function getGoogleToken(code: string, redirectUrl: string) {
   const OAuth2 = google.auth.OAuth2;
@@ -30,12 +30,8 @@ async function getGoogleToken(code: string, redirectUrl: string) {
     };
 
     return authData;
-  } catch (error) {
-    addErrorLog({
-      functionName: "getGoogleToken",
-      message: error.message,
-    });
-    throw error;
+  } catch (err) {
+    throw httpError(err);
   }
 }
 

@@ -2,7 +2,7 @@ import z from "zod";
 import askRepeatedly from "functions/askRepeatedly.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
-import addErrorLog from "functions/addErrorLog.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
@@ -93,7 +93,6 @@ export default async function analyzeCalories({
 
     return { ...analysisResponse, ...shouldEatResponse };
   } catch (err) {
-    addErrorLog({ functionName: "analyzeCalories", message: err.message });
-    throw err;
+    throw httpError(err);
   }
 }

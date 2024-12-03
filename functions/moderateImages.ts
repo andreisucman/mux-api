@@ -8,7 +8,7 @@ import { UserProgressRecordType } from "types.js";
 import { RunType } from "types/askOpenaiTypes.js";
 import checkForProhibitedContent from "functions/checkForProhibitedContent.js";
 import { saveLocally } from "functions/saveLocally.js";
-import addErrorLog from "functions/addErrorLog.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userImage?: string;
@@ -110,7 +110,6 @@ export default async function moderateImages({
 
     return { status: true, message: "" };
   } catch (err) {
-    addErrorLog({ message: err.message, functionName: "moderateImages" });
-    throw err;
+    throw httpError(err);
   }
 }

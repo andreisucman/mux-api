@@ -9,6 +9,7 @@ import {
   FormattedRatingType,
 } from "types.js";
 import { FeatureAnalysisType } from "@/types/analyzePotentialTypes.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
@@ -29,44 +30,48 @@ export default async function analyzePotential({
   toAnalyzeObjects,
   listOfFeatures,
 }: Props) {
-  const results = await doWithRetries({
-    functionName: `analyzePotential - results`,
-    functionToExecute: async () =>
-      Promise.all(
-        listOfFeatures.map((feature) => {
-          const currentScore = analysisResults.find(
-            (record) => record.type === type && record.feature === feature
-          ).score;
+  try {
+    const results = await doWithRetries({
+      functionName: `analyzePotential - results`,
+      functionToExecute: async () =>
+        Promise.all(
+          listOfFeatures.map((feature) => {
+            const currentScore = analysisResults.find(
+              (record) => record.type === type && record.feature === feature
+            ).score;
 
-          const filteredImages = filterImagesByFeature(
-            toAnalyzeObjects,
-            type,
-            feature
-          );
+            const filteredImages = filterImagesByFeature(
+              toAnalyzeObjects,
+              type,
+              feature
+            );
 
-          return doWithRetries({
-            functionName: "analyzePotential - rate",
-            functionToExecute: async () =>
-              rateFeaturePotential({
-                userId,
-                sex,
-                type,
-                feature,
-                currentScore,
-                ageInterval,
-                images: filteredImages,
-              }),
-          });
-        })
-      ),
-  });
+            return doWithRetries({
+              functionName: "analyzePotential - rate",
+              functionToExecute: async () =>
+                rateFeaturePotential({
+                  userId,
+                  sex,
+                  type,
+                  feature,
+                  currentScore,
+                  ageInterval,
+                  images: filteredImages,
+                }),
+            });
+          })
+        ),
+    });
 
-  const rating: FormattedRatingType = formatRatings(results);
+    const rating: FormattedRatingType = formatRatings(results);
 
-  rating.explanations = results.map((record: FeatureAnalysisType) => ({
-    feature: record.feature,
-    explanation: record.explanation,
-  }));
+    rating.explanations = results.map((record: FeatureAnalysisType) => ({
+      feature: record.feature,
+      explanation: record.explanation,
+    }));
 
-  return rating;
+    return rating;
+  } catch (err) {
+    throw httpError(err);
+  }
 }

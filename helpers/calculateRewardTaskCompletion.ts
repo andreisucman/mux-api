@@ -16,23 +16,19 @@ export default function calculateRewardTaskCompletion({
 }: Props) {
   if (!userConditions || !requisite) return { icon: "", value: 0 };
 
-  try {
-    const keys = Object.keys(requisite).filter((key) => key in userConditions);
-    if (keys.length === 0) return { icon: "", value: 0 };
+  const keys = Object.keys(requisite).filter((key) => key in userConditions);
+  if (keys.length === 0) return { icon: "", value: 0 };
 
-    let highestKey = keys[0];
-    let highestValue = userConditions[highestKey as keyof StreaksType] || 0;
+  let highestKey = keys[0];
+  let highestValue = userConditions[highestKey as keyof StreaksType] || 0;
 
-    for (const key of keys) {
-      if ((userConditions[key as keyof StreaksType] || 0) > highestValue) {
-        highestKey = key;
-        highestValue = userConditions[key as keyof StreaksType];
-      }
+  for (const key of keys) {
+    if ((userConditions[key as keyof StreaksType] || 0) > highestValue) {
+      highestKey = key;
+      highestValue = userConditions[key as keyof StreaksType];
     }
-
-    const percentage = calculatePercentage(highestValue, requisite[highestKey]);
-    return percentage;
-  } catch (err) {
-    console.error("Error in calculateRewardTaskCompletion:", err);
   }
+
+  const percentage = calculatePercentage(highestValue, requisite[highestKey]);
+  return percentage;
 }

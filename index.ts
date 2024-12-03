@@ -71,6 +71,8 @@ import updateStatusOfTasks from "routes/updateStatusOfTasks.js";
 import uploadProof from "routes/uploadProof.js";
 import voteForStyle from "routes/voteForStyle.js";
 import withdrawReward from "routes/withdrawReward.js";
+import logCapturer from "middleware/logCapturer.js";
+import errorHandler from "middleware/errorHandler.js";
 
 import { client } from "init.js";
 
@@ -100,6 +102,8 @@ const limiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+app.use(logCapturer);
 
 app.use("/stripeWebhook", stripeWebhook);
 app.use("/connectWebhook", connectWebhook);
@@ -187,6 +191,8 @@ app.use("/updateStatusOfTasks", updateStatusOfTasks);
 app.use("/uploadProof", uploadProof);
 app.use("/voteForStyle", voteForStyle);
 app.use("/withdrawReward", withdrawReward);
+
+app.use("/errorHandler", errorHandler);
 
 const port = process.env.PORT || 3001;
 const httpServer = http.createServer(app);

@@ -1,6 +1,6 @@
+import httpError from "@/helpers/httpError.js";
 import { Request } from "express";
 import geoip from "geoip-lite";
-import addErrorLog from "functions/addErrorLog.js";
 
 export default async function getUsersCountry(req: Request) {
   try {
@@ -19,7 +19,6 @@ export default async function getUsersCountry(req: Request) {
 
     return { country, city };
   } catch (err) {
-    addErrorLog({ functionName: "getUsersCountry", message: err.message });
-    throw err;
+    throw httpError(err);
   }
 }

@@ -1,13 +1,12 @@
 import { ObjectId } from "mongodb";
-import { Router } from "express";
+import { Router, NextFunction } from "express";
 import { db } from "init.js";
 import { CustomRequest } from "types.js";
-import addErrorLog from "functions/addErrorLog.js";
 import doWithRetries from "helpers/doWithRetries.js";
 
 const route = Router();
 
-route.get("/:taskId", async (req: CustomRequest, res) => {
+route.get("/:taskId", async (req: CustomRequest, res, next: NextFunction) => {
   const { taskId } = req.params;
 
   try {
@@ -18,12 +17,8 @@ route.get("/:taskId", async (req: CustomRequest, res) => {
     });
 
     res.status(200).json({ message: taskInfo });
-  } catch (error) {
-    addErrorLog({
-      functionName: "getTaskInfo",
-      message: error.message,
-    });
-    res.status(500).json({ error: "Unexpected error" });
+  } catch (err) {
+    next(err)
   }
 });
 

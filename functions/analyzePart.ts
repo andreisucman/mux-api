@@ -1,5 +1,4 @@
 import { ObjectId } from "mongodb";
-import addErrorLog from "functions/addErrorLog.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import getFeaturesToAnalyze from "helpers/getFeaturesToAnalyze.js";
 import analyzeFeature from "functions/analyzeFeature.js";
@@ -23,6 +22,7 @@ import {
 import updateProgressImages from "functions/updateProgressImages.js";
 import { PartResultType } from "@/types/analyzePartTypes.js";
 import { db } from "init.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
@@ -55,7 +55,6 @@ export default async function analyzePart({
 
     const partResult = { part } as PartResultType;
 
-    console.time("analyzePart - analyzePart");
     const featuresToAnalyze = getFeaturesToAnalyze({
       sex: demographics.sex,
       part,
@@ -83,9 +82,6 @@ export default async function analyzePart({
         ),
     });
 
-    console.timeEnd("analyzePart - analyzePart");
-    console.time("analyzePart - analyzeConcerns");
-
     await doWithRetries({
       functionName: "analyzePart - increment analysis status",
       functionToExecute: async () =>
@@ -105,8 +101,6 @@ export default async function analyzePart({
       toAnalyzeObjects: partToAnalyzeObjects,
     });
 
-    console.timeEnd("analyzePart - analyzeConcerns");
-
     if (newConcerns && newConcerns.length > 0) {
       const uniqueConcerns = [...partConcerns, ...newConcerns].filter(
         (obj, i, arr) => arr.findIndex((o) => o.name === obj.name) === i
@@ -123,7 +117,6 @@ export default async function analyzePart({
       Object.keys(scoresAndExplanations || {}).length === 0;
 
     if (scoresAndExplanationsDontExist) {
-      console.time("analyzePart - analyzePotential");
       /* create the potential of the person */
       scoresAndExplanations = await analyzePotential({
         userId,
@@ -134,8 +127,6 @@ export default async function analyzePart({
         listOfFeatures: featuresToAnalyze,
         analysisResults: appearanceAnalysisResults,
       });
-
-      console.timeEnd("analyzePart - analyzePotential");
 
       await doWithRetries({
         functionName: "analyzePart - increment post potential status",
@@ -287,7 +278,6 @@ export default async function analyzePart({
 
     return partResult;
   } catch (err) {
-    addErrorLog({ functionName: "analyzePart", message: err.message });
-    throw err;
+    throw httpError(err);
   }
 }

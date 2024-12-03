@@ -1,8 +1,8 @@
-import statusIncrementCallback from "helpers/statusIncrementCallback.js";
+import incrementProgress from "@/helpers/incrementProgress.js";
 import askRepeatedly from "functions/askRepeatedly.js";
 import { RunType } from "types/askOpenaiTypes.js";
 import { StyleGoalsType, TypeEnum } from "types.js";
-import addErrorLog from "functions/addErrorLog.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
@@ -51,7 +51,7 @@ export default async function suggestChange({
           },
         ],
         callback: () =>
-          statusIncrementCallback({
+          incrementProgress({
             type: `style-${type}`,
             increment: 15,
             userId,
@@ -66,7 +66,7 @@ export default async function suggestChange({
           },
         ],
         callback: () =>
-          statusIncrementCallback({
+          incrementProgress({
             type: `style-${type}`,
             increment: 20,
             userId,
@@ -81,7 +81,7 @@ export default async function suggestChange({
           },
         ],
         callback: () =>
-          statusIncrementCallback({
+          incrementProgress({
             type: `style-${type}`,
             increment: 15,
             userId,
@@ -96,7 +96,7 @@ export default async function suggestChange({
           },
         ],
         callback: () =>
-          statusIncrementCallback({
+          incrementProgress({
             type: `style-${type}`,
             increment: 25,
             userId,
@@ -123,7 +123,7 @@ export default async function suggestChange({
           },
         ],
         callback: () =>
-          statusIncrementCallback({
+          incrementProgress({
             type: `style-${type}`,
             increment: 25,
             userId,
@@ -142,7 +142,6 @@ export default async function suggestChange({
 
     return rephrased;
   } catch (err) {
-    addErrorLog({ functionName: "suggestChange", message: err.message });
-    throw err;
+    throw httpError(err);
   }
 }

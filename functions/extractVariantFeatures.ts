@@ -1,8 +1,8 @@
 import z from "zod";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import askRepeatedly from "functions/askRepeatedly.js";
-import addErrorLog from "functions/addErrorLog.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
@@ -18,7 +18,6 @@ export default async function extractVariantFeatures({
   const { name, description } = variantData;
 
   try {
-    /* find the related variants */
     const systemContent = `You are given a name and description of a product from amazon.com after ###. Extract all of it's features that are related to this use case: ${taskDescription}. Think step-by-step. ### Product name: ${name}. Product description: ${description}.`;
 
     const VariantFeaturesType = z.object({
@@ -75,10 +74,6 @@ export default async function extractVariantFeatures({
       ...variantData,
     };
   } catch (err) {
-    addErrorLog({
-      functionName: "extractVariantFeatures",
-      message: err.message,
-    });
-    throw err;
+    throw httpError(err);
   }
 }

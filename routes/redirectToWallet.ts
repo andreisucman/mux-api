@@ -2,16 +2,16 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import { ObjectId } from "mongodb";
-import { Router } from "express";
+import { Router, NextFunction } from "express";
 import { ClubDataType, CustomRequest } from "types.js";
 import { db, stripe } from "init.js";
-import addErrorLog from "functions/addErrorLog.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
-route.post("/", async (req: CustomRequest, res) => {
+route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
   const { redirectUrl } = req.body;
-  
+
   try {
     const userInfo = (await db
       .collection("User")
@@ -20,13 +20,13 @@ route.post("/", async (req: CustomRequest, res) => {
         { projection: { "club.payouts.connectId": 1 } }
       )) as unknown as { club: ClubDataType | null };
 
-    if (!userInfo) throw new Error(`User ${req.userId} not found`);
+    if (!userInfo) throw httpError(`User ${req.userId} is not found`);
 
     const { club } = userInfo || {};
     const { payouts } = club || {};
     const { connectId } = payouts || {};
 
-    if (!connectId) throw new Error(`User ${req.userId} not onboarded`);
+    if (!connectId) throw httpError(`User ${req.userId} is not onboarded`);
 
     const account = await stripe.accounts.retrieve(connectId);
 
@@ -45,12 +45,8 @@ route.post("/", async (req: CustomRequest, res) => {
       const loginLink = await stripe.accounts.createLoginLink(connectId);
       res.status(200).json({ message: loginLink.url });
     }
-  } catch (error) {
-    addErrorLog({
-      functionName: "redirectToWallet",
-      message: error.message,
-    });
-    res.status(500).json({ error: "Server error" });
+  } catch (err) {
+    next(err);
   }
 });
 

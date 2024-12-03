@@ -1,6 +1,5 @@
 import doWithRetries from "@/helpers/doWithRetries.js";
-
-// checks if the video is still
+import httpError from "@/helpers/httpError.js";
 
 export default async function isMajorityOfImagesIdentical(...urls: string[]) {
   try {
@@ -10,7 +9,7 @@ export default async function isMajorityOfImagesIdentical(...urls: string[]) {
           functionName: "isMajorityIdentical",
           functionToExecute: async () =>
             fetch(url).then((res) => {
-              if (!res.ok) throw new Error("Network error");
+              if (!res.ok) throw httpError("Network error");
               return res;
             }),
         })
@@ -30,7 +29,6 @@ export default async function isMajorityOfImagesIdentical(...urls: string[]) {
 
     return duplicates > majority;
   } catch (error) {
-    console.error("Error fetching images:", error);
     return false;
   }
 }

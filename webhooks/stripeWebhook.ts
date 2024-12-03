@@ -1,38 +1,35 @@
 import * as dotenv from "dotenv";
 dotenv.config();
-import express, { Request, Response } from "express";
+import express, { NextFunction, Request, Response } from "express";
 import handleStripeWebhook from "functions/handleStripeWebhook.js";
 import { stripe } from "init.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = express.Router();
 
 route.post(
   "/",
   express.raw({ type: "application/json" }),
-  (req: Request, res: Response) => {
-    if (req.method !== "POST") {
-      res.setHeader("Allow", "POST");
-      res.status(405).end("Method Not Allowed");
-      return;
-    }
-
-    const signature = req.headers["stripe-signature"];
-
-    const event = stripe.webhooks.constructEvent(
-      req.body,
-      signature,
-      process.env.STRIPE_WEBHOOK_SECRET
-    );
-
+  (req: Request, res: Response, next: NextFunction) => {
     try {
-      handleStripeWebhook(event);
-    } catch (err) {
-      console.log(`Stripe webhook signature verification failed.`, err.message);
-      res.sendStatus(400);
-      return;
-    }
+      if (req.method !== "POST") {
+        throw httpError("Method not allowed", true, 405);
+      }
 
-    res.status(200).send();
+      const signature = req.headers["stripe-signature"];
+
+      const event = stripe.webhooks.constructEvent(
+        req.body,
+        signature,
+        process.env.STRIPE_WEBHOOK_SECRET
+      );
+
+      handleStripeWebhook(event);
+
+      res.status(200).send();
+    } catch (err) {
+      next(err);
+    }
   }
 );
 

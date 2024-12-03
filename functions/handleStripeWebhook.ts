@@ -1,8 +1,9 @@
 import * as dotenv from "dotenv";
 dotenv.config();
+
 import { db } from "init.js";
-import addErrorLog from "functions/addErrorLog.js";
 import doWithRetries from "helpers/doWithRetries.js";
+import httpError from "@/helpers/httpError.js";
 
 async function handleStripeWebhook(event: any) {
   const { type, data } = event;
@@ -26,13 +27,8 @@ async function handleStripeWebhook(event: any) {
         ),
   });
 
-  if (!userInfo) {
-    addErrorLog({
-      functionName: "handleStripeWebhook - userInfo",
-      message: `User with customerId ${customerId} not found.`,
-    });
-    return;
-  }
+  if (!userInfo)
+    throw httpError(`User with customerId ${customerId} not found.`);
 
   const plans = await doWithRetries({
     functionName: "handleStripeWebhook",
@@ -45,33 +41,24 @@ async function handleStripeWebhook(event: any) {
     const paymentPrices = object.lines.data.map((item: any) => item.price);
     const paymentPriceIds = paymentPrices.map((price: any) => price.id);
 
-    if (!subscriptionId || !customerId) {
-      addErrorLog({
-        functionName: `handleStripeWebhook`,
-        message: `Missing subscriptionId: ${subscriptionId}, customerId: ${customerId}.`,
-      });
-      return;
-    }
+    if (!subscriptionId || !customerId)
+      throw httpError(
+        `Missing subscriptionId: ${subscriptionId}, customerId: ${customerId}.`
+      );
 
-    if (!Array.isArray(object.lines.data) || object.lines.data.length === 0) {
-      addErrorLog({
-        functionName: `handleStripeWebhook`,
-        message: `Missing lines data items for customerId: ${customerId}.`,
-      });
-      return;
-    }
+    if (!Array.isArray(object.lines.data) || object.lines.data.length === 0)
+      throw httpError(
+        `Missing lines data items for customerId: ${customerId}.`
+      );
 
     const relatedPlans = plans.filter((plan) =>
       paymentPriceIds.includes(plan.priceId)
     );
 
-    if (relatedPlans.length === 0) {
-      addErrorLog({
-        functionName: `handleStripeWebhook`,
-        message: `Related plan not found for object: ${object.id} and customerId: ${customerId}.`,
-      });
-      return;
-    }
+    if (relatedPlans.length === 0)
+      throw httpError(
+        `Related plan not found for object: ${object.id} and customerId: ${customerId}.`
+      );
 
     const subscriptionsToIncrease = relatedPlans
       .filter((plan) => subscriptions[plan.name])
@@ -81,13 +68,10 @@ async function handleStripeWebhook(event: any) {
         priceId: plan.priceId,
       }));
 
-    if (subscriptionsToIncrease.length === 0) {
-      addErrorLog({
-        functionName: `handleStripeWebhook`,
-        message: `No subscriptionsToIncrease for objectId ${object.id} customerId: ${customerId}.`,
-      });
-      return;
-    }
+    if (subscriptionsToIncrease.length === 0)
+      throw httpError(
+        `No subscriptionsToIncrease for objectId ${object.id} customerId: ${customerId}.`
+      );
 
     const subscriptionsToIncreaseWithDates = subscriptionsToIncrease
       .map((item) => {
@@ -102,13 +86,10 @@ async function handleStripeWebhook(event: any) {
           (lineItem: any) => lineItem.price.id === item.priceId
         );
 
-        if (!relatedLineItem) {
-          addErrorLog({
-            functionName: "handleStripeWebhook",
-            message: `No line item found for priceId ${item.priceId} and customerId: ${customerId}.`,
-          });
-          return null;
-        }
+        if (!relatedLineItem)
+          throw httpError(
+            `No line item found for priceId ${item.priceId} and customerId: ${customerId}.`
+          );
 
         const data = {
           ...item,

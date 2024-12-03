@@ -1,3 +1,4 @@
+import httpError from "@/helpers/httpError.js";
 import blurContent from "functions/blurContent.js";
 import { BlurTypeEnum } from "types.js";
 
@@ -46,7 +47,6 @@ export default async function getReadyBlurredUrls({
 
     return { mainUrl, mainThumbnail, urls, thumbnails };
   } catch (err) {
-    console.log("Error in getReadyBlurredUrls: ", err);
-    throw err;
+    throw httpError(err);
   }
 }

@@ -1,6 +1,6 @@
 import { PartEnum } from "types.js";
-import addErrorLog from "functions/addErrorLog.js";
 import setUtcMidnight from "helpers/setUtcMidnight.js";
+import httpError from "./httpError.js";
 
 type StreakDatesType = {
   default: { [key: string]: Date };
@@ -98,10 +98,6 @@ export default function getStreaksToIncrement({
 
     return { newStreakDates, streaksToIncrement };
   } catch (err) {
-    addErrorLog({
-      functionName: "getStreaksToIncrement",
-      message: err.message,
-    });
-    throw err;
+    throw httpError(err);
   }
 }

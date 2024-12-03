@@ -2,7 +2,7 @@ import { db } from "init.js";
 import { ObjectId } from "mongodb";
 import getLatestRoutinesAndTasks from "functions/getLatestRoutineAndTasks.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import addErrorLog from "functions/addErrorLog.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
@@ -33,8 +33,7 @@ async function getUserData({ userId }: Props) {
 
     return payload;
   } catch (err) {
-    addErrorLog({ functionName: "getUserData", message: err.message });
-    throw err;
+    throw httpError(err);
   }
 }
 

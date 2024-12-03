@@ -4,8 +4,8 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { db, openai } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import addErrorLog from "functions/addErrorLog.js";
 import { AskOpenaiProps } from "types/askOpenaiTypes.js";
+import httpError from "@/helpers/httpError.js";
 
 async function askOpenAi({
   messages,
@@ -66,9 +66,8 @@ async function askOpenAi({
         : completion.choices[0].message.content,
       tokens: completion.usage.total_tokens,
     };
-  } catch (error) {
-    addErrorLog({ functionName: "askOpenAi", message: error.message });
-    throw error;
+  } catch (err) {
+    throw httpError(err);
   }
 }
 

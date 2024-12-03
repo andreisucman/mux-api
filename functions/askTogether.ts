@@ -2,10 +2,10 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import { ObjectId } from "mongodb";
-import addErrorLog from "functions/addErrorLog.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { RoleEnum } from "@/types/askOpenaiTypes.js";
 import { db, together } from "init.js";
+import httpError from "@/helpers/httpError.js";
 
 type AskTogetherProps = {
   userId: string;
@@ -23,7 +23,7 @@ async function askTogether({
   userId,
 }: AskTogetherProps) {
   try {
-    if (!model) throw new Error("Model is missing");
+    if (!model) throw httpError("Model is missing");
 
     const options: { [key: string]: any } = {
       messages,
@@ -61,9 +61,8 @@ async function askTogether({
       result: completion.choices[0].message.content,
       tokens: completion.usage.total_tokens,
     };
-  } catch (error) {
-    addErrorLog({ functionName: "askTogether", message: error.message });
-    throw error;
+  } catch (err) {
+    throw httpError(err);
   }
 }
 

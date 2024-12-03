@@ -1,14 +1,14 @@
 import z from "zod";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import askRepeatedly from "functions/askRepeatedly.js";
-import addErrorLog from "functions/addErrorLog.js";
-import statusIncrementCallback from "helpers/statusIncrementCallback.js";
+import incrementProgress from "@/helpers/incrementProgress.js";
 import {
   ProductType,
   SimplifiedProductType,
 } from "@/types/findTheBestVariant.js";
 import { UserInfoType, SuggestionType, UserConcernType } from "types.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   key: string;
@@ -43,7 +43,7 @@ export default async function findTheBestVariant({
   const { sex, ageInterval, skinType, ethnicity, skinColor } = demographics;
 
   const callback = () =>
-    statusIncrementCallback({
+    incrementProgress({
       userId: String(userId),
       increment: 3,
       type: analysisType,
@@ -203,10 +203,6 @@ export default async function findTheBestVariant({
 
     return enrichedProducts;
   } catch (err) {
-    addErrorLog({
-      functionName: "findTheBestVariant ",
-      message: err.message,
-    });
-    throw err;
+    throw httpError(err);
   }
 }

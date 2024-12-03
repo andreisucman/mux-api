@@ -29,7 +29,7 @@ async function checkAccess(
   );
 
   if (!csrfVerificationPassed) {
-    signOut(res, 401, "Invalid csrf secret");
+    res.status(401).json({ error: "Invalid csrf secret" });
     return;
   }
 
@@ -39,7 +39,7 @@ async function checkAccess(
   }
 
   if (!accessToken && !bearerToken) {
-    signOut(res, 401, "No authorization token");
+    res.status(401).json({ error: "No authorization token" });
     return;
   }
 
@@ -48,7 +48,7 @@ async function checkAccess(
     const bearerIsValid = process.env.API_SECRET === secret;
 
     if (!bearerIsValid) {
-      signOut(res, 401, "Invalid access token");
+      res.status(403).json({ error: "Invalid access token" });
       return;
     }
 

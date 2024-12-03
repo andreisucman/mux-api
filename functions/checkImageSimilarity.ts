@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import doWithRetries from "helpers/doWithRetries.js";
-import addErrorLog from "functions/addErrorLog.js";
 import { db } from "init.js";
+import httpError from "@/helpers/httpError.js";
 
 export type CheckImageSimilarityProps = {
   userId?: string;
@@ -64,7 +64,6 @@ export default async function checkImageSimilarity({
 
     return { status: true };
   } catch (err) {
-    addErrorLog({ functionName: "checkImageSimilarity", message: err.message });
-    throw err;
+    throw httpError(err);
   }
 }

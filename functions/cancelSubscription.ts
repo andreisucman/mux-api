@@ -1,5 +1,5 @@
+import httpError from "@/helpers/httpError.js";
 import { stripe } from "init.js";
-import addErrorLog from "functions/addErrorLog.js";
 
 export default async function cancelSubscription(subscriptionId: string) {
   if (!subscriptionId) return;
@@ -14,7 +14,6 @@ export default async function cancelSubscription(subscriptionId: string) {
       await stripe.subscriptions.cancel(subscriptionId);
     }
   } catch (err) {
-    addErrorLog({ functionName: "cancelSubscription", message: err });
-    throw err;
+    throw httpError(err);
   }
 }

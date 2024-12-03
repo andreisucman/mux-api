@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import { db } from "init.js";
-import addErrorLog from "functions/addErrorLog.js";
 import doWithRetries from "helpers/doWithRetries.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
@@ -52,11 +52,7 @@ export default async function getClosestTaskDates({ userId }: Props) {
     });
 
     return closestTasks;
-  } catch (error) {
-    addErrorLog({
-      functionName: "getClosestTaskDates",
-      message: error.message,
-    });
-    throw error;
+  } catch (err) {
+    throw httpError(err);
   }
 }

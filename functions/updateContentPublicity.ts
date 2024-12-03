@@ -1,9 +1,9 @@
 import { ObjectId } from "mongodb";
 import { db } from "init.js";
-import addErrorLog from "functions/addErrorLog.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import calculateDifferenceInPrivacies from "helpers/calculateDifferenceInPrivacies.js";
 import { PrivacyType } from "types.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
@@ -23,7 +23,7 @@ export default async function updateContentPublicity({
           .findOne({ _id: new ObjectId(userId) }, { projection: { club: 1 } }),
     });
 
-    if (!userInfo) throw new Error("No userInfo");
+    if (!userInfo) throw httpError("No userInfo");
 
     const { club } = userInfo;
     const { privacy: currentPrivacy } = club;
@@ -108,10 +108,6 @@ export default async function updateContentPublicity({
           ),
     });
   } catch (err) {
-    addErrorLog({
-      functionName: "updateContentPublicity",
-      message: err.message,
-    });
-    throw err;
+    throw httpError(err);
   }
 }

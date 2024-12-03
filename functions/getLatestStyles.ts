@@ -2,7 +2,7 @@ import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { StyleAnalysisType } from "types.js";
-import addErrorLog from "functions/addErrorLog.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
@@ -62,11 +62,7 @@ export default async function getLatestStyles({ userId }: Props) {
     const bodyStyle = styles.find((style) => style.type === "body");
 
     return { head: headStyle, body: bodyStyle };
-  } catch (error) {
-    addErrorLog({
-      functionName: "getLatestStyles",
-      message: error.message,
-    });
-    throw error;
+  } catch (err) {
+    throw httpError(err);
   }
 }

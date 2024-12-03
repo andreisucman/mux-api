@@ -2,25 +2,27 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import { ObjectId } from "mongodb";
-import { Router, Response } from "express";
+import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
-import addErrorLog from "functions/addErrorLog.js";
 import checkTrackedRBAC from "functions/checkTrackedRBAC.js";
 import { CustomRequest } from "types.js";
 import { db } from "init.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
 route.get(
   "/:trackedUserId?/:type?",
-  async (req: CustomRequest, res: Response) => {
+  async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { trackedUserId, type } = req.params;
     const { skip } = req.query;
 
-    try {
-      if (!type) return;
-      if (!trackedUserId || !ObjectId.isValid(trackedUserId)) return;
+    if (!type || !trackedUserId || !ObjectId.isValid(trackedUserId)) {
+      res.status(400).json({ error: "Bad request" });
+      return;
+    }
 
+    try {
       await checkTrackedRBAC({
         userId: req.userId,
         trackedUserId,
@@ -38,11 +40,12 @@ route.get(
             ),
       });
 
-      if (!userInfo) throw new Error("User not found");
+      if (!userInfo) throw httpError(`User ${trackedUserId} not found`);
 
       const { peek } = userInfo.subscriptions || {};
+      const { validUntil } = peek || {};
 
-      if (!peek?.validUntil || new Date() > new Date(peek.validUntil)) {
+      if (!validUntil || new Date() > new Date(peek.validUntil)) {
         res.status(200).json({
           error: "subscription expired",
         });
@@ -65,12 +68,8 @@ route.get(
       res.status(200).json({
         message: routines,
       });
-    } catch (error) {
-      addErrorLog({
-        functionName: "getTrackedRoutines",
-        message: error.message,
-      });
-      res.status(500).json({ error: "Server error" });
+    } catch (err) {
+      next(err);
     }
   }
 );

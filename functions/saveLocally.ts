@@ -2,7 +2,7 @@ import path from "path";
 import { nanoid } from "nanoid";
 import fs from "fs/promises";
 import os from "os";
-import addErrorLog from "functions/addErrorLog.js";
+import httpError from "@/helpers/httpError.js";
 
 const tempDir = os.tmpdir();
 
@@ -14,7 +14,6 @@ export async function saveLocally(image: string) {
     await fs.writeFile(pathAddress, Buffer.from(arrayBuffer));
     return pathAddress;
   } catch (err) {
-    addErrorLog({ message: err.message, functionName: "saveLocally" });
-    throw err;
+    throw httpError(err);
   }
 }

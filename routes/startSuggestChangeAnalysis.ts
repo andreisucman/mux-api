@@ -1,15 +1,15 @@
-import { Router } from "express";
+import { Router, NextFunction } from "express";
 import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import { CustomRequest } from "types.js";
 import suggestChange from "functions/suggestChange.js";
-import addErrorLog from "functions/addErrorLog.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import addAnalysisStatusError from "helpers/addAnalysisStatusError.js";
+import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
-route.post("/", async (req: CustomRequest, res) => {
+route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
   const { goal, analysisId, userId, type } = req.body;
 
   if (!goal || !analysisId || !type) {
@@ -45,7 +45,7 @@ route.post("/", async (req: CustomRequest, res) => {
     });
 
     if (!styleAnalysisRecord)
-      throw new Error(`Style analysis record ${analysisId} not found`);
+      throw httpError(`Style analysis record ${analysisId} is not found`);
 
     await doWithRetries({
       functionName: "startSuggestChangeAnalysis - add analysis status",
@@ -61,8 +61,6 @@ route.post("/", async (req: CustomRequest, res) => {
 
     res.status(200).end();
 
-    console.time("startSuggestChangeAnalysis - analyzeStyle");
-
     const { styleName, image } = styleAnalysisRecord;
 
     const response = await suggestChange({
@@ -72,8 +70,6 @@ route.post("/", async (req: CustomRequest, res) => {
       styleGoals: goal,
       type,
     });
-
-    console.timeEnd("startSuggestChangeAnalysis - analyzeStyle");
 
     await doWithRetries({
       functionName: "startSuggestChangeAnalysis - insert one style analysis",
@@ -121,16 +117,11 @@ route.post("/", async (req: CustomRequest, res) => {
             { $set: { isRunning: false, progress: 0, isError: null } }
           ),
     });
-  } catch (error) {
-    addErrorLog({
-      functionName: "startSuggestChangeAnalysis",
-      message: error.message,
-    });
-
+  } catch (err) {
     await addAnalysisStatusError({
       userId: String(userId),
       type: `style-${type}`,
-      message: error.message,
+      message: err.message,
     });
   }
 });

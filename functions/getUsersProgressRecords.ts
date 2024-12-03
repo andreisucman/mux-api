@@ -3,8 +3,8 @@ import { Router } from "express";
 import { db } from "init.js";
 import { CustomRequest } from "types.js";
 import checkTrackedRBAC from "functions/checkTrackedRBAC.js";
-import addErrorLog from "functions/addErrorLog.js";
 import doWithRetries from "helpers/doWithRetries.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -55,12 +55,8 @@ route.get("/:userId?", async (req: CustomRequest, res) => {
     });
 
     res.status(200).json({ message: progress });
-  } catch (error) {
-    addErrorLog({
-      functionName: "getUsersProgressRecords",
-      message: error.message,
-    });
-    res.status(500).json({ error: "Unexpected error" });
+  } catch (err) {
+    throw httpError(err);
   }
 });
 

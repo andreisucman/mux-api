@@ -1,9 +1,9 @@
 import { ObjectId } from "mongodb";
 import { db, stripe } from "init.js";
-import addErrorLog from "functions/addErrorLog.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { defaultUser } from "data/defaultUser.js";
 import { DemographicsType, StyleAnalysisType, UserType } from "types.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId?: ObjectId | string;
@@ -101,8 +101,8 @@ async function registerUser({
 
       return response;
     }
-  } catch (error) {
-    addErrorLog({ functionName: "registerUser", message: error.message });
+  } catch (err) {
+    throw httpError(err);
   }
 }
 

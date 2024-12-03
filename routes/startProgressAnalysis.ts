@@ -2,12 +2,11 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import { ObjectId } from "mongodb";
-import { Router, Response } from "express";
+import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
-import addErrorLog from "functions/addErrorLog.js";
 import { BlurTypeEnum, CustomRequest, TypeEnum } from "types.js";
 import { UploadProgressUserInfo } from "types/uploadProgressTypes.js";
-import addAnalysisStatusError from "helpers/addAnalysisStatusError.js";
+import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import analyzeAppearance from "functions/analyzeAppearance.js";
 import formatDate from "@/helpers/formatDate.js";
 import checkCanScan from "@/helpers/checkCanScan.js";
@@ -21,128 +20,123 @@ type Props = {
   blurType: BlurTypeEnum;
 };
 
-route.post("/", async (req: CustomRequest, res: Response) => {
-  const { userId, type, blurType }: Props = req.body;
+route.post(
+  "/",
+  async (req: CustomRequest, res: Response, next: NextFunction) => {
+    const { userId, type, blurType }: Props = req.body;
 
-  const finalUserId = req.userId || userId;
+    const finalUserId = req.userId || userId;
 
-  if (!finalUserId || !type) {
-    res.status(400).json({
-      message: `userId: ${finalUserId}, type: ${type} is missing`,
-    });
-    return;
-  }
+    if (!finalUserId || !type) {
+      res.status(400).json({
+        message: `userId: ${finalUserId}, type: ${type} is missing`,
+      });
+      return;
+    }
 
-  try {
-    // const moderationResponse = await moderateImages({
-    //   userId: String(userId),
-    //   image,
-    // });
+    try {
+      // const moderationResponse = await moderateImages({
+      //   userId: String(userId),
+      //   image,
+      // });
 
-    // if (!moderationResponse.status) {
-    //   res.status(200).json({ error: moderationResponse.message });
-    //   return;
-    // }
+      // if (!moderationResponse.status) {
+      //   res.status(200).json({ error: moderationResponse.message });
+      //   return;
+      // }
 
-    console.time("startAnalysis preparation");
-
-    const userInfo = (await doWithRetries({
-      functionToExecute: async () =>
-        db.collection("User").findOne(
-          { _id: new ObjectId(finalUserId) },
-          {
-            projection: {
-              toAnalyze: 1,
-              demographics: 1,
-              concerns: 1,
-              potential: 1,
-              city: 1,
-              country: 1,
-              timeZone: 1,
-              nextScan: 1,
-              latestProgress: 1,
-              specialConsiderations: 1,
-              latestScoresDifference: 1,
-              currentlyHigherThan: 1,
-              potentiallyHigherThan: 1,
-              latestScores: 1,
-              club: 1,
-            },
-          }
-        ),
-      functionName: "startAnalysis",
-    })) as unknown as UploadProgressUserInfo;
-
-    let {
-      toAnalyze,
-      club,
-      nextScan,
-      concerns,
-      demographics,
-      potential,
-      latestProgress,
-      latestScores,
-      currentlyHigherThan,
-      potentiallyHigherThan,
-      latestScoresDifference,
-      specialConsiderations,
-    } = userInfo;
-
-    // const { canScan, canScanDate } =
-    //   checkCanScan({ nextScan, toAnalyze, type }) || {};
-
-    // if (!canScan) {
-    //   const date = formatDate({ date: canScanDate });
-    //   res.status(200).json({
-    //     error: `You have already analyzed yourself. Try again after ${date}.`,
-    //   });
-    //   return;
-    // }
-
-    await doWithRetries({
-      functionName: "startAnalysis - add analysis status",
-      functionToExecute: async () =>
-        db
-          .collection("AnalysisStatus")
-          .updateOne(
-            { userId: new ObjectId(finalUserId), type },
-            { $set: { isRunning: true, progress: 1, isError: null } },
-            { upsert: true }
+      const userInfo = (await doWithRetries({
+        functionToExecute: async () =>
+          db.collection("User").findOne(
+            { _id: new ObjectId(finalUserId) },
+            {
+              projection: {
+                toAnalyze: 1,
+                demographics: 1,
+                concerns: 1,
+                potential: 1,
+                city: 1,
+                country: 1,
+                timeZone: 1,
+                nextScan: 1,
+                latestProgress: 1,
+                specialConsiderations: 1,
+                latestScoresDifference: 1,
+                currentlyHigherThan: 1,
+                potentiallyHigherThan: 1,
+                latestScores: 1,
+                club: 1,
+              },
+            }
           ),
-    });
+        functionName: "startAnalysis",
+      })) as unknown as UploadProgressUserInfo;
 
-    console.timeEnd("startAnalysis preparation");
-    res.status(200).end();
+      let {
+        toAnalyze,
+        club,
+        nextScan,
+        concerns,
+        demographics,
+        potential,
+        latestProgress,
+        latestScores,
+        currentlyHigherThan,
+        potentiallyHigherThan,
+        latestScoresDifference,
+        specialConsiderations,
+      } = userInfo;
 
-    await analyzeAppearance({
-      type,
-      club,
-      userId,
-      concerns,
-      nextScan,
-      potential,
-      blurType,
-      demographics,
-      toAnalyze,
-      latestScores,
-      latestProgress,
-      currentlyHigherThan,
-      potentiallyHigherThan,
-      latestScoresDifference,
-      newSpecialConsiderations: specialConsiderations,
-    });
-  } catch (error) {
-    await addAnalysisStatusError({
-      type,
-      userId: String(finalUserId),
-      message: error.message,
-    });
+      // const { canScan, canScanDate } =
+      //   checkCanScan({ nextScan, toAnalyze, type }) || {};
 
-    addErrorLog({
-      functionName: "startAnalysis route",
-      message: error.message,
-    });
+      // if (!canScan) {
+      //   const date = formatDate({ date: canScanDate });
+      //   res.status(200).json({
+      //     error: `You have already analyzed yourself. Try again after ${date}.`,
+      //   });
+      //   return;
+      // }
+
+      await doWithRetries({
+        functionName: "startAnalysis - add analysis status",
+        functionToExecute: async () =>
+          db
+            .collection("AnalysisStatus")
+            .updateOne(
+              { userId: new ObjectId(finalUserId), type },
+              { $set: { isRunning: true, progress: 1, isError: null } },
+              { upsert: true }
+            ),
+      });
+
+      res.status(200).end();
+
+      await analyzeAppearance({
+        type,
+        club,
+        userId,
+        concerns,
+        nextScan,
+        potential,
+        blurType,
+        demographics,
+        toAnalyze,
+        latestScores,
+        latestProgress,
+        currentlyHigherThan,
+        potentiallyHigherThan,
+        latestScoresDifference,
+        newSpecialConsiderations: specialConsiderations,
+      });
+    } catch (error) {
+      await addAnalysisStatusError({
+        type,
+        userId: String(finalUserId),
+        message: error.message,
+      });
+    }
   }
-});
+);
 
 export default route;

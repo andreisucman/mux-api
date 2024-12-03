@@ -1,6 +1,6 @@
+import httpError from "@/helpers/httpError.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import askRepeatedly from "functions/askRepeatedly.js";
-import addErrorLog from "functions/addErrorLog.js";
 
 type Props = {
   userNote: string;
@@ -81,11 +81,7 @@ export default async function rephraseUserNote({ userNote, userId }: Props) {
     });
 
     return rephrasedText;
-  } catch (error) {
-    addErrorLog({
-      functionName: "rephraseUserNote",
-      message: error.message,
-    });
-    throw error;
+  } catch (err) {
+    throw httpError(err);
   }
 }

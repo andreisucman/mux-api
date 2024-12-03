@@ -1,12 +1,11 @@
-import { Router } from "express";
+import { Router, NextFunction } from "express";
 import { db } from "init.js";
 import { CustomRequest } from "types.js";
-import addErrorLog from "functions/addErrorLog.js";
 import doWithRetries from "helpers/doWithRetries.js";
 
 const route = Router();
 
-route.get("/", async (req: CustomRequest, res) => {
+route.get("/", async (req: CustomRequest, res, next: NextFunction) => {
   const { type, styleName, skip, sex, ageInterval, ethnicity } = req.query;
 
   try {
@@ -49,12 +48,8 @@ route.get("/", async (req: CustomRequest, res) => {
     });
 
     res.status(200).json({ message: styles });
-  } catch (error) {
-    addErrorLog({
-      functionName: "getAllStyleRecords",
-      message: error.message,
-    });
-    res.status(500).json({ error: "Unexpected error" });
+  } catch (err) {
+    next(err);
   }
 });
 

@@ -1,9 +1,9 @@
-import addErrorLog from "functions/addErrorLog.js";
 import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import getClosestTaskDates from "functions/getClosestTaskDates.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { RoutineType, TaskType } from "types.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
@@ -173,11 +173,7 @@ export default async function getLatestRoutinesAndTasks({ userId }: Props) {
     });
 
     return { routines, tasks };
-  } catch (error) {
-    addErrorLog({
-      functionName: "getLatestRoutineAndTasks",
-      message: error.message,
-    });
-    throw error;
+  } catch (err) {
+    throw httpError(err);
   }
 }

@@ -1,11 +1,12 @@
 import z from "zod";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
-import statusIncrementCallback from "helpers/statusIncrementCallback.js";
+import incrementProgress from "@/helpers/incrementProgress.js";
 import { TypeEnum } from "types.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import { outlookStyles } from "data/outlookStyles.js";
 import { sortObjectByNumberValue } from "helpers/utils.js";
 import askRepeatedly from "./askRepeatedly.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   type: TypeEnum;
@@ -47,7 +48,7 @@ export default async function analyzeStyle({ image, type, userId }: Props) {
           },
         ],
         callback: () =>
-          statusIncrementCallback({
+          incrementProgress({
             type: `style-${type}`,
             increment: 15,
             userId,
@@ -62,7 +63,7 @@ export default async function analyzeStyle({ image, type, userId }: Props) {
           },
         ],
         callback: () =>
-          statusIncrementCallback({
+          incrementProgress({
             type: `style-${type}`,
             increment: 15,
             userId,
@@ -98,7 +99,7 @@ export default async function analyzeStyle({ image, type, userId }: Props) {
           },
         ],
         callback: () =>
-          statusIncrementCallback({
+          incrementProgress({
             type: `style-${type}`,
             increment: 15,
             userId,
@@ -116,7 +117,7 @@ export default async function analyzeStyle({ image, type, userId }: Props) {
           },
         ],
         callback: () =>
-          statusIncrementCallback({
+          incrementProgress({
             type: `style-${type}`,
             increment: 15,
             userId,
@@ -160,7 +161,7 @@ export default async function analyzeStyle({ image, type, userId }: Props) {
           },
         ],
         callback: () =>
-          statusIncrementCallback({
+          incrementProgress({
             type: `style-${type}`,
             increment: 20,
             userId,
@@ -189,7 +190,6 @@ export default async function analyzeStyle({ image, type, userId }: Props) {
       suggestion,
     };
   } catch (err) {
-    console.log("Error in analyzeStyle: ", err);
-    throw err;
+    throw httpError(err);
   }
 }

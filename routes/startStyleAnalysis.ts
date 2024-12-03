@@ -5,11 +5,10 @@ import { CustomRequest, StyleAnalysisType, PrivacyType } from "types.js";
 import analyzeStyle from "functions/analyzeStyle.js";
 import { createHashKey } from "functions/createHashKey.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import addErrorLog from "functions/addErrorLog.js";
 import getReadyBlurredUrls from "functions/getReadyBlurredUrls.js";
 import getStyleCompareRecord from "functions/getStyleCompareRecord.js";
 import { StartStyleAnalysisUserInfoType } from "types/startStyleAnalysisTypes.js";
-import addAnalysisStatusError from "helpers/addAnalysisStatusError.js";
+import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 
 const route = Router();
 
@@ -170,11 +169,6 @@ route.post("/", async (req: CustomRequest, res: Response) => {
           ),
     });
   } catch (error) {
-    addErrorLog({
-      functionName: "startStyleAnalysis",
-      message: error.message,
-    });
-
     await addAnalysisStatusError({
       userId: String(userId),
       type: `style-${type}`,

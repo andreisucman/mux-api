@@ -4,7 +4,7 @@ dotenv.config();
 import doWithRetries from "helpers/doWithRetries.js";
 import { BlurTypeEnum, ProgressImageType } from "types.js";
 import blurContent from "functions/blurContent.js";
-import addErrorLog from "functions/addErrorLog.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   blurType: BlurTypeEnum;
@@ -57,10 +57,6 @@ export default async function updateProgressImages({
 
     return newImages;
   } catch (err) {
-    addErrorLog({
-      functionName: "updateProgressImages",
-      message: err.message,
-    });
-    throw err;
+    throw httpError(err);
   }
 }

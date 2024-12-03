@@ -2,19 +2,19 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import { ObjectId } from "mongodb";
-import { Router, Response } from "express";
+import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
-import addErrorLog from "functions/addErrorLog.js";
 import calculateRewardTaskCompletion from "helpers/calculateRewardTaskCompletion.js";
 import { CustomRequest } from "types.js";
 import formatDate from "helpers/formatDate.js";
 import { daysFrom } from "helpers/utils.js";
 import { rewardKeyConditionsMap } from "data/rewardKeyConditionsMap.js";
 import { db } from "init.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
-route.post("/", async (req: CustomRequest, res: Response) => {
+route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
   const { rewardId } = req.body;
 
   try {
@@ -57,7 +57,7 @@ route.post("/", async (req: CustomRequest, res: Response) => {
           ),
     });
 
-    if (!relevantReward) throw new Error("Reward object not found");
+    if (!relevantReward) throw httpError(`Reward ${rewardId} not found`);
 
     const { requisite, value: rewardValue, key: rewardKey } = relevantReward;
 
@@ -67,7 +67,7 @@ route.post("/", async (req: CustomRequest, res: Response) => {
         db.collection("User").findOne({ _id: new ObjectId(req.userId) }),
     });
 
-    if (!userInfo) throw new Error("User not found");
+    if (!userInfo) throw httpError(`User not found`);
 
     const userKeyLocations = rewardKeyConditionsMap[rewardKey];
 
@@ -138,9 +138,8 @@ route.post("/", async (req: CustomRequest, res: Response) => {
     res.status(200).json({
       message: `The reward of $${rewardValue} has been added to your Club balance.`,
     });
-  } catch (error) {
-    addErrorLog({ functionName: "claimReward", message: error.message });
-    res.status(500).json({ error: "Server error" });
+  } catch (err) {
+    next(err)
   }
 });
 

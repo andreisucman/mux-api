@@ -1,11 +1,11 @@
 import * as dotenv from "dotenv";
+dotenv.config();
+
 import doWithRetries from "helpers/doWithRetries.js";
-import addErrorLog from "functions/addErrorLog.js";
 import updateContentPublicity from "functions/updateContentPublicity.js";
 import { defaultClubPrivacy } from "data/defaultClubPrivacy.js";
 import { db, stripe } from "init.js";
-
-dotenv.config();
+import httpError from "@/helpers/httpError.js";
 
 /* Stripe requires the raw body to construct the event */
 export default async function handleConnectWebhook(event: any) {
@@ -56,10 +56,7 @@ export default async function handleConnectWebhook(event: any) {
         });
       }
     } catch (err) {
-      addErrorLog({
-        functionName: "handleConnectWebhook - account.updated",
-        message: `handleConnectWebhook error: ${err.message}.`,
-      });
+      throw httpError(err);
     }
   }
 
@@ -94,10 +91,7 @@ export default async function handleConnectWebhook(event: any) {
           ),
       });
     } catch (err) {
-      addErrorLog({
-        functionName: "handleConnectWebhook - transfer.paid",
-        message: `handleConnectWebhook error: ${err.message}.`,
-      });
+      throw httpError(err);
     }
   }
 }

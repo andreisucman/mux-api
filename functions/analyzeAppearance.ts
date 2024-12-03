@@ -19,9 +19,9 @@ import calculateHigherThanType from "functions/calculateHigherThanType.js";
 import analyzePart from "functions/analyzePart.js";
 import { defaultRequiredProgress } from "data/defaultUser.js";
 import updateNextScan from "helpers/updateNextScan.js";
-import addErrorLog from "functions/addErrorLog.js";
 import getCalorieGoal from "functions/getCalorieGoal.js";
 import { db } from "init.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
@@ -341,11 +341,7 @@ export default async function analyzeAppearance({
             { $set: { isRunning: false, progress: 0 } }
           ),
     });
-  } catch (error) {
-    addErrorLog({
-      functionName: "analyzeAppearance",
-      message: error.message,
-    });
-    throw error;
+  } catch (err) {
+    throw httpError(err);
   }
 }

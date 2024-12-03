@@ -2,7 +2,7 @@ import z from "zod";
 import { zodResponseFormat } from "openai/helpers/zod";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import askRepeatedly from "functions/askRepeatedly.js";
-import addErrorLog from "functions/addErrorLog.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
@@ -50,10 +50,6 @@ export default async function filterRelevantProductTypes({
 
     return response.relevantProductTypes;
   } catch (err) {
-    addErrorLog({
-      functionName: "filterRelevantProductTypes",
-      message: err.message,
-    });
-    throw err;
+    throw httpError(err);
   }
 }

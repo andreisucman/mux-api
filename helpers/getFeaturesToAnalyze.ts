@@ -23,6 +23,5 @@ export default function getFeaturesToAnalyze({ type, part, sex }: Props) {
     } else {
       return ["back", "hips", "thighs", "arms", "belly", "calves"];
     }
-  } else {
   }
 }

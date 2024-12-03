@@ -2,111 +2,107 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import { ObjectId } from "mongodb";
-import { Router, Response } from "express";
+import { Router, Response, NextFunction } from "express";
 import { db, stripe } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import addErrorLog from "functions/addErrorLog.js";
 import { CustomRequest } from "types.js";
 import { ConnectParamsType } from "types/createConnectAccountTypes.js";
 
 const route = Router();
 
-route.post("/", async (req: CustomRequest, res: Response) => {
-  try {
-    const userInfo = await doWithRetries({
-      functionName: "createConnectAccount",
-      functionToExecute: async () =>
-        db
-          .collection("User")
-          .findOne(
-            { _id: new ObjectId(req.userId) },
-            { projection: { email: 1, country: 1, "club.connectId": 1 } }
-          ),
-    });
-
-    if (!userInfo) throw new Error("User not found");
-
-    const { email, club, country } = userInfo;
-    const { payouts } = club || {};
-    let { connectId } = payouts || {};
-
-    if (!connectId) {
-      const params: ConnectParamsType = {
-        type: "express",
-        business_type: "individual",
-        individual: {
-          email,
-        },
-        country: country.toUpperCase(),
-        capabilities: {
-          transfers: { requested: true },
-          card_payments: { requested: true },
-        },
-        business_profile: {
-          mcc: "5734",
-          url: "https://muxout.com/club",
-        },
-        settings: {
-          payments: {
-            statement_descriptor: "MUXOUT REWARD",
-          },
-        },
-      };
-      const globalCountries = ["US", "GB", "CA", "AU"];
-
-      /* if not in the global countries list */
-      if (!globalCountries.includes(country.toUpperCase())) {
-        params.tos_acceptance = { service_agreement: "recipient" };
-        delete params.capabilities.card_payments;
-      }
-
-      const account = await stripe.accounts.create(params as any);
-
-      const accLink = await stripe.accountLinks.create({
-        account: account.id,
-        return_url: process.env.CLIENT_URL + "/club/registration",
-        refresh_url: process.env.CLIENT_URL + "/club/registration",
-        type: "account_onboarding",
-      });
-
-      await doWithRetries({
-        functionName: "createConnectAccount - save connectId",
+route.post(
+  "/",
+  async (req: CustomRequest, res: Response, next: NextFunction) => {
+    try {
+      const userInfo = await doWithRetries({
+        functionName: "createConnectAccount",
         functionToExecute: async () =>
           db
             .collection("User")
-            .updateOne(
+            .findOne(
               { _id: new ObjectId(req.userId) },
-              { $set: { "club.payouts.connectId": account.id } }
+              { projection: { email: 1, country: 1, "club.connectId": 1 } }
             ),
       });
 
-      res.status(200).json({ message: accLink.url });
-      return;
-    } else {
-      const account = await stripe.accounts.retrieve(connectId);
+      const { email, club, country } = userInfo;
+      const { payouts } = club || {};
+      let { connectId } = payouts || {};
 
-      if (!account.details_submitted) {
+      if (!connectId) {
+        const params: ConnectParamsType = {
+          type: "express",
+          business_type: "individual",
+          individual: {
+            email,
+          },
+          country: country.toUpperCase(),
+          capabilities: {
+            transfers: { requested: true },
+            card_payments: { requested: true },
+          },
+          business_profile: {
+            mcc: "5734",
+            url: "https://muxout.com/club",
+          },
+          settings: {
+            payments: {
+              statement_descriptor: "MUXOUT REWARD",
+            },
+          },
+        };
+        const globalCountries = ["US", "GB", "CA", "AU"];
+
+        /* if not in the global countries list */
+        if (!globalCountries.includes(country.toUpperCase())) {
+          params.tos_acceptance = { service_agreement: "recipient" };
+          delete params.capabilities.card_payments;
+        }
+
+        const account = await stripe.accounts.create(params as any);
+
         const accLink = await stripe.accountLinks.create({
-          account: connectId,
+          account: account.id,
           return_url: process.env.CLIENT_URL + "/club/registration",
           refresh_url: process.env.CLIENT_URL + "/club/registration",
           type: "account_onboarding",
         });
+
+        await doWithRetries({
+          functionName: "createConnectAccount - save connectId",
+          functionToExecute: async () =>
+            db
+              .collection("User")
+              .updateOne(
+                { _id: new ObjectId(req.userId) },
+                { $set: { "club.payouts.connectId": account.id } }
+              ),
+        });
+
         res.status(200).json({ message: accLink.url });
         return;
       } else {
-        const loginLink = await stripe.accounts.createLoginLink(connectId);
-        res.status(200).json({ message: loginLink.url });
-        return;
+        const account = await stripe.accounts.retrieve(connectId);
+
+        if (!account.details_submitted) {
+          const accLink = await stripe.accountLinks.create({
+            account: connectId,
+            return_url: process.env.CLIENT_URL + "/club/registration",
+            refresh_url: process.env.CLIENT_URL + "/club/registration",
+            type: "account_onboarding",
+          });
+          res.status(200).json({ message: accLink.url });
+          return;
+        } else {
+          const loginLink = await stripe.accounts.createLoginLink(connectId);
+          res.status(200).json({ message: loginLink.url });
+          return;
+        }
       }
+    } catch (err) {
+      next(err);
     }
-  } catch (error) {
-    addErrorLog({
-      functionName: "createConnectAccount",
-      message: error.message,
-    });
-    res.status(500).json({ error: "Server error" });
   }
-});
+);
 
 export default route;

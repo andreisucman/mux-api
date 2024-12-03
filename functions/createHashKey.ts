@@ -1,5 +1,7 @@
+import fs from "fs";
 import crypto from "crypto";
 import doWithRetries from "@/helpers/doWithRetries.js";
+import httpError from "@/helpers/httpError.js";
 
 export async function createHashKey(url: string) {
   try {
@@ -10,7 +12,7 @@ export async function createHashKey(url: string) {
           const res = await fetch(url);
 
           if (!res.ok) {
-            throw new Error(
+            throw httpError(
               `Failed to fetch ${url}: ${res.status} ${res.statusText}`
             );
           }
@@ -25,7 +27,6 @@ export async function createHashKey(url: string) {
     const base64Uri = base64String.split(",").pop();
     return crypto.createHash("sha256").update(base64Uri).digest("hex");
   } catch (err) {
-    console.log("Error in createHashKey: ", err);
-    throw err;
+    throw httpError(err);
   }
 }

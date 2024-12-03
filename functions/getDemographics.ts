@@ -1,9 +1,9 @@
 import z from "zod";
 import askRepeatedly from "functions/askRepeatedly.js";
-import addErrorLog from "functions/addErrorLog.js";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import { ToAnalyzeType, DemographicsType, TypeEnum } from "types.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   toAnalyzeObjects: ToAnalyzeType[];
@@ -94,8 +94,7 @@ export default async function getDemographics({
       userId,
     });
     return response;
-  } catch (error) {
-    addErrorLog({ functionName: "getDemographics", message: error.message });
-    throw error;
+  } catch (err) {
+    throw httpError(err);
   }
 }

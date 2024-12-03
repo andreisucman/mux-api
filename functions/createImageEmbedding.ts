@@ -1,8 +1,8 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import addErrorLog from "functions/addErrorLog.js";
 import { replicate } from "init.js";
+import httpError from "@/helpers/httpError.js";
 
 export default async function createImageEmbedding(
   imageUrl: string
@@ -22,7 +22,6 @@ export default async function createImageEmbedding(
 
     return result as number[];
   } catch (err) {
-    addErrorLog({ functionName: "createImageEmbedding", message: err.message });
-    throw err;
+    throw httpError(err);
   }
 }

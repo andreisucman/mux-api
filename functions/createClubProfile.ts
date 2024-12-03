@@ -4,8 +4,8 @@ import { uniqueNamesGenerator, adjectives } from "unique-names-generator";
 import { defaultClubPrivacy } from "data/defaultClubPrivacy.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { UserType, ClubDataType } from "types.js";
-import addErrorLog from "functions/addErrorLog.js";
 import { db } from "init.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
@@ -26,7 +26,7 @@ export default async function createClubProfile({ userId, avatar }: Props) {
     });
 
     if (!userInfo)
-      throw new Error(`No user ${userId} found for checking club plan`);
+      throw httpError(`No user ${userId} found for checking club plan`);
 
     const { demographics } = (userInfo as unknown as Partial<UserType>) || {};
     const { sex } = demographics;
@@ -120,8 +120,7 @@ export default async function createClubProfile({ userId, avatar }: Props) {
     });
 
     return defaultClubData;
-  } catch (error) {
-    addErrorLog({ message: error.message, functionName: "createClubProfile" });
-    throw error;
+  } catch (err) {
+    throw httpError(err);
   }
 }

@@ -2,9 +2,9 @@ import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import updateContentPublicity from "functions/updateContentPublicity.js";
-import addErrorLog from "functions/addErrorLog.js";
 import cancelSubscription from "functions/cancelSubscription.js";
 import { defaultClubPrivacy } from "data/defaultClubPrivacy.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
@@ -45,7 +45,7 @@ export default async function removeFromClub({ userId }: Props) {
           ),
     })) as any;
 
-    if (!userInfo) throw new Error(`User: ${userId} not found.`);
+    if (!userInfo) throw httpError(`User: ${userId} not found.`);
 
     const relevantSubscription = userInfo.subscriptions.peek;
 
@@ -61,8 +61,7 @@ export default async function removeFromClub({ userId }: Props) {
       functionToExecute: async () =>
         db.collection("FollowHistory").bulkWrite(removeFromFollowHistoryBatch),
     }).catch();
-  } catch (error) {
-    addErrorLog({ message: error.message, functionName: "removeFromClub" });
-    throw error;
+  } catch (err) {
+    throw httpError(err);
   }
 }

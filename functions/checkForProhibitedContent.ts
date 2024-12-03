@@ -3,6 +3,7 @@ import * as dotenv from "dotenv";
 import { getMimeType } from "helpers/utils.js";
 import fs from "fs/promises";
 import path from "path";
+import httpError from "@/helpers/httpError.js";
 
 dotenv.config();
 
@@ -38,7 +39,7 @@ export default async function checkForProhibitedContent(localFileUrl: string) {
     );
 
     if (!response.ok) {
-      throw new Error(
+      throw httpError(
         `Server responded with ${response.status}: ${response.statusText}`
       );
     }
@@ -52,8 +53,7 @@ export default async function checkForProhibitedContent(localFileUrl: string) {
     const pornDetected = relevant.some((obj: any) => obj.probability > 0.8);
 
     return pornDetected;
-  } catch (error) {
-    console.error("Error uploading files:", error);
-    throw error;
+  } catch (err) {
+    throw httpError(err);
   }
 }

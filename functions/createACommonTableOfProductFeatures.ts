@@ -1,8 +1,8 @@
 import z from "zod";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import askRepeatedly from "functions/askRepeatedly.js";
-import addErrorLog from "functions/addErrorLog.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
@@ -90,10 +90,6 @@ export default async function createACommonTableOfProductFeatures({
 
     return response.commonFeaturesList;
   } catch (err) {
-    addErrorLog({
-      functionName: "createACommonTableOfProductFeatures",
-      message: err.message,
-    });
-    throw err;
+    throw httpError(err);
   }
 }
