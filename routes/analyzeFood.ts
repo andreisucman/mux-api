@@ -12,6 +12,7 @@ import analyzeCalories from "functions/analyzeCalories.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import validateImage from "functions/validateImage.js";
 import { db } from "init.js";
+import { CheckImageSimilarityProps } from "functions/checkImageSimilarity.js";
 
 const route = Router();
 
@@ -50,13 +51,18 @@ route.post("/", async (req: CustomRequest, res: Response) => {
     const hash = await createHashKey(url);
     const embedding = await createImageEmbedding(url);
 
-    const { status: isValidSimilarity, record } = await checkImageSimilarity({
-      userId: req.userId,
+    const checkSimilarityPayload: CheckImageSimilarityProps = {
       hash,
       embedding,
       collection: "FoodAnalysis",
       vectorIndexName: "food_image_search",
-    });
+    };
+
+    if (req.userId) checkSimilarityPayload.userId = req.userId;
+
+    const { status: isValidSimilarity, record } = await checkImageSimilarity(
+      checkSimilarityPayload
+    );
 
     if (!isValidSimilarity) {
       res.status(200).json({

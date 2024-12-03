@@ -49,7 +49,9 @@ route.post("/", async (req: CustomRequest, res: Response) => {
     specialConsiderations: newSpecialConsiderations,
   }: Props = req.body;
 
-  if (!image || !type || !position || !userId) {
+  const finalUserId = req.userId || userId;
+
+  if (!image || !type || !position || !finalUserId) {
     res.status(400).json({
       message: "Bad request",
     });
@@ -58,7 +60,7 @@ route.post("/", async (req: CustomRequest, res: Response) => {
 
   try {
     // const moderationResponse = await moderateImages({
-    //   userId: String(userId),
+    //   userId: String(finalUserId),
     //   image,
     //   allowOnlyUser: true,
     // });
@@ -74,7 +76,7 @@ route.post("/", async (req: CustomRequest, res: Response) => {
     //   image,
     //   part,
     //   position,
-    //   userId,
+    //   userId: finalUserId,
     // });
 
     // console.log("positionValidationResponse", positionValidationResponse);
@@ -89,7 +91,7 @@ route.post("/", async (req: CustomRequest, res: Response) => {
     const userInfo = (await doWithRetries({
       functionToExecute: async () =>
         db.collection("User").findOne(
-          { _id: new ObjectId(userId) },
+          { _id: new ObjectId(finalUserId) },
           {
             projection: {
               requiredProgress: 1,
@@ -114,6 +116,8 @@ route.post("/", async (req: CustomRequest, res: Response) => {
       functionName: "uploadProgress",
     })) as unknown as UploadProgressUserInfo;
 
+    if (!userInfo) throw new Error(`User ${finalUserId} not found`);
+
     let {
       requiredProgress,
       toAnalyze,
@@ -135,7 +139,7 @@ route.post("/", async (req: CustomRequest, res: Response) => {
     if (!canScan) {
       const date = formatDate({ date: canScanDate });
       res.status(200).json({
-        error: `Your scan cooldown is not over yet. Try again after ${date}.`,
+        error: `You have already analyzed yourself. Try again after ${date}.`,
       });
       return;
     }
@@ -158,13 +162,11 @@ route.post("/", async (req: CustomRequest, res: Response) => {
 
     if (blurType) {
       contentUrlTypes.push({
-        // is added to appear in the preview on the client
+        // for the is added to appear in the preview on the client
         name: blurType,
         url: blurredImage,
       });
     }
-
-    console.log("contentUrlTypes", contentUrlTypes);
 
     /* add the current uploaded info to the info to analyze */
     const newToAnalyze: { head: ToAnalyzeType[]; body: ToAnalyzeType[] } = {
@@ -197,7 +199,7 @@ route.post("/", async (req: CustomRequest, res: Response) => {
           db
             .collection("AnalysisStatus")
             .updateOne(
-              { userId: new ObjectId(userId), type },
+              { userId: new ObjectId(finalUserId), type },
               { $set: { isRunning: true, progress: 1, isError: null } },
               { upsert: true }
             ),
@@ -213,7 +215,7 @@ route.post("/", async (req: CustomRequest, res: Response) => {
       await analyzeAppearance({
         type,
         club,
-        userId,
+        userId: finalUserId,
         blurType,
         currentlyHigherThan,
         potentiallyHigherThan,
@@ -233,7 +235,7 @@ route.post("/", async (req: CustomRequest, res: Response) => {
         functionToExecute: async () =>
           db
             .collection("User")
-            .updateOne({ _id: new ObjectId(userId) }, toUpdate),
+            .updateOne({ _id: new ObjectId(finalUserId) }, toUpdate),
         functionName: "uploadProgress - update user data",
       });
 
@@ -247,7 +249,7 @@ route.post("/", async (req: CustomRequest, res: Response) => {
   } catch (error) {
     await addAnalysisStatusError({
       type,
-      userId: String(userId),
+      userId: String(finalUserId),
       message: error.message,
     });
 

@@ -1,8 +1,8 @@
 import * as dotenv from "dotenv";
-import { Response, NextFunction } from "express";
-import csrf from "csrf";
 dotenv.config();
 
+import { Response, NextFunction } from "express";
+import csrf from "csrf";
 import { db } from "init.js";
 import signOut from "functions/signOut.js";
 import { CustomRequest } from "types.js";
@@ -13,7 +13,8 @@ const csrfProtection = new csrf();
 async function checkAccess(
   req: CustomRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
+  rejectUnauthorized: boolean
 ) {
   const accessToken = req.cookies["MYO_accessToken"];
   const csrfTokenFromClient = req.cookies["MYO_csrfToken"];
@@ -22,28 +23,37 @@ async function checkAccess(
   const csrfTokenFromClientHeader = req.headers["X-CSRF-Token"];
   const csrfFromClient = csrfTokenFromClient || csrfTokenFromClientHeader;
 
-  if (!accessToken && !bearerToken) {
-    res.status(401).json({ message: "Access denied: No authorization token." });
+  const csrfVerificationPassed = !csrfProtection.verify(
+    csrfSecret,
+    csrfFromClient as string
+  );
+
+  if (!csrfVerificationPassed) {
+    signOut(res, 401, "Invalid csrf secret");
     return;
   }
 
-  if (accessToken) {
-    if (!csrfProtection.verify(csrfSecret, csrfFromClient as string)) {
-      signOut(res, 403);
-      return;
-    }
+  if (!rejectUnauthorized && !accessToken && !bearerToken) {
+    next();
+    return;
+  }
+
+  if (!accessToken && !bearerToken) {
+    signOut(res, 401, "No authorization token");
+    return;
   }
 
   if (bearerToken) {
     const secret = bearerToken.split(" ")[1];
-    const correct = process.env.API_SECRET === secret;
+    const bearerIsValid = process.env.API_SECRET === secret;
 
-    if (correct) {
-      next();
-    } else {
-      res.status(403).send({ message: "Access denied: Invalid secret." });
+    if (!bearerIsValid) {
+      signOut(res, 401, "Invalid access token");
       return;
     }
+
+    next();
+    return;
   }
 
   try {
@@ -58,18 +68,19 @@ async function checkAccess(
         ),
     });
 
-    if (!session || !session?.userId) {
-      signOut(res, 403);
+    if (!session && rejectUnauthorized) {
+      signOut(res, 403, "Invalid access token");
       return;
     }
 
     const expired = new Date(session.expiresOn) < new Date();
-    if (expired) {
-      signOut(res, 403);
+
+    if (expired && rejectUnauthorized) {
+      signOut(res, 403, "Access token expired");
       return;
     }
 
-    req.userId = session.userId;
+    if (!expired) req.userId = session.userId;
     next();
   } catch (err) {
     console.error("An error occurred:", err);

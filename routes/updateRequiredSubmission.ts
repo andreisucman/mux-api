@@ -23,7 +23,7 @@ route.post("/", async (req: CustomRequest, res: Response) => {
       functionName: "updateRequiredSubmission - find",
       functionToExecute: async () =>
         db.collection("Task").findOne(
-          { _id: new ObjectId(taskId) },
+          { _id: new ObjectId(taskId), userId: new ObjectId(req.userId) },
           {
             projection: {
               requiredSubmissions: 1,
@@ -36,10 +36,7 @@ route.post("/", async (req: CustomRequest, res: Response) => {
         ),
     })) as unknown as TaskType;
 
-    if (String(taskInfo.userId) !== String(req.userId)) {
-      res.status(400).json({ error: "Bad request" });
-      return;
-    }
+    if (!taskInfo) throw new Error(`Task ${taskId} not found`);
 
     const { proofEnabled, requiredSubmissions, routineId, key } = taskInfo;
 
@@ -75,7 +72,7 @@ route.post("/", async (req: CustomRequest, res: Response) => {
           {
             $inc: {
               [`allTasks.$.completed`]: isSubmitted ? -1 : 1,
-              [`allTasks.$.unknown`]: isSubmitted ? 1 : -1, // increment unknown on submit because this submit is without proof
+              [`allTasks.$.unknown`]: isSubmitted ? 1 : -1,
             },
           }
         ),

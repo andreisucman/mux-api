@@ -22,7 +22,10 @@ const route = Router();
 route.post("/", async (req: CustomRequest, res: Response) => {
   const { routineId, type } = req.body;
 
-  if (!routineId || !type) return;
+  if (!routineId || !type) {
+    res.status(400).json({ error: "Bad request" });
+    return;
+  }
 
   try {
     const userInfo = await doWithRetries({

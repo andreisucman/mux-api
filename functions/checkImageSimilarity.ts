@@ -3,8 +3,8 @@ import doWithRetries from "helpers/doWithRetries.js";
 import addErrorLog from "functions/addErrorLog.js";
 import { db } from "init.js";
 
-type CheckImageSimilarityProps = {
-  userId: string;
+export type CheckImageSimilarityProps = {
+  userId?: string;
   hash: string;
   embedding: number[];
   vectorIndexName: "food_image_search" | "style_image_search";

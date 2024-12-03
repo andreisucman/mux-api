@@ -11,6 +11,7 @@ const route = Router();
 
 route.post("/", async (req: CustomRequest, res) => {
   const { redirectUrl } = req.body;
+  
   try {
     const userInfo = (await db
       .collection("User")

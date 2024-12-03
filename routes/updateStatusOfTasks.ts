@@ -21,6 +21,7 @@ route.post("/", async (req: CustomRequest, res: Response) => {
         db.collection("Task").updateMany(
           {
             _id: { $in: taskIds.map((id: string) => new ObjectId(id)) },
+            userId: new ObjectId(req.userId),
           },
           { $set: { status: newStatus } }
         ),

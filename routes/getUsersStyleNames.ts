@@ -24,7 +24,6 @@ route.get("/:trackedUserId?", async (req: CustomRequest, res: Response) => {
   }
 
   try {
-    /* see what for the user voted last for this style */
     const response =
       (await doWithRetries({
         functionName: "getUsersStyleNames - add analysis status",

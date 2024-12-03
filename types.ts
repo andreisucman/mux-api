@@ -481,3 +481,49 @@ export type BeforeAfterType = {
   avatar?: { [key: string]: any };
   clubName?: string;
 };
+
+export type ProofType = {
+  _id: ObjectId;
+  taskName: string;
+  requisite: string;
+  userId: ObjectId;
+  routineId: ObjectId;
+  createdAt: Date;
+  taskKey: string;
+  hash?: string; // hash will only exist when the submission is a video and the blur happened after the upload
+  contentType: "video" | "image";
+  demographics: DemographicsType;
+  mainUrl: BlurredUrlType;
+  mainThumbnail: BlurredUrlType;
+  urls: BlurredUrlType[];
+  thumbnails: BlurredUrlType[];
+  type: TypeEnum;
+  part: PartEnum;
+  icon: string;
+  color: string;
+  taskId: ObjectId;
+  concern: string;
+  proofImages: string[];
+  avatar: { [key: string]: any } | null;
+  clubName: string;
+  isPublic: boolean;
+  latestHeadScoreDifference: number;
+  latestBodyScoreDifference: number;
+};
+
+export type SolutionType = {
+  _id: string;
+  key: string;
+  name: string;
+  icon: string;
+  color: string;
+  instruction: string;
+  description: string;
+  suggestions: SuggestionType[];
+  productTypes: string[];
+  nearestConcerns: string[];
+  embedding: number[];
+  isRecipe: boolean;
+  recipe: RecipeType | null;
+  restDays: number;
+};

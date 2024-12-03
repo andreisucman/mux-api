@@ -38,3 +38,14 @@ export function toSnakeCase(string: string) {
   const words = string.trim().split(/[\s-_]+/);
   return words.map((word) => word.toLowerCase()).join("_");
 }
+
+export function sortObjectByNumberValue(
+  obj: { [key: string]: number },
+  isAscending: boolean
+) {
+  return Object.fromEntries(
+    isAscending
+      ? Object.entries(obj).sort(([, a], [, b]) => a - b)
+      : Object.entries(obj).sort(([, a], [, b]) => b - a)
+  );
+}

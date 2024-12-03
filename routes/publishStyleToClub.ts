@@ -13,7 +13,7 @@ route.post("/", async (req: CustomRequest, res: Response) => {
   const { styleAnalysisId } = req.body;
 
   try {
-    if (!req.userId) {
+    if (!styleAnalysisId) {
       res.status(400).json({ error: "Bad request" });
       return;
     }

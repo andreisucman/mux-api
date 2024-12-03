@@ -14,24 +14,21 @@ route.post("/", async (req: CustomRequest, res: Response) => {
   const { taskId, proofEnabled } = req.body;
 
   try {
-    const task = await doWithRetries({
-      functionName: "proofEnabled - find",
+    const taskInfo = await doWithRetries({
+      functionName: "updateProofUpload - find",
       functionToExecute: async () =>
         db
           .collection("Task")
           .findOne(
-            { _id: new ObjectId(taskId) },
+            { _id: new ObjectId(taskId), userId: new ObjectId(req.userId) },
             { projection: { userId: 1 } }
           ),
     });
 
-    if (String(task.userId) !== String(req.userId)) {
-      res.status(400).json({ error: "Bad request" });
-      return;
-    }
+    if (!taskInfo) throw new Error(`Task ${taskId} not found`);
 
     await doWithRetries({
-      functionName: "proofEnabled - update",
+      functionName: "updateProofUpload - update",
       functionToExecute: async () =>
         db
           .collection("Task")
@@ -40,7 +37,7 @@ route.post("/", async (req: CustomRequest, res: Response) => {
 
     res.status(200).end();
   } catch (error) {
-    addErrorLog({ functionName: "proofEnabled", message: error.message });
+    addErrorLog({ functionName: "updateProofUpload", message: error.message });
   }
 });
 

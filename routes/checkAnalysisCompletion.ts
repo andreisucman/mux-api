@@ -1,0 +1,87 @@
+import { Response } from "express";
+import { Router } from "express";
+import { ObjectId } from "mongodb";
+import addErrorLog from "functions/addErrorLog.js";
+import doWithRetries from "helpers/doWithRetries.js";
+import { db } from "init.js";
+import { CustomRequest } from "types.js";
+import getUserData from "functions/getUserData.js";
+import getLatestRoutinesAndTasks from "functions/getLatestRoutineAndTasks.js";
+import getLatestStyles from "functions/getLatestStyles.js";
+
+const route = Router();
+
+route.post("/", async (req: CustomRequest, res: Response) => {
+  const { userId, operationKey } = req.body;
+  try {
+    if (!ObjectId.isValid(userId)) {
+      addErrorLog({
+        functionName: "checkAnalysisCompletion",
+        message: "No user",
+      });
+      return;
+    }
+
+    const job = await doWithRetries({
+      functionName: "checkAnalysisCompletion - find job",
+      functionToExecute: async () =>
+        db.collection("AnalysisStatus").findOne(
+          {
+            userId: new ObjectId(userId),
+            operationKey,
+          },
+          { projection: { _id: 0 } }
+        ),
+    });
+
+    if (!job) {
+      res.status(200).json({
+        message: {
+          jobProgress: 1,
+        },
+      });
+      return;
+    }
+
+    if (job.isError) {
+      res.status(200).json({
+        error: job.message || "An error occured. Please try again.",
+      });
+      return;
+    }
+
+    if (job.isRunning) {
+      res.status(200).json({
+        message: {
+          jobProgress: job.progress,
+        },
+      });
+      return;
+    }
+
+    const userData = await getUserData({ userId });
+    const { routines, tasks } = await getLatestRoutinesAndTasks({ userId });
+    const latestStyleAnalysis = await getLatestStyles({ userId });
+
+    res.status(200).json({
+      message: {
+        ...userData,
+        tasks,
+        routines,
+        jobProgress: 100,
+        latestStyleAnalysis,
+        isRunning: job.isRunning,
+      },
+    });
+  } catch (error) {
+    addErrorLog({
+      functionName: "checkAnalysisCompletion",
+      message: error.message,
+    });
+    res.status(500).json({
+      message: "Please retry and contact us if the error persists.",
+    });
+  }
+});
+
+export default route;

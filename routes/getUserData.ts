@@ -8,15 +8,6 @@ const route = Router();
 
 route.get("/", async (req: CustomRequest, res: Response) => {
   try {
-    if (!req.userId) {
-      addErrorLog({
-        functionName: "getUserData",
-        message: "No user",
-      });
-      res.status(400).end();
-      return;
-    }
-
     const userData = await doWithRetries({
       functionName: "getUserData",
       functionToExecute: async () => await getUserData({ userId: req.userId }),

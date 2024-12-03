@@ -21,8 +21,14 @@ route.get(
       if (!type) return;
       if (!trackedUserId || !ObjectId.isValid(trackedUserId)) return;
 
+      await checkTrackedRBAC({
+        userId: req.userId,
+        trackedUserId,
+        userProjection: { subsciptions: 1 },
+      });
+
       const userInfo = await doWithRetries({
-        functionName: "checkTrackedRBAC - isCorrectTracker",
+        functionName: "getTrackedRoutines - get user",
         functionToExecute: async () =>
           db
             .collection("User")
@@ -43,12 +49,6 @@ route.get(
 
         return;
       }
-
-      await checkTrackedRBAC({
-        userId: req.userId,
-        trackedUserId,
-        userProjection: { subsciptions: 1 },
-      });
 
       const routines = await doWithRetries({
         functionName: "getTrackedRoutines",

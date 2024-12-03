@@ -1,28 +1,29 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import { ObjectId } from "mongodb";
 import aqp from "api-query-params";
 import { Router, Response } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import addErrorLog from "functions/addErrorLog.js";
 import { CustomRequest } from "types.js";
-import checkTrackedRBAC from "functions/checkTrackedRBAC.js";
 import { db } from "init.js";
 
 const route = Router();
 
-route.get("/:trackedUserId?", async (req: CustomRequest, res: Response) => {
-  const { trackedUserId } = req.params;
+route.get("/", async (req: CustomRequest, res: Response) => {
   const { filter, skip } = aqp(req.query);
-  const { routineId, taskKey, concern, type, part, query, ...otherFilters } =
-    filter || {};
+  const {
+    concern,
+    ageInterval,
+    sex,
+    type,
+    part,
+    query,
+    bodyType,
+    ...otherFilters
+  } = filter || {};
 
   try {
-    if (trackedUserId) {
-      await checkTrackedRBAC({ trackedUserId, userId: req.userId });
-    }
-
     const pipeline: any = [];
 
     if (query) {
@@ -35,21 +36,14 @@ route.get("/:trackedUserId?", async (req: CustomRequest, res: Response) => {
       });
     }
 
-    let finalFilters: { [key: string]: any } = {
-      userId: new ObjectId(userId || req.userId),
-    };
-
-    if (routineId) {
-      finalFilters.routineId = new ObjectId(routineId);
-    }
-
-    if (taskKey) {
-      finalFilters.taskKey = taskKey;
-    }
+    let finalFilters: { [key: string]: any } = {};
 
     if (concern) finalFilters.concern = concern;
     if (type) finalFilters.type = type;
     if (part) finalFilters.part = part;
+    if (sex) finalFilters["demographics.sex"] = sex;
+    if (bodyType) finalFilters["demographics.bodyType"] = bodyType;
+    if (ageInterval) finalFilters["demographics.ageInterval"] = ageInterval;
 
     if (otherFilters) {
       finalFilters = { ...finalFilters, isPublic: true };
@@ -64,17 +58,14 @@ route.get("/:trackedUserId?", async (req: CustomRequest, res: Response) => {
     pipeline.push({ $sort: { createdAt: -1 } }, { $limit: 21 });
 
     const proof = await doWithRetries({
-      functionName: "getUsersProofRecords - aggregate",
+      functionName: "getAllProofRecords",
       functionToExecute: async () =>
         db.collection("Proof").aggregate(pipeline).toArray(),
     });
 
     res.status(200).json({ message: proof });
   } catch (error) {
-    addErrorLog({
-      functionName: "getUsersProofRecords",
-      message: error.message,
-    });
+    addErrorLog({ functionName: "getAllProofRecords", message: error.message });
     res.status(500).json({ error: "Server error" });
   }
 });
