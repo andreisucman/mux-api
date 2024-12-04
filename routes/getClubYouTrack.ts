@@ -11,11 +11,11 @@ import { db } from "init.js";
 const route = Router();
 
 route.get(
-  "/:trackedUserId",
+  "/:followingUserId",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { trackedUserId } = req.params;
+    const { followingUserId } = req.params;
 
-    if (!trackedUserId || !ObjectId.isValid(trackedUserId)) {
+    if (!followingUserId || !ObjectId.isValid(followingUserId)) {
       res.status(400).json({ error: "Invaid userId" });
       return;
     }
@@ -38,14 +38,14 @@ route.get(
 
       const userInfo = (await doWithRetries(async () =>
         db.collection("User").findOne(
-          { _id: new ObjectId(trackedUserId) },
+          { _id: new ObjectId(followingUserId) },
           {
             projection,
           }
         )
       )) as unknown as GetClubYouTrackUserType;
 
-      if (!userInfo) throw new Error(`User ${trackedUserId} not found`);
+      if (!userInfo) throw new Error(`User ${followingUserId} not found`);
 
       const { _id, club, latestScores, latestScoresDifference } = userInfo;
       const { name, avatar, bio, privacy } = club;

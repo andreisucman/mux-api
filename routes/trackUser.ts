@@ -14,16 +14,16 @@ const route = Router();
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { trackedUserId } = req.body;
+    const { followingUserId } = req.body;
 
-    if (!trackedUserId || !ObjectId.isValid(trackedUserId)) {
+    if (!followingUserId || !ObjectId.isValid(followingUserId)) {
       res.status(400).json({
         message: "Bad request",
       });
       return;
     }
 
-    if (trackedUserId === req.userId) {
+    if (followingUserId === req.userId) {
       res.status(400).json({
         message: "Bad request",
       });
@@ -43,7 +43,7 @@ route.post(
 
       const userInfo = (await doWithRetries(async () =>
         db.collection("User").findOne(
-          { _id: new ObjectId(trackedUserId) },
+          { _id: new ObjectId(followingUserId) },
           {
             projection: {
               "club.privacy": 1,
@@ -60,7 +60,7 @@ route.post(
         };
       };
 
-      if (!userInfo) httpError(`User not found - ${trackedUserId}`);
+      if (!userInfo) httpError(`User not found - ${followingUserId}`);
 
       const { club } = userInfo;
       const { privacy, avatar, name } = club;
@@ -81,7 +81,7 @@ route.post(
           .collection("User")
           .updateOne(
             { _id: new ObjectId(req.userId) },
-            { $set: { "club.trackedUserId": trackedUserId } }
+            { $set: { "club.followingUserId": followingUserId } }
           )
       );
 
@@ -90,7 +90,7 @@ route.post(
           .collection("FollowHistory")
           .updateOne(
             { _id: new ObjectId(req.userId) },
-            { $set: { trackedUserId, name, avatar, updatedAt: new Date() } },
+            { $set: { followingUserId, name, avatar, updatedAt: new Date() } },
             { upsert: true }
           )
       );

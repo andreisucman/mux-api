@@ -19,7 +19,7 @@ route.get(
     const { query } = filter || {};
 
     if (userId) {
-      await checkTrackedRBAC({ trackedUserId: userId, userId: req.userId });
+      await checkTrackedRBAC({ followingUserId: userId, userId: req.userId });
     }
 
     let finalUserId = userId || req.userId;

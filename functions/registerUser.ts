@@ -11,6 +11,7 @@ type Props = {
   country?: string;
   fingerprint?: number;
   timeZone: string;
+  password?: string;
   city?: string;
   demographics?: DemographicsType;
   email?: string;
@@ -24,6 +25,7 @@ async function registerUser({
   country,
   timeZone,
   fingerprint,
+  password,
   city,
   demographics,
   email,
@@ -40,6 +42,7 @@ async function registerUser({
         payload.email = email;
         payload.stripeUserId = stripeUser.id;
       }
+      if (password) payload.password = password;
       if (timeZone) payload.timeZone = timeZone;
       if (tosAccepted) payload.tosAccepted = tosAccepted;
       if (city) payload.city = city;

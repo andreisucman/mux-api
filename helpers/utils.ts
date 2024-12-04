@@ -1,4 +1,5 @@
 import mime from "mime-types";
+import bcrypt from "bcrypt";
 
 export function delayExecution(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -49,3 +50,9 @@ export function sortObjectByNumberValue(
       : Object.entries(obj).sort(([, a], [, b]) => b - a)
   );
 }
+
+export const getHashedPassword = async (
+  password?: string
+): Promise<string | null> => {
+  return password ? await bcrypt.hash(password, 10) : null;
+};

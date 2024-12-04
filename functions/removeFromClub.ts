@@ -24,8 +24,8 @@ export default async function removeFromClub({ userId }: Props) {
       db
         .collection("User")
         .updateMany(
-          { "club.trackedUserId": userId },
-          { $unset: { "club.trackedUserId": "" } }
+          { "club.followingUserId": userId },
+          { $unset: { "club.followingUserId": "" } }
         )
     );
 
@@ -46,7 +46,7 @@ export default async function removeFromClub({ userId }: Props) {
     await cancelSubscription(relevantSubscription.subscriptionId);
 
     const removeFromFollowHistoryBatch = [
-      { deleteMany: { filter: { trackedUserId: new ObjectId(userId) } } },
+      { deleteMany: { filter: { followingUserId: new ObjectId(userId) } } },
       { deleteMany: { filter: { userId: new ObjectId(userId) } } },
     ];
 

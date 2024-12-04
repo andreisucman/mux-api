@@ -54,6 +54,7 @@ export type UserType = {
   city: string;
   country: string;
   email: string;
+  password: string | null;
   timeZone: string;
   demographics: DemographicsType;
   auth: string;
@@ -108,6 +109,7 @@ export type UserType = {
   coachEnergy: number;
   stripeUserId: string;
   isBlocked: boolean;
+  emailVerified: boolean;
 };
 
 export type ToAnalyzeType = {
@@ -168,7 +170,7 @@ export type PrivacyType = {
 };
 
 export type ClubDataType = {
-  trackedUserId: string;
+  followingUserId: string;
   bio: {
     intro: string;
     philosophy: string;

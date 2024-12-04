@@ -21,7 +21,7 @@ route.get(
           .collection("FollowHistory")
           .find(
             { userId: new ObjectId(req.userId) },
-            { projection: { trackedUserId: 1, avatar: 1, name: 1 } }
+            { projection: { followingUserId: 1, avatar: 1, name: 1 } }
           )
           .sort({ updatedAt: -1 })
           .skip(skip || 0)

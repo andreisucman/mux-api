@@ -16,7 +16,7 @@ route.get("/:userId?", async (req: CustomRequest, res) => {
     if (userId)
       await checkTrackedRBAC({
         userId: req.userId,
-        trackedUserId: userId,
+        followingUserId: userId,
       });
 
     const filter: { [key: string]: any } = {

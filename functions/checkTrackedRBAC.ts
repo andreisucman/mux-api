@@ -6,20 +6,20 @@ import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
-  trackedUserId: string;
+  followingUserId: string;
   targetProjection?: { [key: string]: any };
   userProjection?: { [key: string]: any };
 };
 
 export default async function checkTrackedRBAC({
   userId,
-  trackedUserId,
+  followingUserId,
   targetProjection,
   userProjection,
 }: Props) {
   try {
     const targetFilter = {
-      _id: new ObjectId(trackedUserId),
+      _id: new ObjectId(followingUserId),
       club: { $exists: true },
     };
     const targetOptions = { projection: { _id: 1 } };
@@ -36,7 +36,7 @@ export default async function checkTrackedRBAC({
 
     if (!targetUserInfo)
       throw httpError(
-        `User ${userId} is trying to access user ${trackedUserId} who is not in the club.`
+        `User ${userId} is trying to access user ${followingUserId} who is not in the club.`
       );
 
     const userFilter = { _id: new ObjectId(userId) };
@@ -54,11 +54,11 @@ export default async function checkTrackedRBAC({
 
     const { club } = (userInfo as unknown as Partial<UserType>) || {};
 
-    const { trackedUserId: clubTrackedUserId } = club || {};
+    const { followingUserId: clubFollowingUserId } = club || {};
 
-    if (trackedUserId !== clubTrackedUserId)
+    if (followingUserId !== clubFollowingUserId)
       throw httpError(
-        `User ${userId} is trying to access user ${trackedUserId} who is not their tracking.`
+        `User ${userId} is trying to access user ${followingUserId} who is not their following.`
       );
 
     return { userInfo, targetUserInfo };

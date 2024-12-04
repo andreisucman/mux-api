@@ -18,7 +18,7 @@ route.get(
         db
           .collection("User")
           .find(
-            { "club.trackedUserId": new ObjectId(req.userId) },
+            { "club.followingUserId": new ObjectId(req.userId) },
             {
               projection: {
                 "club.intro": 1,

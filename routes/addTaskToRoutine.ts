@@ -22,10 +22,10 @@ const route = Router();
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { taskKey, routineId, total, trackedUserId, type } = req.body;
+    const { taskKey, routineId, total, followingUserId, type } = req.body;
 
     try {
-      if (!taskKey || !routineId || !total || !trackedUserId || !type) {
+      if (!taskKey || !routineId || !total || !followingUserId || !type) {
         res.status(400).json({ error: "Bad request" });
         return;
       }
@@ -53,7 +53,7 @@ route.post(
 
       if (!taskToAdd)
         throw httpError(
-          `No task to add from user ${trackedUserId} to user ${req.userId} found.`
+          `No task to add from user ${followingUserId} to user ${req.userId} found.`
         );
 
       /* get the user's current routine */

@@ -11,15 +11,15 @@ import { db } from "init.js";
 const route = Router();
 
 route.get(
-  "/:trackedUserId?",
+  "/:followingUserId?",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { trackedUserId } = req.params;
+    const { followingUserId } = req.params;
 
-    let userId = trackedUserId || req.userId;
+    let userId = followingUserId || req.userId;
 
-    if (trackedUserId) {
+    if (followingUserId) {
       await checkTrackedRBAC({
-        trackedUserId,
+        followingUserId,
         userId: req.userId,
       });
     }

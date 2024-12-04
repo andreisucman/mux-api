@@ -12,12 +12,12 @@ import httpError from "@/helpers/httpError.js";
 const route = Router();
 
 route.get(
-  "/:trackedUserId?/:type?",
+  "/:followingUserId?/:type?",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { trackedUserId, type } = req.params;
+    const { followingUserId, type } = req.params;
     const { skip } = req.query;
 
-    if (!type || !trackedUserId || !ObjectId.isValid(trackedUserId)) {
+    if (!type || !followingUserId || !ObjectId.isValid(followingUserId)) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
@@ -25,7 +25,7 @@ route.get(
     try {
       await checkTrackedRBAC({
         userId: req.userId,
-        trackedUserId,
+        followingUserId,
         userProjection: { subsciptions: 1 },
       });
 
@@ -33,12 +33,12 @@ route.get(
         db
           .collection("User")
           .findOne(
-            { _id: new ObjectId(trackedUserId) },
+            { _id: new ObjectId(followingUserId) },
             { projection: { subscriptions: 1 } }
           )
       );
 
-      if (!userInfo) throw httpError(`User ${trackedUserId} not found`);
+      if (!userInfo) throw httpError(`User ${followingUserId} not found`);
 
       const { peek } = userInfo.subscriptions || {};
       const { validUntil } = peek || {};
@@ -54,7 +54,7 @@ route.get(
       const routines = await doWithRetries(async () =>
         db
           .collection("Routine")
-          .find({ userId: new ObjectId(trackedUserId), type })
+          .find({ userId: new ObjectId(followingUserId), type })
           .sort({ createdAt: -1 })
           .skip(Number(skip) || 0)
           .limit(9)

@@ -21,7 +21,7 @@ promClientRegister.registerMetric(httpResponseCodeCounter);
 
 promClient.collectDefaultMetrics({ register: promClientRegister });
 
-export default async function trackMetrics(
+export default async function metricCapturer(
   req: Request,
   res: Response,
   next: NextFunction

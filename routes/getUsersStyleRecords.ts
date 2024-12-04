@@ -9,16 +9,16 @@ const route = Router();
 
 route.get("/:userId?", async (req: CustomRequest, res, next: NextFunction) => {
   const { type, styleName, skip } = req.query;
-  const { trackedUserId } = req.params;
+  const { followingUserId } = req.params;
 
   try {
-    if (trackedUserId)
+    if (followingUserId)
       await checkTrackedRBAC({
         userId: req.userId,
-        trackedUserId,
+        followingUserId,
       });
 
-    const userId = new ObjectId(trackedUserId || req.userId);
+    const userId = new ObjectId(followingUserId || req.userId);
 
     const filter: { [key: string]: any } = {
       userId,

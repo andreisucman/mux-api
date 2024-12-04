@@ -12,16 +12,16 @@ import { db } from "init.js";
 const route = Router();
 
 route.get(
-  "/:trackedUserId?",
+  "/:followingUserId?",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { trackedUserId } = req.params;
+    const { followingUserId } = req.params;
     const { filter, skip } = aqp(req.query);
     const { routineId, taskKey, concern, type, part, query, ...otherFilters } =
       filter || {};
 
     try {
-      if (trackedUserId) {
-        await checkTrackedRBAC({ trackedUserId, userId: req.userId });
+      if (followingUserId) {
+        await checkTrackedRBAC({ followingUserId, userId: req.userId });
       }
 
       const pipeline: any = [];
@@ -37,7 +37,7 @@ route.get(
       }
 
       let finalFilters: { [key: string]: any } = {
-        userId: new ObjectId(trackedUserId || req.userId),
+        userId: new ObjectId(followingUserId || req.userId),
       };
 
       if (routineId) {

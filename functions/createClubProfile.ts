@@ -87,7 +87,7 @@ export default async function createClubProfile({ userId, avatar }: Props) {
     };
 
     const defaultClubData: ClubDataType = {
-      trackedUserId: "",
+      followingUserId: "",
       bio: clubBio,
       name: randomName,
       avatar,
