@@ -14,6 +14,7 @@ import checkIfUserExists from "functions/checkIfUserExists.js";
 import registerUser from "functions/registerUser.js";
 import getUsersCountry from "functions/getUsersCountry.js";
 import { CustomRequest, UserType } from "types.js";
+import sendConfirmationCode from "@/functions/sendConfirmationCode.js";
 import { getHashedPassword } from "helpers/utils.js";
 import httpError from "@/helpers/httpError.js";
 
@@ -86,6 +87,10 @@ route.post(
         );
 
         userId = registerResponse._id;
+
+        if (!payload.emailVerified) {
+          await sendConfirmationCode({ userId });
+        }
       } else if (localUserId) {
         /* if the account exists, but registration is not finished, this is a second call to finish registration */
         if (email) {
@@ -108,6 +113,10 @@ route.post(
               }
             )
           );
+
+          if (!payload.emailVerified) {
+            await sendConfirmationCode({ userId });
+          }
         }
       } else {
         // login drops here

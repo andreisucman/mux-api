@@ -56,3 +56,7 @@ export const getHashedPassword = async (
 ): Promise<string | null> => {
   return password ? await bcrypt.hash(password, 10) : null;
 };
+
+export function minutesFromNow(minutes: number) {
+  return new Date(new Date().getTime() + minutes * 60000);
+}

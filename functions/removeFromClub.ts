@@ -52,7 +52,7 @@ export default async function removeFromClub({ userId }: Props) {
 
     doWithRetries(async () =>
       db.collection("FollowHistory").bulkWrite(removeFromFollowHistoryBatch)
-    ).catch();
+    );
   } catch (err) {
     throw httpError(err);
   }

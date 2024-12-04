@@ -75,6 +75,10 @@ import metricCapturer from "middleware/metricCapturer.js";
 import metrics from "routes/metrics.js";
 import logCapturer from "middleware/logCapturer.js";
 import errorHandler from "middleware/errorHandler.js";
+import sendPasswordResetEmail from "@/routes/sendPasswordResetEmail.js";
+import setPassword from "routes/setPassword.js";
+import changeEmail from "routes/changeEmail.js";
+import verifyEmail from "routes/verifyEmail.js";
 
 import { client } from "init.js";
 
@@ -124,6 +128,11 @@ app.use("/", rootRoute);
 
 app.use(timeout("2m"));
 app.use("/metrics", metrics);
+
+app.use("/sendPasswordResetEmail", sendPasswordResetEmail);
+app.use("/setPassword", setPassword);
+app.use("/changeEmail", changeEmail);
+app.use("/verifyEmail", verifyEmail);
 
 app.use((req, res, next) => checkAccess(req, res, next, false));
 app.use("/authorize", authorize);

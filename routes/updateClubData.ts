@@ -7,8 +7,9 @@ import { CustomRequest } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { daysFrom } from "helpers/utils.js";
 import formatDate from "helpers/formatDate.js";
-import { db } from "init.js";
+import updatePublicContent from "@/functions/updatePublicContent.js";
 import httpError from "@/helpers/httpError.js";
+import { db } from "init.js";
 
 const route = Router();
 
@@ -25,7 +26,6 @@ route.post(
       if (!userInfo) throw httpError(`User ${req.userId} not found`);
 
       const { club } = userInfo;
-
       const { nextAvatarUpdateAt, nextNameUpdateAt } = club;
 
       if (name && nextNameUpdateAt > new Date()) {
@@ -69,6 +69,14 @@ route.post(
           .collection("User")
           .updateOne({ _id: new ObjectId(req.userId) }, { $set: payload })
       );
+
+      if (name || avatar) {
+        const updatePayload: { [key: string]: any } = {};
+        if (name) payload.name = name;
+        if (avatar) payload.avatar = avatar;
+
+        updatePublicContent({ userId: req.userId, updatePayload });
+      }
 
       res.status(200).end();
     } catch (err) {

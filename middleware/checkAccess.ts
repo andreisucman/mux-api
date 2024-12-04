@@ -19,7 +19,6 @@ async function checkAccess(
   const accessToken = req.cookies["MYO_accessToken"];
   const csrfTokenFromClient = req.cookies["MYO_csrfToken"];
   const csrfSecret = req.cookies["MYO_csrfSecret"];
-  const bearerToken = req.headers["authorization"];
   const csrfTokenFromClientHeader = req.headers["X-CSRF-Token"];
   const csrfFromClient = csrfTokenFromClient || csrfTokenFromClientHeader;
 
@@ -33,26 +32,13 @@ async function checkAccess(
     return;
   }
 
-  if (!rejectUnauthorized && !accessToken && !bearerToken) {
+  if (!rejectUnauthorized && !accessToken) {
     next();
     return;
   }
 
-  if (!accessToken && !bearerToken) {
+  if (!accessToken) {
     res.status(401).json({ error: "No authorization token" });
-    return;
-  }
-
-  if (bearerToken) {
-    const secret = bearerToken.split(" ")[1];
-    const bearerIsValid = process.env.API_SECRET === secret;
-
-    if (!bearerIsValid) {
-      res.status(403).json({ error: "Invalid access token" });
-      return;
-    }
-
-    next();
     return;
   }
 

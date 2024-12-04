@@ -3,17 +3,16 @@ import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
 
-export default async function validateToken(accessToken: string) {
+export default async function validateCode(code: string, isHashed: boolean) {
   try {
-    const hashedAccessToken = crypto
-      .createHash("sha256")
-      .update(accessToken)
-      .digest("hex");
+    if (isHashed) {
+      code = crypto.createHash("sha256").update(code).digest("hex");
+    }
 
     const userInfo = await doWithRetries(
       async () =>
         await db.collection("TemporaryAccessToken").findOne(
-          { token: hashedAccessToken },
+          { code },
           {
             projection: {
               expiresOn: 1,

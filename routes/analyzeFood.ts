@@ -115,7 +115,7 @@ route.post(
 
       doWithRetries(async () =>
         db.collection("FoodAnalysis").insertOne(newRecord)
-      ).catch();
+      );
 
       res.status(200).json({ message: analysis });
     } catch (err) {

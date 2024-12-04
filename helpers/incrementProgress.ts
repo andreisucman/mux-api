@@ -16,6 +16,6 @@ const incrementProgress = async ({ type, increment, userId }: Props) =>
         { userId: new ObjectId(userId), type },
         { $inc: { progress: increment } }
       )
-  ).catch();
+  );
 
 export default incrementProgress;
