@@ -5,7 +5,7 @@ import { db } from "init.js";
 
 export default async function addAnalysisStatusError({
   userId,
-  type,
+  operationKey,
   message,
 }: UpdateErrorProps) {
   try {
@@ -13,7 +13,7 @@ export default async function addAnalysisStatusError({
       db
         .collection("AnalysisStatus")
         .updateOne(
-          { userId: new ObjectId(userId), type },
+          { userId: new ObjectId(userId), operationKey },
           { $set: { isRunning: false, isError: true, message } }
         )
     );

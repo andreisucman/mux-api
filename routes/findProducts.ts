@@ -70,7 +70,7 @@ route.post(
       /* update analysis */
       await doWithRetries(async () =>
         db.collection("AnalysisStatus").updateOne(
-          { userId, type: taskKey },
+          { userId, operationKey: taskKey },
           {
             $set: { isRunning: true, progress: 1 },
             $unset: { isError: "" },
@@ -112,7 +112,7 @@ route.post(
       /* update analysis */
       await doWithRetries(async () =>
         db.collection("AnalysisStatus").updateOne(
-          { userId, type: taskKey },
+          { userId, operationkey: taskKey },
           {
             $set: { isRunning: false, progress: 0 },
             $unset: { isError: "" },

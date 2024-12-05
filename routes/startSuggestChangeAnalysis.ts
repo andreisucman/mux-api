@@ -45,7 +45,7 @@ route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
       db
         .collection("AnalysisStatus")
         .updateOne(
-          { userId: new ObjectId(userId), type: `style-${type}` },
+          { userId: new ObjectId(userId), operationKey: `style-${type}` },
           { $set: { isRunning: true, progress: 1, isError: null } },
           { upsert: true }
         )
@@ -99,14 +99,14 @@ route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
       db
         .collection("AnalysisStatus")
         .updateOne(
-          { userId: new ObjectId(userId), type: `style-${type}` },
+          { userId: new ObjectId(userId), operationKey: `style-${type}` },
           { $set: { isRunning: false, progress: 0, isError: null } }
         )
     );
   } catch (err) {
     await addAnalysisStatusError({
       userId: String(userId),
-      type: `style-${type}`,
+      operationKey: `style-${type}`,
       message: err.message,
     });
   }

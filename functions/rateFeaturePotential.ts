@@ -60,7 +60,7 @@ export default async function rateFeaturePotential({
             }.`,
           },
         ],
-        callback: () => incrementProgress({ type, userId, increment: 1 }),
+        callback: () => incrementProgress({ operationKey:type, userId, increment: 1 }),
       },
     ];
 
@@ -97,7 +97,7 @@ export default async function rateFeaturePotential({
           FormatResponseAsRateAndExplanationType,
           "rateFeaturePotentialRephraseOne"
         ),
-        callback: () => incrementProgress({ type, userId, increment: 1 }),
+        callback: () => incrementProgress({ operationKey:type, userId, increment: 1 }),
       },
     ];
 

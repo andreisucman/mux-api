@@ -14,6 +14,7 @@ route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { userId, operationKey } = req.body;
+    console.log("{ userId, operationKey }", { userId, operationKey });
     try {
       if (!ObjectId.isValid(userId)) {
         res.status(400).json({ error: "Bad request" });

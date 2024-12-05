@@ -110,7 +110,7 @@ route.post(
 
       await doWithRetries(async () =>
         db.collection("AnalysisStatus").updateOne(
-          { userId: new ObjectId(req.userId), type: analysisType },
+          { userId: new ObjectId(req.userId), operationKey: analysisType },
           {
             $set: { isRunning: true, progress: 1 },
             $unset: { isError: "" },
@@ -139,7 +139,7 @@ route.post(
         callback: () =>
           incrementProgress({
             increment: 5,
-            type: analysisType,
+            operationKey: analysisType,
             userId: req.userId,
           }),
       };
@@ -181,7 +181,7 @@ route.post(
           callback: () =>
             incrementProgress({
               increment: 15,
-              type: analysisType,
+              operationKey: analysisType,
               userId: req.userId,
             }),
         });
@@ -198,7 +198,7 @@ route.post(
         callback: () =>
           incrementProgress({
             increment: 5,
-            type: analysisType,
+            operationKey: analysisType,
             userId: req.userId,
           }),
       };
@@ -223,7 +223,7 @@ route.post(
         callback: () =>
           incrementProgress({
             increment: 5,
-            type: analysisType,
+            operationKey: analysisType,
             userId: req.userId,
           }),
       });
@@ -239,7 +239,7 @@ route.post(
         callback: () =>
           incrementProgress({
             increment: 25,
-            type: analysisType,
+            operationKey: analysisType,
             userId: req.userId,
           }),
       });
@@ -263,7 +263,7 @@ route.post(
         callback: () =>
           incrementProgress({
             increment: 9,
-            type: analysisType,
+            operationKey: analysisType,
             userId: req.userId,
           }),
         responseFormat: zodResponseFormat(
@@ -285,7 +285,7 @@ route.post(
 
       await incrementProgress({
         increment: 15,
-        type: analysisType,
+        operationKey: analysisType,
         userId: req.userId,
       });
 
@@ -304,7 +304,7 @@ route.post(
 
       await doWithRetries(async () =>
         db.collection("AnalysisStatus").updateOne(
-          { userId: new ObjectId(req.userId), type: analysisType },
+          { userId: new ObjectId(req.userId), operationKey: analysisType },
           {
             $set: { isRunning: false, progress: 0 },
             $unset: { isError: "" },

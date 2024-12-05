@@ -48,7 +48,7 @@ route.post(
     try {
       await doWithRetries(async () =>
         db.collection("AnalysisStatus").updateOne(
-          { userId: new ObjectId(req.userId), type: taskId },
+          { userId: new ObjectId(req.userId), operationKey: taskId },
           {
             $set: { isRunning: true, progress: 1 },
             $unset: { isError: "", message: "" },
@@ -122,14 +122,14 @@ route.post(
       const urlType = extensionTypeMap[urlExtension];
 
       await incrementProgress({
-        type: taskId,
+        operationKey: taskId,
         increment: Math.round(Math.random() * 20 + 1),
         userId: req.userId,
       });
 
       const iId = setInterval(async () => {
         await incrementProgress({
-          type: taskId,
+          operationKey: taskId,
           increment: Math.round(Math.random() * 5 + 1),
           userId: req.userId,
         });
@@ -147,7 +147,7 @@ route.post(
             return await addAnalysisStatusError({
               message: error,
               userId: req.userId,
-              type: taskId,
+              operationKey: taskId,
             });
           }
         } else if (urlType === "image") {
@@ -170,7 +170,7 @@ route.post(
       // }
 
       await incrementProgress({
-        type: taskId,
+        operationKey: taskId,
         increment: Math.round(Math.random() * 30 + 15),
         userId: req.userId,
       });
@@ -184,7 +184,7 @@ route.post(
         await addAnalysisStatusError({
           message: "This video is not accepted.",
           userId: req.userId,
-          type: taskId,
+          operationKey: taskId,
         });
         return;
       }
@@ -215,7 +215,7 @@ route.post(
         await addAnalysisStatusError({
           message,
           userId: req.userId,
-          type: taskId,
+          operationKey: taskId,
         });
         return;
       }
@@ -374,7 +374,7 @@ route.post(
 
       await doWithRetries(async () =>
         db.collection("AnalysisStatus").updateOne(
-          { userId: new ObjectId(req.userId), type: taskId },
+          { userId: new ObjectId(req.userId), operationKey: taskId },
           {
             $set: { isRunning: false, progress: 0 },
             $unset: { isError: "", message: "" },
@@ -384,7 +384,7 @@ route.post(
     } catch (err) {
       await addAnalysisStatusError({
         userId: String(req.userId),
-        type: taskId,
+        operationKey: taskId,
         message: err.message,
       });
     }

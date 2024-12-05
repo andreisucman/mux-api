@@ -19,6 +19,57 @@ type Props = {
   latestStyleAnalysis?: { head: StyleAnalysisType; body: StyleAnalysisType };
 };
 
+type RegisterNewUserProps = {
+  userId?: ObjectId | string;
+  tosAccepted?: boolean;
+  country?: string;
+  city?: string;
+  fingerprint?: number;
+  timeZone: string;
+  password?: string;
+  demographics?: DemographicsType;
+  email?: string;
+  auth?: string;
+  latestStyleAnalysis?: { head: StyleAnalysisType; body: StyleAnalysisType };
+};
+
+async function registerNewUser({
+  userId,
+  email,
+  auth,
+  password,
+  demographics,
+  country,
+  city,
+  timeZone,
+  fingerprint,
+  tosAccepted,
+}: RegisterNewUserProps) {
+  try {
+    const newUser = {
+      ...defaultUser,
+      _id: new ObjectId(userId),
+      email,
+      auth,
+      demographics,
+      country,
+      city,
+      timeZone,
+      password,
+      tosAccepted,
+      fingerprint,
+    };
+
+    const user = await doWithRetries(
+      async () => await db.collection("User").insertOne(newUser)
+    );
+
+    return { ...newUser, _id: user.insertedId };
+  } catch (err) {
+    throw httpError(err);
+  }
+}
+
 async function registerUser({
   userId,
   tosAccepted,
@@ -76,25 +127,33 @@ async function registerUser({
 
         if (user) {
           response = user;
+        } else {
+          response = await registerNewUser({
+            userId,
+            tosAccepted,
+            country,
+            timeZone,
+            fingerprint,
+            password,
+            city,
+            demographics,
+            email,
+            auth,
+          });
         }
       } else {
-        const newUser = {
-          ...defaultUser,
-          _id: new ObjectId(userId),
-          email,
-          auth,
-          demographics,
+        response = await registerNewUser({
+          userId,
+          tosAccepted,
           country,
           timeZone,
-          city,
           fingerprint,
-        };
-
-        const user = await doWithRetries(
-          async () => await db.collection("User").insertOne(newUser)
-        );
-
-        response = { ...newUser, _id: user.insertedId };
+          password,
+          city,
+          demographics,
+          email,
+          auth,
+        });
       }
 
       return response;

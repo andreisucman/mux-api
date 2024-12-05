@@ -93,7 +93,7 @@ route.post(
 
       await doWithRetries(async () =>
         db.collection("AnalysisStatus").updateOne(
-          { userId: new ObjectId(req.userId), type },
+          { userId: new ObjectId(req.userId), operationKey: type },
           {
             $set: { isRunning: true, progress: 1 },
             $unset: { isError: "" },
@@ -164,7 +164,7 @@ route.post(
         userId: req.userId,
       });
 
-      await incrementProgress({ type, userId: req.userId, increment: 10 });
+      await incrementProgress({ operationKey: type, userId: req.userId, increment: 10 });
 
       const { word, ...otherResponse } = response || {};
 
@@ -191,10 +191,10 @@ route.post(
       const info = `${description}.${instruction}`;
       const embedding = await createTextEmbedding(info);
 
-      await incrementProgress({ type, userId: req.userId, increment: 25 });
+      await incrementProgress({ operationKey: type, userId: req.userId, increment: 25 });
       await doWithRetries(async () =>
         db.collection("AnalysisStatus").updateOne(
-          { userId: new ObjectId(req.userId), type },
+          { userId: new ObjectId(req.userId), operationKey: type },
           {
             $inc: { progress: 25 },
           }
@@ -331,7 +331,7 @@ route.post(
       const dates = Object.keys(finalSchedule);
       const lastRoutineDate = dates[dates.length - 1];
 
-      await incrementProgress({ type, userId: req.userId, increment: 20 });
+      await incrementProgress({ operationKey: type, userId: req.userId, increment: 20 });
 
       const payload: Partial<RoutineType> = {
         ...latestRelevantRoutine,
@@ -348,7 +348,7 @@ route.post(
         payload.createdAt = new Date();
       }
 
-      await incrementProgress({ type, userId: req.userId, increment: 15 });
+      await incrementProgress({ operationKey: type, userId: req.userId, increment: 15 });
 
       await doWithRetries(async () =>
         db.collection("Routine").updateOne(
@@ -366,7 +366,7 @@ route.post(
 
       await doWithRetries(async () =>
         db.collection("AnalysisStatus").updateOne(
-          { userId: new ObjectId(req.userId), type },
+          { userId: new ObjectId(req.userId), operationKey: type },
           {
             $set: { isRunning: false, progress: 0 },
             $unset: { isError: "" },
@@ -377,7 +377,7 @@ route.post(
       await addAnalysisStatusError({
         userId: req.userId,
         message: err.message,
-        type,
+        operationKey: type,
       });
     }
   }

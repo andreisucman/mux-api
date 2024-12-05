@@ -52,7 +52,7 @@ export default async function suggestChange({
         ],
         callback: () =>
           incrementProgress({
-            type: `style-${type}`,
+            operationKey: `style-${type}`,
             increment: 15,
             userId,
           }),
@@ -67,7 +67,7 @@ export default async function suggestChange({
         ],
         callback: () =>
           incrementProgress({
-            type: `style-${type}`,
+            operationKey: `style-${type}`,
             increment: 20,
             userId,
           }),
@@ -82,7 +82,7 @@ export default async function suggestChange({
         ],
         callback: () =>
           incrementProgress({
-            type: `style-${type}`,
+            operationKey: `style-${type}`,
             increment: 15,
             userId,
           }),
@@ -97,7 +97,7 @@ export default async function suggestChange({
         ],
         callback: () =>
           incrementProgress({
-            type: `style-${type}`,
+            operationKey: `style-${type}`,
             increment: 25,
             userId,
           }),
@@ -124,7 +124,7 @@ export default async function suggestChange({
         ],
         callback: () =>
           incrementProgress({
-            type: `style-${type}`,
+            operationKey: `style-${type}`,
             increment: 25,
             userId,
           }),

@@ -227,6 +227,8 @@ export const defaultUser: UserType = {
     default: {},
     club: {},
   },
+  password: null,
+  emailVerified: false,
   concerns: [],
   requiredProgress: defaultRequiredProgress,
   styleRequirements: defaultStyleRequirements,

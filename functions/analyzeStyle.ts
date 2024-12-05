@@ -49,7 +49,7 @@ export default async function analyzeStyle({ image, type, userId }: Props) {
         ],
         callback: () =>
           incrementProgress({
-            type: `style-${type}`,
+            operationKey: `style-${type}`,
             increment: 15,
             userId,
           }),
@@ -64,7 +64,7 @@ export default async function analyzeStyle({ image, type, userId }: Props) {
         ],
         callback: () =>
           incrementProgress({
-            type: `style-${type}`,
+            operationKey: `style-${type}`,
             increment: 15,
             userId,
           }),
@@ -100,7 +100,7 @@ export default async function analyzeStyle({ image, type, userId }: Props) {
         ],
         callback: () =>
           incrementProgress({
-            type: `style-${type}`,
+            operationKey: `style-${type}`,
             increment: 15,
             userId,
           }),
@@ -118,7 +118,7 @@ export default async function analyzeStyle({ image, type, userId }: Props) {
         ],
         callback: () =>
           incrementProgress({
-            type: `style-${type}`,
+            operationKey: `style-${type}`,
             increment: 15,
             userId,
           }),
@@ -162,7 +162,7 @@ export default async function analyzeStyle({ image, type, userId }: Props) {
         ],
         callback: () =>
           incrementProgress({
-            type: `style-${type}`,
+            operationKey: `style-${type}`,
             increment: 20,
             userId,
           }),

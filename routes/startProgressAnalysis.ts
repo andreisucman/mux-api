@@ -100,7 +100,7 @@ route.post(
         db
           .collection("AnalysisStatus")
           .updateOne(
-            { userId: new ObjectId(finalUserId), type },
+            { userId: new ObjectId(finalUserId), operationKey: type },
             { $set: { isRunning: true, progress: 1, isError: null } },
             { upsert: true }
           )
@@ -127,7 +127,7 @@ route.post(
       });
     } catch (error) {
       await addAnalysisStatusError({
-        type,
+        operationKey: type,
         userId: String(finalUserId),
         message: error.message,
       });

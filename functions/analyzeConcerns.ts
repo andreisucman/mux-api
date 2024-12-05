@@ -79,7 +79,7 @@ export default async function analyzeConcerns({
           ConcernsResponseType,
           "concerns_response_type"
         ),
-        callback: () => incrementProgress({ userId, type, increment: 3 }),
+        callback: () => incrementProgress({ userId, operationKey: type, increment: 3 }),
       },
     ];
 

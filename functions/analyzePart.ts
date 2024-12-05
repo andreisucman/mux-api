@@ -82,7 +82,7 @@ export default async function analyzePart({
       db
         .collection("AnalysisStatus")
         .updateOne(
-          { userId: new ObjectId(userId), type },
+          { userId: new ObjectId(userId), operationKey: type },
           { $inc: { progress: 2 } }
         )
     );
@@ -126,7 +126,7 @@ export default async function analyzePart({
         db
           .collection("AnalysisStatus")
           .updateOne(
-            { userId: new ObjectId(userId), type },
+            { userId: new ObjectId(userId), operationKey: type },
             { $inc: { progress: 6 } }
           )
       );

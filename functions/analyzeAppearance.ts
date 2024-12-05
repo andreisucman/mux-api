@@ -65,8 +65,7 @@ export default async function analyzeAppearance({
   newSpecialConsiderations,
 }: Props) {
   try {
-    console.timeEnd("analyzeAppearance preparation");
-
+    console.time("analyzeAppearance - preparation");
     const toAnalyzeObjects = toAnalyze[type as "head"];
 
     const parts = [...new Set(toAnalyzeObjects.map((obj) => obj.part))];
@@ -96,7 +95,7 @@ export default async function analyzeAppearance({
         userId,
         userNote: newSpecialConsiderations,
       });
-
+    console.timeEnd("analyzeAppearance - preparation");
     if (!demographics || !demographics.bodyType) {
       console.time("analyzeAppearance - getDemographics");
 
@@ -112,7 +111,7 @@ export default async function analyzeAppearance({
         db
           .collection("AnalysisStatus")
           .updateOne(
-            { userId: new ObjectId(userId), type },
+            { userId: new ObjectId(userId), operationKey: type },
             { $inc: { progress: 3 } }
           )
       );
@@ -120,7 +119,7 @@ export default async function analyzeAppearance({
       console.timeEnd("analyzeAppearance - getDemographics");
       toUpdateUser.$set.demographics = demographics;
     }
-
+    console.time("analyzeAppearance - getCalorieGoal");
     if (type === "body") {
       const calories = await getCalorieGoal({ userId, toAnalyzeObjects });
       toUpdateUser.$set.dailyCalorieGoal = calories;
@@ -128,6 +127,9 @@ export default async function analyzeAppearance({
 
     toUpdateUser.$set.nextScan = updateNextScan({ nextScan, toAnalyze, type });
 
+    console.timeEnd("analyzeAppearance - getCalorieGoal");
+
+    console.time("analyzeAppearance - analyzeParts");
     const analyzePartPromises = parts.map((part) => {
       return doWithRetries(async () =>
         analyzePart({
@@ -145,6 +147,9 @@ export default async function analyzeAppearance({
     });
 
     const analysesResults = await Promise.all(analyzePartPromises);
+    console.timeEnd("analyzeAppearance - analyzeParts");
+
+    console.time("analyzeAppearance - finalization");
     const partsAnalyzed = analysesResults.map((rec) => rec.part);
 
     const newTypeConcerns = analysesResults.flatMap((rec) => rec.concerns);
@@ -185,7 +190,7 @@ export default async function analyzeAppearance({
       db
         .collection("AnalysisStatus")
         .updateOne(
-          { userId: new ObjectId(userId), type },
+          { userId: new ObjectId(userId), operationKey: type },
           { $set: { isRunning: true, progress: 99 } }
         )
     );
@@ -325,10 +330,11 @@ export default async function analyzeAppearance({
       db
         .collection("AnalysisStatus")
         .updateOne(
-          { userId: new ObjectId(userId), type },
+          { userId: new ObjectId(userId), operationKey: type },
           { $set: { isRunning: false, progress: 0 } }
         )
     );
+    console.timeEnd("analyzeAppearance - finalization");
   } catch (err) {
     throw httpError(err);
   }

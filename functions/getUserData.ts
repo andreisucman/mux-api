@@ -9,6 +9,8 @@ type Props = {
 };
 
 async function getUserData({ userId }: Props) {
+  if (!userId) return null;
+  
   try {
     const userInfo = await doWithRetries(
       async () =>

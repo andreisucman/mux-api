@@ -1,5 +1,5 @@
 export type UpdateErrorProps = {
   userId: string;
-  type: string;
+  operationKey: string;
   message: string;
 };

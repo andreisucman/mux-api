@@ -46,7 +46,7 @@ export default async function findTheBestVariant({
     incrementProgress({
       userId: String(userId),
       increment: 3,
-      type: analysisType,
+      operationKey: analysisType,
     });
 
   const concernKeys = concerns.map((c) => c.name).join(",");

@@ -10,15 +10,12 @@ const logger = pino({
     log(obj) {
       const { statusCode, ip, msg, time, err, req } = obj as any;
 
-      const errorStack =
-        err && err.stack ? err.stack.split("\n").slice(2, 3).join("\n") : null;
-
       return {
         time,
         statusCode,
         ip,
         msg,
-        errorStack,
+        errorStack: err.stack,
         server: "api",
         version: process.version,
       };

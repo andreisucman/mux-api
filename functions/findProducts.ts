@@ -66,7 +66,7 @@ export default async function findProducts({
       db
         .collection("AnalysisStatus")
         .updateOne(
-          { userId: new ObjectId(userId), type: analysisType },
+          { userId: new ObjectId(userId), operationKey: analysisType },
           { $inc: { progress: 2 } }
         )
     );
@@ -112,7 +112,7 @@ export default async function findProducts({
         db
           .collection("AnalysisStatus")
           .updateOne(
-            { userId: new ObjectId(userId), type: analysisType },
+            { userId: new ObjectId(userId), operationKey: analysisType },
             { $inc: { progress: 3 } }
           )
       );
@@ -126,7 +126,7 @@ export default async function findProducts({
         db
           .collection("AnalysisStatus")
           .updateOne(
-            { userId: new ObjectId(userId), type: analysisType },
+            { userId: new ObjectId(userId), operationKey: analysisType },
             { $inc: { progress: 15 } }
           )
       );
@@ -149,7 +149,7 @@ export default async function findProducts({
   } catch (err) {
     await addAnalysisStatusError({
       userId: String(userId),
-      type: analysisType,
+      operationKey: analysisType,
       message: err.message,
     });
 

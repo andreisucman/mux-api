@@ -23,7 +23,7 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
   }
 
   try {
-    const { status, userId, type } = await validateCode(accessToken);
+    const { status, userId, type } = await validateCode(accessToken, true);
 
     if (!status) {
       if (type === "invalid") {
