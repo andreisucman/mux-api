@@ -26,6 +26,7 @@ route.get(
 
     if (!finalUserId) {
       res.status(400).json({ error: "Bad request" });
+      return;
     }
 
     try {

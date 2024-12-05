@@ -4,9 +4,9 @@ dotenv.config();
 import aqp from "api-query-params";
 import { Router, Response } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
+import httpError from "@/helpers/httpError.js";
 import { CustomRequest } from "types.js";
 import { db } from "init.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 

@@ -79,6 +79,7 @@ import sendPasswordResetEmail from "@/routes/sendPasswordResetEmail.js";
 import setPassword from "routes/setPassword.js";
 import changeEmail from "routes/changeEmail.js";
 import verifyEmail from "routes/verifyEmail.js";
+import getAllProofRecords from "routes/getAllProofRecords.js"
 
 import { client } from "init.js";
 
@@ -161,6 +162,7 @@ app.use("/startSuggestChangeAnalysis", startSuggestChangeAnalysis);
 app.use("/startTheFlow", startTheFlow);
 app.use("/uploadProgress", uploadProgress);
 app.use("/uploadToSpaces", uploadToSpaces);
+app.use("/getAllProofRecords", getAllProofRecords);
 
 // protected routes
 app.use((req, res, next) => checkAccess(req, res, next, true));
