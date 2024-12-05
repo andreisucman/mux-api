@@ -56,7 +56,7 @@ route.post(
         payload.nextAvatarUpdateAt = daysFrom({ days: 7 });
       }
 
-      if (intro) payload["club.bio.about"] = intro;
+      if (intro) payload["club.bio.intro"] = intro;
 
       if (bio) {
         for (const key in bio) {

@@ -8,19 +8,19 @@ export default function addCsrfProtection(
   res: Response,
   next: NextFunction
 ) {
-  let token = req.cookies.MYO_csrfToken;
+  let token = req.cookies.MUX_csrfToken;
 
   if (!token) {
-    const secret = req.cookies.MYO_csrfSecret || csrfProtection.secretSync();
+    const secret = req.cookies.MUX_csrfSecret || csrfProtection.secretSync();
 
     token = csrfProtection.create(secret);
 
-    res.cookie("MYO_csrfToken", token, {
+    res.cookie("MUX_csrfToken", token, {
       // domain: ".muxout.com",
       sameSite: "none",
       secure: true,
     });
-    res.cookie("MYO_csrfSecret", secret, {
+    res.cookie("MUX_csrfSecret", secret, {
       httpOnly: true,
       // domain: ".muxout.com",
       secure: true,

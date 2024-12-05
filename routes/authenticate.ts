@@ -146,7 +146,7 @@ route.post(
 
       const userData = await getUserData({ userId });
 
-      res.cookie("MYO_accessToken", accessToken, {
+      res.cookie("MUX_accessToken", accessToken, {
         // domain: ".muxout.com",
         expires: sessionExpiry,
         httpOnly: true,
@@ -154,7 +154,7 @@ route.post(
         sameSite: "none",
       });
 
-      res.cookie("MYO_isLoggedIn", true, {
+      res.cookie("MUX_isLoggedIn", true, {
         // domain: ".muxout.com",
         expires: sessionExpiry,
         secure: true,

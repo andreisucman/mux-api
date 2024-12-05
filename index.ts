@@ -129,6 +129,7 @@ app.use("/", rootRoute);
 app.use(timeout("2m"));
 app.use("/metrics", metrics);
 
+app.use("/issueCsrfToken", issueCsrfToken);
 app.use("/sendPasswordResetEmail", sendPasswordResetEmail);
 app.use("/setPassword", setPassword);
 app.use("/changeEmail", changeEmail);
@@ -137,7 +138,6 @@ app.use("/verifyEmail", verifyEmail);
 app.use((req, res, next) => checkAccess(req, res, next, false));
 app.use("/authorize", authorize);
 app.use("/authenticate", authenticate);
-app.use("/issueCsrfToken", issueCsrfToken);
 app.use("/getBeforeAfters", getBeforeAfters);
 app.use("/startTheFlow", startTheFlow);
 app.use("/analyzeFood", analyzeFood);

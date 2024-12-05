@@ -16,21 +16,11 @@ async function checkAccess(
   next: NextFunction,
   rejectUnauthorized: boolean
 ) {
-  const accessToken = req.cookies["MYO_accessToken"];
-  const csrfTokenFromClient = req.cookies["MYO_csrfToken"];
-  const csrfSecret = req.cookies["MYO_csrfSecret"];
+  const accessToken = req.cookies["MUX_accessToken"];
+  const csrfTokenFromClient = req.cookies["MUX_csrfToken"];
+  const csrfSecret = req.cookies["MUX_csrfSecret"];
   const csrfTokenFromClientHeader = req.headers["X-CSRF-Token"];
   const csrfFromClient = csrfTokenFromClient || csrfTokenFromClientHeader;
-
-  const csrfVerificationPassed = !csrfProtection.verify(
-    csrfSecret,
-    csrfFromClient as string
-  );
-
-  if (!csrfVerificationPassed) {
-    res.status(401).json({ error: "Invalid csrf secret" });
-    return;
-  }
 
   if (!rejectUnauthorized && !accessToken) {
     next();
@@ -39,6 +29,16 @@ async function checkAccess(
 
   if (!accessToken) {
     res.status(401).json({ error: "No authorization token" });
+    return;
+  }
+
+  const csrfVerificationPassed = !csrfProtection.verify(
+    csrfSecret,
+    csrfFromClient as string
+  );
+
+  if (!csrfVerificationPassed) {
+    res.status(401).json({ error: "Invalid csrf secret" });
     return;
   }
 
