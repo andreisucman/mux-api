@@ -42,7 +42,7 @@ route.post(
 
       if (job.isError) {
         res.status(200).json({
-          error: job.message || "An error occured. Please try again.",
+          error: "An error occured. Please try again.",
         });
         return;
       }
