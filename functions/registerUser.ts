@@ -22,6 +22,7 @@ type Props = {
 type RegisterNewUserProps = {
   userId?: ObjectId | string;
   tosAccepted?: boolean;
+  emailVerified: boolean;
   country?: string;
   city?: string;
   fingerprint?: number;
@@ -33,7 +34,7 @@ type RegisterNewUserProps = {
   latestStyleAnalysis?: { head: StyleAnalysisType; body: StyleAnalysisType };
 };
 
-async function registerNewUser({
+async function handleRegister({
   userId,
   email,
   auth,
@@ -41,6 +42,7 @@ async function registerNewUser({
   demographics,
   country,
   city,
+  emailVerified,
   timeZone,
   fingerprint,
   tosAccepted,
@@ -52,6 +54,7 @@ async function registerNewUser({
       email,
       auth,
       demographics,
+      emailVerified,
       country,
       city,
       timeZone,
@@ -72,21 +75,23 @@ async function registerNewUser({
 
 async function registerUser({
   userId,
-  tosAccepted,
   country,
   timeZone,
-  fingerprint,
   password,
-  city,
-  demographics,
   email,
   auth,
+  city,
+  demographics,
+  fingerprint,
+  tosAccepted,
   latestStyleAnalysis,
 }: Props) {
+  const emailVerified = auth === "g";
+
   try {
     /* if this is a registration from register card, associate the existing user with the email */
     if (userId) {
-      const payload = { ...defaultUser } as UserType;
+      const payload = { ...defaultUser, emailVerified } as UserType;
 
       if (email) {
         const stripeUser = await stripe.customers.create({ email });
@@ -128,29 +133,31 @@ async function registerUser({
         if (user) {
           response = user;
         } else {
-          response = await registerNewUser({
+          response = await handleRegister({
             userId,
             tosAccepted,
-            country,
             timeZone,
             fingerprint,
             password,
-            city,
+            emailVerified,
             demographics,
+            country,
+            city,
             email,
             auth,
           });
         }
       } else {
-        response = await registerNewUser({
+        response = await handleRegister({
           userId,
           tosAccepted,
+          emailVerified,
+          demographics,
           country,
           timeZone,
           fingerprint,
           password,
           city,
-          demographics,
           email,
           auth,
         });

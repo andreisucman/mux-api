@@ -11,14 +11,32 @@ route.get("/", async (req, res, next: NextFunction) => {
       ? JSON.parse(decodeURIComponent(state as string))
       : {};
 
-    const { redirectTo } = parsedState;
+    const { redirectPath } = parsedState;
 
-    const redirectUrl =
-      redirectTo === "pricing"
-        ? process.env.PRICING_REDIRECT_URI
-        : redirectTo === "track"
-        ? process.env.TRACK_REDIRECT_URI
-        : process.env.ROUTINE_REDIRECT_URI;
+    let redirectUrl = "";
+
+    switch (redirectPath) {
+      case "/scan/progress":
+        redirectUrl = process.env.SCAN_PROGRESS_REDIRECT_URI;
+        break;
+      case "/scan/style":
+        redirectUrl = process.env.SCAN_STYLE_REDIRECT_URI;
+        break;
+      case "/scan/food":
+        redirectUrl = process.env.SCAN_FOOD_REDIRECT_URI;
+        break;
+      case "/routine":
+        redirectUrl = process.env.ROUTINE_REDIRECT_URI;
+        break;
+      case "/club/routine":
+        redirectUrl = process.env.CLUB_ROUTINE_REDIRECT_URI;
+        break;
+      case "/club/about":
+        redirectUrl = process.env.CLUB_ABOUT_REDIRECT_URI;
+        break;
+      default:
+        redirectUrl = process.env.ROUTINE_REDIRECT_URI;
+    }
 
     const OAuth2 = google.auth.OAuth2;
 
@@ -39,7 +57,7 @@ route.get("/", async (req, res, next: NextFunction) => {
 
     res.status(200).json({ message: loginLink });
   } catch (err) {
-    next(err)
+    next(err);
   }
 });
 
