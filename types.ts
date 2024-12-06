@@ -16,7 +16,6 @@ export type UserInfoType = {
 export type HigherThanType = {
   head: { overall: number; face: number; mouth: number; scalp: number };
   body: { overall: number; body: number };
-  health: { overall: number; health: number };
 };
 
 export type NextActionType = {
@@ -41,7 +40,6 @@ export type UserPotentialRecordType = {
     scalp: FormattedRatingType;
   };
   body: { overall: number; body: FormattedRatingType };
-  health: { overall: number; health: FormattedRatingType };
 };
 
 export type FormattedRatingType = {
@@ -82,7 +80,6 @@ export type UserType = {
   requiredProgress: {
     head: RequirementType[];
     body: RequirementType[];
-    health: RequirementType[];
   };
   styleRequirements: {
     head: RequirementType[];
@@ -105,7 +102,6 @@ export type UserType = {
   toAnalyze: {
     head: ToAnalyzeType[];
     body: ToAnalyzeType[];
-    health: ToAnalyzeType[];
   };
   coachEnergy: number;
   stripeUserId: string;
@@ -205,7 +201,6 @@ export type LatestScoresType = {
     scalp: number;
   } | null;
   body: { overall: number; body: number } | null;
-  health: { overall: number; health: number } | null;
 };
 
 export type DemographicsType = {
@@ -369,7 +364,6 @@ export type UserProgressRecordType = {
     scalp: ProgressType;
   };
   body: { overall: number; body: ProgressType };
-  health: { overall: number; health: ProgressType };
 };
 
 export type RecipeType = {

@@ -98,15 +98,6 @@ export const defaultRequiredProgress = {
       instruction: "Take a full-hight picture of your body from the back.",
     },
   ],
-  health: [
-    {
-      title: "Health scan",
-      instruction: "Upload a photo or PDF of your blood test results.",
-      type: TypeEnum.HEALTH,
-      part: PartEnum.HEALTH,
-      position: PositionEnum.FRONT,
-    },
-  ],
 };
 
 export const defaultStyleRequirements = {
@@ -187,33 +178,27 @@ export const defaultUser: UserType = {
   currentlyHigherThan: {
     head: { overall: 0, face: 0, mouth: 0, scalp: 0 },
     body: { overall: 0, body: 0 },
-    health: { overall: 0, health: 0 },
   },
   potentiallyHigherThan: {
     head: { overall: 0, face: 0, mouth: 0, scalp: 0 },
     body: { overall: 0, body: 0 },
-    health: { overall: 0, health: 0 },
   },
   latestScores: {
     head: { overall: 0, face: 0, mouth: 0, scalp: 0 },
     body: { overall: 0, body: 0 },
-    health: { overall: 0, health: 0 },
   },
   latestScoresDifference: {
     head: { overall: 0, face: 0, mouth: 0, scalp: 0 },
     body: { overall: 0, body: 0 },
-    health: { overall: 0, health: 0 },
   },
   club: null,
   latestProgress: {
     head: { overall: 0, face: null, mouth: null, scalp: null },
     body: { overall: 0, body: null },
-    health: { overall: 0, health: null },
   },
   potential: {
     head: { overall: 0, face: null, mouth: null, scalp: null },
     body: { overall: 0, body: null },
-    health: { overall: 0, health: null },
   },
   fingerprint: 0,
   createdAt: new Date(),
@@ -233,6 +218,6 @@ export const defaultUser: UserType = {
   requiredProgress: defaultRequiredProgress,
   styleRequirements: defaultStyleRequirements,
   subscriptions: defaultSubscriptions,
-  toAnalyze: { head: [], body: [], health: [] },
+  toAnalyze: { head: [], body: [] },
   coachEnergy: 100000,
 };

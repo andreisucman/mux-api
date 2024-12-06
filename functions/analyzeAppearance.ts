@@ -259,7 +259,7 @@ export default async function analyzeAppearance({
     );
 
     const finalTypePotential: any = {
-      ...(potential?.[type] || {}),
+      ...(potential?.[type as TypeEnum.BODY | TypeEnum.HEAD] || {}),
       ...newTypePotential,
     };
 
@@ -269,7 +269,7 @@ export default async function analyzeAppearance({
     };
 
     const finalTypeCurrentlyHigherThan = {
-      ...currentlyHigherThan[type],
+      ...currentlyHigherThan[type as TypeEnum.BODY | TypeEnum.HEAD],
       ...newTypeCurrentlyHigherThan,
     };
 
@@ -279,7 +279,7 @@ export default async function analyzeAppearance({
     };
 
     const finalTypePotentiallyHigherThan = {
-      ...potentiallyHigherThan[type],
+      ...potentiallyHigherThan[type as TypeEnum.BODY | TypeEnum.HEAD],
       ...newTypePotentiallyHigherThan,
     };
 
@@ -289,7 +289,7 @@ export default async function analyzeAppearance({
     };
 
     const finalTypeLatestScores = {
-      ...latestScores[type],
+      ...latestScores[type as TypeEnum.BODY | TypeEnum.HEAD],
       ...newTypeLatestScores,
     };
 
@@ -299,7 +299,7 @@ export default async function analyzeAppearance({
     };
 
     const finalTypeLatestScoresDifference = {
-      ...latestScoresDifference[type],
+      ...latestScoresDifference[type as TypeEnum.BODY | TypeEnum.HEAD],
       ...newTypeLatestScoresDifference,
     };
 
@@ -309,7 +309,7 @@ export default async function analyzeAppearance({
     };
 
     const finalTypeLatestProgress = {
-      ...latestProgress[type],
+      ...latestProgress[type as TypeEnum.BODY | TypeEnum.HEAD],
       ...newTypeLatestProgress,
     };
 
