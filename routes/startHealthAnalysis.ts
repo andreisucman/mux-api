@@ -10,8 +10,9 @@ import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import analyzeAppearance from "functions/analyzeAppearance.js";
 import formatDate from "@/helpers/formatDate.js";
 import checkCanScan from "@/helpers/checkCanScan.js";
-import httpError from "@/helpers/httpError.js";
 import { db } from "init.js";
+import httpError from "@/helpers/httpError.js";
+import { StartHealthAnalysisUserInfo } from "@/types/startHealthAnalysisTypes.js";
 
 const route = Router();
 
@@ -24,11 +25,11 @@ type Props = {
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { userId, type, blurType }: Props = req.body;
+    const { userId, type }: Props = req.body;
 
     const finalUserId = req.userId || userId;
 
-    if (!finalUserId || !type || !["head", "body"].includes(type)) {
+    if (!finalUserId || !type) {
       res.status(400).json({
         message: `userId: ${finalUserId}, type: ${type} is missing`,
       });
@@ -51,42 +52,24 @@ route.post(
           { _id: new ObjectId(finalUserId) },
           {
             projection: {
-              toAnalyze: 1,
-              demographics: 1,
+              requiredProgress: 1,
+              "toAnalyze.health": 1,
               concerns: 1,
-              potential: 1,
-              city: 1,
-              country: 1,
-              timeZone: 1,
+              demographics: 1,
               nextScan: 1,
-              latestProgress: 1,
               specialConsiderations: 1,
-              latestScoresDifference: 1,
-              currentlyHigherThan: 1,
-              potentiallyHigherThan: 1,
-              latestScores: 1,
-              club: 1,
             },
           }
         )
-      )) as unknown as UploadProgressUserInfo;
+      )) as unknown as StartHealthAnalysisUserInfo;
 
       if (!userInfo) throw httpError(`No userInfo for ${finalUserId}`);
 
-      let {
-        toAnalyze,
-        club,
-        nextScan,
-        concerns,
-        demographics,
-        potential,
-        latestProgress,
-        latestScores,
-        currentlyHigherThan,
-        potentiallyHigherThan,
-        latestScoresDifference,
-        specialConsiderations,
-      } = userInfo;
+      let { toAnalyze, nextScan, concerns, demographics } = userInfo;
+
+      const toAnalyzeObjects = toAnalyze.health;
+
+      const toUpdateUser = { $set: {} as { [key: string]: any } };
 
       // const { canScan, canScanDate } =
       //   checkCanScan({ nextScan, toAnalyze, type }) || {};
@@ -110,24 +93,6 @@ route.post(
       );
 
       res.status(200).end();
-
-      await analyzeAppearance({
-        type,
-        club,
-        userId,
-        concerns,
-        nextScan,
-        potential,
-        blurType,
-        demographics,
-        toAnalyze,
-        latestScores,
-        latestProgress,
-        currentlyHigherThan,
-        potentiallyHigherThan,
-        latestScoresDifference,
-        newSpecialConsiderations: specialConsiderations,
-      });
     } catch (error) {
       await addAnalysisStatusError({
         operationKey: type,

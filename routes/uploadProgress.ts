@@ -11,7 +11,7 @@ import {
   BlurTypeEnum,
 } from "types.js";
 import {
-  RequiredProgressType,
+  ProgressType,
   UploadProgressUserInfo,
 } from "@/types/uploadProgressTypes.js";
 import checkCanScan from "@/helpers/checkCanScan.js";
@@ -143,13 +143,13 @@ route.post(
       }
 
       /* remove the current uploaded info from the remaining requirements */
-      const remainingRequirements: RequiredProgressType[] = requiredProgress[
+      const remainingRequirements: ProgressType[] = requiredProgress[
         type as "head"
-      ].filter((record: RequiredProgressType) => record.position !== position);
+      ].filter((record: ProgressType) => record.position !== position);
 
       const newRequiredProgress: {
-        head: RequiredProgressType[];
-        body: RequiredProgressType[];
+        head: ProgressType[];
+        body: ProgressType[];
       } = {
         ...requiredProgress,
         [type]: remainingRequirements,

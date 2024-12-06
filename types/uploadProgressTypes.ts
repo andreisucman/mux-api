@@ -1,6 +1,6 @@
 import { TypeEnum, PartEnum } from "@/types.js";
 
-export type RequiredProgressType = {
+export type ProgressType = {
   type: TypeEnum | null;
   title: string;
   instruction: string;
@@ -22,8 +22,8 @@ import {
 
 export type UploadProgressUserInfo = {
   requiredProgress: {
-    head: RequiredProgressType[];
-    body: RequiredProgressType[];
+    head: ProgressType[];
+    body: ProgressType[];
   };
   toAnalyze: { head: ToAnalyzeType[]; body: ToAnalyzeType[] };
   concerns: UserConcernType[];

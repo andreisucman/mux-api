@@ -25,10 +25,11 @@ export type NextActionType = {
   parts: { part: PartEnum; date: Date | null }[];
 }[];
 
-export type ProgressRequirement = {
+export type RequirementType = {
   title: string;
   instruction: string;
   type: TypeEnum;
+  part: PartEnum;
   position: PositionEnum;
 };
 
@@ -79,13 +80,13 @@ export type UserType = {
   potential: UserPotentialRecordType;
   tosAccepted: boolean;
   requiredProgress: {
-    head: ProgressRequirement[];
-    body: ProgressRequirement[];
-    health: ProgressRequirement[];
+    head: RequirementType[];
+    body: RequirementType[];
+    health: RequirementType[];
   };
   styleRequirements: {
-    head: ProgressRequirement[];
-    body: ProgressRequirement[];
+    head: RequirementType[];
+    body: RequirementType[];
   };
   latestScores: LatestScoresType;
   latestScoresDifference: LatestScoresType;
@@ -290,6 +291,8 @@ export enum PartEnum {
   BODY = "body",
   MOUTH = "mouth",
   SCALP = "scalp",
+  STYLE = "style",
+  HEALTH = "health",
 }
 
 export enum TaskStatusEnum {

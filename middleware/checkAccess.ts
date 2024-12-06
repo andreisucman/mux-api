@@ -32,14 +32,16 @@ async function checkAccess(
     return;
   }
 
-  const csrfVerificationPassed = !csrfProtection.verify(
-    csrfSecret,
-    csrfFromClient as string
-  );
+  if (rejectUnauthorized) {
+    const csrfVerificationPassed = !csrfProtection.verify(
+      csrfSecret,
+      csrfFromClient as string
+    );
 
-  if (!csrfVerificationPassed) {
-    res.status(401).json({ error: "Invalid csrf secret" });
-    return;
+    if (!csrfVerificationPassed) {
+      signOut(res, 401, "Invalid csrf secret");
+      return;
+    }
   }
 
   try {
