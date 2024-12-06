@@ -9,8 +9,6 @@ import authenticate from "routes/authenticate.js";
 import stripeWebhook from "webhooks/stripeWebhook.js";
 import connectWebhook from "webhooks/connectWebhook.js";
 import setHeaders from "middleware/setHeaders.js";
-import addCsrfProtection from "middleware/addCsrfProtection.js";
-import issueCsrfToken from "routes/issueCsrfToken.js";
 import checkAccess from "middleware/checkAccess.js";
 import getBeforeAfters from "routes/getBeforeAfters.js";
 import startTheFlow from "routes/startTheFlow.js";
@@ -79,7 +77,7 @@ import sendPasswordResetEmail from "@/routes/sendPasswordResetEmail.js";
 import setPassword from "routes/setPassword.js";
 import changeEmail from "routes/changeEmail.js";
 import verifyEmail from "routes/verifyEmail.js";
-import getAllProofRecords from "routes/getAllProofRecords.js"
+import getAllProofRecords from "routes/getAllProofRecords.js";
 
 import { client } from "init.js";
 
@@ -121,7 +119,6 @@ app.use(express.json({ limit: "35mb" }));
 app.use(express.urlencoded({ limit: "35mb", extended: true }));
 
 app.use("*", setHeaders);
-app.use("*", addCsrfProtection);
 
 app.use(limiter);
 
@@ -130,15 +127,14 @@ app.use("/", rootRoute);
 app.use(timeout("2m"));
 app.use("/metrics", metrics);
 
-app.use("/issueCsrfToken", issueCsrfToken);
 app.use("/sendPasswordResetEmail", sendPasswordResetEmail);
 app.use("/setPassword", setPassword);
 app.use("/changeEmail", changeEmail);
 app.use("/verifyEmail", verifyEmail);
-
-app.use((req, res, next) => checkAccess(req, res, next, false));
 app.use("/authorize", authorize);
 app.use("/authenticate", authenticate);
+
+app.use((req, res, next) => checkAccess(req, res, next, false));
 app.use("/getBeforeAfters", getBeforeAfters);
 app.use("/startTheFlow", startTheFlow);
 app.use("/analyzeFood", analyzeFood);

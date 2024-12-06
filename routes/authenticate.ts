@@ -16,6 +16,8 @@ import getUsersCountry from "functions/getUsersCountry.js";
 import { CustomRequest, UserType } from "types.js";
 import sendConfirmationCode from "@/functions/sendConfirmationCode.js";
 import { getHashedPassword } from "helpers/utils.js";
+import createCsrf from "@/functions/createCsrf.js";
+import getOauthRedirectUri from "@/helpers/getOauthRedirectUri.js";
 import httpError from "@/helpers/httpError.js";
 
 const route = Router();
@@ -30,14 +32,9 @@ route.post(
         ? JSON.parse(decodeURIComponent(state as string))
         : {};
 
-      const { redirectTo } = parsedState;
+      const { redirectPath } = parsedState;
 
-      const redirectUrl =
-        redirectTo === "pricing"
-          ? process.env.PRICING_REDIRECT_URI
-          : redirectTo === "track"
-          ? process.env.TRACK_REDIRECT_URI
-          : process.env.ROUTINE_REDIRECT_URI;
+      const redirectUrl = getOauthRedirectUri(redirectPath);
 
       let authData = null;
       let auth = code ? "g" : "e";
@@ -120,7 +117,6 @@ route.post(
         }
       } else {
         // login drops here
-
         if (password) {
           const storedPassword = checkIfUserExistsResponse.password;
           const passwordsMatch = await bcrypt.compare(password, storedPassword);
@@ -145,6 +141,23 @@ route.post(
       );
 
       const userData = await getUserData({ userId });
+
+      const { csrfToken, csrfSecret } = createCsrf();
+
+      res.cookie("MUX_csrfSecret", csrfSecret, {
+        // domain: ".muxout.com",
+        expires: sessionExpiry,
+        httpOnly: false,
+        secure: true,
+        sameSite: "none",
+      });
+
+      res.cookie("MUX_csrfToken", csrfToken, {
+        // domain: ".muxout.com",
+        expires: sessionExpiry,
+        secure: true,
+        sameSite: "none",
+      });
 
       res.cookie("MUX_accessToken", accessToken, {
         // domain: ".muxout.com",

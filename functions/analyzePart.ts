@@ -95,14 +95,11 @@ export default async function analyzePart({
       toAnalyzeObjects: partToAnalyzeObjects,
     });
 
-    console.log("newConcerns", newConcerns);
-
     if (newConcerns && newConcerns.length > 0) {
       const uniqueConcerns = [...partConcerns, ...newConcerns].filter(
         (obj, i, arr) => arr.findIndex((o) => o.name === obj.name) === i
       );
 
-      console.log("uniqueConcerns", uniqueConcerns);
       partResult.concerns = uniqueConcerns;
     }
 

@@ -19,8 +19,6 @@ async function checkAccess(
   const accessToken = req.cookies["MUX_accessToken"];
   const csrfTokenFromClient = req.cookies["MUX_csrfToken"];
   const csrfSecret = req.cookies["MUX_csrfSecret"];
-  const csrfTokenFromClientHeader = req.headers["X-CSRF-Token"];
-  const csrfFromClient = csrfTokenFromClient || csrfTokenFromClientHeader;
 
   if (!rejectUnauthorized && !accessToken) {
     next();
@@ -33,9 +31,9 @@ async function checkAccess(
   }
 
   if (rejectUnauthorized) {
-    const csrfVerificationPassed = !csrfProtection.verify(
+    const csrfVerificationPassed = csrfProtection.verify(
       csrfSecret,
-      csrfFromClient as string
+      csrfTokenFromClient as string
     );
 
     if (!csrfVerificationPassed) {
@@ -68,6 +66,7 @@ async function checkAccess(
     }
 
     if (!expired) req.userId = session.userId;
+
     next();
   } catch (err) {
     next(err);

@@ -1,5 +1,6 @@
 import { Router, NextFunction } from "express";
 import { google } from "googleapis";
+import getOauthRedirectUri from "@/helpers/getOauthRedirectUri.js";
 
 const route = Router();
 
@@ -13,30 +14,7 @@ route.get("/", async (req, res, next: NextFunction) => {
 
     const { redirectPath } = parsedState;
 
-    let redirectUrl = "";
-
-    switch (redirectPath) {
-      case "/scan/progress":
-        redirectUrl = process.env.SCAN_PROGRESS_REDIRECT_URI;
-        break;
-      case "/scan/style":
-        redirectUrl = process.env.SCAN_STYLE_REDIRECT_URI;
-        break;
-      case "/scan/food":
-        redirectUrl = process.env.SCAN_FOOD_REDIRECT_URI;
-        break;
-      case "/routine":
-        redirectUrl = process.env.ROUTINE_REDIRECT_URI;
-        break;
-      case "/club/routine":
-        redirectUrl = process.env.CLUB_ROUTINE_REDIRECT_URI;
-        break;
-      case "/club/about":
-        redirectUrl = process.env.CLUB_ABOUT_REDIRECT_URI;
-        break;
-      default:
-        redirectUrl = process.env.ROUTINE_REDIRECT_URI;
-    }
+    const redirectUrl = getOauthRedirectUri(redirectPath);
 
     const OAuth2 = google.auth.OAuth2;
 
