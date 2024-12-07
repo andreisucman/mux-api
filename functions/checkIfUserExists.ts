@@ -1,28 +1,20 @@
 import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
-import { ObjectId } from "mongodb";
+import { UserType } from "@/types.js";
 
 type Props = {
-  email: string;
-  auth: string;
+  filter: { [key: string]: any };
+  projection?: { [key: string]: number };
 };
 
-async function checkIfUserExists({ email, auth }: Props) {
+async function checkIfUserExists({ filter, projection }: Props) {
   try {
     const result = (await doWithRetries(
-      async () =>
-        await db
-          .collection("User")
-          .findOne({ email, auth }, { projection: { _id: 1, password: 1 } })
-    )) as unknown as { _id: ObjectId; password: string | null };
+      async () => await db.collection("User").findOne(filter, { projection })
+    )) as unknown as Partial<UserType>;
 
-    const { _id: userId, password } = result || {};
-
-    return {
-      userId,
-      password,
-    };
+    return result;
   } catch (err) {
     throw httpError(err);
   }

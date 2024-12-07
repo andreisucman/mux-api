@@ -9,19 +9,13 @@ import { db } from "init.js";
 
 type Props = {
   userId: string;
+  email: string;
 };
 
-export default async function sendConfirmationCode({ userId }: Props) {
+export default async function sendConfirmationCode({ userId, email }: Props) {
   try {
     if (!userId) throw httpError("userId is missing");
-
-    const userInfo = await doWithRetries(async () =>
-      db
-        .collection("User")
-        .findOne({ _id: new ObjectId(userId) }, { projection: { email: 1 } })
-    );
-
-    const { email } = userInfo;
+    if (!email) throw httpError("email is missing");
 
     const randomId = nanoid(5).toUpperCase();
 

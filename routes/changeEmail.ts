@@ -22,11 +22,22 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
 
     if (!status) {
       if (type === "expired") {
+        const userInfo = await doWithRetries(() =>
+          db
+            .collection("User")
+            .findOne(
+              { _id: new ObjectId(userId) },
+              { projection: { email: 1 } }
+            )
+        );
+
+        const { email } = userInfo;
+
         res.status(200).json({
-          error:
-            "This code has expired. We've just sent a new one to your email.",
+          error: `This code has expired. We've just sent a new one to ${email}.`,
         });
-        sendConfirmationCode({ userId });
+
+        sendConfirmationCode({ userId, email });
       } else {
         res.status(200).json({
           error: "Invalid confirmation code",
@@ -43,6 +54,8 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
           { $set: { email: newEmail, emailVerified: false } }
         )
     );
+
+    sendConfirmationCode({ userId, email: newEmail });
 
     res.status(200).json({ message: `Email changed to ${newEmail}.` });
   } catch (err) {

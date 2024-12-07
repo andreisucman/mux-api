@@ -7,18 +7,16 @@ import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { db, stripe } from "init.js";
 import { daysFrom } from "helpers/utils.js";
-import getUserData from "functions/getUserData.js";
-import getGoogleToken from "functions/getGoogleToken.js";
 import doWithRetries from "helpers/doWithRetries.js";
+import createUser from "@/functions/createUser.js";
 import checkIfUserExists from "functions/checkIfUserExists.js";
-import registerUser from "functions/registerUser.js";
 import getUsersCountry from "functions/getUsersCountry.js";
 import { CustomRequest, UserType } from "types.js";
 import sendConfirmationCode from "@/functions/sendConfirmationCode.js";
 import { getHashedPassword } from "helpers/utils.js";
 import createCsrf from "@/functions/createCsrf.js";
-import getOauthRedirectUri from "@/helpers/getOauthRedirectUri.js";
-import httpError from "@/helpers/httpError.js";
+import { defaultUser } from "@/data/defaultUser.js";
+import getOAuthAuthenticationData from "@/functions/getOAuthAuthenticationData.js";
 
 const route = Router();
 
@@ -28,103 +26,86 @@ route.post(
     try {
       let { code, email, password, state, localUserId, timeZone } = req.body;
 
-      const parsedState = state
-        ? JSON.parse(decodeURIComponent(state as string))
-        : {};
-
-      const { redirectPath } = parsedState;
-
-      const redirectUrl = getOauthRedirectUri(redirectPath);
-
-      let authData = null;
-      let auth = code ? "g" : "e";
+      let userData = null;
       let accessToken = crypto.randomBytes(32).toString("hex");
+      let finalEmail = email;
+      let finalPassword;
+      const auth = code ? "g" : "e";
 
-      if (auth === "g") {
-        authData = await getGoogleToken(code, redirectUrl);
+      const { country, city } = await getUsersCountry(req);
 
-        if (!authData) {
-          throw httpError("Failed to get Google token");
+      const checkUserPresenceFilter: { [key: string]: any } = { auth };
+
+      if (finalEmail) checkUserPresenceFilter.email = finalEmail;
+      if (localUserId) checkUserPresenceFilter._id = new ObjectId(localUserId);
+
+      if (code) {
+        const { email, accessToken: googleAccessToken } =
+          await getOAuthAuthenticationData({
+            code,
+            state,
+          });
+
+        if (email) {
+          checkUserPresenceFilter.email = email;
         }
-
-        email = authData.email;
-        accessToken = authData.accessToken;
+        accessToken = googleAccessToken;
+        finalEmail = email;
       }
 
-      /* When localUserId is provided it means this is the 2nd step of the registration, which means the data of the user already exists and only email and password need to be added */
-      let userId = localUserId;
-
-      const checkIfUserExistsResponse = await checkIfUserExists({
-        email,
-        auth,
+      const userInfo = await checkIfUserExists({
+        filter: checkUserPresenceFilter,
       });
 
-      if (!userId) {
-        userId = checkIfUserExistsResponse.userId;
-      }
+      if (userInfo) {
+        const { _id: userId, email, password: storedPassword } = userInfo;
 
-      if (!userId) {
-        const { country, city } = await getUsersCountry(req);
-
-        const hashedPassword = await getHashedPassword(password);
-
-        /* if the account doesn't exist and this is the initial call for registration */
-        const payload = {
-          email,
-          auth,
-          timeZone,
-          country,
-          city,
-          emailVerified: auth === "g",
-          password: hashedPassword,
-        };
-
-        const registerResponse = await doWithRetries(
-          async () => await registerUser(payload)
-        );
-
-        userId = registerResponse._id;
-
-        if (!payload.emailVerified) {
-          await sendConfirmationCode({ userId });
-        }
-      } else if (localUserId) {
-        /* if the account exists, but registration is not finished, this is a second call to finish registration */
         if (email) {
-          const hashedPassword = await getHashedPassword(password);
-          const stripeUser = await stripe.customers.create({ email });
-
-          const payload: Partial<UserType> = {
-            email,
-            timeZone,
-            stripeUserId: stripeUser.id,
-            emailVerified: auth === "g",
-            password: hashedPassword,
-          };
-
-          await doWithRetries(async () =>
-            db.collection("User").updateOne(
-              { _id: new ObjectId(userId) },
-              {
-                $set: payload,
-              }
-            )
-          );
-
-          if (!payload.emailVerified) {
-            await sendConfirmationCode({ userId });
-          }
-        }
-      } else {
-        // login drops here
-        if (password) {
-          const storedPassword = checkIfUserExistsResponse.password;
-          const passwordsMatch = await bcrypt.compare(password, storedPassword);
-
-          if (!passwordsMatch) {
-            res.status(200).json({ error: "Password is incorrect." });
+          const loginSuccess = await bcrypt.compare(password, storedPassword);
+          if (!loginSuccess) {
+            res.status(200).json({ error: "The password is incorrect." });
             return;
           }
+        } else {
+          const { stripeUserId } = userInfo;
+
+          const updatePayload: Partial<UserType> = { email };
+
+          if (!stripeUserId) {
+            const stripeUser = await stripe.customers.create({ email });
+            updatePayload.stripeUserId = stripeUser.id;
+          }
+
+          await doWithRetries(() =>
+            db
+              .collection("User")
+              .updateOne({ _id: new ObjectId(userId) }, { $set: updatePayload })
+          );
+        }
+      } else {
+        if (auth === "e") {
+          if (!finalPassword) {
+            res.status(200).json({ error: "You need to provide a password." });
+            return;
+          }
+          finalPassword = await getHashedPassword(password);
+        }
+
+        const stripeUser = await stripe.customers.create({ email });
+
+        userData = await createUser({
+          ...defaultUser,
+          _id: localUserId,
+          password: finalPassword,
+          email,
+          city,
+          country,
+          timeZone,
+          stripeUserId: stripeUser.id,
+        });
+
+        if (auth === "e") {
+          await sendConfirmationCode({ userId: localUserId, email });
         }
       }
 
@@ -133,14 +114,12 @@ route.post(
       await doWithRetries(
         async () =>
           await db.collection("Session").insertOne({
-            userId: new ObjectId(userId),
+            userId: new ObjectId(userData._id),
             createdAt: new Date(),
             accessToken: accessToken,
             expiresOn: sessionExpiry,
           })
       );
-
-      const userData = await getUserData({ userId });
 
       const { csrfToken, csrfSecret } = createCsrf();
 
@@ -174,7 +153,7 @@ route.post(
         sameSite: "none",
       });
 
-      res.status(200).json({ message: userData });
+      res.json({ message: userData });
     } catch (err) {
       next(err);
     }
