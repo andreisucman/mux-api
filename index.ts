@@ -75,7 +75,8 @@ import logCapturer from "middleware/logCapturer.js";
 import errorHandler from "middleware/errorHandler.js";
 import sendPasswordResetEmail from "@/routes/sendPasswordResetEmail.js";
 import setPassword from "routes/setPassword.js";
-import changeEmail from "routes/changeEmail.js";
+import changeEmailStepOne from "routes/changeEmailStepOne.js";
+import changeEmailStepTwo from "routes/changeEmailStepTwo.js";
 import verifyEmail from "routes/verifyEmail.js";
 import sendConfirmationCode from "routes/sendConfirmationCode.js";
 import getAllProofRecords from "routes/getAllProofRecords.js";
@@ -135,7 +136,8 @@ app.use("/authenticate", authenticate);
 
 app.use((req, res, next) => checkAccess(req, res, next, false));
 app.use("/verifyEmail", verifyEmail);
-app.use("/changeEmail", changeEmail);
+app.use("/changeEmailStepOne", changeEmailStepOne);
+app.use("/changeEmailStepTwo", changeEmailStepTwo);
 
 app.use("/startTheFlow", startTheFlow);
 app.use("/analyzeFood", analyzeFood);

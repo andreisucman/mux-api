@@ -36,8 +36,7 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
         sendConfirmationCode({ userId, email });
 
         res.status(200).json({
-          error:
-            "This code has expired. We've just sent a new one to your email.",
+          error: `This code has expired. We've just sent a new one to ${email}.`,
         });
       } else {
         res.status(200).json({

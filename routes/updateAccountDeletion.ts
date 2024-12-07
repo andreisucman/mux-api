@@ -24,7 +24,6 @@ route.post(
         const deleteOn = daysFrom({ days: 30 });
         payload.deleteOn = deleteOn;
       }
-      payload.club = { isActive: isActivate };
 
       await doWithRetries(async () =>
         db
