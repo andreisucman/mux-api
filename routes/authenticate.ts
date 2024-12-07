@@ -24,12 +24,11 @@ route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
-      let { code, email, password, state, localUserId, timeZone } = req.body;
+      let { code, timeZone, localUserId, state, email, password } = req.body;
 
       let userData = null;
       let accessToken = crypto.randomBytes(32).toString("hex");
       let finalEmail = email;
-      let finalPassword;
       const auth = code ? "g" : "e";
 
       const { country, city } = await getUsersCountry(req);
@@ -58,6 +57,8 @@ route.post(
       });
 
       if (userInfo) {
+        userData = userInfo;
+
         const { _id: userId, email, password: storedPassword } = userInfo;
 
         if (email) {
@@ -84,28 +85,30 @@ route.post(
         }
       } else {
         if (auth === "e") {
-          if (!finalPassword) {
+          if (!password) {
             res.status(200).json({ error: "You need to provide a password." });
             return;
           }
-          finalPassword = await getHashedPassword(password);
         }
+
+        const hashedPassword = await getHashedPassword(password);
 
         const stripeUser = await stripe.customers.create({ email });
 
         userData = await createUser({
           ...defaultUser,
           _id: localUserId,
-          password: finalPassword,
+          password: hashedPassword,
           email,
           city,
+          auth,
           country,
           timeZone,
           stripeUserId: stripeUser.id,
         });
 
         if (auth === "e") {
-          await sendConfirmationCode({ userId: localUserId, email });
+          await sendConfirmationCode({ userId: String(userData._id), email });
         }
       }
 

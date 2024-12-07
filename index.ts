@@ -129,13 +129,14 @@ app.use("/metrics", metrics);
 
 app.use("/sendPasswordResetEmail", sendPasswordResetEmail);
 app.use("/setPassword", setPassword);
-app.use("/changeEmail", changeEmail);
-app.use("/verifyEmail", verifyEmail);
 app.use("/authorize", authorize);
 app.use("/authenticate", authenticate);
 
 app.use((req, res, next) => checkAccess(req, res, next, false));
 app.use("/getBeforeAfters", getBeforeAfters);
+app.use("/verifyEmail", verifyEmail);
+app.use("/changeEmail", changeEmail);
+
 app.use("/startTheFlow", startTheFlow);
 app.use("/analyzeFood", analyzeFood);
 app.use("/checkAnalysisCompletion", checkAnalysisCompletion);

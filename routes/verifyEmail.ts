@@ -18,7 +18,7 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
   }
 
   try {
-    const { status, userId, type } = await validateCode(code, false);
+    const { status, userId, type } = await validateCode(code);
 
     if (!status) {
       if (type === "expired") {
@@ -51,7 +51,7 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
       db
         .collection("User")
         .updateOne(
-          { id: new ObjectId(userId) },
+          { _id: new ObjectId(userId) },
           { $set: { emailVerified: status } }
         )
     );

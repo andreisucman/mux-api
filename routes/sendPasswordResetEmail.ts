@@ -31,11 +31,8 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
       return;
     }
 
-    const uniqueId = crypto.randomBytes(32).toString("hex");
-    const accessToken = crypto
-      .createHash("sha256")
-      .update(uniqueId)
-      .digest("hex");
+    const code = crypto.randomBytes(32).toString("hex");
+    const accessToken = crypto.createHash("sha256").update(code).digest("hex");
 
     const fifteenMinutesFromNow = minutesFromNow(15);
 
@@ -48,10 +45,10 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
 
     await doWithRetries(async () =>
       db
-        .collection("TemporaryAccessTokens")
+        .collection("TemporaryAccessToken")
         .updateOne(
-          { _id: new ObjectId(userId) },
-          { $set: { ...temporaryAccessDetails } },
+          { userId: new ObjectId(userId) },
+          { $set: temporaryAccessDetails },
           { upsert: true }
         )
     );

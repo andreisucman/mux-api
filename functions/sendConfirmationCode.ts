@@ -1,10 +1,11 @@
 import { ObjectId } from "mongodb";
 import fs from "fs/promises";
-import { nanoid } from "nanoid";
+import crypto from "crypto";
 import httpError from "@/helpers/httpError.js";
 import doWithRetries from "@/helpers/doWithRetries.js";
 import getEmailContent from "@/helpers/getEmailContent.js";
 import sendEmail from "functions/sendEmail.js";
+import { minutesFromNow } from "@/helpers/utils.js";
 import { db } from "init.js";
 
 type Props = {
@@ -17,14 +18,22 @@ export default async function sendConfirmationCode({ userId, email }: Props) {
     if (!userId) throw httpError("userId is missing");
     if (!email) throw httpError("email is missing");
 
-    const randomId = nanoid(5).toUpperCase();
+    const code = crypto.randomBytes(5).toString("hex").toUpperCase();
+
+    const fifteenMinutesFromNow = minutesFromNow(15);
+
+    const temporaryAccessDetails = {
+      code,
+      updatedAt: new Date(),
+      expiresOn: fifteenMinutesFromNow,
+    };
 
     await doWithRetries(async () =>
       db
-        .collection("ConfirmationCode")
+        .collection("TemporaryAccessToken")
         .updateOne(
-          { _id: new ObjectId(userId) },
-          { $set: { code: randomId, updatedAt: new Date() } },
+          { userId: new ObjectId(userId) },
+          { $set: temporaryAccessDetails },
           { upsert: true }
         )
     );
@@ -35,7 +44,7 @@ export default async function sendConfirmationCode({ userId, email }: Props) {
     });
 
     let emailBody = await fs.readFile(path, "utf8");
-    emailBody = emailBody.replace("{{code}}", randomId);
+    emailBody = emailBody.replace("{{code}}", code);
 
     await sendEmail({
       to: email,

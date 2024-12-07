@@ -17,8 +17,8 @@ export default function getEmailContent({ accessToken, emailType }: Props) {
         title: "Muxout - Reset password",
         bodyPath: path.join(__dirname, "data/emails/passwordReset.html"),
         signedUrl: `${
-          process.env.SERVER_URL
-        }/setPassword?accessToken=${encodeURIComponent(accessToken)}`,
+          process.env.CLIENT_URL
+        }/set-password?accessToken=${encodeURIComponent(accessToken)}`,
       },
       confirmationCode: {
         title: "Muxout - Confirmation code",

@@ -23,18 +23,17 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
   }
 
   try {
-    const { status, userId, type } = await validateCode(accessToken, true);
+    const { status, userId, type } = await validateCode(accessToken);
+
+    console.log("setPassword { status, userId, type }", {
+      status,
+      userId,
+      type,
+    });
 
     if (!status) {
-      if (type === "invalid") {
-        res.redirect(`${process.env.CLIENT_URL}/invalid/?type=password`);
-        return;
-      }
-
-      if (type === "expired") {
-        res.redirect(`${process.env.CLIENT_URL}/expired/?type=password`);
-        return;
-      }
+      res.status(200).json({ error: type });
+      return;
     }
 
     const hashedPassword = password
@@ -48,7 +47,7 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
     await doWithRetries(async () =>
       db
         .collection("User")
-        .updateOne({ id: new ObjectId(userId) }, updateObject)
+        .updateOne({ _id: new ObjectId(userId) }, updateObject)
     );
 
     res.status(200).json({ message: "Password changed" });

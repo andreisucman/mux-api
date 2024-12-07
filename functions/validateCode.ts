@@ -1,14 +1,9 @@
-import crypto from "crypto";
 import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
 
-export default async function validateCode(code: string, isHashed: boolean) {
+export default async function validateCode(code: string) {
   try {
-    if (isHashed) {
-      code = crypto.createHash("sha256").update(code).digest("hex");
-    }
-
     const userInfo = await doWithRetries(
       async () =>
         await db.collection("TemporaryAccessToken").findOne(
