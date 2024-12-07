@@ -56,7 +56,7 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
         )
     );
 
-    res.status(200).json({ message: "Email confirmed" });
+    res.status(200).json({ message: status });
   } catch (err) {
     next(err);
   }

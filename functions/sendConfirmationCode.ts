@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb";
 import fs from "fs/promises";
-import crypto from "crypto";
+import { customAlphabet } from "nanoid";
 import httpError from "@/helpers/httpError.js";
 import doWithRetries from "@/helpers/doWithRetries.js";
 import getEmailContent from "@/helpers/getEmailContent.js";
@@ -10,15 +10,27 @@ import { db } from "init.js";
 
 type Props = {
   userId: string;
-  email: string;
+  email?: string;
 };
 
 export default async function sendConfirmationCode({ userId, email }: Props) {
   try {
     if (!userId) throw httpError("userId is missing");
-    if (!email) throw httpError("email is missing");
 
-    const code = crypto.randomBytes(5).toString("hex").toUpperCase();
+    if (!email) {
+      const userInfo = await doWithRetries(() =>
+        db
+          .collection("User")
+          .findOne({ _id: new ObjectId(userId) }, { projection: { email: 1 } })
+      );
+
+      if (!userInfo) throw httpError("User not found");
+
+      email = userInfo.email;
+    }
+
+    const nanoid = customAlphabet("qwertyuiopasdfghjklzxcvbnm1234567890", 5);
+    const code = nanoid().toUpperCase();
 
     const fifteenMinutesFromNow = minutesFromNow(15);
 

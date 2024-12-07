@@ -25,12 +25,6 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { status, userId, type } = await validateCode(accessToken);
 
-    console.log("setPassword { status, userId, type }", {
-      status,
-      userId,
-      type,
-    });
-
     if (!status) {
       res.status(200).json({ error: type });
       return;

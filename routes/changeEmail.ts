@@ -50,7 +50,7 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
       db
         .collection("User")
         .updateOne(
-          { id: new ObjectId(userId) },
+          { _id: new ObjectId(userId) },
           { $set: { email: newEmail, emailVerified: false } }
         )
     );

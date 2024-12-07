@@ -77,6 +77,7 @@ import sendPasswordResetEmail from "@/routes/sendPasswordResetEmail.js";
 import setPassword from "routes/setPassword.js";
 import changeEmail from "routes/changeEmail.js";
 import verifyEmail from "routes/verifyEmail.js";
+import sendConfirmationCode from "routes/sendConfirmationCode.js";
 import getAllProofRecords from "routes/getAllProofRecords.js";
 
 import { client } from "init.js";
@@ -133,7 +134,6 @@ app.use("/authorize", authorize);
 app.use("/authenticate", authenticate);
 
 app.use((req, res, next) => checkAccess(req, res, next, false));
-app.use("/getBeforeAfters", getBeforeAfters);
 app.use("/verifyEmail", verifyEmail);
 app.use("/changeEmail", changeEmail);
 
@@ -163,6 +163,7 @@ app.use("/getAllProofRecords", getAllProofRecords);
 
 // protected routes
 app.use((req, res, next) => checkAccess(req, res, next, true));
+app.use("/sendConfirmationCode", sendConfirmationCode);
 app.use("/addTaskToRoutine", addTaskToRoutine);
 app.use("/checkVideoBlurStatus", checkVideoBlurStatus);
 app.use("/createTaskFromDescription", createTaskFromDescription);
