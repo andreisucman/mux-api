@@ -14,6 +14,8 @@ async function handleStripeWebhook(event: any) {
   const customerId = object.customer;
   const subscriptionId = object.subscription;
 
+  console.log("line 17, object", object);
+
   if (!customerId) return;
 
   const userInfo = await doWithRetries(async () =>
@@ -25,8 +27,9 @@ async function handleStripeWebhook(event: any) {
       )
   );
 
-  if (!userInfo)
-    throw httpError(`User with customerId ${customerId} not found.`);
+  console.log("line 30, userInfo", userInfo);
+
+  if (!userInfo) return;
 
   const plans = await doWithRetries(async () =>
     db.collection("Plan").find({}).toArray()
@@ -37,6 +40,8 @@ async function handleStripeWebhook(event: any) {
   if (type === "invoice.payment_succeeded") {
     const paymentPrices = object.lines.data.map((item: any) => item.price);
     const paymentPriceIds = paymentPrices.map((price: any) => price.id);
+
+    console.log("line 45, paymentPriceIds", paymentPriceIds);
 
     if (!subscriptionId || !customerId)
       throw httpError(
@@ -51,6 +56,8 @@ async function handleStripeWebhook(event: any) {
     const relatedPlans = plans.filter((plan) =>
       paymentPriceIds.includes(plan.priceId)
     );
+
+    console.log("line 61, relatedPlans", relatedPlans);
 
     if (relatedPlans.length === 0)
       throw httpError(
@@ -96,6 +103,11 @@ async function handleStripeWebhook(event: any) {
         return data;
       })
       .filter(Boolean);
+
+    console.log(
+      "line 108, subscriptionsToIncreaseWithDates",
+      subscriptionsToIncreaseWithDates
+    );
 
     const toUpdate = subscriptionsToIncreaseWithDates.map((item) => ({
       updateOne: {

@@ -34,7 +34,7 @@ route.post(
           individual: {
             email,
           },
-          country: country.toUpperCase(),
+          country: country?.toUpperCase(),
           capabilities: {
             transfers: { requested: true },
             card_payments: { requested: true },
@@ -52,7 +52,7 @@ route.post(
         const globalCountries = ["US", "GB", "CA", "AU"];
 
         /* if not in the global countries list */
-        if (!globalCountries.includes(country.toUpperCase())) {
+        if (country && !globalCountries.includes(country.toUpperCase())) {
           params.tos_acceptance = { service_agreement: "recipient" };
           delete params.capabilities.card_payments;
         }

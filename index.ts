@@ -139,6 +139,7 @@ app.use("/authenticate", authenticate);
 app.use("/getAllSolutions", getAllSolutions);
 
 app.use((req, res, next) => checkAccess(req, res, next, false));
+app.use("/getTrackedRoutines", getTrackedRoutines);
 app.use("/verifyEmail", verifyEmail);
 app.use("/changeEmailStepOne", changeEmailStepOne);
 app.use("/changeEmailStepTwo", changeEmailStepTwo);
@@ -192,7 +193,6 @@ app.use("/findProducts", findProducts);
 app.use("/getCalendarTasks", getCalendarTasks);
 app.use("/getTaskProducts", getTaskProducts);
 app.use("/getTasksProducts", getTasksProducts);
-app.use("/getTrackedRoutines", getTrackedRoutines);
 app.use("/getUserData", getUserData);
 app.use("/joinClub", joinClub);
 app.use("/leaveClub", leaveClub);

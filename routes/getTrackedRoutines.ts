@@ -12,55 +12,61 @@ import httpError from "@/helpers/httpError.js";
 const route = Router();
 
 route.get(
-  "/:followingUserId?/:type?",
+  "/:followingUserId?",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { followingUserId, type } = req.params;
-    const { skip } = req.query;
+    const { followingUserId } = req.params;
+    const { skip, type } = req.query;
 
-    if (!type || !followingUserId || !ObjectId.isValid(followingUserId)) {
+    if (!type) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
 
     try {
-      await checkTrackedRBAC({
-        userId: req.userId,
-        followingUserId,
-        userProjection: { subsciptions: 1 },
-      });
+      if (followingUserId)
+        await checkTrackedRBAC({
+          userId: req.userId,
+          followingUserId,
+          userProjection: { subsciptions: 1 },
+        });
+
+      const finalId = followingUserId || req.userId;
 
       const userInfo = await doWithRetries(async () =>
         db
           .collection("User")
           .findOne(
-            { _id: new ObjectId(followingUserId) },
+            { _id: new ObjectId(finalId) },
             { projection: { subscriptions: 1 } }
           )
       );
 
-      if (!userInfo) throw httpError(`User ${followingUserId} not found`);
+      if (!userInfo) throw httpError(`User ${finalId} not found`);
 
       const { peek } = userInfo.subscriptions || {};
       const { validUntil } = peek || {};
 
-      if (!validUntil || new Date() > new Date(peek.validUntil)) {
-        res.status(200).json({
-          error: "subscription expired",
-        });
+      if (followingUserId) {
+        if (!validUntil || new Date() > new Date(peek.validUntil)) {
+          res.status(200).json({
+            error: "subscription expired",
+          });
 
-        return;
+          return;
+        }
       }
 
       const routines = await doWithRetries(async () =>
         db
           .collection("Routine")
-          .find({ userId: new ObjectId(followingUserId), type })
+          .find({ userId: new ObjectId(finalId), type })
           .sort({ createdAt: -1 })
           .skip(Number(skip) || 0)
           .limit(9)
           .toArray()
       );
 
+      console.log("routines", routines);
       res.status(200).json({
         message: routines,
       });
