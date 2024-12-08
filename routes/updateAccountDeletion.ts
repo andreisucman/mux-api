@@ -31,7 +31,7 @@ route.post(
           .updateOne({ _id: new ObjectId(req.userId) }, { $set: payload })
       );
 
-      res.status(200).json({ deleteOn: payload.deleteOn });
+      res.status(200).json({ message: payload.deleteOn });
     } catch (err) {
       next(err);
     }

@@ -40,17 +40,16 @@ route.get("/:userId?", async (req: CustomRequest, res) => {
       userId: 1,
     };
 
-    const progress = await doWithRetries(
-      async () =>
-        await db
-          .collection("Progress")
-          .find(filter, {
-            projection,
-          })
-          .sort({ createdAt: -1 })
-          .skip(Number(skip) || 0)
-          .limit(7)
-          .toArray()
+    const progress = await doWithRetries(async () =>
+      db
+        .collection("Progress")
+        .find(filter, {
+          projection,
+        })
+        .sort({ createdAt: -1 })
+        .skip(Number(skip) || 0)
+        .limit(7)
+        .toArray()
     );
 
     res.status(200).json({ message: progress });

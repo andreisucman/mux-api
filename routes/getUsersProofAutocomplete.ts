@@ -12,17 +12,20 @@ import { db } from "init.js";
 const route = Router();
 
 route.get(
-  "/:userId?",
+  "/:followingUserId?",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { userId } = req.params;
-    const { filter } = aqp(req.query);
+    const { followingUserId } = req.params;
+    const { filter, projection } = aqp(req.query);
     const { query } = filter || {};
 
-    if (userId) {
-      await checkTrackedRBAC({ followingUserId: userId, userId: req.userId });
+    if (followingUserId) {
+      await checkTrackedRBAC({
+        followingUserId: followingUserId,
+        userId: req.userId,
+      });
     }
 
-    let finalUserId = userId || req.userId;
+    let finalUserId = followingUserId || req.userId;
 
     if (!finalUserId) {
       res.status(400).json({ error: "Bad request" });
@@ -53,12 +56,7 @@ route.get(
           },
         },
         {
-          $project: {
-            taskName: 1,
-            concern: 1,
-            type: 1,
-            part: 1,
-          },
+          $project: projection,
         }
       );
 

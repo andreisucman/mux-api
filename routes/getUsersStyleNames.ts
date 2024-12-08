@@ -14,6 +14,7 @@ route.get(
   "/:followingUserId?",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { followingUserId } = req.params;
+    const { type } = req.query;
 
     let userId = followingUserId || req.userId;
 
@@ -24,34 +25,39 @@ route.get(
       });
     }
 
-    try {
-      const response =
-        (await doWithRetries(async () =>
-          db
-            .collection("StyleVote")
-            .aggregate([
-              {
-                $match: {
-                  userId: new ObjectId(userId),
-                },
-              },
-              {
-                $group: {
-                  _id: null,
-                  styleNames: { $addToSet: "$styleName" },
-                },
-              },
-              {
-                $project: {
-                  styleNames: 1,
-                  _id: 0,
-                },
-              },
-            ])
-            .next()
-        )) || {};
+    const match: { [key: string]: any } = {
+      $match: {
+        userId: new ObjectId(userId),
+      },
+    };
 
-      res.status(200).json({ message: response.styleNames || [] });
+    if (type) {
+      match.type = type;
+    }
+
+    try {
+      const response = await doWithRetries(async () =>
+        db
+          .collection("StyleAnalysis")
+          .aggregate([
+            match,
+            {
+              $group: {
+                _id: null,
+                styleName: { $addToSet: "$styleName" },
+              },
+            },
+            {
+              $project: {
+                styleName: 1,
+                _id: 0,
+              },
+            },
+          ])
+          .next()
+      );
+
+      res.status(200).json({ message: response });
     } catch (err) {
       next(err);
     }

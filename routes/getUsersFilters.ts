@@ -1,0 +1,82 @@
+import * as dotenv from "dotenv";
+dotenv.config();
+
+import { ObjectId } from "mongodb";
+import aqp from "api-query-params";
+
+import { Router, Response, NextFunction } from "express";
+import doWithRetries from "helpers/doWithRetries.js";
+import checkTrackedRBAC from "functions/checkTrackedRBAC.js";
+import { CustomRequest } from "types.js";
+import { db } from "init.js";
+
+const route = Router();
+
+const collectionMap: { [key: string]: string } = {
+  progress: "Progress",
+  style: "StyleAnalysis",
+  proof: "Proof",
+};
+
+route.get(
+  "/:followingUserId?",
+  async (req: CustomRequest, res: Response, next: NextFunction) => {
+    const { followingUserId } = req.params;
+    const { filter, projection } = aqp(req.query);
+    const { collection } = filter;
+
+    if (!collection) {
+      res.status(400).json({ error: "Bad request" });
+      return;
+    }
+
+    try {
+      let userId = followingUserId || req.userId;
+
+      if (followingUserId) {
+        await checkTrackedRBAC({
+          followingUserId,
+          userId: req.userId,
+        });
+      }
+
+      const fields = Object.keys(projection);
+
+      const groupParams = fields.reduce((a: { [key: string]: any }, c) => {
+        a[c] = { $addToSet: `$${c}` };
+        return a;
+      }, {});
+
+      const filters = await doWithRetries(async () =>
+        db
+          .collection(collectionMap[collection])
+          .aggregate([
+            {
+              $match: {
+                userId: new ObjectId(userId),
+              },
+            },
+            {
+              $group: {
+                _id: null,
+                ...groupParams,
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                ...projection,
+              },
+            },
+          ])
+          .next()
+      );
+
+      res.status(200).json({ message: filters });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+export default route;

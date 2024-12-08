@@ -80,6 +80,9 @@ import changeEmailStepTwo from "routes/changeEmailStepTwo.js";
 import verifyEmail from "routes/verifyEmail.js";
 import sendConfirmationCode from "routes/sendConfirmationCode.js";
 import getAllProofRecords from "routes/getAllProofRecords.js";
+import getUsersProgressRecords from "routes/getUsersProgressRecords.js";
+import getAllSolutions from "routes/getAllSolutions.js";
+import getUsersFilters from "@/routes/getUsersFilters.js";
 
 import { client } from "init.js";
 
@@ -133,6 +136,7 @@ app.use("/sendPasswordResetEmail", sendPasswordResetEmail);
 app.use("/setPassword", setPassword);
 app.use("/authorize", authorize);
 app.use("/authenticate", authenticate);
+app.use("/getAllSolutions", getAllSolutions);
 
 app.use((req, res, next) => checkAccess(req, res, next, false));
 app.use("/verifyEmail", verifyEmail);
@@ -165,6 +169,8 @@ app.use("/getAllProofRecords", getAllProofRecords);
 
 // protected routes
 app.use((req, res, next) => checkAccess(req, res, next, true));
+app.use("/getUsersFilters", getUsersFilters);
+app.use("/getUsersProgressRecords", getUsersProgressRecords);
 app.use("/sendConfirmationCode", sendConfirmationCode);
 app.use("/addTaskToRoutine", addTaskToRoutine);
 app.use("/checkVideoBlurStatus", checkVideoBlurStatus);
