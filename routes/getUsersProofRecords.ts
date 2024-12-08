@@ -19,6 +19,13 @@ route.get(
     const { routineId, taskKey, concern, type, part, query, ...otherFilters } =
       filter || {};
 
+    const finalUserId = followingUserId || req.userId;
+
+    if (!ObjectId.isValid(finalUserId)) {
+      res.status(400).json({ error: "Bad request" });
+      return;
+    }
+
     try {
       if (followingUserId) {
         await checkTrackedRBAC({ followingUserId, userId: req.userId });

@@ -11,6 +11,13 @@ route.get("/:userId?", async (req: CustomRequest, res, next: NextFunction) => {
   const { type, styleName, skip } = req.query;
   const { followingUserId } = req.params;
 
+  const finalUserId = followingUserId || req.userId;
+
+  if (!ObjectId.isValid(finalUserId)) {
+    res.status(400).json({ error: "Bad request" });
+    return;
+  }
+
   try {
     if (followingUserId)
       await checkTrackedRBAC({
@@ -18,10 +25,8 @@ route.get("/:userId?", async (req: CustomRequest, res, next: NextFunction) => {
         followingUserId,
       });
 
-    const userId = new ObjectId(followingUserId || req.userId);
-
     const filter: { [key: string]: any } = {
-      userId,
+      userId: new ObjectId(finalUserId),
     };
 
     if (type) filter.type = type;

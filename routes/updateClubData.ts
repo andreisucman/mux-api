@@ -52,8 +52,8 @@ route.post(
       }
 
       if (avatar) {
-        payload["club.avatar"] = name;
-        payload.nextAvatarUpdateAt = daysFrom({ days: 7 });
+        payload["club.avatar"] = avatar;
+        payload["club.nextAvatarUpdateAt"] = daysFrom({ days: 7 });
       }
 
       if (intro) payload["club.bio.intro"] = intro;

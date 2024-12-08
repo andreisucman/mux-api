@@ -18,21 +18,26 @@ route.get(
     const { filter, projection } = aqp(req.query);
     const { query } = filter || {};
 
-    if (followingUserId) {
-      await checkTrackedRBAC({
-        followingUserId: followingUserId,
-        userId: req.userId,
-      });
-    }
-
     let finalUserId = followingUserId || req.userId;
 
-    if (!finalUserId) {
+    if (!ObjectId.isValid(finalUserId)) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
 
     try {
+      if (followingUserId) {
+        await checkTrackedRBAC({
+          followingUserId,
+          userId: req.userId,
+        });
+      }
+
+      if (!finalUserId) {
+        res.status(400).json({ error: "Bad request" });
+        return;
+      }
+
       const pipeline: any = [];
 
       let match: { [key: string]: any } = {};

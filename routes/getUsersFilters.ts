@@ -25,14 +25,14 @@ route.get(
     const { filter, projection } = aqp(req.query);
     const { collection } = filter;
 
-    if (!collection) {
+    let finalUserId = followingUserId || req.userId;
+
+    if (!collection || !ObjectId.isValid(finalUserId)) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
 
     try {
-      let userId = followingUserId || req.userId;
-
       if (followingUserId) {
         await checkTrackedRBAC({
           followingUserId,
@@ -53,7 +53,7 @@ route.get(
           .aggregate([
             {
               $match: {
-                userId: new ObjectId(userId),
+                userId: new ObjectId(finalUserId),
               },
             },
             {

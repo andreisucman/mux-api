@@ -8,19 +8,26 @@ import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
-route.get("/:userId?", async (req: CustomRequest, res) => {
+route.get("/:followingUserId?", async (req: CustomRequest, res) => {
   const { type, part, skip } = req.query;
-  const { userId } = req.params;
+  const { followingUserId } = req.params;
+
+  const finalUserId = followingUserId || req.userId;
+
+  if (!ObjectId.isValid(finalUserId)) {
+    res.status(400).json({ error: "Bad request" });
+    return;
+  }
 
   try {
-    if (userId)
+    if (followingUserId)
       await checkTrackedRBAC({
         userId: req.userId,
-        followingUserId: userId,
+        followingUserId,
       });
 
     const filter: { [key: string]: any } = {
-      userId: new ObjectId(userId || req.userId),
+      userId: new ObjectId(finalUserId),
     };
 
     if (type) filter.type = type;

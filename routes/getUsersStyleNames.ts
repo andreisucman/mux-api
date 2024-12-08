@@ -16,26 +16,31 @@ route.get(
     const { followingUserId } = req.params;
     const { type } = req.query;
 
-    let userId = followingUserId || req.userId;
+    let finalUserId = followingUserId || req.userId;
 
-    if (followingUserId) {
-      await checkTrackedRBAC({
-        followingUserId,
-        userId: req.userId,
-      });
-    }
-
-    const match: { [key: string]: any } = {
-      $match: {
-        userId: new ObjectId(userId),
-      },
-    };
-
-    if (type) {
-      match.type = type;
+    if (!ObjectId.isValid(finalUserId)) {
+      res.status(400).json({ error: "Bad request" });
+      return;
     }
 
     try {
+      if (followingUserId) {
+        await checkTrackedRBAC({
+          followingUserId,
+          userId: req.userId,
+        });
+      }
+
+      const match: { [key: string]: any } = {
+        $match: {
+          userId: new ObjectId(finalUserId),
+        },
+      };
+
+      if (type) {
+        match.type = type;
+      }
+
       const response = await doWithRetries(async () =>
         db
           .collection("StyleAnalysis")

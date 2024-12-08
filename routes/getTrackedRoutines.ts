@@ -27,7 +27,6 @@ route.get(
         await checkTrackedRBAC({
           userId: req.userId,
           followingUserId,
-          userProjection: { subsciptions: 1 },
         });
 
       const finalId = followingUserId || req.userId;
