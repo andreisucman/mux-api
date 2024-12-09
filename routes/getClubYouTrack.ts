@@ -4,9 +4,8 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import { GetClubYouTrackUserType } from "types/getClubYouTrackTypes.js";
-import doWithRetries from "helpers/doWithRetries.js";
-import { CustomRequest } from "types.js";
-import { db } from "init.js";
+import { ClubBioType, CustomRequest } from "types.js";
+import checkTrackedRBAC from "@/functions/checkTrackedRBAC.js";
 
 const route = Router();
 
@@ -26,28 +25,47 @@ route.get(
         "club.name": 1,
         "club.privacy": 1,
         "club.avatar": 1,
+        "club.bio": 1,
         latestScores: 1,
         latestScoresDifference: 1,
       };
 
-      if (req.userId) {
-        projection["club.bio"] = 1;
-      } else {
-        projection["club.bio.intro"] = 1;
-      }
+      let userInfo;
 
-      const userInfo = (await doWithRetries(async () =>
-        db.collection("User").findOne(
-          { _id: new ObjectId(followingUserId) },
-          {
-            projection,
-          }
-        )
-      )) as unknown as GetClubYouTrackUserType;
+      if (followingUserId) {
+        const rbacResponse = await checkTrackedRBAC({
+          followingUserId,
+          userId: req.userId,
+          targetProjection: projection,
+          throwOnError: false,
+        });
+
+        userInfo = rbacResponse.targetUserInfo;
+
+        if (!rbacResponse.isFollowing) {
+          const newBio = Object.keys(userInfo.club.bio).reduce(
+            (a: ClubBioType, c) => {
+              if (c !== "intro") {
+                if (c === "questions") {
+                  a[c] = [];
+                } else {
+                  a[c as "intro"] = "";
+                }
+              }
+              return a;
+            },
+            {} as ClubBioType
+          );
+
+          userInfo.club.bio = newBio;
+        }
+      }
 
       if (!userInfo) throw new Error(`User ${followingUserId} not found`);
 
-      const { _id, club, latestScores, latestScoresDifference } = userInfo;
+      const { _id, club, latestScores, latestScoresDifference } =
+        userInfo as GetClubYouTrackUserType;
+
       const { name, avatar, bio, privacy } = club;
 
       const result: { [key: string]: any } = {

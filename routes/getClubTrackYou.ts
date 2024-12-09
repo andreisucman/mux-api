@@ -21,7 +21,7 @@ route.get(
             { "club.followingUserId": new ObjectId(req.userId) },
             {
               projection: {
-                "club.intro": 1,
+                "club.bio.intro": 1,
                 "club.name": 1,
                 "club.privacy": 1,
                 "club.avatar": 1,

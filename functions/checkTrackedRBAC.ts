@@ -7,17 +7,26 @@ import httpError from "@/helpers/httpError.js";
 type Props = {
   userId: string;
   followingUserId: string;
+  throwOnError?: boolean;
   targetProjection?: { [key: string]: any };
   userProjection?: { [key: string]: any };
 };
 
 export default async function checkTrackedRBAC({
   userId,
+  throwOnError = true,
   followingUserId,
   targetProjection,
   userProjection,
 }: Props) {
   try {
+    const result = {
+      inClub: true,
+      isFollowing: true,
+      userInfo: null as Partial<UserType>,
+      targetUserInfo: null as Partial<UserType>,
+    };
+
     const targetFilter = {
       _id: new ObjectId(followingUserId),
       club: { $exists: true },
@@ -34,10 +43,16 @@ export default async function checkTrackedRBAC({
       db.collection("User").findOne(targetFilter, targetOptions)
     );
 
-    if (!targetUserInfo)
-      throw httpError(
-        `User ${userId} is trying to access user ${followingUserId} who is not in the club.`
-      );
+    if (!targetUserInfo) {
+      if (throwOnError) {
+        throw httpError(
+          `User ${userId} is trying to access user ${followingUserId} who is not in the club.`
+        );
+      }
+      result.inClub = false;
+    }
+
+    result.targetUserInfo = targetUserInfo;
 
     const userFilter = { _id: new ObjectId(userId) };
     const userOptions = { projection: { club: 1 } };
@@ -48,20 +63,24 @@ export default async function checkTrackedRBAC({
         ...userProjection,
       };
 
-    const userInfo = await doWithRetries(async () =>
+    result.userInfo = await doWithRetries(async () =>
       db.collection("User").findOne(userFilter, userOptions)
     );
 
-    const { club } = (userInfo as unknown as Partial<UserType>) || {};
+    const { club } = (result.userInfo as unknown as Partial<UserType>) || {};
 
     const { followingUserId: clubFollowingUserId } = club || {};
 
-    if (followingUserId !== clubFollowingUserId)
-      throw httpError(
-        `User ${userId} is trying to access user ${followingUserId} who is not their following.`
-      );
+    if (followingUserId !== clubFollowingUserId) {
+      if (throwOnError) {
+        throw httpError(
+          `User ${userId} is trying to access user ${followingUserId} who is not their following.`
+        );
+      }
+      result.isFollowing = false;
+    }
 
-    return { userInfo, targetUserInfo };
+    return result;
   } catch (err) {
     throw httpError(err);
   }

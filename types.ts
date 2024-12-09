@@ -166,16 +166,19 @@ export type PrivacyType = {
   parts: { name: string; value: boolean }[];
 };
 
+export type ClubBioType = {
+  intro: string;
+  philosophy: string;
+  style: string;
+  tips: string;
+  about: string;
+  questions: { asking: string; question: string }[];
+  socials: { value: string; label: string }[];
+};
+
 export type ClubDataType = {
   followingUserId: string;
-  bio: {
-    intro: string;
-    philosophy: string;
-    style: string;
-    tips: string;
-    about: string;
-    questions: { asking: string; question: string }[];
-  };
+  bio: ClubBioType;
   name: string;
   avatar: { [key: string]: any } | null;
   isActive: boolean;

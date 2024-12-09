@@ -16,6 +16,7 @@ import sendConfirmationCode from "@/functions/sendConfirmationCode.js";
 import { getHashedPassword } from "helpers/utils.js";
 import createCsrf from "@/functions/createCsrf.js";
 import { defaultUser } from "@/data/defaultUser.js";
+import getUserData from "@/functions/getUserData.js";
 import getOAuthAuthenticationData from "@/functions/getOAuthAuthenticationData.js";
 
 const route = Router();
@@ -33,11 +34,6 @@ route.post(
 
       const { country, city } = await getUsersCountry(req);
 
-      const checkUserPresenceFilter: { [key: string]: any } = { auth };
-
-      if (finalEmail) checkUserPresenceFilter.email = finalEmail;
-      if (localUserId) checkUserPresenceFilter._id = new ObjectId(localUserId);
-
       if (code) {
         const { email, accessToken: googleAccessToken } =
           await getOAuthAuthenticationData({
@@ -45,11 +41,18 @@ route.post(
             state,
           });
 
-        if (email) {
-          checkUserPresenceFilter.email = email;
-        }
         accessToken = googleAccessToken;
         finalEmail = email;
+      }
+
+      const checkUserPresenceFilter: { [key: string]: any } = { auth };
+
+      if (localUserId) {
+        checkUserPresenceFilter._id = new ObjectId(localUserId);
+      } else {
+        if (finalEmail) {
+          checkUserPresenceFilter.email = finalEmail;
+        }
       }
 
       const userInfo = await checkIfUserExists({
@@ -62,18 +65,25 @@ route.post(
         const { _id: userId, email, password: storedPassword } = userInfo;
 
         if (email) {
-          const loginSuccess = await bcrypt.compare(password, storedPassword);
-          if (!loginSuccess) {
-            res.status(200).json({ error: "The password is incorrect." });
-            return;
+          if (auth === "e") {
+            const loginSuccess = await bcrypt.compare(password, storedPassword);
+            if (!loginSuccess) {
+              res.status(200).json({ error: "The password is incorrect." });
+              return;
+            }
           }
         } else {
           const { stripeUserId } = userInfo;
 
-          const updatePayload: Partial<UserType> = { email };
+          const updatePayload: Partial<UserType> = {
+            email: finalEmail,
+            emailVerified: auth === "g",
+          };
 
           if (!stripeUserId) {
-            const stripeUser = await stripe.customers.create({ email });
+            const stripeUser = await stripe.customers.create({
+              email: finalEmail,
+            });
             updatePayload.stripeUserId = stripeUser.id;
           }
 
@@ -82,6 +92,8 @@ route.post(
               .collection("User")
               .updateOne({ _id: new ObjectId(userId) }, { $set: updatePayload })
           );
+
+          userData = await getUserData({ userId: String(userId) });
         }
       } else {
         if (auth === "e") {
@@ -93,17 +105,18 @@ route.post(
 
         const hashedPassword = await getHashedPassword(password);
 
-        const stripeUser = await stripe.customers.create({ email });
+        const stripeUser = await stripe.customers.create({ email: finalEmail });
 
         userData = await createUser({
           ...defaultUser,
           _id: localUserId,
           password: hashedPassword,
-          email,
+          email: finalEmail,
           city,
           auth,
           country,
           timeZone,
+          emailVerified: auth === "g",
           stripeUserId: stripeUser.id,
         });
 

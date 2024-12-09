@@ -16,7 +16,7 @@ const route = Router();
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { name, avatar, intro, bio } = req.body;
+    const { name, avatar, intro, bio, socials } = req.body;
 
     try {
       const userInfo = await doWithRetries(async () =>
@@ -48,7 +48,7 @@ route.post(
 
       if (name) {
         payload["club.name"] = name;
-        payload.nextNameUpdateAt = daysFrom({ days: 30 });
+        payload["club.nextNameUpdateAt"] = daysFrom({ days: 30 });
       }
 
       if (avatar) {
@@ -57,6 +57,8 @@ route.post(
       }
 
       if (intro) payload["club.bio.intro"] = intro;
+
+      if (socials) payload["club.bio.socials"] = socials;
 
       if (bio) {
         for (const key in bio) {

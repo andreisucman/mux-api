@@ -5,6 +5,7 @@ import updateContentPublicity from "functions/updateContentPublicity.js";
 import cancelSubscription from "functions/cancelSubscription.js";
 import { defaultClubPrivacy } from "data/defaultClubPrivacy.js";
 import httpError from "@/helpers/httpError.js";
+import { SubscriptionType } from "@/types.js";
 
 type Props = {
   userId: string;
@@ -17,7 +18,7 @@ export default async function removeFromClub({ userId }: Props) {
     await doWithRetries(async () =>
       db
         .collection("User")
-        .updateOne({ _id: new ObjectId(userId) }, { $unset: { club: null } })
+        .updateOne({ _id: new ObjectId(userId) }, { $set: { club: null } })
     );
 
     await doWithRetries(async () =>
@@ -33,11 +34,11 @@ export default async function removeFromClub({ userId }: Props) {
     const userInfo = (await doWithRetries(async () =>
       db
         .collection("User")
-        .updateOne(
+        .findOne(
           { _id: new ObjectId(userId) },
           { projection: { subscriptions: 1 } }
         )
-    )) as any;
+    )) as unknown as { subscriptions: { peek: SubscriptionType } };
 
     if (!userInfo) throw httpError(`User: ${userId} not found.`);
 

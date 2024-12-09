@@ -3,7 +3,7 @@ import { names } from "fancy-random-names";
 import { uniqueNamesGenerator, adjectives } from "unique-names-generator";
 import { defaultClubPrivacy } from "data/defaultClubPrivacy.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import { UserType, ClubDataType } from "types.js";
+import { UserType, ClubDataType, ClubBioType } from "types.js";
 import { db } from "init.js";
 import httpError from "@/helpers/httpError.js";
 
@@ -77,13 +77,14 @@ export default async function createClubProfile({ userId, avatar }: Props) {
       },
     ];
 
-    const clubBio = {
+    const clubBio: ClubBioType = {
       intro: "I love working out and eating healthy.",
       philosophy: "",
       style: "",
       tips: "",
       about: "",
       questions: defaultQuestions,
+      socials: [],
     };
 
     const defaultClubData: ClubDataType = {
