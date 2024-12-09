@@ -88,7 +88,7 @@ export default async function createClubProfile({ userId, avatar }: Props) {
     };
 
     const defaultClubData: ClubDataType = {
-      followingUserId: "",
+      followingUserId: null,
       bio: clubBio,
       name: randomName,
       avatar,
@@ -105,6 +105,7 @@ export default async function createClubProfile({ userId, avatar }: Props) {
       privacy: defaultClubPrivacy,
       nextAvatarUpdateAt: null,
       nextNameUpdateAt: null,
+      totalFollowers: 0,
     };
 
     await doWithRetries(async () =>

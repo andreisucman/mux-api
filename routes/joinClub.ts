@@ -7,6 +7,7 @@ import { db } from "init.js";
 import { CustomRequest } from "types.js";
 import createClubProfile from "functions/createClubProfile.js";
 import doWithRetries from "helpers/doWithRetries.js";
+import formatDate from "@/helpers/formatDate.js";
 
 const route = Router();
 
@@ -20,9 +21,19 @@ route.post(
           {
             _id: new ObjectId(req.userId),
           },
-          { projection: { club: 1 } }
+          { projection: { club: 1, canRejoinClubAfter: 1 } }
         )
       );
+
+      const { canRejoinClubAfter } = userInfo;
+
+      if (new Date(canRejoinClubAfter || 0) > new Date()) {
+        const rejoinDate = formatDate({ date: canRejoinClubAfter });
+        res
+          .status(200)
+          .json({ error: `You can rejoin the Club after ${rejoinDate}.` });
+        return;
+      }
 
       let clubData = userInfo.club;
 

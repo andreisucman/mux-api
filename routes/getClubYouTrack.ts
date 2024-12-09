@@ -4,7 +4,7 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import { GetClubYouTrackUserType } from "types/getClubYouTrackTypes.js";
-import { ClubBioType, CustomRequest } from "types.js";
+import { ClubBioType, CustomRequest, UserType } from "types.js";
 import checkTrackedRBAC from "@/functions/checkTrackedRBAC.js";
 
 const route = Router();
@@ -30,7 +30,7 @@ route.get(
         latestScoresDifference: 1,
       };
 
-      let userInfo;
+      let userInfo: Partial<UserType> = {};
 
       if (followingUserId) {
         const rbacResponse = await checkTrackedRBAC({
@@ -51,6 +51,8 @@ route.get(
                 } else {
                   a[c as "intro"] = "";
                 }
+              } else {
+                a[c as "intro"] = userInfo.club.bio[c];
               }
               return a;
             },

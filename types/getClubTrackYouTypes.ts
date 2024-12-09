@@ -8,6 +8,7 @@ type TrackerClubDataType = {
 };
 
 export type TrackerType = {
+  _id: 1;
   club: TrackerClubDataType;
   latestScores: LatestScoresType;
   latestScoresDifference: LatestScoresType;

@@ -107,6 +107,7 @@ export type UserType = {
   stripeUserId: string;
   isBlocked: boolean;
   emailVerified: boolean;
+  canRejoinClubAfter: Date | null;
 };
 
 export type ToAnalyzeType = {
@@ -177,7 +178,7 @@ export type ClubBioType = {
 };
 
 export type ClubDataType = {
-  followingUserId: string;
+  followingUserId: ObjectId;
   bio: ClubBioType;
   name: string;
   avatar: { [key: string]: any } | null;
@@ -194,6 +195,7 @@ export type ClubDataType = {
   privacy: PrivacyType[];
   nextAvatarUpdateAt: Date | null;
   nextNameUpdateAt: Date | null;
+  totalFollowers: number;
 };
 
 export type LatestScoresType = {

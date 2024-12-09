@@ -14,8 +14,6 @@ async function handleStripeWebhook(event: any) {
   const customerId = object.customer;
   const subscriptionId = object.subscription;
 
-  console.log("line 17, object", object);
-
   if (!customerId) return;
 
   const userInfo = await doWithRetries(async () =>
@@ -26,8 +24,6 @@ async function handleStripeWebhook(event: any) {
         { projection: { subscriptions: 1, club: 1 } }
       )
   );
-
-  console.log("line 30, userInfo", userInfo);
 
   if (!userInfo) return;
 
@@ -40,8 +36,6 @@ async function handleStripeWebhook(event: any) {
   if (type === "invoice.payment_succeeded") {
     const paymentPrices = object.lines.data.map((item: any) => item.price);
     const paymentPriceIds = paymentPrices.map((price: any) => price.id);
-
-    console.log("line 45, paymentPriceIds", paymentPriceIds);
 
     if (!subscriptionId || !customerId)
       throw httpError(
@@ -56,8 +50,6 @@ async function handleStripeWebhook(event: any) {
     const relatedPlans = plans.filter((plan) =>
       paymentPriceIds.includes(plan.priceId)
     );
-
-    console.log("line 61, relatedPlans", relatedPlans);
 
     if (relatedPlans.length === 0)
       throw httpError(

@@ -71,7 +71,7 @@ export default async function checkTrackedRBAC({
 
     const { followingUserId: clubFollowingUserId } = club || {};
 
-    if (followingUserId !== clubFollowingUserId) {
+    if (followingUserId !== String(clubFollowingUserId)) {
       if (throwOnError) {
         throw httpError(
           `User ${userId} is trying to access user ${followingUserId} who is not their following.`

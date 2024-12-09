@@ -220,4 +220,5 @@ export const defaultUser: UserType = {
   subscriptions: defaultSubscriptions,
   toAnalyze: { head: [], body: [] },
   coachEnergy: 100000,
+  canRejoinClubAfter: null,
 };

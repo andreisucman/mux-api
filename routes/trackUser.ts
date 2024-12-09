@@ -4,7 +4,7 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import { Router, Response, NextFunction } from "express";
-import { CustomRequest, PrivacyType } from "types.js";
+import { ClubDataType, CustomRequest, PrivacyType } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import checkSubscriptionStatus from "functions/checkSubscription.js";
 import httpError from "@/helpers/httpError.js";
@@ -41,7 +41,7 @@ route.post(
         return;
       }
 
-      const userInfo = (await doWithRetries(async () =>
+      const newFollowingInfo = (await doWithRetries(async () =>
         db.collection("User").findOne(
           { _id: new ObjectId(followingUserId) },
           {
@@ -60,10 +60,10 @@ route.post(
         };
       };
 
-      if (!userInfo) httpError(`User not found - ${followingUserId}`);
+      if (!newFollowingInfo) httpError(`User not found - ${followingUserId}`);
 
-      const { club } = userInfo;
-      const { privacy, avatar, name } = club;
+      const { club: followingClub } = newFollowingInfo;
+      const { privacy, avatar, name } = followingClub;
 
       const allPartPrivacies = privacy.flatMap((typePrivacy) =>
         typePrivacy.parts.map((partPrivacy) => partPrivacy.value)
@@ -76,23 +76,63 @@ route.post(
         return;
       }
 
+      const userInfo = (await doWithRetries(async () =>
+        db.collection("User").findOne(
+          { _id: new ObjectId(req.userId) },
+          {
+            projection: {
+              "club.followingUserId": 1,
+            },
+          }
+        )
+      )) as unknown as { club: ClubDataType };
+      const { club } = userInfo || {};
+      const { followingUserId: oldFollowingUserId } = club;
+
+      const userUpdates = [
+        {
+          updateOne: {
+            filter: { _id: new ObjectId(req.userId) },
+            update: {
+              $set: { "club.followingUserId": new ObjectId(followingUserId) },
+            },
+          },
+        },
+        {
+          updateOne: {
+            filter: { _id: new ObjectId(oldFollowingUserId) },
+            update: {
+              $set: { $inc: { "club.totalFollowers": -1 } },
+            },
+          },
+        },
+        {
+          updateOne: {
+            filter: { _id: new ObjectId(followingUserId) },
+            update: {
+              $set: { $inc: { "club.totalFollowers": 1 } },
+            },
+          },
+        },
+      ];
+
       await doWithRetries(async () =>
-        db
-          .collection("User")
-          .updateOne(
-            { _id: new ObjectId(req.userId) },
-            { $set: { "club.followingUserId": followingUserId } }
-          )
+        db.collection("User").bulkWrite(userUpdates)
       );
 
       await doWithRetries(async () =>
-        db
-          .collection("FollowHistory")
-          .updateOne(
-            { _id: new ObjectId(req.userId) },
-            { $set: { followingUserId, name, avatar, updatedAt: new Date() } },
-            { upsert: true }
-          )
+        db.collection("FollowHistory").updateOne(
+          { _id: new ObjectId(req.userId) },
+          {
+            $set: {
+              followingUserId: new ObjectId(followingUserId),
+              name,
+              avatar,
+              updatedAt: new Date(),
+            },
+          },
+          { upsert: true }
+        )
       );
 
       res.status(200).end();

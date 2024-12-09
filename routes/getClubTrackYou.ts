@@ -13,6 +13,8 @@ const route = Router();
 route.get(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
+    const { skip } = req.query;
+
     try {
       const trackers = (await doWithRetries(async () =>
         db
@@ -30,14 +32,17 @@ route.get(
               },
             }
           )
+          .limit(11)
+          .skip(Number(skip) || 0)
           .toArray()
       )) as unknown as TrackerType[];
 
       const results = trackers.map((rec) => {
-        const { club, latestScores, latestScoresDifference } = rec;
+        const { club, latestScores, latestScoresDifference, _id } = rec;
         const { privacy, name, about, avatar } = club;
 
         const updated = {
+          _id,
           name,
           about,
           avatar,
@@ -63,6 +68,8 @@ route.get(
           updated.scores.bodyTotalProgress =
             latestScoresDifference.body.overall;
         }
+
+        return updated;
       });
 
       res.status(200).json({ message: results });

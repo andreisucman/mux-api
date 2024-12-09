@@ -65,7 +65,6 @@ route.get(
           .toArray()
       );
 
-      console.log("routines", routines);
       res.status(200).json({
         message: routines,
       });

@@ -6,6 +6,7 @@ import cancelSubscription from "functions/cancelSubscription.js";
 import { defaultClubPrivacy } from "data/defaultClubPrivacy.js";
 import httpError from "@/helpers/httpError.js";
 import { SubscriptionType } from "@/types.js";
+import { daysFrom } from "@/helpers/utils.js";
 
 type Props = {
   userId: string;
@@ -15,18 +16,23 @@ export default async function removeFromClub({ userId }: Props) {
   try {
     await updateContentPublicity({ userId, newPrivacy: defaultClubPrivacy });
 
+    const canRejoinClubAfter = daysFrom({ days: 7 });
+
     await doWithRetries(async () =>
       db
         .collection("User")
-        .updateOne({ _id: new ObjectId(userId) }, { $set: { club: null } })
+        .updateOne(
+          { _id: new ObjectId(userId) },
+          { $set: { club: null, canRejoinClubAfter } }
+        )
     );
 
     await doWithRetries(async () =>
       db
         .collection("User")
         .updateMany(
-          { "club.followingUserId": userId },
-          { $unset: { "club.followingUserId": "" } }
+          { "club.followingUserId": new ObjectId(userId) },
+          { $set: { "club.followingUserId": null } }
         )
     );
 
