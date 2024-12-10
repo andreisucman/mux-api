@@ -77,7 +77,6 @@ route.post(
         if (name) updatePayload.name = name;
         if (avatar) updatePayload.avatar = avatar;
 
-        console.log("userId", req.userId, "updatePayload", updatePayload);
         updatePublicContent({ userId: req.userId, updatePayload });
       }
 

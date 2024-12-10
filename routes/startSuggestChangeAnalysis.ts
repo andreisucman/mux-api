@@ -4,6 +4,7 @@ import { db } from "init.js";
 import { CustomRequest } from "types.js";
 import suggestChange from "functions/suggestChange.js";
 import doWithRetries from "helpers/doWithRetries.js";
+import { StyleAnalysisType } from "types.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import httpError from "@/helpers/httpError.js";
 
@@ -17,7 +18,7 @@ route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
     return;
   }
 
-  let finalUserId = req.userId || userId;
+  let finalUserId = req.userId || userId; // userId is necessary if the user is not registered
 
   if (!finalUserId) {
     res.status(400).json({ error: "Bad request" });
@@ -34,12 +35,12 @@ route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
         )
     );
 
-    const styleAnalysisRecord = await doWithRetries(async () =>
+    const styleAnalysisRecord = (await doWithRetries(async () =>
       db.collection("StyleAnalysis").findOne({ _id: new ObjectId(analysisId) })
-    );
+    )) as unknown as StyleAnalysisType | null;
 
     if (!styleAnalysisRecord)
-      throw httpError(`Style analysis record ${analysisId} is not found`);
+      next(httpError(`Style analysis record ${analysisId} is not found`));
 
     await doWithRetries(async () =>
       db
@@ -53,12 +54,12 @@ route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
 
     res.status(200).end();
 
-    const { styleName, image } = styleAnalysisRecord;
+    const { styleName, mainUrl } = styleAnalysisRecord;
 
     const response = await suggestChange({
       userId: userId,
       currentStyle: styleName,
-      image,
+      image: mainUrl.url,
       styleGoals: goal,
       type,
     });

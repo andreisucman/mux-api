@@ -33,7 +33,6 @@ export default async function suggestChange({
     }
 
     analysisSystemContent += `Think step-by-step. Use only the information provided.`;
-
     const runs = [
       {
         isMini: false,

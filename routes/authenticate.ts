@@ -27,8 +27,6 @@ route.post(
     try {
       let { code, timeZone, localUserId, state, email, password } = req.body;
 
-      console.log("line 30 req.body", req.body);
-
       let userData = null;
       let accessToken = crypto.randomBytes(32).toString("hex");
       let finalEmail = email;
@@ -61,11 +59,8 @@ route.post(
         filter: checkUserPresenceFilter,
       });
 
-      console.log("line 64 userInfo", userInfo);
-
       if (userInfo) {
         // if the registration happens as a result of the analysis
-        console.log("line 67");
         userData = userInfo;
 
         const { _id: userId, email, password: storedPassword } = userInfo;
@@ -79,7 +74,6 @@ route.post(
             }
           }
         } else {
-          console.log("line 81");
           const { stripeUserId } = userInfo;
 
           const updatePayload: Partial<UserType> = {
@@ -116,7 +110,6 @@ route.post(
           }
         }
 
-        console.log("line 112");
         const hashedPassword = await getHashedPassword(password);
 
         const stripeUser = await stripe.customers.create({ email: finalEmail });

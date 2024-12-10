@@ -96,11 +96,6 @@ async function handleStripeWebhook(event: any) {
       })
       .filter(Boolean);
 
-    console.log(
-      "line 108, subscriptionsToIncreaseWithDates",
-      subscriptionsToIncreaseWithDates
-    );
-
     const toUpdate = subscriptionsToIncreaseWithDates.map((item) => ({
       updateOne: {
         filter: { stripeUserId: customerId },

@@ -55,24 +55,34 @@ route.post("/", async (req: CustomRequest, res: Response) => {
 
     const { privacy } = club || {};
 
-    const {
-      explanation: currentDescription,
-      suggestion: currentSuggestion,
-      styleName,
-      scores,
-    } = await analyzeStyle({
+    const styleAnalysisResponse = await analyzeStyle({
       userId,
       image,
       type,
     });
 
+    const {
+      explanation: currentDescription,
+      suggestion: currentSuggestion,
+      styleName,
+      scores,
+    } = styleAnalysisResponse;
+
     const existingTypeAnaysis = latestStyleAnalysis?.[type as "head"];
     const { _id, ...restExisting } = existingTypeAnaysis || {};
 
-    const { mainUrl, urls } = await getReadyBlurredUrls({
-      url: image,
-      blurType,
-    });
+    let mainUrl = { name: "original" as "original", url: image };
+    let urls = [mainUrl];
+
+    if (blurType && blurType !== "original") {
+      const blurredResponse = await getReadyBlurredUrls({
+        url: image,
+        blurType,
+      });
+
+      mainUrl = blurredResponse.mainUrl;
+      urls = blurredResponse.urls;
+    }
 
     const compareStyleRecord = await getStyleCompareRecord({ userId });
     const {

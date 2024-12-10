@@ -14,6 +14,7 @@ route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { userId, operationKey } = req.body;
+
     try {
       if (!ObjectId.isValid(userId)) {
         res.status(400).json({ error: "Bad request" });
@@ -31,6 +32,7 @@ route.post(
       );
 
       if (!job) {
+        ("line 34");
         res.status(200).json({
           message: {
             jobProgress: 1,
@@ -40,6 +42,7 @@ route.post(
       }
 
       if (job.isError) {
+        ("line 44");
         res.status(200).json({
           error: "An error occured. Please try again.",
         });

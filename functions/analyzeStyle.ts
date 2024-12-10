@@ -50,7 +50,7 @@ export default async function analyzeStyle({ image, type, userId }: Props) {
         callback: () =>
           incrementProgress({
             operationKey: `style-${type}`,
-            increment: 15,
+            increment: 5,
             userId,
           }),
       },
@@ -65,7 +65,7 @@ export default async function analyzeStyle({ image, type, userId }: Props) {
         callback: () =>
           incrementProgress({
             operationKey: `style-${type}`,
-            increment: 15,
+            increment: 10,
             userId,
           }),
       },
@@ -119,7 +119,7 @@ export default async function analyzeStyle({ image, type, userId }: Props) {
         callback: () =>
           incrementProgress({
             operationKey: `style-${type}`,
-            increment: 15,
+            increment: 5,
             userId,
           }),
       },
@@ -149,6 +149,7 @@ export default async function analyzeStyle({ image, type, userId }: Props) {
         casual: z.number(),
       }),
       explanation: z.string(),
+      suggestion: z.string(),
     });
 
     const formattingRuns: RunType[] = [
@@ -163,7 +164,7 @@ export default async function analyzeStyle({ image, type, userId }: Props) {
         callback: () =>
           incrementProgress({
             operationKey: `style-${type}`,
-            increment: 20,
+            increment: 5,
             userId,
           }),
         model: "ft:gpt-4o-mini-2024-07-18:personal:analyzestyle:AF22Yzhl",
