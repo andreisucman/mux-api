@@ -58,14 +58,14 @@ async function checkAccess(
       return;
     }
 
-    const expired = new Date(session.expiresOn) < new Date();
+    const expired = new Date() > new Date(session?.expiresOn);
 
     if (expired && rejectUnauthorized) {
       signOut(res, 403, "Access token expired");
       return;
     }
 
-    if (!expired) req.userId = session.userId;
+    if (!expired) req.userId = session?.userId;
 
     next();
   } catch (err) {

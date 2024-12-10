@@ -35,10 +35,12 @@ async function askTogether({
       together.chat.completions.create(options as any)
     );
 
+    const escapedKey = model.replace(/\./g, "\\.");
+
     const update: { [key: string]: any } = {
       $set: {},
       $inc: {
-        [model]: completion.usage.total_tokens,
+        [escapedKey]: completion.usage.total_tokens,
       },
     };
 

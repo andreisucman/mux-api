@@ -27,6 +27,8 @@ route.post(
     try {
       let { code, timeZone, localUserId, state, email, password } = req.body;
 
+      console.log("line 30 req.body", req.body);
+
       let userData = null;
       let accessToken = crypto.randomBytes(32).toString("hex");
       let finalEmail = email;
@@ -45,7 +47,7 @@ route.post(
         finalEmail = email;
       }
 
-      const checkUserPresenceFilter: { [key: string]: any } = { auth };
+      const checkUserPresenceFilter: { [key: string]: any } = {};
 
       if (localUserId) {
         checkUserPresenceFilter._id = new ObjectId(localUserId);
@@ -59,7 +61,11 @@ route.post(
         filter: checkUserPresenceFilter,
       });
 
+      console.log("line 64 userInfo", userInfo);
+
       if (userInfo) {
+        // if the registration happens as a result of the analysis
+        console.log("line 67");
         userData = userInfo;
 
         const { _id: userId, email, password: storedPassword } = userInfo;
@@ -73,9 +79,11 @@ route.post(
             }
           }
         } else {
+          console.log("line 81");
           const { stripeUserId } = userInfo;
 
           const updatePayload: Partial<UserType> = {
+            auth,
             email: finalEmail,
             emailVerified: auth === "g",
           };
@@ -94,8 +102,13 @@ route.post(
           );
 
           userData = await getUserData({ userId: String(userId) });
+
+          if (auth === "e") {
+            await sendConfirmationCode({ userId: String(userData._id), email });
+          }
         }
       } else {
+        // if the registration happes from the sign in page
         if (auth === "e") {
           if (!password) {
             res.status(200).json({ error: "You need to provide a password." });
@@ -103,6 +116,7 @@ route.post(
           }
         }
 
+        console.log("line 112");
         const hashedPassword = await getHashedPassword(password);
 
         const stripeUser = await stripe.customers.create({ email: finalEmail });

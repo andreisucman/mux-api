@@ -5,6 +5,7 @@ import { Router, Request, Response, NextFunction } from "express";
 import validateCode from "@/functions/validateCode.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import sendConfirmationCode from "@/functions/sendConfirmationCode.js";
+import invalidateTheCode from "@/functions/invalidateTheCode.js";
 import { db } from "init.js";
 
 const route = Router();
@@ -54,6 +55,8 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
           { $set: { emailVerified: status } }
         )
     );
+
+    invalidateTheCode(code);
 
     res.status(200).json({ message: status });
   } catch (err) {

@@ -343,23 +343,25 @@ export default async function analyzeAppearance({
     );
 
     /* update the beforeafters with the latest overal scores to be shown on the cars meta panel */
-    const { privacy } = club;
+    if (club) {
+      const { privacy } = club;
 
-    const { latestBodyScoreDifference, latestHeadScoreDifference } =
-      getScoreDifference({ latestScoresDifference, privacy });
+      const { latestBodyScoreDifference, latestHeadScoreDifference } =
+        getScoreDifference({ latestScoresDifference, privacy });
 
-    const baUpdates = partsAnalyzed.map((part) => ({
-      updateOne: {
-        filter: { _id: new ObjectId(userId), type, part },
-        update: {
-          $set: { latestBodyScoreDifference, latestHeadScoreDifference },
+      const baUpdates = partsAnalyzed.map((part) => ({
+        updateOne: {
+          filter: { _id: new ObjectId(userId), type, part },
+          update: {
+            $set: { latestBodyScoreDifference, latestHeadScoreDifference },
+          },
         },
-      },
-    }));
+      }));
 
-    await doWithRetries(async () =>
-      db.collection("BeforeAfter").bulkWrite(baUpdates)
-    );
+      await doWithRetries(async () =>
+        db.collection("BeforeAfter").bulkWrite(baUpdates)
+      );
+    }
 
     console.timeEnd("analyzeAppearance - finalization");
   } catch (err) {

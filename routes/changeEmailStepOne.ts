@@ -72,7 +72,7 @@ route.post(
           updatedAt: new Date(),
         })
       );
-
+      await invalidateTheCode(code);
       await sendConfirmationCode({ userId: req.userId, email: newEmail });
       res.status(200).end();
     } catch (err) {

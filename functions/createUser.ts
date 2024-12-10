@@ -6,20 +6,30 @@ import { UserType } from "types.js";
 import httpError from "@/helpers/httpError.js";
 
 async function createUser(props: Partial<UserType>) {
-  const { _id: userId, ...otherProps } = props || {};
+  let { _id: userId, ...otherProps } = props || {};
 
   try {
-    const payload = {
+    if (!userId) {
+      userId = new ObjectId();
+    }
+
+    const updatePayload = {
       ...defaultUser,
-      _id: new ObjectId(userId),
       ...otherProps,
     };
 
     const newUser = await doWithRetries(
-      async () => await db.collection("User").insertOne(payload)
+      async () =>
+        await db
+          .collection("User")
+          .updateOne(
+            { _id: new ObjectId(userId) },
+            { $set: updatePayload },
+            { upsert: true }
+          )
     );
 
-    return { ...payload, _id: newUser.insertedId };
+    return { ...updatePayload, _id: userId };
   } catch (err) {
     throw httpError(err);
   }

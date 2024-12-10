@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import { ObjectId } from "mongodb";
 import { Router, Request, Response, NextFunction } from "express";
 import validateCode from "@/functions/validateCode.js";
+import invalidateTheCode from "@/functions/invalidateTheCode.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { db } from "init.js";
 
@@ -43,6 +44,8 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
         .collection("User")
         .updateOne({ _id: new ObjectId(userId) }, updateObject)
     );
+
+    invalidateTheCode(accessToken);
 
     res.status(200).json({ message: "Password changed" });
   } catch (err) {

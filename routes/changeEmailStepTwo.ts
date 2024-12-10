@@ -4,6 +4,7 @@ import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import { CustomRequest } from "types.js";
 import validateCode from "@/functions/validateCode.js";
+import invalidateTheCode from "@/functions/invalidateTheCode.js";
 import sendConfirmationCode from "@/functions/sendConfirmationCode.js";
 import doWithRetries from "@/helpers/doWithRetries.js";
 import { db } from "@/init.js";
@@ -55,6 +56,8 @@ route.post(
             { $set: { email: newEmail, emailVerified: true } }
           )
       );
+
+      invalidateTheCode(code);
 
       res.status(200).json({ message: `Email changed to ${newEmail}.` });
     } catch (err) {
