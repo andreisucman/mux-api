@@ -74,9 +74,10 @@ route.post(
 
       if (name || avatar) {
         const updatePayload: { [key: string]: any } = {};
-        if (name) payload.name = name;
-        if (avatar) payload.avatar = avatar;
+        if (name) updatePayload.name = name;
+        if (avatar) updatePayload.avatar = avatar;
 
+        console.log("userId", req.userId, "updatePayload", updatePayload);
         updatePublicContent({ userId: req.userId, updatePayload });
       }
 

@@ -481,9 +481,13 @@ export type BeforeAfterType = {
   initialImages: ProgressImageType[];
   scores: { [key: string]: any };
   scoresDifference: { [key: string]: any };
+  latestBodyScoreDifference: number;
+  latestHeadScoreDifference: number;
   isPublic: boolean;
   avatar?: { [key: string]: any };
   clubName?: string;
+  type: TypeEnum;
+  part: PartEnum;
 };
 
 export type ProofType = {

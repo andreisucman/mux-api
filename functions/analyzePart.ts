@@ -18,6 +18,7 @@ import {
   PrivacyType,
   ProgressImageType,
   BeforeAfterType,
+  LatestScoresType,
 } from "types.js";
 import updateProgressImages from "functions/updateProgressImages.js";
 import { PartResultType } from "@/types/analyzePartTypes.js";
@@ -213,14 +214,16 @@ export default async function analyzePart({
 
     const beforeAfterUpdate: BeforeAfterType = {
       images,
-      updatedAt: new Date(),
+      type,
+      part,
+      scores,
       demographics,
+      isPublic: false,
+      concerns: newConcerns,
+      updatedAt: new Date(),
       initialDate: initialProgress?.createdAt || createdAt,
       initialImages: initialProgress?.images || updatedImages,
-      scores,
-      concerns: newConcerns,
       scoresDifference: newScoresDifference,
-      isPublic: false,
     };
 
     if (club) {

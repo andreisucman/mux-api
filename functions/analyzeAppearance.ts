@@ -21,6 +21,7 @@ import { defaultRequiredProgress } from "data/defaultUser.js";
 import updateNextScan from "helpers/updateNextScan.js";
 import getCalorieGoal from "functions/getCalorieGoal.js";
 import { db } from "init.js";
+import getScoreDifference from "@/helpers/getScoreDifference.js";
 import httpError from "@/helpers/httpError.js";
 
 type Props = {
@@ -95,6 +96,7 @@ export default async function analyzeAppearance({
         userId,
         userNote: newSpecialConsiderations,
       });
+
     console.timeEnd("analyzeAppearance - preparation");
     if (!demographics || !demographics.bodyType) {
       console.time("analyzeAppearance - getDemographics");
@@ -170,6 +172,7 @@ export default async function analyzeAppearance({
       },
       { overall: 0 }
     );
+
     newTypeLatestScores.overall = Math.round(
       newTypeLatestScores.overall / analysesResults.length
     );
@@ -182,6 +185,7 @@ export default async function analyzeAppearance({
       },
       { overall: 0 }
     );
+
     newTypeLatestScoresDifference.overall = Math.round(
       newTypeLatestScoresDifference.overall / analysesResults.length
     );
@@ -216,6 +220,7 @@ export default async function analyzeAppearance({
       },
       { overall: 0 }
     );
+
     newTypeLatestProgress.overall = Math.round(
       newTypeLatestProgress.overall / analysesResults.length
     );
@@ -303,10 +308,12 @@ export default async function analyzeAppearance({
       ...newTypeLatestScoresDifference,
     };
 
-    toUpdateUser.$set.latestScoresDifference = {
+    const finalLatestScoresDifference = {
       ...latestScoresDifference,
       [type]: finalTypeLatestScoresDifference,
     };
+
+    toUpdateUser.$set.latestScoresDifference = finalLatestScoresDifference;
 
     const finalTypeLatestProgress = {
       ...latestProgress[type as TypeEnum.BODY | TypeEnum.HEAD],
@@ -334,6 +341,26 @@ export default async function analyzeAppearance({
           { $set: { isRunning: false, progress: 0 } }
         )
     );
+
+    /* update the beforeafters with the latest overal scores to be shown on the cars meta panel */
+    const { privacy } = club;
+
+    const { latestBodyScoreDifference, latestHeadScoreDifference } =
+      getScoreDifference({ latestScoresDifference, privacy });
+
+    const baUpdates = partsAnalyzed.map((part) => ({
+      updateOne: {
+        filter: { _id: new ObjectId(userId), type, part },
+        update: {
+          $set: { latestBodyScoreDifference, latestHeadScoreDifference },
+        },
+      },
+    }));
+
+    await doWithRetries(async () =>
+      db.collection("BeforeAfter").bulkWrite(baUpdates)
+    );
+
     console.timeEnd("analyzeAppearance - finalization");
   } catch (err) {
     throw httpError(err);

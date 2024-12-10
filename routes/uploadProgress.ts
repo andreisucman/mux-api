@@ -147,10 +147,7 @@ route.post(
         type as "head"
       ].filter((record: ProgressType) => record.position !== position);
 
-      const newRequiredProgress: {
-        head: ProgressType[];
-        body: ProgressType[];
-      } = {
+      const newRequiredProgress = {
         ...requiredProgress,
         [type]: remainingRequirements,
       };

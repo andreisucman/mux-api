@@ -6,6 +6,7 @@ import analyzeStyle from "functions/analyzeStyle.js";
 import { createHashKey } from "functions/createHashKey.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import getReadyBlurredUrls from "functions/getReadyBlurredUrls.js";
+import getScoreDifference from "@/helpers/getScoreDifference.js";
 import getStyleCompareRecord from "functions/getStyleCompareRecord.js";
 import { StartStyleAnalysisUserInfoType } from "types/startStyleAnalysisTypes.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
@@ -89,8 +90,8 @@ route.post("/", async (req: CustomRequest, res: Response) => {
       userId: new ObjectId(userId),
       ...restExisting,
       demographics: userInfo.demographics,
-      latestHeadScoreDifference: latestScoresDifference?.head?.overall || 0,
-      latestBodyScoreDifference: latestScoresDifference?.body?.overall || 0,
+      latestHeadScoreDifference: 0,
+      latestBodyScoreDifference: 0,
       goal: null,
       type,
       hash,
@@ -114,41 +115,47 @@ route.post("/", async (req: CustomRequest, res: Response) => {
       votes: 0,
     };
 
-    const relevantTypePrivacy = privacy?.find(
-      (typePrivacyObj: PrivacyType) => typePrivacyObj.name === type
-    );
+    if (privacy) {
+      const relevantTypePrivacy = privacy.find(
+        (typePrivacyObj: PrivacyType) => typePrivacyObj.name === type
+      );
 
-    const somePartEnabled = relevantTypePrivacy?.parts?.some(
-      (partPrivacyObj: { value: boolean }) => Boolean(partPrivacyObj.value)
-    );
+      if (relevantTypePrivacy) {
+        const somePartEnabled = relevantTypePrivacy.parts.some(
+          (partPrivacyObj: { value: boolean }) => Boolean(partPrivacyObj.value)
+        );
 
-    if (somePartEnabled) {
-      styleAnalysis.isPublic = somePartEnabled;
+        if (somePartEnabled) {
+          styleAnalysis.isPublic = somePartEnabled;
+        }
+      }
+    }
+
+    if (userInfo) {
+      const { latestBodyScoreDifference, latestHeadScoreDifference } =
+        getScoreDifference({ latestScoresDifference, privacy });
+
+      styleAnalysis.latestHeadScoreDifference = latestHeadScoreDifference;
+      styleAnalysis.latestBodyScoreDifference = latestBodyScoreDifference;
+
+      const newLatestAnalysis = {
+        ...latestStyleAnalysis,
+        [type]: styleAnalysis,
+      };
+
+      await doWithRetries(async () =>
+        db
+          .collection("User")
+          .updateOne(
+            { _id: new ObjectId(req.userId) },
+            { $set: { latestStyleAnalysis: newLatestAnalysis } }
+          )
+      );
     }
 
     await doWithRetries(async () =>
       db.collection("StyleAnalysis").insertOne(styleAnalysis)
     );
-
-    if (userInfo) {
-      const newLatestAnalysis: {
-        head?: StyleAnalysisType;
-        body?: StyleAnalysisType;
-      } = {
-        ...latestStyleAnalysis,
-        [type]: styleAnalysis,
-      };
-
-      if (req.userId)
-        await doWithRetries(async () =>
-          db
-            .collection("User")
-            .updateOne(
-              { _id: new ObjectId(req.userId) },
-              { $set: { latestStyleAnalysis: newLatestAnalysis } }
-            )
-        );
-    }
 
     await doWithRetries(async () =>
       db
