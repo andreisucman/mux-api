@@ -118,7 +118,9 @@ route.post(
       );
 
       const latestRelevantRoutine = (await doWithRetries(async () =>
-        db.collection("Routine").findOne({ type, status: "active" })
+        db
+          .collection("Routine")
+          .findOne({ userId: new ObjectId(req.userId), type, status: "active" })
       )) || { _id: new ObjectId() };
 
       const systemContent = `The user gives you the description and instruction of an activity and a list of concerns. Your goal is to create a task based on this info.
@@ -164,7 +166,11 @@ route.post(
         userId: req.userId,
       });
 
-      await incrementProgress({ operationKey: type, userId: req.userId, increment: 10 });
+      await incrementProgress({
+        operationKey: type,
+        userId: req.userId,
+        increment: 10,
+      });
 
       const { word, ...otherResponse } = response || {};
 
@@ -191,7 +197,11 @@ route.post(
       const info = `${description}.${instruction}`;
       const embedding = await createTextEmbedding(info);
 
-      await incrementProgress({ operationKey: type, userId: req.userId, increment: 25 });
+      await incrementProgress({
+        operationKey: type,
+        userId: req.userId,
+        increment: 25,
+      });
       await doWithRetries(async () =>
         db.collection("AnalysisStatus").updateOne(
           { userId: new ObjectId(req.userId), operationKey: type },
@@ -331,7 +341,11 @@ route.post(
       const dates = Object.keys(finalSchedule);
       const lastRoutineDate = dates[dates.length - 1];
 
-      await incrementProgress({ operationKey: type, userId: req.userId, increment: 20 });
+      await incrementProgress({
+        operationKey: type,
+        userId: req.userId,
+        increment: 20,
+      });
 
       const payload: Partial<RoutineType> = {
         ...latestRelevantRoutine,
@@ -348,7 +362,11 @@ route.post(
         payload.createdAt = new Date();
       }
 
-      await incrementProgress({ operationKey: type, userId: req.userId, increment: 15 });
+      await incrementProgress({
+        operationKey: type,
+        userId: req.userId,
+        increment: 15,
+      });
 
       await doWithRetries(async () =>
         db.collection("Routine").updateOne(
