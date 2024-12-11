@@ -14,7 +14,7 @@ type Props = {
 
 export default async function checkTrackedRBAC({
   userId,
-  throwOnError = true,
+  throwOnError = false,
   followingUserId,
   targetProjection,
   userProjection,

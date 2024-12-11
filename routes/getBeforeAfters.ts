@@ -32,7 +32,7 @@ route.get("/", async (req: CustomRequest, res, next: NextFunction) => {
 
     pipeline.push(
       match,
-      { $sort: { createdAt: -1 } },
+      { $sort: { updatedAt: -1 } },
       { $skip: skip || 0 },
       { $limit: 21 }
     );

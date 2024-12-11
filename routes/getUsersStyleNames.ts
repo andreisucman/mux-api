@@ -25,10 +25,15 @@ route.get(
 
     try {
       if (followingUserId) {
-        await checkTrackedRBAC({
-          followingUserId,
+        const { inClub, isFollowing } = await checkTrackedRBAC({
           userId: req.userId,
+          followingUserId,
         });
+
+        if (!inClub || !isFollowing) {
+          res.status(200).json({ message: { styleNames: [] } });
+          return;
+        }
       }
 
       const match: { [key: string]: any } = {

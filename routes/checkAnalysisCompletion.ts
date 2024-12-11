@@ -27,12 +27,19 @@ route.post(
             userId: new ObjectId(userId),
             operationKey,
           },
-          { projection: { _id: 0 } }
+          {
+            projection: {
+              _id: 0,
+              isError: 1,
+              isRunning: 1,
+              message: 1,
+              progress: 1,
+            },
+          }
         )
       );
 
       if (!job) {
-        ("line 34");
         res.status(200).json({
           message: {
             jobProgress: 1,
@@ -42,9 +49,8 @@ route.post(
       }
 
       if (job.isError) {
-        ("line 44");
         res.status(200).json({
-          error: "An error occured. Please try again.",
+          error: job.message,
         });
         return;
       }

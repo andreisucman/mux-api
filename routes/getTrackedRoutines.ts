@@ -23,11 +23,17 @@ route.get(
     }
 
     try {
-      if (followingUserId)
-        await checkTrackedRBAC({
+      if (followingUserId) {
+        const { inClub, isFollowing } = await checkTrackedRBAC({
           userId: req.userId,
           followingUserId,
         });
+
+        if (!inClub || !isFollowing) {
+          res.status(200).json({ message: [] });
+          return;
+        }
+      }
 
       const finalId = followingUserId || req.userId;
 

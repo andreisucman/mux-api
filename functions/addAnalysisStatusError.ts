@@ -7,6 +7,7 @@ export default async function addAnalysisStatusError({
   userId,
   operationKey,
   message,
+  originalMessage,
 }: UpdateErrorProps) {
   try {
     await doWithRetries(async () =>
@@ -14,7 +15,9 @@ export default async function addAnalysisStatusError({
         .collection("AnalysisStatus")
         .updateOne(
           { userId: new ObjectId(userId), operationKey },
-          { $set: { isRunning: false, isError: true, message } }
+          {
+            $set: { isRunning: false, isError: true, message, originalMessage },
+          }
         )
     );
   } catch (err) {

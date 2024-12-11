@@ -83,6 +83,7 @@ import getAllProofRecords from "routes/getAllProofRecords.js";
 import getUsersProgressRecords from "routes/getUsersProgressRecords.js";
 import getAllSolutions from "routes/getAllSolutions.js";
 import getUsersFilters from "@/routes/getUsersFilters.js";
+import getLastStyleVote from "@/routes/getLastStyleVote.js";
 
 import { client } from "init.js";
 
@@ -143,6 +144,7 @@ app.use("/getTrackedRoutines", getTrackedRoutines);
 app.use("/verifyEmail", verifyEmail);
 app.use("/changeEmailStepOne", changeEmailStepOne);
 app.use("/changeEmailStepTwo", changeEmailStepTwo);
+app.use("/getLastStyleVote", getLastStyleVote);
 
 app.use("/startTheFlow", startTheFlow);
 app.use("/analyzeFood", analyzeFood);

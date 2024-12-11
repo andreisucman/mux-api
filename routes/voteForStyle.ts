@@ -29,7 +29,7 @@ route.post(
     try {
       /* see what for the user voted last for this style */
       const lastVote = await doWithRetries(async () =>
-        db.collection("StyleAnalysis").findOne(
+        db.collection("StyleVote").findOne(
           {
             styleId: new ObjectId(styleId),
             userId: new ObjectId(req.userId),

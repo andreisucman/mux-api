@@ -37,7 +37,6 @@ route.get(
           followingUserId,
           userId: req.userId,
           targetProjection: projection,
-          throwOnError: false,
         });
 
         userInfo = rbacResponse.targetUserInfo;

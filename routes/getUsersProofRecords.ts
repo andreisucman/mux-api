@@ -28,7 +28,15 @@ route.get(
 
     try {
       if (followingUserId) {
-        await checkTrackedRBAC({ followingUserId, userId: req.userId });
+        const { inClub, isFollowing } = await checkTrackedRBAC({
+          userId: req.userId,
+          followingUserId,
+        });
+
+        if (!inClub || !isFollowing) {
+          res.status(200).json({ message: [] });
+          return;
+        }
       }
 
       const pipeline: any = [];
