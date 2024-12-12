@@ -38,8 +38,6 @@ route.post(
     const urlExtension = url.includes(".") ? url.split(".").pop() : "";
     const correctExtension = ["jpg", "webm", "mp4"].includes(urlExtension);
 
-    console.log("uploadProof req.body", req.body, correctExtension);
-
     if (!taskId || !url || !submissionId || !correctExtension) {
       res.status(400).json({
         error: "Bad request",
@@ -117,8 +115,6 @@ route.post(
           .toArray()
       );
 
-      console.log("uploadProof oldProofsArray", oldProofsArray);
-
       const oldProofImages = oldProofsArray
         .flatMap((proof) => proof.proofImages)
         .filter(Boolean);
@@ -179,13 +175,10 @@ route.post(
         userId: req.userId,
       });
 
-      console.log("uploadProof proofImages", proofImages);
-
       const majorityIdentical = await isMajorityOfImagesIdentical(
         ...proofImages,
         ...oldProofImages
       );
-      console.log("uploadProof majorityIdentical", majorityIdentical);
 
       if (majorityIdentical) {
         await addAnalysisStatusError({
@@ -213,8 +206,6 @@ route.post(
 
       const checkFailed =
         verdicts.filter(Boolean).length < Math.round(proofImages.length / 2);
-
-      console.log("uploadProof checkFailed", checkFailed);
 
       // if (checkFailed) {
       //   await addAnalysisStatusError({

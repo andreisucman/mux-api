@@ -45,13 +45,18 @@ route.get("/:userId?", async (req: CustomRequest, res, next: NextFunction) => {
       styleName: 1,
       isPublic: 1,
       mainUrl: 1,
-      initialMainUrl: 1,
+      compareMainUrl: 1,
+      compareStyleName: 1,
       urls: 1,
+      compareUrls: 1,
       analysis: 1,
       initialAnalysis: 1,
       createdAt: 1,
-      likes: 1,
-      initialLikes: 1,
+      compareDate: 1,
+      votes: 1,
+      clubName: 1,
+      avatar: 1,
+      compareVotes: 1,
     };
 
     const styles = await doWithRetries(

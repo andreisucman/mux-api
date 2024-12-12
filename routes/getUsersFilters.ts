@@ -22,7 +22,7 @@ route.get(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { followingUserId } = req.params;
     const { filter, projection } = aqp(req.query);
-    const { collection } = filter;
+    const { collection, type } = filter;
 
     let finalUserId = followingUserId || req.userId;
 
@@ -51,14 +51,18 @@ route.get(
         return a;
       }, {});
 
+      const match: { [key: string]: any } = {
+        userId: new ObjectId(finalUserId),
+      };
+
+      if (type) match.type = type;
+
       const filters = await doWithRetries(async () =>
         db
           .collection(collectionMap[collection])
           .aggregate([
             {
-              $match: {
-                userId: new ObjectId(finalUserId),
-              },
+              $match: match,
             },
             {
               $group: {
@@ -75,7 +79,6 @@ route.get(
           ])
           .next()
       );
-
 
       res.status(200).json({ message: filters });
     } catch (err) {
