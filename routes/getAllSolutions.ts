@@ -17,29 +17,25 @@ route.get("/", async (req: CustomRequest, res: Response) => {
   try {
     const pipeline: any = [];
 
-    const match = { $match: {} };
+    let match: { [key: string]: any } = {};
 
     if (query) {
-      match.$match = {
-        $text: {
-          $search: `"${query}"`,
-          $caseSensitive: false,
-          $diacriticSensitive: false,
-        },
+      match.$text = {
+        $search: `"${query}"`,
+        $caseSensitive: false,
+        $diacriticSensitive: false,
       };
     }
 
-    let finalFilters: { [key: string]: any } = {};
-
     if (otherFilters) {
-      finalFilters = { ...finalFilters, ...otherFilters };
+      match = { ...match, ...otherFilters };
     }
 
-    if (concern) finalFilters.nearestConcerns = { $in: [concern] };
+    if (concern) match.nearestConcerns = { $in: [concern] };
 
-    match.$match = { ...match.$match, ...finalFilters };
+    match = { ...match, ...match };
 
-    pipeline.push(match);
+    pipeline.push({ $match: match });
 
     if (skip) {
       pipeline.push({ $skip: skip });

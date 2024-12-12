@@ -152,8 +152,7 @@ route.post(
         [type]: remainingRequirements,
       };
 
-      const mainUrl = { url: image, name: "original" };
-      const contentUrlTypes = [mainUrl];
+      const contentUrlTypes = [];
 
       if (blurType) {
         contentUrlTypes.push({

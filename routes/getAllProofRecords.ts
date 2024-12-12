@@ -26,30 +26,28 @@ route.get("/", async (req: CustomRequest, res: Response) => {
   try {
     const pipeline: any = [];
 
+    let match: { [key: string]: any } = {};
+
     if (query) {
-      pipeline.push({
-        $text: {
-          $search: `"${query}"`,
-          $caseSensitive: false,
-          $diacriticSensitive: false,
-        },
-      });
+      match.$text = {
+        $search: `"${query}"`,
+        $caseSensitive: false,
+        $diacriticSensitive: false,
+      };
     }
 
-    let finalFilters: { [key: string]: any } = {};
-
-    if (concern) finalFilters.concern = concern;
-    if (type) finalFilters.type = type;
-    if (part) finalFilters.part = part;
-    if (sex) finalFilters["demographics.sex"] = sex;
-    if (bodyType) finalFilters["demographics.bodyType"] = bodyType;
-    if (ageInterval) finalFilters["demographics.ageInterval"] = ageInterval;
+    if (concern) match.concern = concern;
+    if (type) match.type = type;
+    if (part) match.part = part;
+    if (sex) match["demographics.sex"] = sex;
+    if (bodyType) match["demographics.bodyType"] = bodyType;
+    if (ageInterval) match["demographics.ageInterval"] = ageInterval;
 
     if (otherFilters) {
-      finalFilters = { ...finalFilters, isPublic: true };
+      match = { ...match, isPublic: true };
     }
 
-    pipeline.push({ $match: finalFilters });
+    pipeline.push({ $match: match });
 
     if (skip) {
       pipeline.push({ $skip: skip });

@@ -243,8 +243,6 @@ export enum PositionEnum {
   BACK = "back",
   RIGHT = "right",
   LEFT = "left",
-  MOUTH = "mouth",
-  SCALP = "scalp",
 }
 
 export enum EthnicityEnum {
@@ -452,7 +450,6 @@ export type RoutineType = {
 
 export type ConcernType = {
   name: string;
-  key: string;
   types: TypeEnum[];
   parts: PartEnum[];
   sex: SexEnum;
@@ -481,8 +478,8 @@ export type BeforeAfterType = {
   initialImages: ProgressImageType[];
   scores: { [key: string]: any };
   scoresDifference: { [key: string]: any };
-  latestBodyScoreDifference: number;
-  latestHeadScoreDifference: number;
+  latestBodyScoreDifference?: number;
+  latestHeadScoreDifference?: number;
   isPublic: boolean;
   avatar?: { [key: string]: any };
   clubName?: string;

@@ -11,15 +11,15 @@ export default function filterImagesByFeature(
   if (type === "head") {
     if (feature === "mouth") {
       filteredImages = toAnalyzeObjects
-        .filter((obj) => obj.position === "mouth")
+        .filter((obj) => obj.part === "mouth" && obj.position === "front")
         .map((obj) => obj.mainUrl.url);
     } else if (feature === "scalp") {
       filteredImages = toAnalyzeObjects
-        .filter((obj) => obj.position === "scalp")
+        .filter((obj) => obj.part === "scalp" && obj.position === "front")
         .map((obj) => obj.mainUrl.url);
     } else {
       filteredImages = toAnalyzeObjects
-        .filter((obj) => obj.position !== "scalp" && obj.position !== "mouth")
+        .filter((obj) => obj.part !== "scalp" && obj.part !== "mouth")
         .map((obj) => obj.mainUrl.url);
     }
   } else {

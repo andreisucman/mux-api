@@ -41,37 +41,35 @@ route.get(
 
       const pipeline: any = [];
 
-      if (query) {
-        pipeline.push({
-          $text: {
-            $search: `"${query}"`,
-            $caseSensitive: false,
-            $diacriticSensitive: false,
-          },
-        });
-      }
-
-      let finalFilters: { [key: string]: any } = {
+      let match: { [key: string]: any } = {
         userId: new ObjectId(followingUserId || req.userId),
       };
 
+      if (query) {
+        match.$text = {
+          $search: `"${query}"`,
+          $caseSensitive: false,
+          $diacriticSensitive: false,
+        };
+      }
+
       if (routineId) {
-        finalFilters.routineId = new ObjectId(routineId);
+        match.routineId = new ObjectId(routineId);
       }
 
       if (taskKey) {
-        finalFilters.taskKey = taskKey;
+        match.taskKey = taskKey;
       }
 
-      if (concern) finalFilters.concern = concern;
-      if (type) finalFilters.type = type;
-      if (part) finalFilters.part = part;
+      if (concern) match.concern = concern;
+      if (type) match.type = type;
+      if (part) match.part = part;
 
       if (otherFilters) {
-        finalFilters = { ...finalFilters, isPublic: true };
+        match = { ...match, isPublic: true };
       }
 
-      pipeline.push({ $match: finalFilters });
+      pipeline.push({ $match: match });
 
       if (skip) {
         pipeline.push({ $skip: skip });

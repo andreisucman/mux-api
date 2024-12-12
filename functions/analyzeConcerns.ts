@@ -45,7 +45,7 @@ export default async function analyzeConcerns({
         .toArray()
     )) as unknown as ConcernType[];
 
-    const concerns = concernsObjects.map((obj) => obj.key);
+    const concerns = concernsObjects.map((obj) => obj.name);
 
     const systemContent = `You are a ${
       type === "head"

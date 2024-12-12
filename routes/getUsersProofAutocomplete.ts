@@ -48,12 +48,10 @@ route.get(
       let match: { [key: string]: any } = {};
 
       if (query) {
-        match = {
-          $text: {
-            $search: `"${query}"`,
-            $caseSensitive: false,
-            $diacriticSensitive: false,
-          },
+        match.$text = {
+          $search: `"${query}"`,
+          $caseSensitive: false,
+          $diacriticSensitive: false,
         };
       }
 

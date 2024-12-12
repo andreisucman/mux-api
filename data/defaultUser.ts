@@ -55,14 +55,14 @@ export const defaultRequiredProgress = {
     },
     {
       type: TypeEnum.HEAD,
-      position: PositionEnum.MOUTH,
+      position: PositionEnum.FRONT,
       part: PartEnum.MOUTH,
       title: "Progress: Head - mouth",
       instruction: "Take a photo of your open mouth.",
     },
     {
       type: TypeEnum.HEAD,
-      position: PositionEnum.SCALP,
+      position: PositionEnum.FRONT,
       part: PartEnum.SCALP,
       title: "Progress: Head - scalp & hair",
       instruction: "Take a photo of your head from the top.",

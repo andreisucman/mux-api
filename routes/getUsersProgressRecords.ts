@@ -10,7 +10,7 @@ const route = Router();
 route.get(
   "/:followingUserId?",
   async (req: CustomRequest, res, next: NextFunction) => {
-    const { type, part, skip } = req.query;
+    const { type, part, position, skip } = req.query;
     const { followingUserId } = req.params;
 
     const finalUserId = followingUserId || req.userId;
@@ -39,6 +39,7 @@ route.get(
 
       if (type) filter.type = type;
       if (part) filter.part = part;
+      if (position) filter.images.position = position;
 
       const projection: { [key: string]: any } = {
         _id: 1,
