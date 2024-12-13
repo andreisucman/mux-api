@@ -185,8 +185,6 @@ export type ClubDataType = {
   isActive: boolean;
   payouts: {
     connectId: string;
-    rewardFund: number;
-    oneShareAmount: number;
     rewardEarned: number;
     payoutsEnabled: boolean;
     detailsSubmitted: boolean;

@@ -23,6 +23,7 @@ export default async function checkTrackedRBAC({
     const result = {
       inClub: true,
       isFollowing: true,
+      subscriptionActive: true,
       userInfo: null as Partial<UserType>,
       targetUserInfo: null as Partial<UserType>,
     };
@@ -55,7 +56,7 @@ export default async function checkTrackedRBAC({
     result.targetUserInfo = targetUserInfo;
 
     const userFilter = { _id: new ObjectId(userId) };
-    const userOptions = { projection: { club: 1 } };
+    const userOptions = { projection: { club: 1, ["subscriptions.peek"]: 1 } };
 
     if (userProjection)
       userOptions.projection = {
@@ -67,7 +68,20 @@ export default async function checkTrackedRBAC({
       db.collection("User").findOne(userFilter, userOptions)
     );
 
-    const { club } = (result.userInfo as unknown as Partial<UserType>) || {};
+    const { club, subscriptions } =
+      (result.userInfo as unknown as Partial<UserType>) || {
+        peek: { validUntil: null },
+      };
+
+    const { peek } = subscriptions;
+    const { validUntil } = peek;
+
+    if (!validUntil || (validUntil && validUntil < new Date())) {
+      if (throwOnError) {
+        throw httpError(`The peek subscription of the ${userId} has expired.`);
+      }
+      result.subscriptionActive = false;
+    }
 
     const { followingUserId: clubFollowingUserId } = club || {};
 

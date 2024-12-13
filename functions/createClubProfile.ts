@@ -95,8 +95,6 @@ export default async function createClubProfile({ userId, avatar }: Props) {
       isActive: false,
       payouts: {
         connectId: "",
-        rewardFund: 0,
-        oneShareAmount: 0,
         rewardEarned: 0,
         payoutsEnabled: false,
         detailsSubmitted: false,

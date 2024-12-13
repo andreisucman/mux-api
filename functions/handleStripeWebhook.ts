@@ -8,7 +8,10 @@ import httpError from "@/helpers/httpError.js";
 async function handleStripeWebhook(event: any) {
   const { type, data } = event;
 
-  if (type !== "invoice.payment_succeeded") return;
+  if (type !== "invoice.payment_succeeded" && type !== "invoice.payment_failed")
+    return;
+
+  const isPaymentSuccess = type === "invoice.payment_succeeded";
 
   const object = data.object;
   const customerId = object.customer;
@@ -31,50 +34,52 @@ async function handleStripeWebhook(event: any) {
     db.collection("Plan").find({}).toArray()
   );
 
-  const { subscriptions = {}, club } = userInfo;
+  const { subscriptions } = userInfo;
 
-  if (type === "invoice.payment_succeeded") {
-    const paymentPrices = object.lines.data.map((item: any) => item.price);
-    const paymentPriceIds = paymentPrices.map((price: any) => price.id);
+  const paymentPrices = object.lines.data.map((item: any) => item.price);
+  const paymentPriceIds = paymentPrices.map((price: any) => price.id);
 
-    if (!subscriptionId || !customerId)
-      throw httpError(
-        `Missing subscriptionId: ${subscriptionId}, customerId: ${customerId}.`
-      );
-
-    if (!Array.isArray(object.lines.data) || object.lines.data.length === 0)
-      throw httpError(
-        `Missing lines data items for customerId: ${customerId}.`
-      );
-
-    const relatedPlans = plans.filter((plan) =>
-      paymentPriceIds.includes(plan.priceId)
+  if (!subscriptionId || !customerId)
+    throw httpError(
+      `Missing subscriptionId: ${subscriptionId}, customerId: ${customerId}.`
     );
 
-    if (relatedPlans.length === 0)
-      throw httpError(
-        `Related plan not found for object: ${object.id} and customerId: ${customerId}.`
-      );
+  if (!Array.isArray(object.lines.data) || object.lines.data.length === 0)
+    throw httpError(`Missing lines data items for customerId: ${customerId}.`);
 
-    const subscriptionsToIncrease = relatedPlans
-      .filter((plan) => subscriptions[plan.name])
-      .map((plan) => ({
-        ...subscriptions[plan.name],
-        name: plan.name,
-        priceId: plan.priceId,
-      }));
+  const relatedPlans = plans.filter((plan) =>
+    paymentPriceIds.includes(plan.priceId)
+  );
 
-    if (subscriptionsToIncrease.length === 0)
-      throw httpError(
-        `No subscriptionsToIncrease for objectId ${object.id} customerId: ${customerId}.`
-      );
+  if (relatedPlans.length === 0)
+    throw httpError(
+      `Related plan not found for object: ${object.id} and customerId: ${customerId}.`
+    );
 
-    const subscriptionsToIncreaseWithDates = subscriptionsToIncrease
-      .map((item) => {
-        const currentValidUntil = item.validUntil
-          ? new Date(item.validUntil)
-          : new Date();
-        const newDate = new Date(currentValidUntil);
+  const subscriptionsToUpdate = relatedPlans
+    .filter((plan) => subscriptions[plan.name])
+    .map((plan) => ({
+      ...subscriptions[plan.name],
+      name: plan.name,
+      priceId: plan.priceId,
+    }));
+
+  if (subscriptionsToUpdate.length === 0)
+    throw httpError(
+      `No subscriptionsToUpdate for objectId ${object.id} customerId: ${customerId}.`
+    );
+
+  const subscriptionsToUpdateWithDates = subscriptionsToUpdate
+    .map((item) => {
+      const currentValidUntil = item.validUntil
+        ? new Date(item.validUntil)
+        : new Date();
+
+      let subscriptionId = null;
+      let newDate = null;
+
+      if (isPaymentSuccess) {
+        newDate = new Date(currentValidUntil.getTime());
         newDate.setMonth(newDate.getMonth() + 1);
 
         // Find the corresponding line item for this subscription
@@ -87,58 +92,35 @@ async function handleStripeWebhook(event: any) {
             `No line item found for priceId ${item.priceId} and customerId: ${customerId}.`
           );
 
-        const data = {
-          ...item,
-          newDate,
-          subscriptionId: relatedLineItem.subscription,
-        };
-        return data;
-      })
-      .filter(Boolean);
+        subscriptionId = relatedLineItem.subscription;
+      }
 
-    const toUpdate = subscriptionsToIncreaseWithDates.map((item) => ({
-      updateOne: {
-        filter: { stripeUserId: customerId },
-        update: {
-          $set: {
-            [`subscriptions.${item.name}.subscriptionId`]: item.subscriptionId,
-            [`subscriptions.${item.name}.validUntil`]: item.newDate,
-          },
+      const data = {
+        ...item,
+        newDate,
+        subscriptionId,
+      };
+
+      return data;
+    })
+    .filter(Boolean);
+
+  const toUpdate = subscriptionsToUpdateWithDates.map((item) => ({
+    updateOne: {
+      filter: { stripeUserId: customerId },
+      update: {
+        $set: {
+          [`subscriptions.${item.name}.subscriptionId`]: item.subscriptionId,
+          [`subscriptions.${item.name}.validUntil`]: item.newDate,
         },
       },
-    }));
+    },
+  }));
 
-    const { payouts } = club || {};
-    const { connectId } = payouts || {};
-
-    if (connectId) {
-      const clubPlan = relatedPlans.find((plan) => plan.name === "club");
-      if (clubPlan) {
-        const clubPayment = paymentPrices.find(
-          (priceObj: any) => priceObj.id === clubPlan.priceId
-        );
-        if (clubPayment) {
-          const rewardFund =
-            (clubPayment.amount / 100) *
-            Number(process.env.TRACKER_COMISSION || 0);
-          const oneShareAmount = rewardFund / 30;
-
-          toUpdate.push({
-            updateOne: {
-              filter: { stripeUserId: customerId },
-              update: {
-                $set: { rewardFund, oneShareAmount },
-              },
-            },
-          });
-        }
-      }
-    }
-
+  if (toUpdate.length > 0)
     await doWithRetries(
       async () => await db.collection("User").bulkWrite(toUpdate)
     );
-  }
 }
 
 export default handleStripeWebhook;

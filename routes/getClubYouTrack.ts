@@ -41,7 +41,9 @@ route.get(
 
         userInfo = rbacResponse.targetUserInfo;
 
-        if (!rbacResponse.isFollowing) {
+        const { isFollowing, subscriptionActive } = rbacResponse;
+
+        if (!isFollowing || !subscriptionActive) {
           const newBio = Object.keys(userInfo.club.bio).reduce(
             (a: ClubBioType, c) => {
               if (c !== "intro") {

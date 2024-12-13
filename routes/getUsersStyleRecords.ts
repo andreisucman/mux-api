@@ -20,12 +20,12 @@ route.get("/:userId?", async (req: CustomRequest, res, next: NextFunction) => {
 
   try {
     if (followingUserId) {
-      const { inClub, isFollowing } = await checkTrackedRBAC({
+      const { inClub, isFollowing, subscriptionActive } = await checkTrackedRBAC({
         userId: req.userId,
         followingUserId,
       });
 
-      if (!inClub || !isFollowing) {
+      if (!inClub || !isFollowing || !subscriptionActive) {
         res.status(200).json({ message: [] });
         return;
       }
