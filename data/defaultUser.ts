@@ -113,7 +113,7 @@ export const defaultStyleRequirements = {
   body: [
     {
       title: "Style scan: Outfit",
-      instruction: "Upload a photo of yourself in your usual outfit.",
+      instruction: "Take a full body photo of your outfit.",
       type: TypeEnum.BODY,
       part: PartEnum.STYLE,
       position: PositionEnum.FRONT,

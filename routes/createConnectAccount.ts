@@ -61,8 +61,8 @@ route.post(
 
         const accLink = await stripe.accountLinks.create({
           account: account.id,
-          return_url: process.env.CLIENT_URL + "/club/registration",
-          refresh_url: process.env.CLIENT_URL + "/club/registration",
+          return_url: process.env.CLIENT_URL + "/club/admission",
+          refresh_url: process.env.CLIENT_URL + "/club/admission",
           type: "account_onboarding",
         });
 
@@ -83,8 +83,8 @@ route.post(
         if (!account.details_submitted) {
           const accLink = await stripe.accountLinks.create({
             account: connectId,
-            return_url: process.env.CLIENT_URL + "/club/registration",
-            refresh_url: process.env.CLIENT_URL + "/club/registration",
+            return_url: process.env.CLIENT_URL + "/club/admission",
+            refresh_url: process.env.CLIENT_URL + "/club/admission",
             type: "account_onboarding",
           });
           res.status(200).json({ message: accLink.url });
