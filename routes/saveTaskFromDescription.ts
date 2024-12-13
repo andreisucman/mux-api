@@ -19,7 +19,7 @@ import findRelevantSolutions from "functions/findRelevantSolutions.js";
 import setUtcMidnight from "@/helpers/setUtcMidnight.js";
 import distributeSubmissions from "@/helpers/distributeSubmissions.js";
 import sortTasksInScheduleByDate from "@/helpers/sortTasksInScheduleByDate.js";
-import { daysFrom, toSnakeCase } from "helpers/utils.js";
+import { daysFrom } from "helpers/utils.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import createTextEmbedding from "functions/createTextEmbedding.js";
 import checkIfTaskIsRelated from "functions/checkIfTaskIsRelated.js";
@@ -29,6 +29,7 @@ import incrementProgress from "@/helpers/incrementProgress.js";
 import filterRelevantProductTypes from "@/functions/filterRelevantTypes.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import { db } from "init.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -150,7 +151,7 @@ route.post(
             {
               type: "text",
               text: `Activity description: ${description}.<-->Activity instruction: ${instruction}.<-->List of concerns: ${JSON.stringify(
-                listOfRelevantConcerns.map((obj) => obj.key)
+                listOfRelevantConcerns.map((obj) => obj.name)
               )}`,
             },
           ],
@@ -185,7 +186,7 @@ route.post(
         productsPersonalized: false,
         proofEnabled: true,
         status: "active",
-        key: toSnakeCase(otherResponse.name),
+        key: otherResponse.name.toLowerCase(),
         description,
         instruction,
         isCreated: true,
@@ -397,6 +398,7 @@ route.post(
         message: err.message,
         operationKey: type,
       });
+      next(err);
     }
   }
 );

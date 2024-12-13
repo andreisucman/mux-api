@@ -134,6 +134,7 @@ route.post(
         userId: String(finalUserId),
         message: error.message,
       });
+      next(error)
     }
   }
 );

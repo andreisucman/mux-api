@@ -321,6 +321,7 @@ export type StreaksType = {
 
 export type UserConcernType = {
   name: string;
+  key: string;
   type: TypeEnum;
   part: PartEnum;
   explanation: string;
@@ -450,6 +451,7 @@ export type RoutineType = {
 
 export type ConcernType = {
   name: string;
+  key: string;
   types: TypeEnum[];
   parts: PartEnum[];
   sex: SexEnum;

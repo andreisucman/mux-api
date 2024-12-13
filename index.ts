@@ -72,7 +72,7 @@ import metricCapturer from "middleware/metricCapturer.js";
 import metrics from "routes/metrics.js";
 import logCapturer from "middleware/logCapturer.js";
 import errorHandler from "middleware/errorHandler.js";
-import sendPasswordResetEmail from "@/routes/sendPasswordResetEmail.js";
+import sendPasswordResetEmail from "routes/sendPasswordResetEmail.js";
 import setPassword from "routes/setPassword.js";
 import changeEmailStepOne from "routes/changeEmailStepOne.js";
 import changeEmailStepTwo from "routes/changeEmailStepTwo.js";
@@ -81,8 +81,9 @@ import sendConfirmationCode from "routes/sendConfirmationCode.js";
 import getAllProofRecords from "routes/getAllProofRecords.js";
 import getUsersProgressRecords from "routes/getUsersProgressRecords.js";
 import getAllSolutions from "routes/getAllSolutions.js";
-import getUsersFilters from "@/routes/getUsersFilters.js";
-import getLastStyleVote from "@/routes/getLastStyleVote.js";
+import getUsersFilters from "routes/getUsersFilters.js";
+import getLastStyleVote from "routes/getLastStyleVote.js";
+import createRoutine from "routes/createRoutine.js";
 
 import { client } from "init.js";
 
@@ -170,6 +171,7 @@ app.use("/getAllProofRecords", getAllProofRecords);
 
 // protected routes
 app.use((req, res, next) => checkAccess(req, res, next, true));
+app.use("/createRoutine", createRoutine);
 app.use("/getUsersFilters", getUsersFilters);
 app.use("/getUsersProgressRecords", getUsersProgressRecords);
 app.use("/sendConfirmationCode", sendConfirmationCode);

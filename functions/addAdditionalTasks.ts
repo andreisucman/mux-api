@@ -1,0 +1,108 @@
+import { ObjectId } from "mongodb";
+import doWithRetries from "helpers/doWithRetries.js";
+import createTasks from "functions/createTasks.js";
+import mergeSchedules from "functions/mergeSchedules.js";
+import getRawSchedule from "functions/getRawSchedule.js";
+import getAdditionalSolutionsAndFrequencies from "functions/getAdditionalSolutionsAndFrequencies.js";
+import { UserConcernType, TaskType, TypeEnum, PartEnum } from "@/types.js";
+import addAnalysisStatusError from "functions/addAnalysisStatusError.js";
+import {
+  CreateRoutineUserInfoType,
+  CreateRoutineAllSolutionsType,
+} from "types/createRoutineTypes.js";
+import { db } from "init.js";
+import httpError from "@/helpers/httpError.js";
+
+type Props = {
+  type: TypeEnum;
+  part: PartEnum;
+  concerns: UserConcernType[];
+  currentTasks: TaskType[];
+  currentSchedule: { [key: string]: { key: string; concern: string }[] };
+  userInfo: CreateRoutineUserInfoType;
+  allSolutions: CreateRoutineAllSolutionsType[];
+};
+
+export default async function addAdditionalTasks({
+  type,
+  part,
+  userInfo,
+  concerns,
+  currentSchedule,
+  allSolutions,
+}: Props) {
+  const { _id: userId, specialConsiderations, demographics } = userInfo;
+
+  try {
+    const solutionsAndFrequencies = await doWithRetries(async () =>
+      getAdditionalSolutionsAndFrequencies({
+        userId: String(userId),
+        type,
+        part,
+        concerns,
+        specialConsiderations,
+        allSolutions,
+        demographics,
+      })
+    );
+
+    await doWithRetries(async () =>
+      db
+        .collection("AnalysisStatus")
+        .updateOne(
+          { userId: new ObjectId(userId), operationKey: type },
+          { $inc: { progress: 2 } }
+        )
+    );
+
+    const { rawSchedule: rawNewSchedule } = await doWithRetries(async () =>
+      getRawSchedule({
+        solutionsAndFrequencies,
+        concerns,
+        days: 6,
+      })
+    );
+
+    const mergedSchedule = await doWithRetries(async () =>
+      mergeSchedules({
+        rawNewSchedule,
+        currentSchedule,
+        userId: String(userId),
+        type,
+      })
+    );
+
+    await doWithRetries(async () =>
+      db
+        .collection("AnalysisStatus")
+        .updateOne(
+          { userId: new ObjectId(userId), operationKey: type },
+          { $inc: { progress: 3 } }
+        )
+    );
+
+    const tasksToInsert = await doWithRetries(async () =>
+      createTasks({
+        finalSchedule: mergedSchedule,
+        allSolutions,
+        userInfo,
+        concerns,
+        type,
+        part,
+      })
+    );
+
+    return {
+      mergedSchedule,
+      additionalAllTasks: solutionsAndFrequencies,
+      additionalTasksToInsert: tasksToInsert,
+    };
+  } catch (error) {
+    await addAnalysisStatusError({
+      operationKey: type,
+      userId: String(userId),
+      message: error.message,
+    });
+    throw httpError(error);
+  }
+}

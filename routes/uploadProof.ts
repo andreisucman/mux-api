@@ -396,6 +396,7 @@ route.post(
         operationKey: taskId,
         message: err.message,
       });
+      next(err)
     }
   }
 );

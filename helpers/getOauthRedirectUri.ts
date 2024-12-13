@@ -14,11 +14,11 @@ export default function getOauthRedirectUri(redirectPath: string) {
     case "/scan/food":
       redirectUrl = process.env.SCAN_FOOD_REDIRECT_URI;
       break;
-    case "/routines":
-      redirectUrl = process.env.ROUTINES_REDIRECT_URI;
+    case "/tasks":
+      redirectUrl = process.env.TASKS_REDIRECT_URI;
       break;
-    case "/club/routine":
-      redirectUrl = process.env.CLUB_ROUTINE_REDIRECT_URI;
+    case "/club/routines":
+      redirectUrl = process.env.CLUB_ROUTINES_REDIRECT_URI;
       break;
     case "/club/about":
       redirectUrl = process.env.CLUB_ABOUT_REDIRECT_URI;

@@ -6,9 +6,9 @@ import findTheBestVariant from "functions/findTheBestVariant.js";
 import isTheProductValid from "functions/isTheProductValid.js";
 import { ProductType, SuggestionVariant } from "@/types/findTheBestVariant.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
+import httpError from "@/helpers/httpError.js";
 import { UserInfoType } from "types.js";
 import { db } from "init.js";
-import httpError from "@/helpers/httpError.js";
 
 interface ValidProductType extends ProductType {
   verdict: boolean;
@@ -106,6 +106,11 @@ export default async function findProducts({
 
       const extractedFeaturesObjectsArray = await Promise.all(
         extractFeaturesPromises
+      );
+
+      console.log(
+        "findProducts line 117 taskData",
+        extractedFeaturesObjectsArray
       );
 
       await doWithRetries(async () =>

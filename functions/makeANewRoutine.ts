@@ -1,0 +1,166 @@
+import { ObjectId } from "mongodb";
+import doWithRetries from "helpers/doWithRetries.js";
+import getRawSchedule from "functions/getRawSchedule.js";
+import polishRawSchedule from "functions/polishRawSchedule.js";
+import createTasks from "functions/createTasks.js";
+import getSolutionsAndFrequencies from "functions/getSolutionsAndFrequencies.js";
+import deactivatePreviousRoutineAndTasks from "functions/deactivatePreviousRoutineAndTasks.js";
+import { UserConcernType, TypeEnum, PartEnum } from "types.js";
+import {
+  CreateRoutineUserInfoType,
+  CreateRoutineAllSolutionsType,
+} from "types/createRoutineTypes.js";
+import { db } from "init.js";
+import httpError from "helpers/httpError.js";
+
+type Props = {
+  userId: string;
+  type: TypeEnum;
+  part: PartEnum;
+  userInfo: CreateRoutineUserInfoType;
+  concerns: UserConcernType[];
+  specialConsiderations: string;
+  allSolutions: CreateRoutineAllSolutionsType[];
+};
+
+export default async function makeANewRoutine({
+  userId,
+  type,
+  part,
+  userInfo,
+  concerns,
+  specialConsiderations,
+  allSolutions,
+}: Props) {
+  try {
+    console.timeEnd("Preparing");
+    console.time("Creating schedule outline");
+
+
+    const solutionsAndFrequencies = await doWithRetries(async () =>
+      getSolutionsAndFrequencies({
+        specialConsiderations,
+        allSolutions,
+        concerns,
+        userInfo,
+        type,
+        part,
+      })
+    );
+
+    await doWithRetries(async () =>
+      db
+        .collection("AnalysisStatus")
+        .updateOne(
+          { userId: new ObjectId(userId), operationKey: type },
+          { $inc: { progress: 20 } }
+        )
+    );
+
+    console.timeEnd("Creating schedule outline");
+    console.time("Creating raw schedule");
+
+    const { rawSchedule } = await doWithRetries(async () =>
+      getRawSchedule({
+        solutionsAndFrequencies,
+        concerns,
+        days: 6,
+      })
+    );
+
+    await doWithRetries(async () =>
+      db
+        .collection("AnalysisStatus")
+        .updateOne(
+          { userId: new ObjectId(userId), operationKey: type },
+          { $inc: { progress: 10 } }
+        )
+    );
+
+    console.timeEnd("Creating raw schedule");
+    console.time("Creating final schedule");
+
+    const finalSchedule = await doWithRetries(async () =>
+      polishRawSchedule({
+        type,
+        userId,
+        concerns,
+        rawSchedule,
+        specialConsiderations,
+      })
+    );
+
+    console.timeEnd("Creating final schedule");
+
+    await doWithRetries(async () =>
+      db
+        .collection("AnalysisStatus")
+        .updateOne(
+          { userId: new ObjectId(userId), operationKey: type },
+          { $inc: { progress: 5 } }
+        )
+    );
+
+    /* deactivate the old routine and tasks */
+    const previousRoutineRecord = await doWithRetries(async () =>
+      db
+        .collection("Routine")
+        .find(
+          { userId: new ObjectId(userId), type, part },
+          {
+            projection: {
+              _id: 1,
+            },
+          }
+        )
+        .sort({ createdAt: -1 })
+        .next()
+    );
+
+    if (previousRoutineRecord)
+      await deactivatePreviousRoutineAndTasks(
+        String(previousRoutineRecord._id)
+      );
+
+    let tasksToInsert = await doWithRetries(async () =>
+      createTasks({
+        part,
+        type,
+        concerns,
+        allSolutions,
+        finalSchedule,
+        userInfo,
+      })
+    );
+
+    /* add the new routine object */
+    const dates = Object.keys(finalSchedule);
+    const lastDate = dates[dates.length - 1];
+
+    const newRoutineObject = await doWithRetries(async () =>
+      db.collection("Routine").insertOne({
+        userId: new ObjectId(userId),
+        concerns,
+        finalSchedule,
+        status: "active",
+        createdAt: new Date(),
+        allTasks: solutionsAndFrequencies,
+        lastDate: new Date(lastDate),
+        type,
+        part,
+      })
+    );
+
+    /* update final tasks */
+    tasksToInsert = tasksToInsert.map((rt) => ({
+      ...rt,
+      routineId: newRoutineObject.insertedId,
+    }));
+
+    await doWithRetries(async () =>
+      db.collection("Task").insertMany(tasksToInsert)
+    );
+  } catch (err) {
+    throw httpError(err);
+  }
+}

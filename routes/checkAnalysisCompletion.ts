@@ -41,9 +41,7 @@ route.post(
 
       if (!job) {
         res.status(200).json({
-          message: {
-            jobProgress: 1,
-          },
+          error: "Job not found. Please try again.",
         });
         return;
       }

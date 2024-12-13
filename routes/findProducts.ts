@@ -3,11 +3,11 @@ dotenv.config();
 
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
-import { db } from "init.js";
 import findProducts from "functions/findProducts.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { CustomRequest, SolutionType } from "types.js";
 import httpError from "@/helpers/httpError.js";
+import { db } from "init.js";
 
 const route = Router();
 
@@ -22,11 +22,9 @@ route.post(
     }
 
     try {
-      const userId = new ObjectId(req.userId);
-      /* find user info */
       const userInfo = await doWithRetries(async () =>
         db.collection("User").findOne(
-          { _id: userId },
+          { _id: new ObjectId(req.userId) },
           {
             projection: {
               specialConsiderations: 1,
@@ -50,10 +48,13 @@ route.post(
         return;
       }
 
-      /* find task info */
       const taskData = await doWithRetries(async () =>
         db.collection("Task").findOne(
-          { key: taskKey, expiresAt: { $gt: new Date() } },
+          {
+            userId: new ObjectId(req.userId),
+            expiresAt: { $gt: new Date() },
+            key: taskKey,
+          },
           {
             projection: {
               description: 1,
@@ -67,10 +68,9 @@ route.post(
 
       if (!taskData) return next(httpError(`Task ${taskKey} not not found`));
 
-      /* update analysis */
       await doWithRetries(async () =>
         db.collection("AnalysisStatus").updateOne(
-          { userId, operationKey: taskKey },
+          { userId: new ObjectId(req.userId), operationKey: taskKey },
           {
             $set: { isRunning: true, progress: 1 },
             $unset: { isError: "" },
@@ -87,7 +87,7 @@ route.post(
       const suggestedProducts = await findProducts({
         taskData: taskData as unknown as SolutionType,
         userInfo: {
-          _id: userId,
+          _id: new ObjectId(req.userId),
           specialConsiderations,
           demographics,
           timeZone,
@@ -99,7 +99,11 @@ route.post(
 
       await doWithRetries(async () =>
         db.collection("Task").updateMany(
-          { key: taskKey, expiresAt: { $gt: new Date() } },
+          {
+            userId: new ObjectId(req.userId),
+            key: taskKey,
+            expiresAt: { $gt: new Date() },
+          },
           {
             $set: {
               suggestions: suggestedProducts,
@@ -109,18 +113,16 @@ route.post(
         )
       );
 
-      /* update analysis */
       await doWithRetries(async () =>
         db.collection("AnalysisStatus").updateOne(
-          { userId, operationkey: taskKey },
+          { userId: new ObjectId(req.userId), operationKey: taskKey },
           {
             $set: { isRunning: false, progress: 0 },
-            $unset: { isError: "" },
           }
         )
       );
     } catch (error) {
-      // this is async
+      next(error);
     }
   }
 );

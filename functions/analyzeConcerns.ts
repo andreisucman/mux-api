@@ -79,7 +79,8 @@ export default async function analyzeConcerns({
           ConcernsResponseType,
           "concerns_response_type"
         ),
-        callback: () => incrementProgress({ userId, operationKey: type, increment: 3 }),
+        callback: () =>
+          incrementProgress({ userId, operationKey: type, increment: 3 }),
       },
     ];
 
@@ -91,7 +92,10 @@ export default async function analyzeConcerns({
       });
 
     const combined: UserConcernType[] = response.concerns.map(
-      (concern: { name: string; explanation: string }, index: number) => ({
+      (
+        concern: { name: string; key: string; explanation: string },
+        index: number
+      ) => ({
         ...concern,
         part,
         importance: index + 1,

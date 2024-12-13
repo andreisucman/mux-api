@@ -1,4 +1,4 @@
-import { Router, Response } from "express";
+import { Router, Response, NextFunction } from "express";
 import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import { CustomRequest, StyleAnalysisType, PrivacyType } from "types.js";
@@ -10,10 +10,11 @@ import getScoreDifference from "@/helpers/getScoreDifference.js";
 import getStyleCompareRecord from "functions/getStyleCompareRecord.js";
 import { StartStyleAnalysisUserInfoType } from "types/startStyleAnalysisTypes.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
-route.post("/", async (req: CustomRequest, res: Response) => {
+route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
   const { image, type, blurType, localUserId } = req.body;
 
   let userId = req.userId || localUserId;
@@ -181,6 +182,7 @@ route.post("/", async (req: CustomRequest, res: Response) => {
       operationKey: `style-${type}`,
       message: error.message,
     });
+    next(error)
   }
 });
 

@@ -110,6 +110,7 @@ route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
       operationKey: `style-${type}`,
       message: err.message,
     });
+    next(err)
   }
 });
 

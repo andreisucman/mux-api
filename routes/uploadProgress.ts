@@ -143,9 +143,13 @@ route.post(
       }
 
       /* remove the current uploaded info from the remaining requirements */
-      const remainingRequirements: ProgressType[] = requiredProgress[
-        type as "head"
-      ].filter((record: ProgressType) => record.position !== position);
+      const typeProgressRequirements = requiredProgress[type as "head"];
+
+      const remainingRequirements: ProgressType[] =
+        typeProgressRequirements.filter(
+          (record: ProgressType) =>
+            record.part !== part || record.position !== position
+        );
 
       const newRequiredProgress = {
         ...requiredProgress,
@@ -236,12 +240,12 @@ route.post(
         });
       }
     } catch (err) {
-      next(err);
       await addAnalysisStatusError({
         operationKey: type,
         userId: String(finalUserId),
         message: err.message,
       });
+      next(err);
     }
   }
 );

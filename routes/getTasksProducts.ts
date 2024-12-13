@@ -17,7 +17,7 @@ route.get(
       const filter: { [key: string]: any } = {
         userId: new ObjectId(req.userId),
         expiresAt: { $gt: new Date() },
-        status: { $ne: "inactive" },
+        status: "active",
       };
 
       if (type) filter.type = type;

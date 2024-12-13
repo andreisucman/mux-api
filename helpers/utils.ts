@@ -34,9 +34,12 @@ export function upperFirst(string: string) {
   return string[0].toUpperCase() + string.slice(1);
 }
 
-export function toSnakeCase(string: string) {
-  if (!string) return "";
-  const words = string.trim().split(/[\s-_]+/);
+export function toSnakeCase(value: any): string {
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  const words = value.trim().split(/[\s-_]+/);
   return words.map((word) => word.toLowerCase()).join("_");
 }
 
@@ -59,4 +62,54 @@ export const getHashedPassword = async (
 
 export function minutesFromNow(minutes: number) {
   return new Date(new Date().getTime() + minutes * 60000);
+}
+
+export function calculateDaysDifference(dateFrom: Date, dateTo: Date) {
+  try {
+    const from = new Date(dateFrom).getTime();
+    const to = new Date(dateTo).getTime();
+    const differenceInTime = to - from;
+    const differenceInDays = differenceInTime / (1000 * 3600 * 24);
+    return Math.round(differenceInDays);
+  } catch (err) {
+    console.log(`Error in calculateDaysDifference:`, err.message);
+    throw err;
+  }
+}
+
+export function convertKeysAndValuesTotoSnakeCase(obj: { [key: string]: any }) {
+  const newObj: { [key: string]: any } = {};
+
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      let lowerCaseKey = key.toLowerCase();
+      let toSnakeCaseValues;
+
+      if (Array.isArray(obj[key])) {
+        toSnakeCaseValues = obj[key].map((value: any) => toSnakeCase(value));
+      } else {
+        toSnakeCaseValues = toSnakeCase(obj[key]);
+      }
+
+      newObj[lowerCaseKey] = toSnakeCaseValues;
+    }
+  }
+
+  return newObj;
+}
+
+export function combineSolutions(
+  findSolutionsResponse: { [key: string]: string },
+  findAdditionalSolutionsResponse: { [key: string]: string }
+) {
+  const combinedSolutions: { [key: string]: string[] } = {};
+
+  for (const [concern, solution] of Object.entries(findSolutionsResponse)) {
+    combinedSolutions[concern] = [
+      solution,
+      ...(findAdditionalSolutionsResponse[solution] || []),
+    ];
+  }
+
+  return combinedSolutions;
 }
