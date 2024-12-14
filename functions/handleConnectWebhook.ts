@@ -17,7 +17,6 @@ export default async function handleConnectWebhook(event: any) {
       const { disabled_reason } = requirements || {};
 
       const updatePayload: { [key: string]: any } = {
-        "club.isActive": true,
         "club.payouts.payoutsEnabled": payouts_enabled,
         "club.payouts.detailsSubmitted": details_submitted,
         "club.payouts.disabledReason": disabled_reason,

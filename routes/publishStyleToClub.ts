@@ -39,11 +39,12 @@ route.post(
       const { club, latestScoresDifference } = userInfo || {
         club: {},
       };
-      const { isActive } = club || {};
+      const { payouts } = club || {};
+      const { detailsSubmitted } = payouts || {};
       const { head: headScoreDifference, body: bodyScoreDifference } =
         latestScoresDifference || {};
 
-      if (!isActive) {
+      if (!detailsSubmitted) {
         res.status(200).json({ error: "You need to join the Club first." });
         return;
       }

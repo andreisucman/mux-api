@@ -33,6 +33,12 @@ const emptyFilters: ExistingFiltersType = {
 
 const route = Router();
 
+const collectionMap: { [key: string]: string } = {
+  progress: "BeforeAfter",
+  style: "StyleAnalysis",
+  proof: "Proof",
+};
+
 route.get(
   "/:collection",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
@@ -40,7 +46,9 @@ route.get(
 
     try {
       const object = await doWithRetries(async () =>
-        db.collection("ExistingFilters").findOne({ collection })
+        db
+          .collection("ExistingFilters")
+          .findOne({ collection: collectionMap[collection] })
       );
 
       let result = emptyFilters;

@@ -182,7 +182,6 @@ export type ClubDataType = {
   bio: ClubBioType;
   name: string;
   avatar: { [key: string]: any } | null;
-  isActive: boolean;
   payouts: {
     connectId: string;
     rewardEarned: number;

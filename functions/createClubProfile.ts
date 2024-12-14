@@ -92,7 +92,6 @@ export default async function createClubProfile({ userId, avatar }: Props) {
       bio: clubBio,
       name: randomName,
       avatar,
-      isActive: false,
       payouts: {
         connectId: "",
         rewardEarned: 0,
