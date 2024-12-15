@@ -85,6 +85,9 @@ import getUsersFilters from "routes/getUsersFilters.js";
 import getLastStyleVote from "routes/getLastStyleVote.js";
 import createRoutine from "routes/createRoutine.js";
 import checkCountry from "routes/checkCountry.js";
+import getDiaryRecords from "routes/getDiaryRecords.js";
+import createDiaryRecord from "routes/createDiaryRecord.js";
+import saveDiaryRecord from "routes/saveDiaryRecord.js";
 
 import { client } from "init.js";
 
@@ -172,6 +175,9 @@ app.use("/getAllProofRecords", getAllProofRecords);
 
 // protected routes
 app.use((req, res, next) => checkAccess(req, res, next, true));
+app.use("/saveDiaryRecord", saveDiaryRecord);
+app.use("/createDiaryRecord", createDiaryRecord);
+app.use("/getDiaryRecords", getDiaryRecords);
 app.use("/checkCountry", checkCountry);
 app.use("/createRoutine", createRoutine);
 app.use("/getUsersFilters", getUsersFilters);

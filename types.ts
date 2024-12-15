@@ -135,6 +135,7 @@ export type StyleAnalysisType = {
   type: TypeEnum;
   goal: StyleGoalsType | null;
   hash: string;
+  styleIcon: string;
   styleName: string;
   compareStyleName: string;
   currentDescription: string;

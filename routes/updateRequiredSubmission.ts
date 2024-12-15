@@ -48,14 +48,9 @@ route.post(
         return;
       }
 
-      let updatedSubmissions = [...requiredSubmissions];
-
-      const relevantIndex = requiredSubmissions.findIndex(
-        (submission) => submission.submissionId === submissionId
+      const updatedSubmissions = requiredSubmissions.map((s) =>
+        s.submissionId === submissionId ? { ...s, isSubmitted } : s
       );
-
-      const updatedSubmission = { ...relevantSubmission, isSubmitted };
-      updatedSubmissions.splice(relevantIndex, 1, updatedSubmission);
 
       const payload: Partial<TaskType> = {
         requiredSubmissions: updatedSubmissions,

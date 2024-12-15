@@ -69,12 +69,10 @@ export default async function checkTrackedRBAC({
     );
 
     const { club, subscriptions } =
-      (result.userInfo as unknown as Partial<UserType>) || {
-        peek: { validUntil: null },
-      };
+      (result.userInfo as unknown as Partial<UserType>) || {};
 
-    const { peek } = subscriptions;
-    const { validUntil } = peek;
+    const { peek } = subscriptions || {};
+    const { validUntil } = peek || {};
 
     if (!validUntil || (validUntil && validUntil < new Date())) {
       if (throwOnError) {

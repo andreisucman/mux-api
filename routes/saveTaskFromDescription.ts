@@ -395,7 +395,9 @@ route.post(
     } catch (err) {
       await addAnalysisStatusError({
         userId: req.userId,
-        message: err.message,
+        message:
+          "An unexpected error occured. Please try again and inform us if the error persists.",
+        originalMessage: err.message,
         operationKey: type,
       });
       next(err);

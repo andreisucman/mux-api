@@ -1,9 +1,9 @@
 import { ObjectId } from "mongodb";
-import { names } from "fancy-random-names";
-import { uniqueNamesGenerator, adjectives } from "unique-names-generator";
 import { defaultClubPrivacy } from "data/defaultClubPrivacy.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { UserType, ClubDataType, ClubBioType } from "types.js";
+import { names } from "fancy-random-names";
+import { uniqueNamesGenerator, adjectives } from "unique-names-generator";
 import { db } from "init.js";
 import httpError from "@/helpers/httpError.js";
 
@@ -33,7 +33,7 @@ export default async function createClubProfile({ userId, avatar }: Props) {
       dictionaries: [adjectives, names],
       length: 2,
       style: "capital",
-      separator: " ",
+      separator: "",
     });
 
     const defaultQuestions = [
@@ -88,9 +88,9 @@ export default async function createClubProfile({ userId, avatar }: Props) {
     };
 
     const defaultClubData: ClubDataType = {
-      followingUserId: null,
       bio: clubBio,
       name: randomName,
+      followingUserId: null,
       avatar,
       payouts: {
         connectId: "",
@@ -106,12 +106,15 @@ export default async function createClubProfile({ userId, avatar }: Props) {
     };
 
     await doWithRetries(async () =>
-      db
-        .collection("User")
-        .updateOne(
-          { _id: new ObjectId(userId) },
-          { $set: { club: defaultClubData } }
-        )
+      db.collection("User").updateOne(
+        { _id: new ObjectId(userId) },
+        {
+          $set: {
+            club: defaultClubData,
+            followingUserId: null,
+          },
+        }
+      )
     );
 
     return defaultClubData;

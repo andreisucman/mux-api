@@ -22,7 +22,7 @@ async function getFileBufferFromUrl(url: string) {
   }
 }
 
-export default async function uploadFilesToS3(filesOrUrls: string[] | any) {
+export default async function uploadFilesToS3(filesOrUrls: string[] | any[]) {
   try {
     const uploadedUrls = [];
 
