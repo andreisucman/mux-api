@@ -9,7 +9,9 @@ import { daysFrom } from "helpers/utils.js";
 import formatDate from "helpers/formatDate.js";
 import updatePublicContent from "@/functions/updatePublicContent.js";
 import httpError from "@/helpers/httpError.js";
-import { db } from "init.js";
+import isNameUnique from "@/functions/isNameUnique.js";
+import { db, stripe } from "init.js";
+import getUserInfo from "@/functions/getUserInfo.js";
 
 const route = Router();
 
@@ -19,65 +21,94 @@ route.post(
     const { name, avatar, intro, bio, socials } = req.body;
 
     try {
-      const userInfo = await doWithRetries(async () =>
-        db.collection("User").findOne({ _id: new ObjectId(req.userId) })
-      );
+      const userInfo = await getUserInfo({
+        userId: req.userId,
+        projection: {
+          nextNameUpdateAt: 1,
+          nextAvatarUpdateAt: 1,
+          "club.payouts.connectId": 1,
+        },
+      });
 
       if (!userInfo) throw httpError(`User ${req.userId} not found`);
 
-      const { club } = userInfo;
-      const { nextAvatarUpdateAt, nextNameUpdateAt } = club;
+      const { nextAvatarUpdateAt, nextNameUpdateAt } = userInfo;
 
-      if (name && nextNameUpdateAt > new Date()) {
-        const formattedDate = formatDate({ date: nextNameUpdateAt });
-        res
-          .status(200)
-          .json({ error: `You can update your name after ${formattedDate}.` });
-        return;
-      }
-
-      if (avatar && nextAvatarUpdateAt > new Date()) {
-        const formattedDate = formatDate({ date: nextNameUpdateAt });
-        res.status(200).json({
-          error: `You can update your avatar after ${formattedDate}.`,
-        });
-        return;
-      }
-
-      const payload: { [key: string]: any } = {};
+      const updatePayload: { [key: string]: any } = {};
 
       if (name) {
-        payload["club.name"] = name;
-        payload["club.nextNameUpdateAt"] = daysFrom({ days: 30 });
+        if (nextNameUpdateAt > new Date()) {
+          const formattedDate = formatDate({ date: nextNameUpdateAt });
+          res.status(200).json({
+            error: `You can update your name after ${formattedDate}.`,
+          });
+          return;
+        }
+
+        const isUnique = await isNameUnique(name);
+
+        if (!isUnique) {
+          res.status(200).json({
+            error: `A user with this name already exists. Choose a different name.`,
+          });
+          return;
+        }
+        updatePayload.name = name;
+        updatePayload.nextNameUpdateAt = daysFrom({ days: 30 });
+
+        const { club } = userInfo;
+
+        if (club) {
+          const { payouts } = club || {};
+          const { connectId } = payouts;
+
+          await doWithRetries(() =>
+            stripe.accounts.update(connectId, {
+              business_profile: {
+                url: `${process.env.CLIENT_URL}/club/${name}`,
+              },
+            })
+          );
+        }
       }
 
       if (avatar) {
-        payload["club.avatar"] = avatar;
-        payload["club.nextAvatarUpdateAt"] = daysFrom({ days: 7 });
+        if (nextAvatarUpdateAt > new Date()) {
+          const formattedDate = formatDate({ date: nextNameUpdateAt });
+          res.status(200).json({
+            error: `You can update your avatar after ${formattedDate}.`,
+          });
+          return;
+        }
+
+        updatePayload.avatar = avatar;
+        updatePayload.nextAvatarUpdateAt = daysFrom({ days: 7 });
       }
 
-      if (intro) payload["club.bio.intro"] = intro;
-
-      if (socials) payload["club.bio.socials"] = socials;
+      if (intro) updatePayload["club.bio.intro"] = intro;
+      if (socials) updatePayload["club.bio.socials"] = socials;
 
       if (bio) {
         for (const key in bio) {
-          payload[`club.bio.${key}`] = bio[key];
+          updatePayload[`club.bio.${key}`] = bio[key];
         }
       }
 
       await doWithRetries(async () =>
         db
           .collection("User")
-          .updateOne({ _id: new ObjectId(req.userId) }, { $set: payload })
+          .updateOne({ _id: new ObjectId(req.userId) }, { $set: updatePayload })
       );
 
       if (name || avatar) {
-        const updatePayload: { [key: string]: any } = {};
-        if (name) updatePayload.clubName = name;
-        if (avatar) updatePayload.avatar = avatar;
+        const updatePublicityPayload: { [key: string]: any } = {};
+        if (name) updatePublicityPayload.userName = name;
+        if (avatar) updatePublicityPayload.avatar = avatar;
 
-        updatePublicContent({ userId: req.userId, updatePayload });
+        updatePublicContent({
+          userId: req.userId,
+          updatePayload: updatePublicityPayload,
+        });
       }
 
       res.status(200).end();

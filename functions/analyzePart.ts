@@ -27,6 +27,8 @@ import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
+  name: string;
+  avatar: { [key: string]: any } | null;
   blurType: BlurTypeEnum;
   type: TypeEnum;
   part: PartEnum;
@@ -39,6 +41,8 @@ type Props = {
 
 export default async function analyzePart({
   userId,
+  name,
+  avatar,
   club,
   type,
   part,
@@ -241,10 +245,10 @@ export default async function analyzePart({
         }
       }
 
-      recordOfProgress.avatar = club.avatar;
-      recordOfProgress.clubName = club.name;
-      beforeAfterUpdate.avatar = club.avatar;
-      beforeAfterUpdate.clubName = club.name;
+      recordOfProgress.avatar = avatar;
+      recordOfProgress.userName = name;
+      beforeAfterUpdate.avatar = avatar;
+      beforeAfterUpdate.userName = name;
     }
 
     await doWithRetries(async () =>

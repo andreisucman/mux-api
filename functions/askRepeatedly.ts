@@ -19,7 +19,6 @@ type Props = {
   userId: string;
   systemContent: string;
   isResultString?: boolean;
-  responseFormat?: any;
 };
 
 const defaultSeed = Number(process.env.DEFAULT_OPENAI_SEED);
@@ -31,7 +30,6 @@ async function askRepeatedly({
   userId,
   systemContent,
   isResultString,
-  responseFormat,
 }: Props) {
   try {
     if (!ObjectId.isValid(userId) && !meta)
@@ -48,10 +46,6 @@ async function askRepeatedly({
         content: runs[i].content,
       } as MessageType);
 
-      const finalResponseFormat = runs[i].responseFormat
-        ? runs[i].responseFormat
-        : responseFormat;
-
       const payload: AskOpenaiProps = {
         userId,
         meta,
@@ -62,7 +56,8 @@ async function askRepeatedly({
       };
 
       if (runs[i].model) payload.model = runs[i].model;
-      if (finalResponseFormat) payload.responseFormat = finalResponseFormat;
+      if (runs[i].responseFormat)
+        payload.responseFormat = runs[i].responseFormat;
 
       const response = await doWithRetries(async () => askOpenai(payload));
 

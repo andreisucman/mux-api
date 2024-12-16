@@ -16,6 +16,7 @@ import getLatestRoutinesAndTasks from "functions/getLatestRoutineAndTasks.js";
 import setUtcMidnight from "helpers/setUtcMidnight.js";
 import { daysFrom } from "helpers/utils.js";
 import httpError from "@/helpers/httpError.js";
+import getUserInfo from "@/functions/getUserInfo.js";
 
 const route = Router();
 
@@ -30,14 +31,10 @@ route.post(
     }
 
     try {
-      const userInfo = await doWithRetries(async () =>
-        db.collection("User").findOne(
-          {
-            _id: new ObjectId(req.userId),
-          },
-          { projection: { timeZone: 1 } }
-        )
-      );
+      const userInfo = await getUserInfo({
+        userId: req.userId,
+        projection: { timeZone: 1 },
+      });
 
       if (!userInfo) throw httpError(`User ${req.userId} not found`);
 

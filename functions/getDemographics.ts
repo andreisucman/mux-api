@@ -19,7 +19,7 @@ export default async function getDemographics({
   let systemContent = "";
 
   if (type === "head") {
-    systemContent += `You are an anthropologist. You are given images of a human. Your goal is to determine its demographic data such as sex, age interval, ethnicity, skin color and skin type.`;
+    systemContent += `You are an anthropologist. You are given images of a human. Your goal is to determine its demographic data such as sex, age interval, ethnicity,  and skin type.`;
   } else {
     systemContent += `You are an anthropologist. You are given images of a human. Your goal is to determine its body type.`;
   }
@@ -49,14 +49,6 @@ export default async function getDemographics({
         "arab",
         "south_asian",
         "native_american",
-      ]),
-      skinColor: z.enum([
-        "fitzpatrick-1",
-        "fitzpatrick-2",
-        "fitzpatrick-3",
-        "fitzpatrick-4",
-        "fitzpatrick-5",
-        "fitzpatrick-6",
       ]),
       skinType: z.enum(["dry", "oily", "normal"]),
     });

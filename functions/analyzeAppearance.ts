@@ -26,6 +26,8 @@ import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
+  name: string;
+  avatar: { [key: string]: any } | null;
   type: TypeEnum;
   blurType: BlurTypeEnum;
   defaultToUpdateUser?: { $set: { [key: string]: unknown } };
@@ -49,6 +51,8 @@ type Props = {
 
 export default async function analyzeAppearance({
   userId,
+  name, 
+  avatar,
   type,
   club,
   blurType,
@@ -135,6 +139,8 @@ export default async function analyzeAppearance({
     const analyzePartPromises = parts.map((part) => {
       return doWithRetries(async () =>
         analyzePart({
+          name,
+          avatar,
           club,
           type,
           part,

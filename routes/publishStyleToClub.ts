@@ -25,7 +25,10 @@ route.post(
           { _id: new ObjectId(req.userId) },
           {
             projection: {
-              club: 1,
+              "club.payouts": 1,
+              "club.privacy": 1,
+              name: 1,
+              avatar: 1,
               "demographics.sex": 1,
               latestStyleAnalysis: 1,
               latestProgress: 1,
@@ -36,18 +39,17 @@ route.post(
         )
       )) as unknown as PublishToClubUserInfoType;
 
-      const { club, latestScoresDifference } = userInfo || {
-        club: {},
-      };
+      const { club } = userInfo || {};
       const { payouts } = club || {};
       const { detailsSubmitted } = payouts || {};
-      const { head: headScoreDifference, body: bodyScoreDifference } =
-        latestScoresDifference || {};
 
       if (!detailsSubmitted) {
         res.status(200).json({ error: "You need to join the Club first." });
         return;
       }
+      const { latestScoresDifference } = userInfo || {};
+      const { head: headScoreDifference, body: bodyScoreDifference } =
+        latestScoresDifference || {};
 
       const relevantStyle = await doWithRetries(async () =>
         db.collection("StyleAnalysis").findOne(
@@ -72,7 +74,7 @@ route.post(
         return;
       }
 
-      const { latestProgress } = userInfo;
+      const { latestProgress, name, avatar } = userInfo;
       const { head } = latestProgress;
       const { face } = head;
 
@@ -112,8 +114,8 @@ route.post(
           {
             $set: {
               isPublic: true,
-              clubName: club.name,
-              avatar: club.avatar,
+              userName: name,
+              avatar,
               latestHeadScoreDifference: headScoreDifference.overall,
               latestBodyScoreDifference: bodyScoreDifference.overall,
             },

@@ -6,11 +6,16 @@ import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import createRoutine from "functions/createRoutine.js";
 import checkSubscriptionStatus from "functions/checkSubscription.js";
-import { UserConcernType, CustomRequest, NextActionType } from "types.js";
-import formatDate from "helpers/formatDate.js";
+import {
+  UserConcernType,
+  CustomRequest,
+  SubscriptionTypeNamesEnum,
+} from "types.js";
 import updateNextRoutine from "helpers/updateNextRoutine.js";
-import { db } from "init.js";
+import formatDate from "helpers/formatDate.js";
 import httpError from "@/helpers/httpError.js";
+import { db } from "init.js";
+import getUserInfo from "@/functions/getUserInfo.js";
 
 const route = Router();
 
@@ -30,7 +35,7 @@ route.post(
     try {
       const subscriptionIsValid: boolean = await checkSubscriptionStatus({
         userId: req.userId,
-        subscriptionType: "improvement",
+        subscriptionType: SubscriptionTypeNamesEnum.IMPROVEMENT,
       });
 
       if (!subscriptionIsValid) {
@@ -38,18 +43,10 @@ route.post(
         return;
       }
 
-      const userInfo = (await doWithRetries(async () =>
-        db
-          .collection("User")
-          .findOne(
-            { _id: new ObjectId(req.userId) },
-            { projection: { nextRoutine: 1, nextScan: 1, concerns: 1 } }
-          )
-      )) as unknown as {
-        nextRoutine: NextActionType;
-        nextScan: NextActionType;
-        concerns: UserConcernType[];
-      };
+      const userInfo = await getUserInfo({
+        userId: req.userId,
+        projection: { nextRoutine: 1, nextScan: 1, concerns: 1 },
+      });
 
       if (!userInfo) throw httpError("User not found");
 

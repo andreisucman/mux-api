@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
+import httpError from "@/helpers/httpError.js";
 
 export default async function validateCode(code: string) {
   try {
@@ -40,6 +41,6 @@ export default async function validateCode(code: string) {
       userId,
     };
   } catch (err) {
-    throw err;
+    throw httpError(err);
   }
 }

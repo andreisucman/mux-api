@@ -40,7 +40,7 @@ export default async function findTheBestVariant({
   }));
 
   const { _id: userId, demographics, specialConsiderations } = userInfo;
-  const { sex, ageInterval, skinType, ethnicity, skinColor } = demographics;
+  const { sex, ageInterval, skinType, ethnicity } = demographics;
 
   const callback = () =>
     incrementProgress({
@@ -51,7 +51,7 @@ export default async function findTheBestVariant({
 
   const concernKeys = concerns.map((c) => c.name).join(",");
 
-  const userDescription = `Sex: ${sex}.<-->Age interval: ${ageInterval}.<-->Skin type: ${skinType}.<-->Ethnicity: ${ethnicity}.<-->Skin color: ${skinColor}.<-->Criteria: ${criteria}.<-->Concerns: ${concernKeys}.`;
+  const userDescription = `Sex: ${sex}.<-->Age interval: ${ageInterval}.<-->Skin type: ${skinType}.<-->Ethnicity: ${ethnicity}.<-->Criteria: ${criteria}.<-->Concerns: ${concernKeys}.`;
 
   const list = simplifiedVariants
     .map(

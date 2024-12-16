@@ -5,7 +5,7 @@ import { ObjectId } from "mongodb";
 import { z } from "zod";
 import { Router, Response, NextFunction } from "express";
 import { zodResponseFormat } from "openai/helpers/zod";
-import { CustomRequest, NextActionType } from "types.js";
+import { CustomRequest } from "types.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import askRepeatedly from "functions/askRepeatedly.js";
 import moderateText from "functions/moderateText.js";
@@ -14,6 +14,7 @@ import checkIfTaskIsRelated from "@/functions/checkIfTaskIsRelated.js";
 import { daysFrom } from "helpers/utils.js";
 import setUtcMidnight from "@/helpers/setUtcMidnight.js";
 import { db } from "init.js";
+import getUserInfo from "@/functions/getUserInfo.js";
 
 const route = Router();
 
@@ -29,14 +30,10 @@ route.post(
 
     try {
       /* check if scanned */
-      const userInfo = (await doWithRetries(async () =>
-        db.collection("User").findOne(
-          {
-            _id: new ObjectId(req.userId),
-          },
-          { projection: { nextScan: 1 } }
-        )
-      )) as unknown as { nextScan: NextActionType };
+      const userInfo = await getUserInfo({
+        userId: req.userId,
+        projection: { nextScan: 1 },
+      });
 
       const finalType = type === "head" ? type : "body";
 

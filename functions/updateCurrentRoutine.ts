@@ -35,13 +35,13 @@ export default async function updateCurrentRoutine({
   const { _id: userId } = userInfo;
 
   try {
-    if (!routineId) throw new Error("No routineId");
+    if (!routineId) throw httpError("No routineId");
 
     const currentRoutine = await doWithRetries(async () =>
       db.collection("Routine").findOne({ _id: new ObjectId(routineId) })
     );
 
-    if (!currentRoutine) throw new Error("No currentRoutine");
+    if (!currentRoutine) throw httpError("No currentRoutine");
 
     const daysDifference = calculateDaysDifference(
       new Date(),

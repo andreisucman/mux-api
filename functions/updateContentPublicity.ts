@@ -4,26 +4,26 @@ import doWithRetries from "helpers/doWithRetries.js";
 import calculateDifferenceInPrivacies from "helpers/calculateDifferenceInPrivacies.js";
 import { PrivacyType } from "types.js";
 import httpError from "@/helpers/httpError.js";
+import getUserInfo from "./getUserInfo.js";
 
 type Props = {
-  userId: string;
+  userName: string;
   newPrivacy: PrivacyType[];
 };
 
 export default async function updateContentPublicity({
-  userId,
+  userName,
   newPrivacy,
 }: Props) {
   try {
-    const userInfo = await doWithRetries(async () =>
-      db
-        .collection("User")
-        .findOne({ _id: new ObjectId(userId) }, { projection: { club: 1 } })
-    );
+    const userInfo = await getUserInfo({
+      userName,
+      projection: { "club.privacy": 1, name: 1, avatar: 1 },
+    });
 
     if (!userInfo) throw httpError("No userInfo");
 
-    const { club } = userInfo;
+    const { club, name, avatar } = userInfo;
     const { privacy: currentPrivacy } = club;
 
     const difference = calculateDifferenceInPrivacies(
@@ -36,15 +36,15 @@ export default async function updateContentPublicity({
       .map((obj: { name: string; type: string; value: boolean }) => ({
         updateOne: {
           filter: {
-            userId: new ObjectId(userId),
+            name: userName,
             part: obj.name,
             type: obj.type,
           },
           update: {
             $set: {
               isPublic: obj.value,
-              clubName: club.name,
-              avatar: club.avatar,
+              userName: name,
+              avatar,
             },
           },
         },
@@ -55,13 +55,13 @@ export default async function updateContentPublicity({
       .map((obj: { name: string; type: string; value: boolean }) => ({
         updateOne: {
           filter: {
-            userId: new ObjectId(userId),
+            name: userName,
           },
           update: {
             $set: {
               isPublic: obj.value,
-              clubName: club.name,
-              avatar: club.avatar,
+              userName: name,
+              avatar,
             },
           },
         },
@@ -90,10 +90,7 @@ export default async function updateContentPublicity({
     await doWithRetries(async () =>
       db
         .collection("User")
-        .updateOne(
-          { _id: new ObjectId(userId) },
-          { $set: { "club.privacy": newPrivacy } }
-        )
+        .updateOne({ name: userName }, { $set: { "club.privacy": newPrivacy } })
     );
   } catch (err) {
     throw httpError(err);

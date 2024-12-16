@@ -21,6 +21,8 @@ import {
 } from "types.js";
 
 export type UploadProgressUserInfo = {
+  name: string;
+  avatar: { [key: string]: any } | null;
   requiredProgress: {
     head: ProgressType[];
     body: ProgressType[];

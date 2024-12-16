@@ -8,6 +8,8 @@ import {
 
 export type PublishToClubUserInfoType = {
   _id: string;
+  name: string;
+  avatar: { [key: string]: any };
   latestStyleAnalysis: { head?: StyleAnalysisType; body?: StyleAnalysisType };
   latestScoresDifference: LatestScoresType;
   demographics: DemographicsType;

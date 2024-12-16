@@ -6,25 +6,26 @@ import { Router, Response, NextFunction } from "express";
 import { GetClubYouTrackUserType } from "types/getClubYouTrackTypes.js";
 import { ClubBioType, CustomRequest, UserType } from "types.js";
 import checkTrackedRBAC from "@/functions/checkTrackedRBAC.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
 route.get(
-  "/:followingUserId",
+  "/:followingUserName",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { followingUserId } = req.params;
+    const { followingUserName } = req.params;
 
-    if (!followingUserId || !ObjectId.isValid(followingUserId)) {
-      res.status(400).json({ error: "Invaid userId" });
+    if (!followingUserName) {
+      res.status(400).json({ error: "Bad request" });
       return;
     }
 
     try {
       const projection: { [key: string]: number } = {
         _id: 1,
-        "club.name": 1,
+        name: 1,
+        avatar: 1,
         "club.privacy": 1,
-        "club.avatar": 1,
         "club.bio": 1,
         latestScores: 1,
         latestScoresDifference: 1,
@@ -32,9 +33,9 @@ route.get(
 
       let userInfo: Partial<UserType> = {};
 
-      if (followingUserId) {
+      if (followingUserName) {
         const rbacResponse = await checkTrackedRBAC({
-          followingUserId,
+          followingUserName,
           userId: req.userId,
           targetProjection: projection,
         });
@@ -70,12 +71,12 @@ route.get(
         }
       }
 
-      if (!userInfo) throw new Error(`User ${followingUserId} not found`);
+      if (!userInfo) throw httpError(`User ${followingUserName} not found`);
 
-      const { _id, club, latestScores, latestScoresDifference } =
+      const { _id, club, name, avatar, latestScores, latestScoresDifference } =
         userInfo as GetClubYouTrackUserType;
 
-      const { name, avatar, bio, privacy } = club;
+      const { bio, privacy } = club;
 
       const result: { [key: string]: any } = {
         _id,

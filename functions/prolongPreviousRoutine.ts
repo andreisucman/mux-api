@@ -39,7 +39,7 @@ export default async function prolongPreviousRoutine({
 
   try {
     if (!tasksToProlong || tasksToProlong.length === 0)
-      throw new Error("No tasks to prolong");
+      throw httpError("No tasks to prolong");
 
     const firstTask = tasksToProlong[0];
     const previousRoutineId = firstTask.routineId;

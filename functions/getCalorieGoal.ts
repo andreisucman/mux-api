@@ -24,7 +24,7 @@ export default async function getCalorieGoal({
     );
 
     if (!frontalBody)
-      throw new Error(`Frontal body image not found for user ${userId}`);
+      throw httpError(`Frontal body image not found for user ${userId}`);
 
     const runs = [
       {

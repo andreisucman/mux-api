@@ -1,15 +1,10 @@
 import { LatestScoresType, PrivacyType } from "types.js";
 
-type TrackerClubDataType = {
-  about: string;
-  name: string;
-  privacy: PrivacyType[];
-  avatar: { [key: string]: any };
-};
-
 export type TrackerType = {
   _id: 1;
-  club: TrackerClubDataType;
+  name: string;
+  avatar: { [key: string]: any };
+  club: { privacy: PrivacyType[]; bio: { about: String } };
   latestScores: LatestScoresType;
   latestScoresDifference: LatestScoresType;
 };

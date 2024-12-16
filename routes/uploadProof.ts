@@ -8,7 +8,6 @@ import { daysFrom } from "helpers/utils.js";
 import isMajorityOfImagesIdentical from "functions/isMajorityOfImagesIdentical.js";
 import extractImagesFromVideo from "functions/extractImagesFromVideo.js";
 import { extensionTypeMap } from "data/extensionTypeMap.js";
-import combineSentences from "@/functions/combineSentences.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import {
   CustomRequest,
@@ -64,8 +63,10 @@ route.post(
           { _id: new ObjectId(req.userId) },
           {
             projection: {
-              streakDates: 1,
               club: 1,
+              name: 1,
+              avatar: 1,
+              streakDates: 1,
               demographics: 1,
               latestScoresDifference: 1,
               dailyCalorieGoal: 1,
@@ -247,8 +248,9 @@ route.post(
         requisite,
         routineId,
       } = taskInfo || {};
-      const { demographics, club, latestScoresDifference } = userInfo || {};
-      const { name, avatar, privacy } = club || {};
+      const { name, avatar, demographics, club, latestScoresDifference } =
+        userInfo || {};
+      const { privacy } = club || {};
 
       /* add a new proof */
       const newProof: ProofType = {
@@ -273,7 +275,7 @@ route.post(
         thumbnails,
         proofImages,
         avatar,
-        clubName: name,
+        userName: name,
         isPublic: false,
         latestBodyScoreDifference: 0,
         latestHeadScoreDifference: 0,
@@ -396,7 +398,7 @@ route.post(
         operationKey: taskId,
         message: err.message,
       });
-      next(err)
+      next(err);
     }
   }
 );

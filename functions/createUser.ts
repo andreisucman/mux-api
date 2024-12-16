@@ -18,7 +18,7 @@ async function createUser(props: Partial<UserType>) {
       ...otherProps,
     };
 
-    const newUser = await doWithRetries(
+    await doWithRetries(
       async () =>
         await db
           .collection("User")

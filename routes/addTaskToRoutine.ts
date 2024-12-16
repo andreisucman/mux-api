@@ -16,28 +16,25 @@ import {
 } from "types.js";
 import { db } from "init.js";
 import httpError from "@/helpers/httpError.js";
+import getUserInfo from "@/functions/getUserInfo.js";
 
 const route = Router();
 
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { taskKey, routineId, total, followingUserId, type } = req.body;
+    const { taskKey, routineId, total, followingUserName, type } = req.body;
 
     try {
-      if (!taskKey || !routineId || !total || !followingUserId || !type) {
+      if (!taskKey || !routineId || !total || !followingUserName || !type) {
         res.status(400).json({ error: "Bad request" });
         return;
       }
 
-      const userInfo = await doWithRetries(async () =>
-        db.collection("User").findOne(
-          {
-            _id: new ObjectId(req.userId),
-          },
-          { projection: { timeZone: 1 } }
-        )
-      );
+      const userInfo = await getUserInfo({
+        userId: req.userId,
+        projection: { timeZone: 1 },
+      });
 
       if (!userInfo) throw httpError(`User ${req.userId} not found`);
 
@@ -53,7 +50,7 @@ route.post(
 
       if (!taskToAdd)
         throw httpError(
-          `No task to add from user ${followingUserId} to user ${req.userId} found.`
+          `No task to add from user ${followingUserName} to user ${req.userId} found.`
         );
 
       /* get the user's current routine */

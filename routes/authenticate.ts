@@ -10,7 +10,7 @@ import { daysFrom } from "helpers/utils.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import createUser from "@/functions/createUser.js";
 import checkIfUserExists from "functions/checkIfUserExists.js";
-import getUsersCountry from "functions/getUsersCountry.js";
+import getUsersCountry from "@/helpers/getUsersCountry.js";
 import { CustomRequest, UserType } from "types.js";
 import sendConfirmationCode from "@/functions/sendConfirmationCode.js";
 import { getHashedPassword } from "helpers/utils.js";

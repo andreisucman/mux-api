@@ -13,9 +13,9 @@ route.get("/", async (req: CustomRequest, res, next: NextFunction) => {
 
     if (type) filter.type = type;
     if (styleName) filter.styleName = styleName;
-    if (sex) filter.demographics["sex"] = sex;
-    if (ageInterval) filter.demographics["ageInterval"] = ageInterval;
-    if (ethnicity) filter.demographics["ethnicity"] = ethnicity;
+    if (sex) filter.demographics.sex = sex;
+    if (ageInterval) filter.demographics.ageInterval = ageInterval;
+    if (ethnicity) filter.demographics.ethnicity = ethnicity;
 
     const projection: { [key: string]: any } = {
       _id: 1,
@@ -33,7 +33,7 @@ route.get("/", async (req: CustomRequest, res, next: NextFunction) => {
       createdAt: 1,
       compareDate: 1,
       votes: 1,
-      clubName: 1,
+      userName: 1,
       avatar: 1,
       compareVotes: 1,
     };

@@ -51,6 +51,8 @@ route.post(
           { _id: new ObjectId(finalUserId) },
           {
             projection: {
+              name: 1,
+              avatar: 1,
               toAnalyze: 1,
               demographics: 1,
               concerns: 1,
@@ -74,6 +76,8 @@ route.post(
       if (!userInfo) throw httpError(`No userInfo for ${finalUserId}`);
 
       let {
+        name,
+        avatar,
         toAnalyze,
         club,
         nextScan,
@@ -115,6 +119,8 @@ route.post(
         type,
         club,
         userId,
+        name,
+        avatar,
         concerns,
         nextScan,
         potential,
@@ -134,7 +140,7 @@ route.post(
         userId: String(finalUserId),
         message: error.message,
       });
-      next(error)
+      next(error);
     }
   }
 );

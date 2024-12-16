@@ -18,25 +18,24 @@ const collectionMap: { [key: string]: string } = {
 };
 
 route.get(
-  "/:followingUserId?",
+  "/:followingUserName?",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { followingUserId } = req.params;
+    const { followingUserName } = req.params;
     const { filter, projection } = aqp(req.query);
     const { collection, type } = filter;
 
-    let finalUserId = followingUserId || req.userId;
-
-    if (!collection || !ObjectId.isValid(finalUserId)) {
+    if (!collection || (!followingUserName && !req.userId)) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
 
     try {
-      if (followingUserId) {
-        const { inClub, isFollowing, subscriptionActive } = await checkTrackedRBAC({
-          userId: req.userId,
-          followingUserId,
-        });
+      if (followingUserName) {
+        const { inClub, isFollowing, subscriptionActive } =
+          await checkTrackedRBAC({
+            userId: req.userId,
+            followingUserName,
+          });
 
         if (!inClub || !isFollowing || !subscriptionActive) {
           res.status(200).json({ message: null });
@@ -51,9 +50,13 @@ route.get(
         return a;
       }, {});
 
-      const match: { [key: string]: any } = {
-        userId: new ObjectId(finalUserId),
-      };
+      const match: { [key: string]: any } = {};
+
+      if (followingUserName) {
+        match.name = followingUserName;
+      } else {
+        match.userId = new ObjectId(req.userId);
+      }
 
       if (type) match.type = type;
 

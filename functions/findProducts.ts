@@ -108,11 +108,6 @@ export default async function findProducts({
         extractFeaturesPromises
       );
 
-      console.log(
-        "findProducts line 117 taskData",
-        extractedFeaturesObjectsArray
-      );
-
       await doWithRetries(async () =>
         db
           .collection("AnalysisStatus")

@@ -64,6 +64,8 @@ export default async function moderateImages({
     if (userImage && allowOnlyUser) {
       const samePersonContent = `You are given two images. Your goal is to check if the person on each image is the same. Format your reponse as a JSON with this structure: {same: true if the same, false if not}`;
 
+      const ModerateImagesResponseType = z.object({ same: z.boolean() });
+
       const runs = [
         {
           isMini: true,
@@ -83,19 +85,17 @@ export default async function moderateImages({
               },
             },
           ],
+          responseFormat: zodResponseFormat(
+            ModerateImagesResponseType,
+            "ModerateImagesResponseType"
+          ),
         },
       ];
 
-      const ModerateImagesResponseType = z.object({ same: z.boolean() });
-
       const response = await askRepeatedly({
+        userId,
         systemContent: samePersonContent,
         runs: runs as RunType[],
-        userId,
-        responseFormat: zodResponseFormat(
-          ModerateImagesResponseType,
-          "ModerateImagesResponseType"
-        ),
       });
 
       if (!response.same) {

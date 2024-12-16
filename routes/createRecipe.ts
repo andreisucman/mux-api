@@ -8,7 +8,11 @@ import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import moderateText from "functions/moderateText.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { RunType } from "types/askOpenaiTypes.js";
-import { CustomRequest, UserInfoType } from "types.js";
+import {
+  CustomRequest,
+  SubscriptionTypeNamesEnum,
+  UserInfoType,
+} from "types.js";
 import askRepeatedly from "functions/askRepeatedly.js";
 import findProducts from "functions/findProducts.js";
 import generateImage from "functions/generateImage.js";
@@ -34,7 +38,7 @@ route.post(
     try {
       const subscriptionIsValid: boolean = await checkSubscriptionStatus({
         userId: req.userId,
-        subscriptionType: "improvement",
+        subscriptionType: SubscriptionTypeNamesEnum.IMPROVEMENT,
       });
 
       if (!subscriptionIsValid) {
@@ -217,7 +221,7 @@ route.post(
         content: [
           {
             type: "text",
-            text: `What's the estimated number of calories this dish has in total? Reply with one word.`,
+            text: `What's the estimated number of calories this dish has in total? Reply with one number.`,
           },
         ],
         callback: () =>

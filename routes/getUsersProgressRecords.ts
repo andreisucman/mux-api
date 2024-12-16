@@ -8,24 +8,23 @@ import doWithRetries from "helpers/doWithRetries.js";
 const route = Router();
 
 route.get(
-  "/:followingUserId?",
+  "/:followingUserName?",
   async (req: CustomRequest, res, next: NextFunction) => {
     const { type, part, position, skip } = req.query;
-    const { followingUserId } = req.params;
+    const { followingUserName } = req.params;
 
-    const finalUserId = followingUserId || req.userId;
-
-    if (!ObjectId.isValid(finalUserId)) {
+    if (!followingUserName && !req.userId) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
 
     try {
-      if (followingUserId) {
-        const { inClub, isFollowing, subscriptionActive } = await checkTrackedRBAC({
-          userId: req.userId,
-          followingUserId,
-        });
+      if (followingUserName) {
+        const { inClub, isFollowing, subscriptionActive } =
+          await checkTrackedRBAC({
+            userId: req.userId,
+            followingUserName,
+          });
 
         if (!inClub || !isFollowing || !subscriptionActive) {
           res.status(200).json({ message: [] });
@@ -33,9 +32,13 @@ route.get(
         }
       }
 
-      const filter: { [key: string]: any } = {
-        userId: new ObjectId(finalUserId),
-      };
+      const filter: { [key: string]: any } = {};
+
+      if (followingUserName) {
+        filter.name = followingUserName;
+      } else {
+        filter.userId = new ObjectId(req.userId);
+      }
 
       if (type) filter.type = type;
       if (part) filter.part = part;

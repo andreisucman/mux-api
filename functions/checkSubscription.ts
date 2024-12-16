@@ -1,38 +1,59 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import { ObjectId } from "mongodb";
-import { db } from "init.js";
-import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
+import { SubscriptionTypeNamesEnum } from "@/types.js";
+import { ObjectId } from "mongodb";
+import doWithRetries from "@/helpers/doWithRetries.js";
+import { db } from "@/init.js";
 
 type Props = {
-  userId: string;
-  subscriptionType: string;
+  userId?: string;
+  userName?: string;
+  subscriptionType: SubscriptionTypeNamesEnum;
 };
 
-async function checkSubscriptionStatus({ userId, subscriptionType }: Props) {
+async function checkSubscriptionStatus({
+  userId,
+  userName,
+  subscriptionType,
+}: Props) {
   try {
-    const userInfo = await doWithRetries(async () =>
+    if (!userId && !userName) throw httpError("No userId and userName");
+
+    const filters: { [key: string]: any } = {};
+
+    if (userName) {
+      filters.name = userName;
+    } else {
+      filters._id = new ObjectId(userId);
+    }
+    const userInfo = await doWithRetries(() =>
       db
         .collection("User")
-        .findOne(
-          { _id: new ObjectId(userId) },
-          { projection: { subscriptions: 1 } }
-        )
+        .findOne(filters, { projection: { subscriptions: 1 } })
     );
 
     if (!userInfo) throw httpError(`User ${userId} not found`);
 
     const { subscriptions } = userInfo;
+    const { peek } = subscriptions;
+
+    if (peek.validUntil) {
+      if (new Date() < new Date(peek.validUntil)) {
+        return true;
+      }
+    }
 
     const relevant = subscriptions[subscriptionType];
 
-    const { validUntil } = relevant || {};
+    if (relevant.validUntil) {
+      if (new Date() < new Date(relevant.validUntil)) {
+        return true;
+      }
+    }
 
-    if (!relevant || !validUntil) return false;
-
-    return new Date() < new Date(relevant.validUntil);
+    return false;
   } catch (err) {
     throw httpError(err);
   }

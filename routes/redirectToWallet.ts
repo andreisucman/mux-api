@@ -1,11 +1,12 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import { ObjectId } from "mongodb";
 import { Router, NextFunction } from "express";
-import { ClubDataType, CustomRequest } from "types.js";
-import { db, stripe } from "init.js";
+import { CustomRequest } from "types.js";
+import { stripe } from "init.js";
 import httpError from "@/helpers/httpError.js";
+import getUserInfo from "@/functions/getUserInfo.js";
+import doWithRetries from "@/helpers/doWithRetries.js";
 
 const route = Router();
 
@@ -13,12 +14,10 @@ route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
   const { redirectUrl } = req.body;
 
   try {
-    const userInfo = (await db
-      .collection("User")
-      .findOne(
-        { _id: new ObjectId(req.userId) },
-        { projection: { "club.payouts.connectId": 1 } }
-      )) as unknown as { club: ClubDataType | null };
+    const userInfo = await getUserInfo({
+      userId: req.userId,
+      projection: { "club.payouts.connectId": 1 },
+    });
 
     if (!userInfo) throw httpError(`User ${req.userId} is not found`);
 
@@ -28,7 +27,9 @@ route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
 
     if (!connectId) throw httpError(`User ${req.userId} is not onboarded`);
 
-    const account = await stripe.accounts.retrieve(connectId);
+    const account = await doWithRetries(async () =>
+      stripe.accounts.retrieve(connectId)
+    );
 
     if (!account.details_submitted) {
       // The account hasn't completed onboarding

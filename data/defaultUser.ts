@@ -123,7 +123,6 @@ export const defaultStyleRequirements = {
 
 const defaultDemographics: DemographicsType = {
   sex: null,
-  skinColor: null,
   ageInterval: null,
   bodyType: null,
   ethnicity: null,
@@ -166,6 +165,10 @@ const defaultStreaks = {
 };
 
 export const defaultUser: UserType = {
+  name: "",
+  avatar: null,
+  nextAvatarUpdateAt: null,
+  nextNameUpdateAt: null,
   email: "",
   auth: "",
   city: "",

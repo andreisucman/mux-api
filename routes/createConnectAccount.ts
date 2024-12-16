@@ -7,6 +7,7 @@ import { db, stripe } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { CustomRequest } from "types.js";
 import { ConnectParamsType } from "types/createConnectAccountTypes.js";
+import getUserInfo from "@/functions/getUserInfo.js";
 
 const route = Router();
 
@@ -14,16 +15,12 @@ route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
-      const userInfo = await doWithRetries(async () =>
-        db
-          .collection("User")
-          .findOne(
-            { _id: new ObjectId(req.userId) },
-            { projection: { email: 1, country: 1, "club.connectId": 1 } }
-          )
-      );
+      const userInfo = await getUserInfo({
+        userId: req.userId,
+        projection: { email: 1, country: 1, name: 1, "club.payouts": 1 },
+      });
 
-      const { email, club, country } = userInfo;
+      const { email, club, country, name } = userInfo;
       const { payouts } = club || {};
       let { connectId } = payouts || {};
 
@@ -41,7 +38,7 @@ route.post(
           },
           business_profile: {
             mcc: "5734",
-            url: "https://muxout.com/club",
+            url: `${process.env.CLIENT_URL}/club/${name}`,
           },
           settings: {
             payments: {

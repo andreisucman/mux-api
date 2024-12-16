@@ -29,6 +29,7 @@ export default async function getLatestStyles({ userId }: Props) {
                 currentDescription: { $first: "$currentDescription" },
                 currentSuggestion: { $first: "$currentSuggestion" },
                 matchSuggestion: { $first: "$matchSuggestion" },
+                latestStyleAnalysis: { $first: "$latestStyleAnalysis" },
                 image: { $first: "$image" },
                 styleName: { $first: "$styleName" },
               },

@@ -14,10 +14,10 @@ type Props = {
 
 export default async function personalizeInstruction({
   description,
-  type,
   instruction,
   userInfo,
   name,
+  type,
 }: Props) {
   const { city, country, specialConsiderations, _id: userId } = userInfo;
 

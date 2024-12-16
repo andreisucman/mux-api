@@ -20,11 +20,11 @@ route.get("/", async (req: CustomRequest, res, next: NextFunction) => {
       isPublic: true,
     };
 
-    if (sex) filter["demographics.sex"] = sex;
-    if (bodyType) filter["demographics.bodyType"] = bodyType;
-    if (ageInterval) filter["demographics.ageInterval"] = ageInterval;
-    if (ethnicity) filter["demographics.ethnicity"] = ethnicity;
-    if (concern) filter["concerns.name"] = concern;
+    if (sex) filter.demographics.sex = sex;
+    if (bodyType) filter.demographics.bodyType = bodyType;
+    if (ageInterval) filter.demographics.ageInterval = ageInterval;
+    if (ethnicity) filter.demographics.ethnicity = ethnicity;
+    if (concern) filter.concerns.name = concern;
     if (type) filter.type = type;
     if (part) filter.part = part;
 

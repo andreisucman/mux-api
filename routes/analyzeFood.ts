@@ -3,16 +3,16 @@ dotenv.config();
 
 import { Router, Response, NextFunction } from "express";
 import { ObjectId } from "mongodb";
-import { CustomRequest, UserConcernType } from "types.js";
+import { CustomRequest } from "types.js";
 import { createHashKey } from "@/functions/createHashKey.js";
 import createImageEmbedding from "@/functions/createImageEmbedding.js";
 import checkImageSimilarity from "functions/checkImageSimilarity.js";
 import analyzeCalories from "functions/analyzeCalories.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import validateImage from "functions/validateImage.js";
-import httpError from "@/helpers/httpError.js";
 import { CheckImageSimilarityProps } from "functions/checkImageSimilarity.js";
 import { db } from "init.js";
+import getUserInfo from "@/functions/getUserInfo.js";
 
 const route = Router();
 
@@ -74,17 +74,10 @@ route.post(
       let userAbout = "";
 
       if (req.userId) {
-        const userInfo = (await doWithRetries(async () =>
-          db
-            .collection("User")
-            .findOne(
-              { _id: new ObjectId(req.userId) },
-              { projection: { specialConsiderations: 1, concerns: 1 } }
-            )
-        )) as unknown as {
-          specialConsiderations: string;
-          concerns: UserConcernType[];
-        };
+        const userInfo = await getUserInfo({
+          userId: req.userId,
+          projection: { specialConsiderations: 1, concerns: 1 },
+        });
 
         if (userInfo) {
           const { concerns, specialConsiderations } = userInfo;

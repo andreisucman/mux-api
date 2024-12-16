@@ -12,35 +12,29 @@ import { db } from "init.js";
 const route = Router();
 
 route.get(
-  "/:followingUserId?",
+  "/:followingUserName?",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { followingUserId } = req.params;
+    const { followingUserName } = req.params;
     const { filter, projection } = aqp(req.query);
     const { query } = filter || {};
 
-    let finalUserId = followingUserId || req.userId;
-
-    if (!ObjectId.isValid(finalUserId)) {
+    if (!followingUserName && !req.userId) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
 
     try {
-      if (followingUserId) {
-        const { inClub, isFollowing, subscriptionActive } = await checkTrackedRBAC({
-          userId: req.userId,
-          followingUserId,
-        });
+      if (followingUserName) {
+        const { inClub, isFollowing, subscriptionActive } =
+          await checkTrackedRBAC({
+            userId: req.userId,
+            followingUserName,
+          });
 
         if (!inClub || !isFollowing || !subscriptionActive) {
           res.status(200).json({ message: [] });
           return;
         }
-      }
-
-      if (!finalUserId) {
-        res.status(400).json({ error: "Bad request" });
-        return;
       }
 
       const pipeline: any = [];
@@ -55,11 +49,16 @@ route.get(
         };
       }
 
+      if (followingUserName) {
+        match.name = followingUserName;
+      } else {
+        match.userId = new ObjectId(req.userId);
+      }
+
       pipeline.push(
         {
           $match: {
             ...match,
-            userId: new ObjectId(finalUserId),
             isPublic: true,
           },
         },

@@ -50,7 +50,7 @@ export default async function createTasks({
 
   try {
     if (!finalSchedule || !concerns || !type || !allSolutions)
-      throw new Error("createTasks - inputs missing");
+      throw httpError("createTasks - inputs missing");
 
     const values = Object.values(finalSchedule);
     const rawTasks = values.flat();

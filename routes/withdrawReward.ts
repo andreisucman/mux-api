@@ -33,13 +33,16 @@ route.post(
       if (!payoutsEnabled) {
         res.status(200).json({
           error:
-            "Your payouts are disabled. Please login into your wallet to complete the necessary requirements for enabling payouts.",
+            "Your payouts are disabled. Please login into your wallet and complete the necessary requirements for enabling payouts.",
         });
         return;
       }
 
       if (rewardEarned === 0) {
-        res.status(200).json({ error: "Your balance is zero." });
+        res.status(200).json({
+          error:
+            "Your balance is zero. Check your wallet for the payout history.",
+        });
         return;
       }
 
@@ -61,7 +64,7 @@ route.post(
       );
 
       res.status(200).json({
-        message: `You have initiated a withdrawal of $${rewardEarned} to your wallet.`,
+        message: `You have initiated a withdrawal of $${rewardEarned}. For details check your wallet.`,
       });
     } catch (err) {
       next(err);

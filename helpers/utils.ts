@@ -43,6 +43,12 @@ export function toSnakeCase(value: any): string {
   return words.map((word) => word.toLowerCase()).join("_");
 }
 
+export function toSentenceCase(value: any): string {
+  if (typeof value !== "string") return value;
+
+  return value.trim().replace(/^\w/, (char) => char.toUpperCase());
+}
+
 export function sortObjectByNumberValue(
   obj: { [key: string]: number },
   isAscending: boolean

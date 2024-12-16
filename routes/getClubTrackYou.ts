@@ -24,9 +24,9 @@ route.get(
             {
               projection: {
                 "club.bio.intro": 1,
-                "club.name": 1,
                 "club.privacy": 1,
-                "club.avatar": 1,
+                name: 1,
+                avatar: 1,
                 latestScores: 1,
                 latestScoresDifference: 1,
               },
@@ -38,13 +38,20 @@ route.get(
       )) as unknown as TrackerType[];
 
       const results = trackers.map((rec) => {
-        const { club, latestScores, latestScoresDifference, _id } = rec;
-        const { privacy, name, about, avatar } = club;
+        const {
+          club,
+          name,
+          avatar,
+          latestScores,
+          latestScoresDifference,
+          _id,
+        } = rec;
+        const { privacy, bio } = club;
 
         const updated = {
           _id,
           name,
-          about,
+          about: bio.about,
           avatar,
           scores: {} as { [key: string]: number },
         };

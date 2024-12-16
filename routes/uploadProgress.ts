@@ -109,6 +109,8 @@ route.post(
               potentiallyHigherThan: 1,
               latestScores: 1,
               club: 1,
+              name: 1,
+              avatar: 1,
             },
           }
         )
@@ -117,6 +119,8 @@ route.post(
       if (!userInfo) throw httpError(`User ${finalUserId} not found`);
 
       let {
+        name,
+        avatar,
         requiredProgress,
         toAnalyze,
         club,
@@ -209,6 +213,8 @@ route.post(
         });
 
         await analyzeAppearance({
+          name,
+          avatar,
           type,
           club,
           userId: finalUserId,

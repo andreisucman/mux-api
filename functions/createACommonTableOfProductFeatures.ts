@@ -3,6 +3,7 @@ import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import askRepeatedly from "functions/askRepeatedly.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import httpError from "@/helpers/httpError.js";
+import { toSentenceCase } from "@/helpers/utils.js";
 
 type Props = {
   userId: string;
@@ -14,7 +15,9 @@ export default async function createACommonTableOfProductFeatures({
   extractedVariantFeatures,
 }: Props) {
   const CommonTableFeaturesType = z.object({
-    commonFeaturesList: z.array(z.string()),
+    commonFeaturesList: z
+      .array(z.string())
+      .describe("An array of product comparison criteria check points"),
   });
 
   try {
@@ -23,7 +26,7 @@ export default async function createACommonTableOfProductFeatures({
       .join("\n");
 
     /* find the related variants */
-    const systemContent = `You are given the features and functionalities of several products after ###. Your goal is to create a check list based on them. Think step-by-step. ### The features and functionalities: ${originalList}`;
+    const systemContent = `You are given the features and functionalities of several products after ###. Your goal is to create a product comparison check list based on them. Think step-by-step. ### The features and functionalities: ${originalList}`;
 
     const runs: RunType[] = [
       {
@@ -31,16 +34,7 @@ export default async function createACommonTableOfProductFeatures({
         content: [
           {
             type: "text",
-            text: `Based on the data you have create a new common list of criteria for this type of products.`,
-          },
-        ],
-      },
-      {
-        isMini: true,
-        content: [
-          {
-            type: "text",
-            text: `Go over the criteria and remove specific product's details from it, making the list applicable to all products.`,
+            text: `Create a new common list of product comparison criteria based on the information provided.`,
           },
         ],
       },
@@ -58,16 +52,7 @@ export default async function createACommonTableOfProductFeatures({
         content: [
           {
             type: "text",
-            text: `Remove the criteria that doesn't tell anything specific.`,
-          },
-        ],
-      },
-      {
-        isMini: true,
-        content: [
-          {
-            type: "text",
-            text: `Rewrite the names of the criteria in the sentence case.`,
+            text: `Remove any specific product's details, making each criteria generic and applicable to each product.`,
           },
         ],
       },
@@ -88,7 +73,15 @@ export default async function createACommonTableOfProductFeatures({
 
     const response = await askRepeatedly({ systemContent, runs, userId });
 
-    return response.commonFeaturesList;
+    let commonFeaturesList = [];
+
+    if (response.commonFeaturesList) {
+      commonFeaturesList = response.commonFeaturesList.map((feature: string) =>
+        toSentenceCase(feature)
+      );
+    }
+
+    return commonFeaturesList;
   } catch (err) {
     throw httpError(err);
   }

@@ -16,16 +16,16 @@ export default async function getClosestTaskDates({ userId }: Props) {
           {
             $match: {
               userId: new ObjectId(userId),
-              $or: [
-                {
-                  status: "active",
-                  expiresAt: { $gte: new Date() },
-                },
-                {
-                  status: "completed",
-                  expiresAt: { $gte: new Date() },
-                },
-              ],
+              // $or: [
+              //   {
+              //     status: "active",
+              //     expiresAt: { $gte: new Date() },
+              //   },
+              //   {
+              //     status: "completed",
+              //     expiresAt: { $gte: new Date() },
+              //   },
+              // ],
             },
           },
           { $sort: { startsAt: 1 } },

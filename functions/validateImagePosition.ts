@@ -37,6 +37,10 @@ export default async function validateImagePosition({
 
     const samePersonContent = `${requirement.requirement} Format your reponse as a JSON with this structure: {verdict: true if yes, false if not}`;
 
+    const ValidateImagePositionResponseType = z.object({
+      verdict: z.boolean(),
+    });
+
     const runs = [
       {
         isMini: true,
@@ -53,22 +57,18 @@ export default async function validateImagePosition({
             text: requirement.requirement,
           },
         ],
+        responseFormat: zodResponseFormat(
+          ValidateImagePositionResponseType,
+          "ValidateImagePositionResponseType"
+        ),
       },
     ];
-
-    const ValidateImagePositionResponseType = z.object({
-      verdict: z.boolean(),
-    });
 
     const response = await askRepeatedly({
       userId,
       systemContent: samePersonContent,
       runs: runs as RunType[],
       meta: "validateImagePosition",
-      responseFormat: zodResponseFormat(
-        ValidateImagePositionResponseType,
-        "ValidateImagePositionResponseType"
-      ),
     });
 
     return { verdict: response.verdict, message: requirement.message };

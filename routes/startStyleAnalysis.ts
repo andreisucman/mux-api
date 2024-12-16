@@ -40,22 +40,27 @@ route.post(
           { _id: new ObjectId(req.userId) },
           {
             projection: {
+              name: 1,
+              avatar: 1,
               latestStyleAnalysis: 1,
               latestScoresDifference: 1,
               demographics: 1,
-              "club.name": 1,
-              "club.avatar": 1,
               "club.privacy": 1,
             },
           }
         )
       )) as unknown as StartStyleAnalysisUserInfoType;
 
-      const { club, latestStyleAnalysis, latestScoresDifference } =
-        userInfo || {
-          club: {},
-          latestStyleAnalysis: {},
-        };
+      const {
+        club,
+        name,
+        avatar,
+        latestStyleAnalysis,
+        latestScoresDifference,
+      } = userInfo || {
+        club: {},
+        latestStyleAnalysis: {},
+      };
 
       const { privacy } = club || {};
 
@@ -98,7 +103,9 @@ route.post(
       } = compareStyleRecord || {};
 
       const hash = await createHashKey(image);
-      const relevantStyleObject = outlookStyles.find((s) => s.name === styleName);
+      const relevantStyleObject = outlookStyles.find(
+        (s) => s.name === styleName
+      );
 
       const styleAnalysis: StyleAnalysisType = {
         _id: new ObjectId(),
@@ -126,8 +133,8 @@ route.post(
         currentSuggestion,
         matchSuggestion: null as string,
         isPublic: false,
-        clubName: club.name,
-        avatar: club.avatar,
+        userName: name,
+        avatar,
         votes: 0,
       };
 

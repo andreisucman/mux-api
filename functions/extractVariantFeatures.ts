@@ -18,7 +18,7 @@ export default async function extractVariantFeatures({
   const { name, description } = variantData;
 
   try {
-    const systemContent = `You are given a name and description of a product from amazon.com after ###. Extract all of it's features that are related to this use case: ${taskDescription}. Think step-by-step. ### Product name: ${name}. Product description: ${description}.`;
+    const systemContent = `You are a strict and objective analyst. You are given a name and description of a product from amazon.com after ###. Extract all of it's features that are related to this use case: ${taskDescription}. Think step-by-step. ### Product name: ${name}. Product description: ${description}.`;
 
     const VariantFeaturesType = z.object({
       featuresAndFunctionalities: z.array(z.string()),
@@ -39,7 +39,7 @@ export default async function extractVariantFeatures({
         content: [
           {
             type: "text",
-            text: `Rewrite the list and leave only specific information from the description. Example: Does not weigh down hair. \nDoesn't contain fragrance. \nVegan and cruelty-free.\nClinically tested.`,
+            text: `Rewrite the list and leave only specific information from the description. Example of your response: Does not weigh down hair. \nDoesn't contain fragrance. \nVegan and cruelty-free.\nClinically tested.`,
           },
         ],
       },
@@ -48,7 +48,7 @@ export default async function extractVariantFeatures({
         content: [
           {
             type: "text",
-            text: `Eliminate all claims that can't be objectively checked in a lab setting.`,
+            text: `Eliminate claims that can't be objectively checked in a lab setting.`,
           },
         ],
       },

@@ -2,11 +2,12 @@ import { ObjectId } from "mongodb";
 import doWithRetries from "helpers/doWithRetries.js";
 import { UserType } from "types.js";
 import { db } from "init.js";
+import getUserInfo from "./getUserInfo.js";
 import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
-  followingUserId: string;
+  followingUserName: string;
   throwOnError?: boolean;
   targetProjection?: { [key: string]: any };
   userProjection?: { [key: string]: any };
@@ -15,7 +16,7 @@ type Props = {
 export default async function checkTrackedRBAC({
   userId,
   throwOnError = false,
-  followingUserId,
+  followingUserName,
   targetProjection,
   userProjection,
 }: Props) {
@@ -29,7 +30,7 @@ export default async function checkTrackedRBAC({
     };
 
     const targetFilter = {
-      _id: new ObjectId(followingUserId),
+      _id: new ObjectId(followingUserName),
       club: { $exists: true },
     };
     const targetOptions = { projection: { _id: 1 } };
@@ -47,7 +48,7 @@ export default async function checkTrackedRBAC({
     if (!targetUserInfo) {
       if (throwOnError) {
         throw httpError(
-          `User ${userId} is trying to access user ${followingUserId} who is not in the club.`
+          `User ${userId} is trying to access user ${followingUserName} who is not in the club.`
         );
       }
       result.inClub = false;
@@ -56,7 +57,13 @@ export default async function checkTrackedRBAC({
     result.targetUserInfo = targetUserInfo;
 
     const userFilter = { _id: new ObjectId(userId) };
-    const userOptions = { projection: { club: 1, ["subscriptions.peek"]: 1 } };
+    const userOptions = {
+      projection: {
+        "club.followingUserName": 1,
+        "subscriptions.peek": 1,
+        name: 1,
+      },
+    };
 
     if (userProjection)
       userOptions.projection = {
@@ -68,7 +75,7 @@ export default async function checkTrackedRBAC({
       db.collection("User").findOne(userFilter, userOptions)
     );
 
-    const { club, subscriptions } =
+    const { club, name, subscriptions } =
       (result.userInfo as unknown as Partial<UserType>) || {};
 
     const { peek } = subscriptions || {};
@@ -81,12 +88,12 @@ export default async function checkTrackedRBAC({
       result.subscriptionActive = false;
     }
 
-    const { followingUserId: clubFollowingUserId } = club || {};
+    const { followingUserName: clubFollowingUserName } = club || {};
 
-    if (followingUserId !== String(clubFollowingUserId)) {
+    if (clubFollowingUserName !== name) {
       if (throwOnError) {
         throw httpError(
-          `User ${userId} is trying to access user ${followingUserId} who is not their following.`
+          `User ${name} is trying to access user ${clubFollowingUserName} who is not their following.`
         );
       }
       result.isFollowing = false;

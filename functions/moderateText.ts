@@ -6,6 +6,7 @@ import doWithRetries from "helpers/doWithRetries.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import httpError from "@/helpers/httpError.js";
 import { db } from "init.js";
+import getUserInfo from "./getUserInfo.js";
 
 type Props = {
   text: string;
@@ -14,14 +15,10 @@ type Props = {
 
 export default async function moderateText({ userId, text }: Props) {
   try {
-    const userInfo = await doWithRetries(async () =>
-      db
-        .collection("User")
-        .findOne(
-          { _id: new ObjectId(userId) },
-          { projection: { specialConsiderations: 1 } }
-        )
-    );
+    const userInfo = await getUserInfo({
+      userId,
+      projection: { specialConsiderations: 1 },
+    });
 
     const { specialConsiderations } = userInfo;
 

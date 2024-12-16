@@ -23,8 +23,6 @@ export default async function getLatestRoutinesAndTasks({ userId }: Props) {
                 _id: "$type",
                 tempId: { $first: "$_id" },
                 type: { $first: "$type" },
-                status: { $first: "$status" },
-                concerns: { $first: "$concerns" },
                 finalSchedule: { $first: "$finalSchedule" },
                 createdAt: { $first: "$createdAt" },
                 allTasks: { $first: "$allTasks" },

@@ -18,6 +18,10 @@ export default async function validateImage({
   try {
     const systemContent = `Does the image meet this condition: ${condition}? <-->Format your reponse as a JSON with this structure: {verdict: true if yes, false if not} `;
 
+    const ValidateImageResponse = z.object({
+      verdict: z.boolean(),
+    });
+
     const runs = [
       {
         isMini: true,
@@ -34,22 +38,18 @@ export default async function validateImage({
             text: systemContent,
           },
         ],
+        responseFormat: zodResponseFormat(
+          ValidateImageResponse,
+          "ValidateImageResponse"
+        ),
       },
     ];
-
-    const ValidateImageResponse = z.object({
-      verdict: z.boolean(),
-    });
 
     const response = await askRepeatedly({
       userId,
       systemContent,
       runs: runs as RunType[],
       meta: "validateImage",
-      responseFormat: zodResponseFormat(
-        ValidateImageResponse,
-        "ValidateImageResponse"
-      ),
     });
 
     return { verdict: response.verdict };

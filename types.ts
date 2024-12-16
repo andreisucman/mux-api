@@ -50,6 +50,8 @@ export type FormattedRatingType = {
 
 export type UserType = {
   _id?: ObjectId;
+  name: string;
+  avatar: { [key: string]: any } | null;
   city: string;
   country: string;
   email: string;
@@ -108,6 +110,8 @@ export type UserType = {
   isBlocked: boolean;
   emailVerified: boolean;
   canRejoinClubAfter: Date | null;
+  nextAvatarUpdateAt: Date | null;
+  nextNameUpdateAt: Date | null;
 };
 
 export type ToAnalyzeType = {
@@ -146,7 +150,7 @@ export type StyleAnalysisType = {
   latestBodyScoreDifference: number;
   analysis: { [key: string]: number } | null;
   compareAnalysis: { [key: string]: number } | null;
-  clubName: string | null;
+  userName: string | null;
   avatar: { [key: string]: any } | null;
 };
 
@@ -155,6 +159,13 @@ export type StyleGoalsType = {
   description: string;
   icon: string;
 };
+
+export enum SubscriptionTypeNamesEnum {
+  IMPROVEMENT = "improvement",
+  PEEK = "peek",
+  ADVISOR = "advisor",
+  ANALYST = "analyst",
+}
 
 export type SubscriptionType = {
   subscriptionId: string;
@@ -179,10 +190,9 @@ export type ClubBioType = {
 };
 
 export type ClubDataType = {
+  followingUserName: string;
   followingUserId: ObjectId;
   bio: ClubBioType;
-  name: string;
-  avatar: { [key: string]: any } | null;
   payouts: {
     connectId: string;
     rewardEarned: number;
@@ -191,8 +201,6 @@ export type ClubDataType = {
     disabledReason: string;
   };
   privacy: PrivacyType[];
-  nextAvatarUpdateAt: Date | null;
-  nextNameUpdateAt: Date | null;
   totalFollowers: number;
 };
 
@@ -208,7 +216,6 @@ export type LatestScoresType = {
 
 export type DemographicsType = {
   sex: SexEnum | null;
-  skinColor: SkinColorEnum | null;
   ethnicity: EthnicityEnum | null;
   skinType: SkinTypeEnum | null;
   ageInterval: AgeIntervalEnum | null;
@@ -355,7 +362,7 @@ export type ProgressType = {
   specialConsiderations: string;
   isPublic: boolean;
   avatar?: { [key: string]: any };
-  clubName?: string;
+  userName?: string;
 };
 
 export type UserProgressRecordType = {
@@ -482,7 +489,7 @@ export type BeforeAfterType = {
   latestHeadScoreDifference?: number;
   isPublic: boolean;
   avatar?: { [key: string]: any };
-  clubName?: string;
+  userName?: string;
   type: TypeEnum;
   part: PartEnum;
 };
@@ -510,7 +517,7 @@ export type ProofType = {
   concern: string;
   proofImages: string[];
   avatar: { [key: string]: any } | null;
-  clubName: string;
+  userName: string;
   isPublic: boolean;
   latestHeadScoreDifference: number;
   latestBodyScoreDifference: number;

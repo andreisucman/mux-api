@@ -2,9 +2,9 @@ import { ObjectId } from "mongodb";
 import { defaultClubPrivacy } from "data/defaultClubPrivacy.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { UserType, ClubDataType, ClubBioType } from "types.js";
-import { names } from "fancy-random-names";
-import { uniqueNamesGenerator, adjectives } from "unique-names-generator";
 import { db } from "init.js";
+import getUserInfo from "./getUserInfo.js";
+import createRandomName from "./createRandomName.js";
 import httpError from "@/helpers/httpError.js";
 
 type Props = {
@@ -14,27 +14,17 @@ type Props = {
 
 export default async function createClubProfile({ userId, avatar }: Props) {
   try {
-    const userInfo = await doWithRetries(async () =>
-      db
-        .collection("User")
-        .findOne(
-          { _id: new ObjectId(userId) },
-          { projection: { demographics: 1 } }
-        )
-    );
+    const userInfo = await getUserInfo({
+      userId,
+      projection: { demographics: 1 },
+    });
 
-    if (!userInfo)
-      throw httpError(`No user ${userId} found for checking club plan`);
+    if (!userInfo) throw httpError(`User ${userId} not found`);
 
     const { demographics } = (userInfo as unknown as Partial<UserType>) || {};
     const { sex } = demographics;
 
-    const randomName = uniqueNamesGenerator({
-      dictionaries: [adjectives, names],
-      length: 2,
-      style: "capital",
-      separator: "",
-    });
+    const randomName = await createRandomName();
 
     const defaultQuestions = [
       {
@@ -88,10 +78,9 @@ export default async function createClubProfile({ userId, avatar }: Props) {
     };
 
     const defaultClubData: ClubDataType = {
-      bio: clubBio,
-      name: randomName,
+      followingUserName: null,
       followingUserId: null,
-      avatar,
+      bio: clubBio,
       payouts: {
         connectId: "",
         rewardEarned: 0,
@@ -100,8 +89,6 @@ export default async function createClubProfile({ userId, avatar }: Props) {
         disabledReason: "",
       },
       privacy: defaultClubPrivacy,
-      nextAvatarUpdateAt: null,
-      nextNameUpdateAt: null,
       totalFollowers: 0,
     };
 
@@ -111,7 +98,8 @@ export default async function createClubProfile({ userId, avatar }: Props) {
         {
           $set: {
             club: defaultClubData,
-            followingUserId: null,
+            name: randomName,
+            avatar,
           },
         }
       )

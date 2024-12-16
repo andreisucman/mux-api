@@ -8,6 +8,8 @@ import {
 } from "types.js";
 
 export type UploadProofUserType = {
+  name: string;
+  avatar: { [key: string]: any } | null;
   club: ClubDataType;
   demographics: DemographicsType;
   latestScoresDifference: LatestScoresType;

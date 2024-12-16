@@ -22,7 +22,7 @@ route.post(
           .collection("User")
           .findOne(
             { _id: new ObjectId(req.userId) },
-            { projection: { club: 1 } }
+            { projection: { "club.payouts": 1, name: 1 } }
           )
       );
 
@@ -30,7 +30,7 @@ route.post(
       if (!userInfo.club)
         throw httpError(`User ${req.userId} is not in the club`);
 
-      const { club } = userInfo;
+      const { club, name } = userInfo;
       const { payouts } = club;
       const { payoutsEnabled } = payouts;
 
@@ -41,7 +41,7 @@ route.post(
         return;
       }
 
-      updateContentPublicity({ userId: req.userId, newPrivacy: privacy });
+      updateContentPublicity({ userName: name, newPrivacy: privacy });
 
       res.status(200).end();
     } catch (err) {

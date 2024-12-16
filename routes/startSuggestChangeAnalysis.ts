@@ -7,6 +7,7 @@ import doWithRetries from "helpers/doWithRetries.js";
 import { StyleAnalysisType } from "types.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import httpError from "@/helpers/httpError.js";
+import getUserInfo from "@/functions/getUserInfo.js";
 
 const route = Router();
 
@@ -26,14 +27,10 @@ route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
   }
 
   try {
-    const userInfo = await doWithRetries(async () =>
-      db
-        .collection("User")
-        .findOne(
-          { _id: new ObjectId(finalUserId) },
-          { projection: { latestStyleAnalysis: 1 } }
-        )
-    );
+    const userInfo = await getUserInfo({
+      userId: finalUserId,
+      projection: { latestStyleAnalysis: 1 },
+    });
 
     const styleAnalysisRecord = (await doWithRetries(async () =>
       db.collection("StyleAnalysis").findOne({ _id: new ObjectId(analysisId) })
@@ -110,7 +107,7 @@ route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
       operationKey: `style-${type}`,
       message: err.message,
     });
-    next(err)
+    next(err);
   }
 });
 

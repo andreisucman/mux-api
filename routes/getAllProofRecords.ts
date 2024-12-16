@@ -39,9 +39,9 @@ route.get("/", async (req: CustomRequest, res: Response) => {
     if (concern) match.concern = concern;
     if (type) match.type = type;
     if (part) match.part = part;
-    if (sex) match["demographics.sex"] = sex;
-    if (bodyType) match["demographics.bodyType"] = bodyType;
-    if (ageInterval) match["demographics.ageInterval"] = ageInterval;
+    if (sex) match.demographics.sex = sex;
+    if (bodyType) match.demographics.bodyType = bodyType;
+    if (ageInterval) match.demographics.ageInterval = ageInterval;
 
     if (otherFilters) {
       match = { ...match, isPublic: true };

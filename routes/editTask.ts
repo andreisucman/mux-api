@@ -1,4 +1,6 @@
 import * as dotenv from "dotenv";
+dotenv.config();
+
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import { CustomRequest } from "types.js";
@@ -11,8 +13,6 @@ import doWithRetries from "helpers/doWithRetries.js";
 import checkTaskSimilar from "functions/checkTaskSimilar.js";
 import { db } from "init.js";
 import httpError from "@/helpers/httpError.js";
-
-dotenv.config();
 
 const route = Router();
 

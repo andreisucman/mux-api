@@ -33,10 +33,6 @@ export default async function makeANewRoutine({
   allSolutions,
 }: Props) {
   try {
-    console.timeEnd("Preparing");
-    console.time("Creating schedule outline");
-
-
     const solutionsAndFrequencies = await doWithRetries(async () =>
       getSolutionsAndFrequencies({
         specialConsiderations,
@@ -57,9 +53,6 @@ export default async function makeANewRoutine({
         )
     );
 
-    console.timeEnd("Creating schedule outline");
-    console.time("Creating raw schedule");
-
     const { rawSchedule } = await doWithRetries(async () =>
       getRawSchedule({
         solutionsAndFrequencies,
@@ -77,9 +70,6 @@ export default async function makeANewRoutine({
         )
     );
 
-    console.timeEnd("Creating raw schedule");
-    console.time("Creating final schedule");
-
     const finalSchedule = await doWithRetries(async () =>
       polishRawSchedule({
         type,
@@ -90,8 +80,6 @@ export default async function makeANewRoutine({
       })
     );
 
-    console.timeEnd("Creating final schedule");
-
     await doWithRetries(async () =>
       db
         .collection("AnalysisStatus")
@@ -101,7 +89,6 @@ export default async function makeANewRoutine({
         )
     );
 
-    /* deactivate the old routine and tasks */
     const previousRoutineRecord = await doWithRetries(async () =>
       db
         .collection("Routine")
@@ -133,7 +120,6 @@ export default async function makeANewRoutine({
       })
     );
 
-    /* add the new routine object */
     const dates = Object.keys(finalSchedule);
     const lastDate = dates[dates.length - 1];
 
@@ -151,7 +137,6 @@ export default async function makeANewRoutine({
       })
     );
 
-    /* update final tasks */
     tasksToInsert = tasksToInsert.map((rt) => ({
       ...rt,
       routineId: newRoutineObject.insertedId,

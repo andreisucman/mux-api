@@ -5,16 +5,16 @@ import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import checkTrackedRBAC from "functions/checkTrackedRBAC.js";
-import { CustomRequest } from "types.js";
+import { CustomRequest, SubscriptionTypeNamesEnum } from "types.js";
+import checkSubscriptionStatus from "@/functions/checkSubscription.js";
 import { db } from "init.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
 route.get(
-  "/:followingUserId?",
+  "/:followingUserName?",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { followingUserId } = req.params;
+    const { followingUserName } = req.params;
     const { skip, type } = req.query;
 
     if (!type) {
@@ -23,11 +23,12 @@ route.get(
     }
 
     try {
-      if (followingUserId) {
-        const { inClub, isFollowing, subscriptionActive } = await checkTrackedRBAC({
-          userId: req.userId,
-          followingUserId,
-        });
+      if (followingUserName) {
+        const { inClub, isFollowing, subscriptionActive } =
+          await checkTrackedRBAC({
+            userId: req.userId,
+            followingUserName,
+          });
 
         if (!inClub || !isFollowing || !subscriptionActive) {
           res.status(200).json({ message: [] });
@@ -35,36 +36,34 @@ route.get(
         }
       }
 
-      const finalId = followingUserId || req.userId;
+      if (followingUserName) {
+        const isSubscriptionValid = await checkSubscriptionStatus({
+          userName: followingUserName,
+          subscriptionType: SubscriptionTypeNamesEnum.PEEK,
+        });
 
-      const userInfo = await doWithRetries(async () =>
-        db
-          .collection("User")
-          .findOne(
-            { _id: new ObjectId(finalId) },
-            { projection: { subscriptions: 1 } }
-          )
-      );
-
-      if (!userInfo) throw httpError(`User ${finalId} not found`);
-
-      const { peek } = userInfo.subscriptions || {};
-      const { validUntil } = peek || {};
-
-      if (followingUserId) {
-        if (!validUntil || new Date() > new Date(peek.validUntil)) {
+        if (!isSubscriptionValid) {
           res.status(200).json({
             error: "subscription expired",
           });
-
           return;
         }
       }
 
+      const filter: { [key: string]: any } = { type };
+
+      if (followingUserName) {
+        filter.name = followingUserName;
+      } else {
+        filter.userId = new ObjectId(req.userId);
+      }
+
+      const projection = { _id: 1, createdAt: 1, allTasks: 1, status: 1 };
+
       const routines = await doWithRetries(async () =>
         db
           .collection("Routine")
-          .find({ userId: new ObjectId(finalId), type })
+          .find(filter, { projection })
           .sort({ createdAt: -1 })
           .skip(Number(skip) || 0)
           .limit(9)

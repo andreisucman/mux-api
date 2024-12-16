@@ -3,7 +3,7 @@ dotenv.config();
 import { Router, Request, Response, NextFunction } from "express";
 import getUserData from "functions/getUserData.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import getUsersCountry from "functions/getUsersCountry.js";
+import getUsersCountry from "@/helpers/getUsersCountry.js";
 import checkIfUserExists from "@/functions/checkIfUserExists.js";
 import createUser from "@/functions/createUser.js";
 import { UserType } from "types.js";

@@ -8,7 +8,6 @@ import doWithRetries from "helpers/doWithRetries.js";
 type ExistingFiltersType = {
   bodyType: string[];
   ethnicity: string[];
-  skinColor: string[];
   concern: string[];
   nearestConcerns: string[];
   ageInterval: string[];
@@ -21,7 +20,6 @@ type ExistingFiltersType = {
 const emptyFilters: ExistingFiltersType = {
   bodyType: [],
   ethnicity: [],
-  skinColor: [],
   concern: [],
   nearestConcerns: [],
   ageInterval: [],

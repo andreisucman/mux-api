@@ -5,12 +5,13 @@ import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import calculateRewardTaskCompletion from "helpers/calculateRewardTaskCompletion.js";
-import { CustomRequest } from "types.js";
+import { CustomRequest, UserType } from "types.js";
 import formatDate from "helpers/formatDate.js";
 import { daysFrom } from "helpers/utils.js";
 import { rewardKeyConditionsMap } from "data/rewardKeyConditionsMap.js";
 import { db } from "init.js";
 import httpError from "@/helpers/httpError.js";
+import getUserInfo from "@/functions/getUserInfo.js";
 
 const route = Router();
 
@@ -39,7 +40,7 @@ route.post(
           });
 
           res.status(200).json({
-            error: `You have already claimed this reward. Please retry after ${formattedDate}`,
+            error: `You have already claimed this reward. Try again after ${formattedDate}`,
           });
 
           return;
@@ -59,9 +60,10 @@ route.post(
 
       const { requisite, value: rewardValue, key: rewardKey } = relevantReward;
 
-      const userInfo = await doWithRetries(async () =>
-        db.collection("User").findOne({ _id: new ObjectId(req.userId) })
-      );
+      const userInfo = await getUserInfo({
+        userId: req.userId,
+        projection: { streaks: 1 },
+      });
 
       if (!userInfo) throw httpError(`User not found`);
 
@@ -73,11 +75,13 @@ route.post(
           const lastPart = parts[parts.length - 1];
 
           const value = parts.reduce(
-            (a, key) => (a ? a[key] : undefined),
+            (a, key) => (a ? a[key as keyof UserType] : undefined),
             userInfo
           );
 
-          acc[lastPart] = value;
+          if (typeof value === "number") {
+            acc[lastPart] = value;
+          }
           return acc;
         },
         {}

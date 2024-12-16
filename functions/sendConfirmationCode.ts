@@ -7,6 +7,7 @@ import getEmailContent from "@/helpers/getEmailContent.js";
 import sendEmail from "functions/sendEmail.js";
 import { minutesFromNow } from "@/helpers/utils.js";
 import { db } from "init.js";
+import getUserInfo from "./getUserInfo.js";
 
 type Props = {
   userId: string;
@@ -18,12 +19,7 @@ export default async function sendConfirmationCode({ userId, email }: Props) {
     if (!userId) throw httpError("userId is missing");
 
     if (!email) {
-      const userInfo = await doWithRetries(() =>
-        db
-          .collection("User")
-          .findOne({ _id: new ObjectId(userId) }, { projection: { email: 1 } })
-      );
-
+      const userInfo = await getUserInfo({ userId, projection: { email: 1 } });
       if (!userInfo) throw httpError("User not found");
 
       email = userInfo.email;

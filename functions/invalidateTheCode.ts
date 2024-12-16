@@ -4,7 +4,7 @@ import { db } from "@/init.js";
 
 export default async function invalidateTheCode(code: string) {
   try {
-    if (!code) throw httpError("Missing code");
+    if (!code) throw httpError("Missing the code");
 
     await doWithRetries(
       async () =>

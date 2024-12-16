@@ -1,12 +1,11 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
-import doWithRetries from "helpers/doWithRetries.js";
 import cancelSubscription from "functions/cancelSubscription.js";
 import { CustomRequest } from "types.js";
-import { stripe, db } from "init.js";
+import { stripe } from "init.js";
+import getUserInfo from "@/functions/getUserInfo.js";
 
 const route = Router();
 
@@ -21,14 +20,10 @@ route.post(
     }
 
     try {
-      const userInfo = await doWithRetries(async () =>
-        db
-          .collection("User")
-          .findOne(
-            { _id: new ObjectId(req.userId) },
-            { projection: { stripeUserId: 1, subscriptions: 1 } }
-          )
-      );
+      const userInfo = await getUserInfo({
+        userId: req.userId,
+        projection: { stripeUserId: 1, subscriptions: 1 },
+      });
 
       const { stripeUserId } = userInfo;
 
@@ -40,7 +35,7 @@ route.post(
 
       if (subscriptions.data.length > 0) {
         const subscription = await stripe.subscriptions.create({
-          customer: userInfo.stripeUserId,
+          customer: stripeUserId,
           items: [{ price: priceId }],
           expand: ["latest_invoice.payment_intent"],
           payment_behavior: "default_incomplete",
@@ -54,7 +49,7 @@ route.post(
           await cancelSubscription(subscription.id);
 
           const session = await stripe.checkout.sessions.create({
-            customer: userInfo.stripeUserId,
+            customer: stripeUserId,
             payment_method_types: ["card"],
             mode: "subscription",
             line_items: [{ price: priceId, quantity: 1 }],
@@ -73,8 +68,9 @@ route.post(
           line_items: [{ price: priceId, quantity: 1 }],
           success_url: redirectUrl,
           cancel_url: cancelUrl,
-          customer: userInfo.stripeUserId,
+          customer: stripeUserId,
         });
+        
         res.status(200).json({ message: { redirectUrl: session.url } });
       }
     } catch (err) {

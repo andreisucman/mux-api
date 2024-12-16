@@ -5,9 +5,15 @@ import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import findProducts from "functions/findProducts.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import { CustomRequest, SolutionType } from "types.js";
+import {
+  CustomRequest,
+  SolutionType,
+  SubscriptionTypeNamesEnum,
+} from "types.js";
 import httpError from "@/helpers/httpError.js";
 import { db } from "init.js";
+import checkSubscriptionStatus from "@/functions/checkSubscription.js";
+import getUserInfo from "@/functions/getUserInfo.js";
 
 const route = Router();
 
@@ -22,28 +28,12 @@ route.post(
     }
 
     try {
-      const userInfo = await doWithRetries(async () =>
-        db.collection("User").findOne(
-          { _id: new ObjectId(req.userId) },
-          {
-            projection: {
-              specialConsiderations: 1,
-              subscriptions: 1,
-              demographics: 1,
-              timeZone: 1,
-              concerns: 1,
-            },
-          }
-        )
-      );
+      const isSubscriptionValid = await checkSubscriptionStatus({
+        userId: req.userId,
+        subscriptionType: SubscriptionTypeNamesEnum.ANALYST,
+      });
 
-      const { subscriptions } = userInfo;
-      const { analyst } = subscriptions;
-
-      const subscriptionEndDate = analyst.validUntil;
-      const subscriptionExpired = new Date() > new Date(subscriptionEndDate);
-
-      if (!subscriptionEndDate || subscriptionExpired) {
+      if (!isSubscriptionValid) {
         res.status(200).json({ error: "subscription expired" });
         return;
       }
@@ -80,6 +70,16 @@ route.post(
       );
 
       res.status(200).end();
+
+      const userInfo = await getUserInfo({
+        userId: req.userId,
+        projection: {
+          timeZone: 1,
+          concerns: 1,
+          demographics: 1,
+          specialConsiderations: 1,
+        },
+      });
 
       const { timeZone, concerns, demographics, specialConsiderations } =
         userInfo;
