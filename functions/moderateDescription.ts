@@ -1,11 +1,8 @@
 import z from "zod";
-import { ObjectId } from "mongodb";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import askRepeatedly from "functions/askRepeatedly.js";
-import doWithRetries from "helpers/doWithRetries.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import httpError from "@/helpers/httpError.js";
-import { db } from "init.js";
 import getUserInfo from "./getUserInfo.js";
 
 type Props = {
@@ -13,7 +10,7 @@ type Props = {
   userId: string;
 };
 
-export default async function moderateText({ userId, text }: Props) {
+export default async function moderateDescription({ userId, text }: Props) {
   try {
     const userInfo = await getUserInfo({
       userId,

@@ -14,7 +14,7 @@ import {
   TaskType,
 } from "types.js";
 import askRepeatedly from "functions/askRepeatedly.js";
-import moderateText from "functions/moderateText.js";
+import moderateDescription from "@/functions/moderateDescription.js";
 import findRelevantSolutions from "functions/findRelevantSolutions.js";
 import setUtcMidnight from "@/helpers/setUtcMidnight.js";
 import distributeSubmissions from "@/helpers/distributeSubmissions.js";
@@ -61,7 +61,7 @@ route.post(
     try {
       const text = `Description: ${description}.<-->Instruction: ${instruction}.`;
 
-      const { isHarmful, explanation } = await moderateText({
+      const { isHarmful, explanation } = await moderateDescription({
         userId: req.userId,
         text,
       });
