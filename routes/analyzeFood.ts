@@ -66,7 +66,11 @@ route.post(
 
       if (!isValidSimilarity) {
         res.status(200).json({
-          message: record.analysis,
+          message: {
+            _id: record._id,
+            url: record.url,
+            analysis: record.analysis,
+          },
         });
         return;
       }
@@ -97,6 +101,7 @@ route.post(
       });
 
       const newRecord: { [key: string]: any } = {
+        _id: new ObjectId(),
         createdAt: new Date(),
         analysis,
         url,
@@ -110,7 +115,13 @@ route.post(
         db.collection("FoodAnalysis").insertOne(newRecord)
       );
 
-      res.status(200).json({ message: analysis });
+      res.status(200).json({
+        message: {
+          _id: newRecord._id,
+          url: newRecord.url,
+          analysis: newRecord.analysis,
+        },
+      });
     } catch (err) {
       next(err);
     }

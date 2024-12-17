@@ -18,7 +18,7 @@ export default async function createRandomName() {
       name = uniqueNamesGenerator({
         dictionaries: [adjectives, names, numberDictionary],
         length: 2,
-        style: "capital",
+        style: "lowerCase",
         separator: "_",
       });
       isUnique = await isNameUnique(name);

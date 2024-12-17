@@ -51,7 +51,12 @@ route.post(
 
       if (!newFollowingInfo) httpError(`User not found - ${newFollowingInfo}`);
 
-      const { club: followingClub, avatar, name } = newFollowingInfo;
+      const {
+        club: followingClub,
+        avatar,
+        name,
+        _id: newFollowingUserId,
+      } = newFollowingInfo;
       const { privacy } = followingClub;
 
       const allPartPrivacies = privacy.flatMap((typePrivacy) =>
@@ -73,7 +78,10 @@ route.post(
           updateOne: {
             filter: { _id: new ObjectId(req.userId) },
             update: {
-              $set: { "club.followingUserName": followingUserName },
+              $set: {
+                "club.followingUserName": followingUserName,
+                "club.followingUserId": newFollowingUserId,
+              },
             },
           },
         },
@@ -105,7 +113,7 @@ route.post(
           {
             $set: {
               followingUserName,
-              name,
+              userName: name,
               avatar,
               updatedAt: new Date(),
             },

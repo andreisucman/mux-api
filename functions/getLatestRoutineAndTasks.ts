@@ -65,6 +65,7 @@ export default async function getLatestRoutinesAndTasks({ userId }: Props) {
       status: 1,
       part: 1,
       routineId: 1,
+      isRecipe: 1,
       description: 1,
       requiredSubmissions: 1,
       startsAt: 1,

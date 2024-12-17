@@ -101,7 +101,7 @@ route.post(
 
       if (!taskInfo) throw httpError(`Task ${taskId} not found`);
 
-      /* get the previous images of the same routine */
+      /* get the previous images of the same task */
       const oldProofsArray = await doWithRetries(async () =>
         db
           .collection("Proof")
@@ -120,8 +120,6 @@ route.post(
         .flatMap((proof) => proof.proofImages)
         .filter(Boolean);
 
-      const urlType = extensionTypeMap[urlExtension];
-
       await incrementProgress({
         operationKey: taskId,
         increment: Math.round(Math.random() * 20 + 1),
@@ -137,6 +135,7 @@ route.post(
       }, 5000);
 
       let proofImages;
+      const urlType = extensionTypeMap[urlExtension];
 
       try {
         if (urlType === "video") {
@@ -212,7 +211,7 @@ route.post(
       //   await addAnalysisStatusError({
       //     originalMessage: explanations.join("\n"),
       //     message:
-      //       "This submission is not acceptable. Please follow the instructions when recording your proof.",
+      //       "This submission is not acceptable. Your proof must fulfill the requirement from the instructions.",
       //     userId: req.userId,
       //     operationKey: taskId,
       //   });
@@ -344,7 +343,7 @@ route.post(
 
       const userUpdatePayload = {
         $inc: streaksToIncrement,
-        $set: { streakDates: newStreakDates },
+        $set: { streakDates: newStreakDates } as { [key: string]: any },
       };
 
       /* decrement the daily calories for food submissions */
@@ -356,7 +355,7 @@ route.post(
         });
         const { energy } = foodAnalysis;
         const newDailyCalorieGoal = Math.max(0, dailyCalorieGoal - energy);
-        userUpdatePayload.$inc.dailyCalorieGoal = newDailyCalorieGoal;
+        userUpdatePayload.$set.dailyCalorieGoal = newDailyCalorieGoal;
       }
 
       await doWithRetries(async () =>

@@ -2,7 +2,6 @@ import { ObjectId } from "mongodb";
 import doWithRetries from "helpers/doWithRetries.js";
 import { UserType } from "types.js";
 import { db } from "init.js";
-import getUserInfo from "./getUserInfo.js";
 import httpError from "@/helpers/httpError.js";
 
 type Props = {
@@ -22,6 +21,7 @@ export default async function checkTrackedRBAC({
 }: Props) {
   try {
     const result = {
+      isSelf: true,
       inClub: true,
       isFollowing: true,
       subscriptionActive: true,
@@ -30,7 +30,7 @@ export default async function checkTrackedRBAC({
     };
 
     const targetFilter = {
-      _id: new ObjectId(followingUserName),
+      name: followingUserName,
       club: { $exists: true },
     };
     const targetOptions = { projection: { _id: 1 } };
@@ -52,6 +52,11 @@ export default async function checkTrackedRBAC({
         );
       }
       result.inClub = false;
+    }
+
+    if (String(targetUserInfo._id) === userId) {
+      result.isSelf = true;
+      return result;
     }
 
     result.targetUserInfo = targetUserInfo;

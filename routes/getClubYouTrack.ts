@@ -1,7 +1,6 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import { GetClubYouTrackUserType } from "types/getClubYouTrackTypes.js";
 import { ClubBioType, CustomRequest, UserType } from "types.js";
@@ -11,12 +10,12 @@ import httpError from "@/helpers/httpError.js";
 const route = Router();
 
 route.get(
-  "/:followingUserName",
+  "/:followingUserName?",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { followingUserName } = req.params;
 
     if (!followingUserName) {
-      res.status(400).json({ error: "Bad request" });
+      res.status(200).json({ message: null });
       return;
     }
 
@@ -45,8 +44,10 @@ route.get(
         const { isFollowing, subscriptionActive } = rbacResponse;
 
         if (!isFollowing || !subscriptionActive) {
-          const newBio = Object.keys(userInfo.club.bio).reduce(
-            (a: ClubBioType, c) => {
+          const { club } = userInfo || {};
+
+          if (club) {
+            const newBio = Object.keys(club.bio).reduce((a: ClubBioType, c) => {
               if (c !== "intro") {
                 if (c === "questions") {
                   a[c] = [];
@@ -60,14 +61,13 @@ route.get(
                   a[c as "intro"] = "";
                 }
               } else {
-                a[c as "intro"] = userInfo.club.bio[c];
+                a[c as "intro"] = club.bio[c];
               }
               return a;
-            },
-            {} as ClubBioType
-          );
+            }, {} as ClubBioType);
 
-          userInfo.club.bio = newBio;
+            userInfo.club.bio = newBio;
+          }
         }
       }
 

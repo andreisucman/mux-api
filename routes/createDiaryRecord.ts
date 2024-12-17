@@ -124,7 +124,7 @@ route.post(
 
       if (results.length === 0) {
         res.status(200).json({
-          error: `You don't have any activity today. Try again when you have done something .`,
+          error: `You don't have any activity today. Try again after you have done something .`,
         });
         return;
       }

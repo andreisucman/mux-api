@@ -18,7 +18,7 @@ export default async function checkImageSimilarity({
   collection,
   vectorIndexName,
 }: CheckImageSimilarityProps) {
-  const projection = { embedding: 0, hash: 0 };
+  const projection = { _id: 1, embedding: 0, hash: 0 };
 
   try {
     const duplicateCheckResult = await doWithRetries(async () =>
@@ -51,6 +51,8 @@ export default async function checkImageSimilarity({
     const closestDocument = await doWithRetries(async () =>
       db.collection(collection).aggregate(pipeline).next()
     );
+
+    console.log("closestDocument", closestDocument);
 
     if (closestDocument) {
       if (closestDocument.score >= 90) {
