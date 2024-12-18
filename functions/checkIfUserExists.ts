@@ -10,8 +10,9 @@ type Props = {
 
 async function checkIfUserExists({ filter, projection }: Props) {
   try {
+    const projectionStage = projection ? { projection } : undefined;
     const result = (await doWithRetries(
-      async () => await db.collection("User").findOne(filter, { projection })
+      async () => await db.collection("User").findOne(filter, projectionStage)
     )) as unknown as Partial<UserType>;
 
     return result;

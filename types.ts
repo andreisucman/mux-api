@@ -168,7 +168,7 @@ export enum SubscriptionTypeNamesEnum {
 }
 
 export type SubscriptionType = {
-  subscriptionId: string;
+  subscriptionId: string | null;
   validUntil: Date | null;
   isTrialUsed: boolean;
 };

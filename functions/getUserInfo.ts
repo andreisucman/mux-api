@@ -18,15 +18,15 @@ export default async function getUserInfo({
   try {
     if (!userId && !userName) throw httpError("No userId and name");
 
-    const finalProjection = { _id: 1, ...projection };
-
     const filter: { [key: string]: any } = {};
 
     if (userId) filter._id = new ObjectId(userId);
     if (userName) filter.name = userName;
 
+    const projectionStage = projection ? { projection } : undefined;
+
     const userInfo = await doWithRetries(() =>
-      db.collection("User").findOne(filter, { projection: finalProjection })
+      db.collection("User").findOne(filter, projectionStage)
     );
 
     return userInfo;

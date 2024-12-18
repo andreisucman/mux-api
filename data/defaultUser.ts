@@ -10,22 +10,22 @@ import {
 export const defaultSubscriptions = {
   improvement: {
     isTrialUsed: false,
-    subscriptionId: "",
+    subscriptionId: null as string | null,
     validUntil: null as Date | null,
   },
   peek: {
     isTrialUsed: false,
-    subscriptionId: "",
+    subscriptionId: null as string | null,
     validUntil: null as Date | null,
   },
   analyst: {
     isTrialUsed: false,
-    subscriptionId: "",
+    subscriptionId: null as string | null,
     validUntil: null as Date | null,
   },
   advisor: {
     isTrialUsed: false,
-    subscriptionId: "",
+    subscriptionId: null as string | null,
     validUntil: null as Date | null,
   },
 };
