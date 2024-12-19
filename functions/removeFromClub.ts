@@ -1,4 +1,4 @@
-import { db } from "init.js";
+import { ObjectId } from "mongodb";
 import doWithRetries from "helpers/doWithRetries.js";
 import updateContentPublicity from "functions/updateContentPublicity.js";
 import cancelSubscription from "functions/cancelSubscription.js";
@@ -6,14 +6,15 @@ import { defaultClubPrivacy } from "data/defaultClubPrivacy.js";
 import httpError from "@/helpers/httpError.js";
 import { daysFrom } from "@/helpers/utils.js";
 import getUserInfo from "./getUserInfo.js";
+import { db } from "init.js";
 
 type Props = {
-  userName: string;
+  userId: string;
 };
 
-export default async function removeFromClub({ userName }: Props) {
+export default async function removeFromClub({ userId }: Props) {
   try {
-    await updateContentPublicity({ userName, newPrivacy: defaultClubPrivacy });
+    await updateContentPublicity({ userId, newPrivacy: defaultClubPrivacy });
 
     const canRejoinClubAfter = daysFrom({ days: 7 });
 
@@ -21,14 +22,14 @@ export default async function removeFromClub({ userName }: Props) {
       db
         .collection("User")
         .updateOne(
-          { name: userName },
-          { $set: { club: null, canRejoinClubAfter } }
+          { userId: new ObjectId(userId) },
+          { $set: { club: null, name: null, canRejoinClubAfter } }
         )
     );
 
     await doWithRetries(async () =>
       db.collection("User").updateMany(
-        { "club.followingUserName": userName },
+        { "club.followingUserId": new ObjectId(userId) },
         {
           $set: {
             "club.followingUserName": null,
@@ -39,19 +40,19 @@ export default async function removeFromClub({ userName }: Props) {
     );
 
     const userInfo = await getUserInfo({
-      userName,
+      userId,
       projection: { subscriptions: 1 },
     });
 
-    if (!userInfo) throw httpError(`User: ${userName} not found.`);
+    if (!userInfo) throw httpError(`User: ${userId} not found.`);
 
     const relevantSubscription = userInfo.subscriptions.peek;
 
     await cancelSubscription(relevantSubscription.subscriptionId);
 
     const removeFromFollowHistoryBatch = [
-      { deleteMany: { filter: { followingUserName: userName } } },
-      { deleteMany: { filter: { userName } } },
+      { deleteMany: { filter: { followingUserId: new ObjectId(userId) } } },
+      { deleteMany: { filter: { userId: new ObjectId(userId) } } },
     ];
 
     doWithRetries(async () =>

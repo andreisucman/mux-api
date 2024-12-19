@@ -22,7 +22,7 @@ route.post(
           .collection("User")
           .findOne(
             { _id: new ObjectId(req.userId) },
-            { projection: { "club.payouts": 1, name: 1 } }
+            { projection: { "club.payouts": 1 } }
           )
       );
 
@@ -41,7 +41,10 @@ route.post(
         return;
       }
 
-      updateContentPublicity({ userName: name, newPrivacy: privacy });
+      updateContentPublicity({
+        userId: req.userId,
+        newPrivacy: privacy,
+      });
 
       res.status(200).end();
     } catch (err) {

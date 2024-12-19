@@ -7,17 +7,17 @@ import httpError from "@/helpers/httpError.js";
 import getUserInfo from "./getUserInfo.js";
 
 type Props = {
-  userName: string;
+  userId: string;
   newPrivacy: PrivacyType[];
 };
 
 export default async function updateContentPublicity({
-  userName,
+  userId,
   newPrivacy,
 }: Props) {
   try {
     const userInfo = await getUserInfo({
-      userName,
+      userId,
       projection: { "club.privacy": 1, name: 1, avatar: 1 },
     });
 
@@ -36,7 +36,7 @@ export default async function updateContentPublicity({
       .map((obj: { name: string; type: string; value: boolean }) => ({
         updateOne: {
           filter: {
-            name: userName,
+            userId: new ObjectId(userId),
             part: obj.name,
             type: obj.type,
           },
@@ -55,7 +55,7 @@ export default async function updateContentPublicity({
       .map((obj: { name: string; type: string; value: boolean }) => ({
         updateOne: {
           filter: {
-            name: userName,
+            userId: new ObjectId(userId),
           },
           update: {
             $set: {
@@ -90,7 +90,10 @@ export default async function updateContentPublicity({
     await doWithRetries(async () =>
       db
         .collection("User")
-        .updateOne({ name: userName }, { $set: { "club.privacy": newPrivacy } })
+        .updateOne(
+          { _id: new ObjectId(userId) },
+          { $set: { "club.privacy": newPrivacy } }
+        )
     );
   } catch (err) {
     throw httpError(err);

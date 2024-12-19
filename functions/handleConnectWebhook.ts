@@ -41,12 +41,12 @@ export default async function handleConnectWebhook(event: any) {
             .collection("User")
             .findOne(
               { "club.payouts.connectId": object.id },
-              { projection: { name: 1 } }
+              { projection: { _id: 1 } }
             )
         );
 
         await updateContentPublicity({
-          userName: userInfo.name,
+          userId: String(userInfo._id),
           newPrivacy: defaultClubPrivacy,
         });
       }

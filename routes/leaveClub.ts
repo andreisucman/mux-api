@@ -18,7 +18,7 @@ route.post(
       });
 
       const { name } = userInfo;
-      await removeFromClub({ userName: name });
+      await removeFromClub({ userId: req.userId });
       res.status(200).end();
     } catch (err) {
       next(err);
