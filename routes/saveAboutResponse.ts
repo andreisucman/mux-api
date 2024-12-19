@@ -62,7 +62,6 @@ route.post(
         const updatedBio = await updateAboutBio({
           userId: req.userId,
           currentBio: {
-            about: bio.about,
             philosophy: bio.philosophy,
             style: bio.style,
             tips: bio.tips,

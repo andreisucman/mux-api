@@ -4,10 +4,11 @@ dotenv.config();
 import { Router, NextFunction } from "express";
 import doWithRetries from "@/helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
+import { CustomRequest } from "@/types.js";
 
 const route = Router();
 
-route.post("/", async (req, res, next: NextFunction) => {
+route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
   const { url } = req.body;
 
   try {
@@ -17,6 +18,7 @@ route.post("/", async (req, res, next: NextFunction) => {
         headers: {
           "Content-Type": "application/json",
           Authorization: process.env.PROCESSING_SECRET,
+          UserId: req.userId,
         },
         body: JSON.stringify({ audioFile: url }),
       })

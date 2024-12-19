@@ -14,7 +14,6 @@ type UpdateAboutBioProps = {
     philosophy: string;
     style: string;
     tips: string;
-    about: string;
   };
 };
 
@@ -34,11 +33,6 @@ async function updateBioPart({
   userId,
 }: UpdateBioPartProps) {
   try {
-    const UpdateBioPartResponseType = z.object({
-      isUpdated: z.boolean(),
-      updatedText: z.string(),
-    });
-
     const finalPartName = `${
       partName === "tips"
         ? "face and outfit style tips"
@@ -49,7 +43,24 @@ async function updateBioPart({
         : partName
     }`;
 
-    const systemContent = `You are given a text about the user's ${finalPartName} and the new information. Your goal is check if there is anything in the new information related to the ${finalPartName} of the user and if yes, update the user's ${finalPartName} with the new information. Respond with a JSON object like this: {isUpdated: true if the text was updated, updatedText: the updated text if the new information is related, or empty string if not}`;
+    const UpdateBioPartResponseType = z.object({
+      isUpdated: z
+        .boolean()
+        .describe(
+          `true if the new information is related to the ${finalPartName} and text was updated, otherwise false`
+        ),
+      updatedText: z
+        .string()
+        .describe(
+          "the updated text or empty string if the text wasn't updated"
+        ),
+    });
+
+    let systemContent = `You are given a text about the user's ${finalPartName} and the additional information. Create a biography style description about the user's ${finalPartName} based on the information you have. Come up with additional details for the provided information to make the story engaging, but don't make up new facts. Your goall is to turn the existing text into an engaging personality description. Write from the name of the user in the first person style I/me}`;
+
+    if (partName === "tips")
+      systemContent +=
+        "Your response should be an advice to other people on how to achieve a look similar to yours. Avoid generic advice, be specific.";
 
     const runs = [
       {
@@ -61,7 +72,7 @@ async function updateBioPart({
           },
           {
             type: "text",
-            text: `The new information: -${question}? -${reply}.`,
+            text: `Additional information: -${question}? -${reply}.`,
           },
         ],
         responseFormat: zodResponseFormat(

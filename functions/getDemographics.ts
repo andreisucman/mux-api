@@ -81,9 +81,9 @@ export default async function getDemographics({
 
   try {
     const response: DemographicsType = await askRepeatedly({
+      userId,
       systemContent,
       runs: runs as RunType[],
-      userId,
       functionName: "getDemographics",
     });
     return response;

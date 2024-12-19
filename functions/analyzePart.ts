@@ -214,6 +214,7 @@ export default async function analyzePart({
       scoresDifference: newScoresDifference,
       specialConsiderations,
       isPublic: false,
+      isBlocked: false,
     };
 
     const beforeAfterUpdate: BeforeAfterType = {

@@ -168,6 +168,7 @@ export const defaultUser: UserType = {
   name: "",
   avatar: null,
   nextAvatarUpdateAt: null,
+  nextDiaryRecordAfter: null,
   nextNameUpdateAt: null,
   email: "",
   auth: "",

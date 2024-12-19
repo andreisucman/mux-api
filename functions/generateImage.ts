@@ -56,7 +56,7 @@ export default async function generateImage({ description, userId }: Props) {
       userId,
       unitCost,
       units,
-      functionName: "generateImages",
+      functionName: "generateImage",
       modelName: model.split(".").join("_"),
     });
 

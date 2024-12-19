@@ -111,6 +111,7 @@ export type UserType = {
   emailVerified: boolean;
   canRejoinClubAfter: Date | null;
   nextAvatarUpdateAt: Date | null;
+  nextDiaryRecordAfter: Date | null;
   nextNameUpdateAt: Date | null;
 };
 
@@ -152,6 +153,7 @@ export type StyleAnalysisType = {
   compareAnalysis: { [key: string]: number } | null;
   userName: string | null;
   avatar: { [key: string]: any } | null;
+  isBlocked: boolean;
 };
 
 export type StyleGoalsType = {
@@ -184,7 +186,6 @@ export type ClubBioType = {
   philosophy: string;
   style: string;
   tips: string;
-  about: string;
   questions: { asking: string; question: string }[];
   socials: { value: string; label: string }[];
 };
@@ -363,6 +364,7 @@ export type ProgressType = {
   isPublic: boolean;
   avatar?: { [key: string]: any };
   userName?: string;
+  isBlocked: boolean;
 };
 
 export type UserProgressRecordType = {
@@ -521,6 +523,7 @@ export type ProofType = {
   isPublic: boolean;
   latestHeadScoreDifference: number;
   latestBodyScoreDifference: number;
+  isBlocked: boolean;
 };
 
 export type SolutionType = {

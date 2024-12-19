@@ -28,6 +28,7 @@ route.post(
           headers: {
             "Content-Type": "application/json",
             Authorization: process.env.PROCESSING_SECRET,
+            UserId: req.userId,
           },
           body: JSON.stringify({ audioFile: audio }),
         })
@@ -49,6 +50,7 @@ route.post(
         transcription: body.message,
         audio,
         createdAt: utcDate,
+        isBlocked: false,
       };
 
       await doWithRetries(async () =>

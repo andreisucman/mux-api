@@ -5,18 +5,33 @@ import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import { CustomRequest } from "types.js";
+import checkTrackedRBAC from "@/functions/checkTrackedRBAC.js";
 import { db } from "init.js";
 
 const route = Router();
 
 route.get(
-  "/",
+  "/:userName?",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
+    const { userName } = req.params;
     const { type } = req.query;
 
     try {
+      if (userName) {
+        const { inClub, isFollowing } = await checkTrackedRBAC({
+          followingUserName: userName,
+          userId: req.userId,
+          throwOnError: false,
+        });
+
+        if (!inClub || !isFollowing) {
+          res.status(200).json({message: []});
+          return;
+        };
+      }
       const filters: { [key: string]: any } = {
         userId: new ObjectId(req.userId),
+        isBlocked: false,
       };
 
       if (type) filters.type = type;

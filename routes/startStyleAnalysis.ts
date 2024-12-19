@@ -133,6 +133,7 @@ route.post(
         currentSuggestion,
         matchSuggestion: null as string,
         isPublic: false,
+        isBlocked: false,
         userName: name,
         avatar,
         votes: 0,

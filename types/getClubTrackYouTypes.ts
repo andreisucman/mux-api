@@ -4,7 +4,7 @@ export type TrackerType = {
   _id: 1;
   name: string;
   avatar: { [key: string]: any };
-  club: { privacy: PrivacyType[]; bio: { about: String } };
+  club: { privacy: PrivacyType[] };
   latestScores: LatestScoresType;
   latestScoresDifference: LatestScoresType;
 };

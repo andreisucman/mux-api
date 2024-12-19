@@ -17,7 +17,7 @@ export default async function createImageEmbedding(
 
     const model =
       "daanelson/imagebind:0383f62e173dc821ec52663ed22a076d9c970549c209666ac3db181618b7a304";
-    const unitCost = Number(process.env.IMAGE_EMBEDDING_PRICE);
+    const unitCost = Number(process.env.IMAGE_EMBEDDING_PRICE) / 1000000;
 
     const result = await replicate.run(model, {
       input: payload,

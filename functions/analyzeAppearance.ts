@@ -51,7 +51,7 @@ type Props = {
 
 export default async function analyzeAppearance({
   userId,
-  name, 
+  name,
   avatar,
   type,
   club,
@@ -70,7 +70,6 @@ export default async function analyzeAppearance({
   newSpecialConsiderations,
 }: Props) {
   try {
-    console.time("analyzeAppearance - preparation");
     const toAnalyzeObjects = toAnalyze[type as "head"];
 
     const parts = [...new Set(toAnalyzeObjects.map((obj) => obj.part))];
@@ -101,10 +100,7 @@ export default async function analyzeAppearance({
         userNote: newSpecialConsiderations,
       });
 
-    console.timeEnd("analyzeAppearance - preparation");
     if (!demographics || !demographics.bodyType) {
-      console.time("analyzeAppearance - getDemographics");
-
       const newDemographics = await getDemographics({
         userId,
         toAnalyzeObjects,
@@ -122,10 +118,8 @@ export default async function analyzeAppearance({
           )
       );
 
-      console.timeEnd("analyzeAppearance - getDemographics");
       toUpdateUser.$set.demographics = demographics;
     }
-    console.time("analyzeAppearance - getCalorieGoal");
     if (type === "body") {
       const calories = await getCalorieGoal({ userId, toAnalyzeObjects });
       toUpdateUser.$set.dailyCalorieGoal = calories;
@@ -133,9 +127,6 @@ export default async function analyzeAppearance({
 
     toUpdateUser.$set.nextScan = updateNextScan({ nextScan, toAnalyze, type });
 
-    console.timeEnd("analyzeAppearance - getCalorieGoal");
-
-    console.time("analyzeAppearance - analyzeParts");
     const analyzePartPromises = parts.map((part) => {
       return doWithRetries(async () =>
         analyzePart({

@@ -279,6 +279,7 @@ route.post(
         avatar,
         userName: name,
         isPublic: false,
+        isBlocked: false,
         latestBodyScoreDifference: 0,
         latestHeadScoreDifference: 0,
       };

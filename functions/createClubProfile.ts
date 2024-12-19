@@ -72,7 +72,6 @@ export default async function createClubProfile({ userId, avatar }: Props) {
       philosophy: "",
       style: "",
       tips: "",
-      about: "",
       questions: defaultQuestions,
       socials: [],
     };

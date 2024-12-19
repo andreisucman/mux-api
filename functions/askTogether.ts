@@ -47,7 +47,7 @@ async function askTogether({
     const outputTokens = completion.usage.completion_tokens;
 
     const modelKey = model.split(".").join("_");
-    const unitCost = priceMap[modelKey];
+    const unitCost = priceMap[modelKey] / 1000000;
 
     updateSpend({
       functionName,

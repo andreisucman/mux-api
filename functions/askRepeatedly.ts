@@ -2,7 +2,6 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import { ObjectId } from "mongodb";
-import askOpenai from "functions/askOpenAi.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import {
   AskOpenaiProps,
@@ -10,6 +9,7 @@ import {
   RoleEnum,
   RunType,
 } from "types/askOpenaiTypes.js";
+import askOpenai from "./askOpenai.js";
 import httpError from "@/helpers/httpError.js";
 
 type Props = {
@@ -26,7 +26,6 @@ const defaultSeed = Number(process.env.DEFAULT_OPENAI_SEED);
 
 async function askRepeatedly({
   runs,
-  meta,
   seed,
   userId,
   functionName,
@@ -34,10 +33,11 @@ async function askRepeatedly({
   isResultString,
 }: Props) {
   try {
-    if (!ObjectId.isValid(userId) && !meta)
+    if (!ObjectId.isValid(userId))
       throw httpError("Invalid userId format and no meta");
 
     let result;
+    
     let conversation: MessageType[] = [
       { role: "system" as RoleEnum, content: systemContent },
     ];

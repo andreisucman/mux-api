@@ -18,7 +18,7 @@ const {
   FINETUNED_4O_OUTPUT_PRICE,
 } = process.env;
 
-async function askOpenAi({
+async function askOpenai({
   messages,
   seed,
   model,
@@ -69,12 +69,13 @@ async function askOpenAi({
       : DEFAULT_4O_OUTPUT_PRICE;
 
     const unitCost =
-      (inputTokens / (inputTokens + outputTokens)) * Number(inputPrice) +
-      (outputTokens / (inputTokens + outputTokens)) * Number(outputPrice);
+      ((inputTokens / (inputTokens + outputTokens)) * Number(inputPrice) +
+        (outputTokens / (inputTokens + outputTokens)) * Number(outputPrice)) /
+      1000000;
 
     updateSpend({
       functionName,
-      modelName: model,
+      modelName: finalModel,
       unitCost,
       units: inputTokens + outputTokens,
       userId,
@@ -88,4 +89,4 @@ async function askOpenAi({
   }
 }
 
-export default askOpenAi;
+export default askOpenai;

@@ -46,12 +46,11 @@ route.get(
           latestScoresDifference,
           _id,
         } = rec;
-        const { privacy, bio } = club;
+        const { privacy } = club;
 
         const updated = {
           _id,
           name,
-          about: bio.about,
           avatar,
           scores: {} as { [key: string]: number },
         };
