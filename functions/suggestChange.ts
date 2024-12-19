@@ -108,6 +108,7 @@ export default async function suggestChange({
       systemContent: analysisSystemContent,
       runs: runs as RunType[],
       isResultString: true,
+      functionName: "suggestChange",
     });
 
     const formattingSystemContent = `You are given the user's current style name, their goal style name, and the improvement suggestions for changing the style. Your goal is to rephrase and format this information in the 2nd tense (you/your) and an engaging language. Don't make things up. Think step-by-step.`;
@@ -137,6 +138,7 @@ export default async function suggestChange({
       runs: formattingRuns,
       isResultString: true,
       seed: 1100893210,
+      functionName: "suggestChange",
     });
 
     return rephrased;

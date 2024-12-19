@@ -10,8 +10,6 @@ import {
   DemographicsType,
   PartEnum,
 } from "@/types.js";
-import z from "zod";
-import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import { CreateRoutineAllSolutionsType } from "types/createRoutineTypes.js";
 import httpError from "@/helpers/httpError.js";
@@ -112,6 +110,7 @@ export default async function getAdditionalSolutionsAndFrequencies({
       userId,
       systemContent: findSolutionsInstruction,
       runs: findSolutionsContentArray as RunType[],
+      functionName: "getAdditionalSolutionsAndFrequencies",
     });
 
     /* get additional solutions */
@@ -206,6 +205,7 @@ export default async function getAdditionalSolutionsAndFrequencies({
       userId,
       systemContent: findAdditionalSolutionsInstruction,
       runs: findAdditionalSolutionsContentArray as RunType[],
+      functionName: "getAdditionalSolutionsAndFrequencies",
     });
 
     let updatedConcernsSolutionsMap = combineSolutions(
@@ -305,6 +305,7 @@ export default async function getAdditionalSolutionsAndFrequencies({
       userId,
       systemContent: findFrequenciesInstruction,
       runs: findFrequenciesContentArray as RunType[],
+      functionName: "getAdditionalSolutionsAndFrequencies",
     });
 
     findFrequencyResponse = convertKeysAndValuesTotoSnakeCase(

@@ -13,6 +13,7 @@ import { fileURLToPath } from "url";
 
 const client = new MongoClient(process.env.DATABASE_URI);
 const db = client.db(process.env.DATABASE_NAME);
+const adminDb = client.db(process.env.ADMIN_DATABASE_NAME);
 const promClientRegister = new promClient.Registry();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -48,6 +49,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export {
   db,
+  adminDb,
   client,
   s3Client,
   sesClient,

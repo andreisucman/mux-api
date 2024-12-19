@@ -165,6 +165,7 @@ route.post(
         systemContent: systemContent,
         runs: runs as RunType[],
         userId: req.userId,
+        functionName: "saveTaskFromDescription",
       });
 
       await incrementProgress({
@@ -196,7 +197,10 @@ route.post(
       };
 
       const info = `${description}.${instruction}`;
-      const embedding = await createTextEmbedding(info);
+      const embedding = await createTextEmbedding({
+        userId: req.userId,
+        text: info,
+      });
 
       await incrementProgress({
         operationKey: type,

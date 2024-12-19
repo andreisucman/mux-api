@@ -3,6 +3,7 @@ import doWithRetries from "helpers/doWithRetries.js";
 import askTogether from "functions/askTogether.js";
 import { RoleEnum } from "@/types/askOpenaiTypes.js";
 import { together } from "init.js";
+import updateSpend from "./updateSpend.js";
 import httpError from "@/helpers/httpError.js";
 
 type Props = {
@@ -23,26 +24,41 @@ export default async function generateImage({ description, userId }: Props) {
       },
     ];
 
-    const promptResponse = await askTogether({
+    const prompt = await askTogether({
       messages,
       userId,
       model: "meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo",
+      functionName: "generateImage",
     });
 
-    const { result: prompt } = promptResponse;
+    const width = 480;
+    const height = 288;
+
+    const model = "black-forest-labs/FLUX.1.1-pro";
 
     const imageResponse: any = await doWithRetries(
       async () =>
         await together.images.create({
-          model: "black-forest-labs/FLUX.1-pro",
+          model,
           prompt,
           steps: 20,
           n: 1,
-          width: 480,
-          height: 288,
+          width,
+          height,
           negative_prompt: "deformed, scary, blurred, unrealistic",
         })
     );
+
+    const units = width * height;
+    const unitCost = Number(process.env.IMAGE_GENERATION_PRICE) / 1000000;
+
+    updateSpend({
+      userId,
+      unitCost,
+      units,
+      functionName: "generateImages",
+      modelName: model.split(".").join("_"),
+    });
 
     const image = imageResponse.data[0].url;
 

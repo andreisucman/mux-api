@@ -60,7 +60,8 @@ export default async function rateFeaturePotential({
             }.`,
           },
         ],
-        callback: () => incrementProgress({ operationKey:type, userId, increment: 1 }),
+        callback: () =>
+          incrementProgress({ operationKey: type, userId, increment: 1 }),
       },
     ];
 
@@ -69,6 +70,7 @@ export default async function rateFeaturePotential({
       systemContent: initialSystemContent,
       runs: initialRuns as RunType[],
       isResultString: true,
+      functionName: "rateFeaturePotential",
     });
 
     const finalSystemContent = `You are given a description of the user's body part and it's current esthetic score. Your goal is to format the description in the 2nd tense (you/your) with a better flow and a more cohesive context. Your response must be entirely based on the information you are given. Don't make things up. Rate is the upper boundary of the highest achievable esthetic score for the body part. Explanation is your description and reasoning. Think step-by-step.`;
@@ -97,7 +99,8 @@ export default async function rateFeaturePotential({
           FormatResponseAsRateAndExplanationType,
           "rateFeaturePotentialRephraseOne"
         ),
-        callback: () => incrementProgress({ operationKey:type, userId, increment: 1 }),
+        callback: () =>
+          incrementProgress({ operationKey: type, userId, increment: 1 }),
       },
     ];
 
@@ -107,6 +110,7 @@ export default async function rateFeaturePotential({
         systemContent: finalSystemContent,
         runs: finalRuns as RunType[],
         seed: 263009886,
+        functionName: "rateFeaturePotential",
       });
 
     const { rate, explanation } = finalResponse;

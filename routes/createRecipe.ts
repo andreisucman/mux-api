@@ -280,6 +280,7 @@ route.post(
         runs,
         systemContent,
         userId: req.userId,
+        functionName: "createRecipe",
       });
 
       const image = await generateImage({

@@ -130,6 +130,7 @@ route.post(
         systemContent: systemContent,
         runs: runs as RunType[],
         userId: req.userId,
+        functionName: "createTaskFromDescription",
       });
 
       res.status(200).json({ message: response });

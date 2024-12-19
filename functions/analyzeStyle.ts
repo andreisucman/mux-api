@@ -76,6 +76,7 @@ export default async function analyzeStyle({ image, type, userId }: Props) {
       systemContent: analysisSystemContent,
       runs: runs as RunType[],
       isResultString: true,
+      functionName: "analyzeStyle",
     });
 
     const currentSuggestionsSystemContent = `The user gives you their image. Your goal is to check if there are any tweaks ${
@@ -130,6 +131,7 @@ export default async function analyzeStyle({ image, type, userId }: Props) {
       systemContent: currentSuggestionsSystemContent,
       runs: suggestionRuns as RunType[],
       isResultString: true,
+      functionName: "analyzeStyle",
     });
 
     const formattingSystemContent = `You are given an analysis of the user's appearance, the style reference list used in the analysis and the suggestions for the user on what to change in their appearance. Your goal is to rephrase and format this information in the 2nd tense (you/your) and an engaging language. Format it as a JSON object with the following structure {styleName: the closest style to the user, i.e. the name of the style that the user scored the highest (e.g. rugged, or minimalist, etc), scores: object representing the user's scores for each style of the list, explanation: your rephrased explanation for each score, suggestion: your rephrased suggestion on what the user should change}. Use only the information provided. Don't make things up. Think step-by-step.`; // never modify due to fine tuning
@@ -180,6 +182,7 @@ export default async function analyzeStyle({ image, type, userId }: Props) {
       systemContent: formattingSystemContent,
       runs: formattingRuns,
       seed: 481331555,
+      functionName: "analyzeStyle",
     });
 
     const sortedScores = sortObjectByNumberValue(scores, false);

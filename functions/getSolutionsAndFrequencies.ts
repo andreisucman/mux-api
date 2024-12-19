@@ -129,6 +129,7 @@ export default async function getSolutionsAndFrequencies({
       userId: String(userId),
       systemContent: findSolutionsInstruction,
       runs: findSolutionsContentArray as RunType[],
+      functionName: "getSolutionsAndFrequencies",
     });
 
     /* get additional solutions */
@@ -240,6 +241,7 @@ export default async function getSolutionsAndFrequencies({
       userId: String(userId),
       systemContent: findAdditionalSolutionsInstruction,
       runs: findAdditionalSolutionsContentArray as RunType[],
+      functionName: "getSolutionsAndFrequencies",
     });
 
     let updatedConcernsSolutionsMap = combineSolutions(
@@ -345,6 +347,7 @@ export default async function getSolutionsAndFrequencies({
       userId: String(userId),
       systemContent: findFrequenciesInstruction,
       runs: findFrequenciesContentArray as RunType[],
+      functionName: "getSolutionsAndFrequencies",
     });
 
     findFrequencyResponse = convertKeysAndValuesTotoSnakeCase(

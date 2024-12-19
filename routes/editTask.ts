@@ -10,7 +10,7 @@ import formatDate from "@/helpers/formatDate.js";
 import sortTasksInScheduleByDate from "@/helpers/sortTasksInScheduleByDate.js";
 import { daysFrom } from "helpers/utils.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import checkTaskSimilar from "functions/checkTaskSimilar.js";
+import checkIfTaskIsSimilar from "@/functions/checkIfTaskIsSimilar.js";
 import { db } from "init.js";
 import httpError from "@/helpers/httpError.js";
 
@@ -73,7 +73,7 @@ route.post(
 
       const { description, instruction, routineId, startsAt } = currentTask;
 
-      const isSimilar = await checkTaskSimilar({
+      const isSimilar = await checkIfTaskIsSimilar({
         userId: req.userId,
         description,
         instruction,

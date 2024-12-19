@@ -30,7 +30,12 @@ export default async function isTheProductValid({
       },
     ];
 
-    const response = await askRepeatedly({ systemContent, runs, userId });
+    const response = await askRepeatedly({
+      systemContent,
+      runs,
+      userId,
+      functionName: "isTheProductValid",
+    });
 
     return {
       ...variantData,

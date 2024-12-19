@@ -116,6 +116,7 @@ export default async function polishRawSchedule({
       userId,
       systemContent,
       runs: userContent,
+      functionName: "polishRawSchedule",
     });
   } catch (error) {
     throw httpError(error);

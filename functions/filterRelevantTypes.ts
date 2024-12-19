@@ -46,6 +46,7 @@ export default async function filterRelevantProductTypes({
       systemContent: systemContent,
       runs: runs as RunType[],
       userId,
+      functionName: "filterRelevantProductTypes",
     });
 
     return response.relevantProductTypes;

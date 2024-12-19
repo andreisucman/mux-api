@@ -68,7 +68,7 @@ export default async function validateImagePosition({
       userId,
       systemContent: samePersonContent,
       runs: runs as RunType[],
-      meta: "validateImagePosition",
+      functionName: "validateImagePosition",
     });
 
     return { verdict: response.verdict, message: requirement.message };

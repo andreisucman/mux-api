@@ -4,20 +4,40 @@ dotenv.config();
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 import { openai } from "init.js";
+import updateSpend from "./updateSpend.js";
 
-export default async function createTextEmbedding(
-  text: string
-): Promise<number[]> {
+type Props = {
+  userId: string;
+  text: string;
+};
+
+export default async function createTextEmbedding({
+  userId,
+  text,
+}: Props): Promise<number[]> {
   if (!text) throw httpError("Text not provided");
 
   try {
+    const model = "text-embedding-3-small";
+
     const embeddingObject = await doWithRetries(async () =>
       openai.embeddings.create({
-        model: "text-embedding-3-small",
+        model,
         input: text,
         encoding_format: "float",
       })
     );
+
+    const unitCost = Number(process.env.TEXT_EMBEDDING_PRICE) / 1000000;
+    const units = embeddingObject.usage.total_tokens;
+
+    updateSpend({
+      userId,
+      unitCost,
+      units,
+      functionName: "createTextEmbedding",
+      modelName: model,
+    });
 
     return embeddingObject.data[0].embedding;
   } catch (err) {

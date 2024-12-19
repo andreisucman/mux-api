@@ -42,7 +42,7 @@ route.post(
         systemContent,
         runs: userContent as RunType[],
         userId: req.userId,
-        meta: "validateAddress",
+        functionName: "checkCountry",
       });
 
       const { isValid } = response;

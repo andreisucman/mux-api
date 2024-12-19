@@ -73,6 +73,7 @@ export default async function moderateDescription({ userId, text }: Props) {
       systemContent: systemContent,
       runs: runs as RunType[],
       userId,
+      functionName: "moderateDescription",
     });
 
     return response;

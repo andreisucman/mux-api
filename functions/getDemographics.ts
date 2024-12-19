@@ -84,6 +84,7 @@ export default async function getDemographics({
       systemContent,
       runs: runs as RunType[],
       userId,
+      functionName: "getDemographics",
     });
     return response;
   } catch (err) {

@@ -67,7 +67,12 @@ export default async function extractVariantFeatures({
       },
     ];
 
-    const response = await askRepeatedly({ systemContent, runs, userId });
+    const response = await askRepeatedly({
+      systemContent,
+      runs,
+      userId,
+      functionName: "extractVariantFeatures",
+    });
 
     return {
       featuresAndFunctionalities: response.featuresAndFunctionalities,

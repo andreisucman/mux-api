@@ -86,9 +86,10 @@ export default async function analyzeConcerns({
 
     const response: { concerns: { name: string; explanation: string }[] } =
       await askRepeatedly({
+        userId,
         systemContent,
         runs: userContent as RunType[],
-        userId,
+        functionName: "analyzeConcerns",
       });
 
     const combined: UserConcernType[] = response.concerns.map(

@@ -187,6 +187,7 @@ export default async function findTheBestVariant({
       systemContent,
       runs,
       userId: String(userId),
+      functionName: "findTheBestVariant",
     });
 
     const { rankedProducts } = response || [];

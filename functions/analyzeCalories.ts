@@ -52,9 +52,9 @@ export default async function analyzeCalories({
 
     const analysisResponse = await askRepeatedly({
       runs,
-      systemContent,
       userId,
-      meta: "analyzeCalories",
+      systemContent,
+      functionName: "analyzeCalories",
     });
 
     let shouldEatResponse = { shouldEat: true, explanation: "" };
@@ -86,8 +86,9 @@ export default async function analyzeCalories({
 
       shouldEatResponse = await askRepeatedly({
         runs,
-        systemContent,
         userId,
+        systemContent,
+        functionName: "analyzeCalories",
       });
     }
 

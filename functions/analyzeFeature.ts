@@ -60,6 +60,7 @@ export default async function analyzeFeature({
       systemContent,
       userId,
       runs,
+      functionName: "analyzeFeature",
     });
 
     const roundedRate = Math.round(score);

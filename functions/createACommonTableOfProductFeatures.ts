@@ -71,7 +71,12 @@ export default async function createACommonTableOfProductFeatures({
       },
     ];
 
-    const response = await askRepeatedly({ systemContent, runs, userId });
+    const response = await askRepeatedly({
+      systemContent,
+      runs,
+      userId,
+      functionName: "createACommonTableOfProductFeatures",
+    });
 
     let commonFeaturesList = [];
 

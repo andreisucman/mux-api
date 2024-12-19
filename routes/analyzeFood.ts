@@ -49,7 +49,7 @@ route.post(
       }
 
       const hash = await createHashKey(url);
-      const embedding = await createImageEmbedding(url);
+      const embedding = await createImageEmbedding(url, req.userId);
 
       const checkSimilarityPayload: CheckImageSimilarityProps = {
         hash,

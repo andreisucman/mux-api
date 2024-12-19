@@ -17,6 +17,7 @@ type Props = {
   meta?: string;
   seed?: number;
   userId: string;
+  functionName: string;
   systemContent: string;
   isResultString?: boolean;
 };
@@ -28,6 +29,7 @@ async function askRepeatedly({
   meta,
   seed,
   userId,
+  functionName,
   systemContent,
   isResultString,
 }: Props) {
@@ -48,7 +50,7 @@ async function askRepeatedly({
 
       const payload: AskOpenaiProps = {
         userId,
-        meta,
+        functionName,
         seed: seed || defaultSeed,
         messages: conversation,
         isMini: runs[i].isMini,
@@ -59,9 +61,7 @@ async function askRepeatedly({
       if (runs[i].responseFormat)
         payload.responseFormat = runs[i].responseFormat;
 
-      const response = await doWithRetries(async () => askOpenai(payload));
-
-      result = response.result;
+      result = await doWithRetries(async () => askOpenai(payload));
 
       conversation.push({
         role: "assistant" as RoleEnum,

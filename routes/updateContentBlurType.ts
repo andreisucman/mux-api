@@ -144,6 +144,8 @@ route.post(
               urls: 1,
               thumbnails: 1,
               initialImages: 1,
+              type: 1,
+              part: 1,
             },
           }
         )
@@ -152,7 +154,8 @@ route.post(
       let message: { [key: string]: any } = {};
 
       if (contentCategory === "progress") {
-        const { images, initialImages } = relevantRecord as ProgressType;
+        const { images, initialImages, type, part } =
+          relevantRecord as ProgressType;
 
         const { images: updatedImages } = await updateProgressRecord({
           images,
@@ -165,10 +168,18 @@ route.post(
         });
 
         message = {
-          ...message,
           images: updatedImages,
           initialImages: updatedInitialImages,
         };
+
+        await doWithRetries(() =>
+          db
+            .collection("BeforeAfter")
+            .updateOne(
+              { userId: new ObjectId(req.userId), type, part },
+              { $set: message }
+            )
+        );
       } else {
         const { mainUrl, urls, thumbnails } = relevantRecord;
 

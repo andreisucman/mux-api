@@ -42,9 +42,10 @@ export default async function checkIfTaskIsRelated({
     ];
 
     const response = await askRepeatedly({
+      userId,
       systemContent: systemContent,
       runs: runs as RunType[],
-      userId,
+      functionName: "checkIfTaskIsRelated",
     });
 
     return { satisfies: response.satisfies, condition };

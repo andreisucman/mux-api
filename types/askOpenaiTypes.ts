@@ -31,5 +31,5 @@ export type AskOpenaiProps = {
   responseFormat?: any;
   isMini: boolean;
   isJson: boolean;
-  meta?: string;
+  functionName: string;
 };

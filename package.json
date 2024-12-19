@@ -38,7 +38,7 @@
     "nanoid": "^5.0.7",
     "node-emoji": "^2.1.3",
     "node-emoji-new": "^3.4.5",
-    "openai": "^4.53.0",
+    "openai": "^4.77.0",
     "pino": "^9.5.0",
     "pino-http": "^10.3.0",
     "prom-client": "^15.1.3",

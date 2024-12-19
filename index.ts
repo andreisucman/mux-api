@@ -89,6 +89,7 @@ import getDiaryRecords from "routes/getDiaryRecords.js";
 import createDiaryRecord from "routes/createDiaryRecord.js";
 import getFoodAnalysis from "routes/getFoodAnalysis.js";
 import saveDiaryRecord from "routes/saveDiaryRecord.js";
+import transcribe from "routes/transcribe.js";
 
 import { client } from "init.js";
 
@@ -225,6 +226,7 @@ app.use("/updateStatusOfTasks", updateStatusOfTasks);
 app.use("/uploadProof", uploadProof);
 app.use("/voteForStyle", voteForStyle);
 app.use("/withdrawReward", withdrawReward);
+app.use("/transcribe", transcribe);
 
 app.use(errorHandler);
 

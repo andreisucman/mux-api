@@ -1,17 +1,28 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import { ObjectId } from "mongodb";
-import { db, openai } from "init.js";
+import { openai } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { AskOpenaiProps } from "types/askOpenaiTypes.js";
 import httpError from "@/helpers/httpError.js";
+import updateSpend from "./updateSpend.js";
+
+const {
+  DEFAULT_4O_MINI_INPUT_PRICE,
+  DEFAULT_4O_MINI_OUTPUT_PRICE,
+  DEFAULT_4O_INPUT_PRICE,
+  DEFAULT_4O_OUTPUT_PRICE,
+  FINETUNED_4O_MINI_INPUT_PRICE,
+  FINETUNED_4O_MINI_OUTPUT_PRICE,
+  FINETUNED_4O_INPUT_PRICE,
+  FINETUNED_4O_OUTPUT_PRICE,
+} = process.env;
 
 async function askOpenAi({
   messages,
   seed,
   model,
-  meta,
+  functionName,
   isMini,
   userId,
   responseFormat,
@@ -38,29 +49,40 @@ async function askOpenAi({
       openai.chat.completions.create(options as any)
     );
 
-    const update: { [key: string]: any } = {
-      $set: {},
-      $inc: {
-        [finalModel]: completion.usage.total_tokens,
-      },
-    };
+    const inputTokens = completion.usage.prompt_tokens;
+    const outputTokens = completion.usage.completion_tokens;
 
-    if (meta) update.$set.meta = meta;
+    const inputPrice = isMini
+      ? model
+        ? FINETUNED_4O_MINI_INPUT_PRICE
+        : DEFAULT_4O_MINI_INPUT_PRICE
+      : model
+      ? FINETUNED_4O_INPUT_PRICE
+      : DEFAULT_4O_INPUT_PRICE;
 
-    doWithRetries(async () =>
-      db
-        .collection("Spend")
-        .updateOne({ userId: new ObjectId(userId) }, update, {
-          upsert: true,
-        })
-    );
+    const outputPrice = isMini
+      ? model
+        ? FINETUNED_4O_MINI_OUTPUT_PRICE
+        : DEFAULT_4O_MINI_OUTPUT_PRICE
+      : model
+      ? FINETUNED_4O_OUTPUT_PRICE
+      : DEFAULT_4O_OUTPUT_PRICE;
 
-    return {
-      result: isJson
-        ? JSON.parse(completion.choices[0].message.content)
-        : completion.choices[0].message.content,
-      tokens: completion.usage.total_tokens,
-    };
+    const unitCost =
+      (inputTokens / (inputTokens + outputTokens)) * Number(inputPrice) +
+      (outputTokens / (inputTokens + outputTokens)) * Number(outputPrice);
+
+    updateSpend({
+      functionName,
+      modelName: model,
+      unitCost,
+      units: inputTokens + outputTokens,
+      userId,
+    });
+
+    return isJson
+      ? JSON.parse(completion.choices[0].message.content)
+      : completion.choices[0].message.content;
   } catch (err) {
     throw httpError(err);
   }

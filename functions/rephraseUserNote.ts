@@ -36,6 +36,7 @@ export default async function rephraseUserNote({ userNote, userId }: Props) {
       systemContent,
       runs: runs as RunType[],
       userId,
+      functionName: "rephraseUserNote"
     });
 
     if (!verdict) {
@@ -78,6 +79,7 @@ export default async function rephraseUserNote({ userNote, userId }: Props) {
       userId,
       systemContent,
       runs: runs as RunType[],
+      functionName: "rephraseUserNote"
     });
 
     return rephrasedText;

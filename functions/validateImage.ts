@@ -49,7 +49,7 @@ export default async function validateImage({
       userId,
       systemContent,
       runs: runs as RunType[],
-      meta: "validateImage",
+      functionName: "validateImage",
     });
 
     return { verdict: response.verdict };

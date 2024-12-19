@@ -53,6 +53,7 @@ export default async function getCalorieGoal({
       systemContent,
       runs: runs as RunType[],
       userId,
+      functionName: "getCalorieGoal",
     });
     return response;
   } catch (err) {

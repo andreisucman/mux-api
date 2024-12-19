@@ -5,7 +5,6 @@ import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
-import uploadFilesToS3 from "@/functions/uploadFilesToS3.js";
 import setUtcMidnight from "@/helpers/setUtcMidnight.js";
 import { CustomRequest } from "types.js";
 import { db } from "init.js";
@@ -26,7 +25,10 @@ route.post(
       const response = await doWithRetries(async () =>
         fetch(`${process.env.PROCESSING_SERVER_URL}/transcribe`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: process.env.PROCESSING_SECRET,
+          },
           body: JSON.stringify({ audioFile: audio }),
         })
       );
@@ -37,8 +39,6 @@ route.post(
         throw httpError(body.message);
       }
 
-      const audioUrls = await uploadFilesToS3([audio]);
-
       const utcDate = setUtcMidnight({ date: new Date() });
 
       const newDiaryRecord = {
@@ -47,7 +47,7 @@ route.post(
         activity,
         userId: new ObjectId(req.userId),
         transcription: body.message,
-        audio: audioUrls[0],
+        audio,
         createdAt: utcDate,
       };
 

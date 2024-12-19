@@ -12,7 +12,7 @@ type Props = {
   newInstruction: string;
 };
 
-export default async function checkTaskSimilar({
+export default async function checkIfTaskIsSimilar({
   userId,
   description,
   newDescription,
@@ -44,6 +44,7 @@ export default async function checkTaskSimilar({
       systemContent: systemContent,
       runs: runs as RunType[],
       userId,
+      functionName: "checkIfTaskIsSimilar",
     });
 
     return response.satisfies;

@@ -96,6 +96,7 @@ export default async function moderateImages({
         userId,
         systemContent: samePersonContent,
         runs: runs as RunType[],
+        functionName: "moderateImages",
       });
 
       if (!response.same) {

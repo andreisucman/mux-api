@@ -40,9 +40,10 @@ export default async function checkProofImage({
     ];
 
     const response = await askRepeatedly({
-      runs: runs as RunType[],
       userId,
       systemContent,
+      runs: runs as RunType[],
+      functionName: "checkProofImage",
     });
 
     const { verdict, explanation } = response || {};

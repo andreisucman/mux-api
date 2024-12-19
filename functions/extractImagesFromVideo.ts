@@ -1,7 +1,12 @@
 import httpError from "@/helpers/httpError.js";
 import doWithRetries from "helpers/doWithRetries.js";
 
-export default async function extractImagesFromVideo(url: string) {
+type Props = {
+  url: string;
+  userId: string;
+};
+
+export default async function extractImagesFromVideo({ url, userId }: Props) {
   try {
     const response = await doWithRetries(
       async () =>
@@ -9,6 +14,7 @@ export default async function extractImagesFromVideo(url: string) {
           headers: {
             Authorization: process.env.PROCESSING_SECRET,
             "Content-Type": "application/json",
+            UserId: userId,
           },
           method: "POST",
           body: JSON.stringify({ url }),

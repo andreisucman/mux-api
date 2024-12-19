@@ -139,7 +139,10 @@ route.post(
 
       try {
         if (urlType === "video") {
-          const { status, message, error } = await extractImagesFromVideo(url);
+          const { status, message, error } = await extractImagesFromVideo({
+            url,
+            userId: req.userId,
+          });
 
           if (status) {
             proofImages = message;

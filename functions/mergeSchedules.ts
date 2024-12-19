@@ -82,6 +82,7 @@ export default async function mergeSchedules({
       userId,
       systemContent,
       runs: userContent,
+      functionName: "mergeSchedules",
     });
   } catch (error) {
     throw httpError(error);

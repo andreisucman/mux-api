@@ -37,6 +37,7 @@ export default async function moderateTextProfanity({ userId, text }: Props) {
       systemContent: systemContent,
       runs: runs as RunType[],
       userId,
+      functionName: "moderateTextProfanity",
     });
 
     return response;

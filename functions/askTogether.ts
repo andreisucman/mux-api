@@ -1,10 +1,10 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import { ObjectId } from "mongodb";
 import doWithRetries from "helpers/doWithRetries.js";
 import { RoleEnum } from "@/types/askOpenaiTypes.js";
-import { db, together } from "init.js";
+import { together } from "init.js";
+import updateSpend from "./updateSpend.js";
 import httpError from "@/helpers/httpError.js";
 
 type AskTogetherProps = {
@@ -13,13 +13,21 @@ type AskTogetherProps = {
   model: string;
   messages: { role: RoleEnum; content: string }[];
   isJson?: boolean;
-  meta?: string;
+  functionName: string;
+};
+
+const { LLAMA_2_11B_VISION_PRICE } = process.env;
+
+const priceMap: { [key: string]: number } = {
+  "meta-llama/Llama-3_2-11B-Vision-Instruct-Turbo": Number(
+    LLAMA_2_11B_VISION_PRICE
+  ),
 };
 
 async function askTogether({
   messages,
   model,
-  meta,
+  functionName,
   userId,
 }: AskTogetherProps) {
   try {
@@ -35,30 +43,21 @@ async function askTogether({
       together.chat.completions.create(options as any)
     );
 
-    const modelParts = model.split(".");
-    const modelKey = modelParts[modelParts.length - 1];
+    const inputTokens = completion.usage.prompt_tokens;
+    const outputTokens = completion.usage.completion_tokens;
 
-    const update: { [key: string]: any } = {
-      $set: {},
-      $inc: {
-        [modelKey]: completion.usage.total_tokens,
-      },
-    };
+    const modelKey = model.split(".").join("_");
+    const unitCost = priceMap[modelKey];
 
-    if (meta) update.$set.meta = meta;
+    updateSpend({
+      functionName,
+      modelName: modelKey,
+      unitCost,
+      units: inputTokens + outputTokens,
+      userId,
+    });
 
-    doWithRetries(async () =>
-      db
-        .collection("Spend")
-        .updateOne({ userId: new ObjectId(userId) }, update, {
-          upsert: true,
-        })
-    );
-
-    return {
-      result: completion.choices[0].message.content,
-      tokens: completion.usage.total_tokens,
-    };
+    return completion.choices[0].message.content;
   } catch (err) {
     throw httpError(err);
   }

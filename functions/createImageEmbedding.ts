@@ -2,10 +2,12 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import { replicate } from "init.js";
+import updateSpend from "./updateSpend.js";
 import httpError from "@/helpers/httpError.js";
 
 export default async function createImageEmbedding(
-  imageUrl: string
+  imageUrl: string,
+  userId: string
 ): Promise<number[]> {
   try {
     const payload: { [key: string]: any } = {
@@ -13,12 +15,21 @@ export default async function createImageEmbedding(
       input: imageUrl,
     };
 
-    const result = await replicate.run(
-      "daanelson/imagebind:0383f62e173dc821ec52663ed22a076d9c970549c209666ac3db181618b7a304",
-      {
-        input: payload,
-      }
-    );
+    const model =
+      "daanelson/imagebind:0383f62e173dc821ec52663ed22a076d9c970549c209666ac3db181618b7a304";
+    const unitCost = Number(process.env.IMAGE_EMBEDDING_PRICE);
+
+    const result = await replicate.run(model, {
+      input: payload,
+    });
+
+    updateSpend({
+      functionName: "createImageEmbedding",
+      modelName: model,
+      unitCost,
+      units: 1,
+      userId,
+    });
 
     return result as number[];
   } catch (err) {

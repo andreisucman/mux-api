@@ -76,6 +76,7 @@ async function updateBioPart({
         systemContent,
         runs: runs as RunType[],
         userId,
+        functionName: "updateAboutBio",
       });
 
     const finalResponse: {

@@ -99,6 +99,7 @@ export default async function personalizeInstruction({
       systemContent,
       runs: userContentArray as RunType[],
       isResultString: true,
+      functionName: "personalizeInstruction",
     });
 
     return response;
