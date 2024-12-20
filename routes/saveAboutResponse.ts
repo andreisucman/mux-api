@@ -5,10 +5,9 @@ import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import { db } from "init.js";
 import updateAboutBio from "functions/updateAboutBio.js";
-import { CustomRequest } from "types.js";
+import { ContentModerationStatusEnum, CustomRequest } from "types.js";
 import { QuestionType } from "@/types/saveAboutResponseTypes.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -29,6 +28,7 @@ route.post(
         question,
         audioReplies,
         createdAt: new Date(),
+        moderationStatus: ContentModerationStatusEnum.ACTIVE,
       };
 
       await doWithRetries(async () =>

@@ -40,9 +40,10 @@ route.post(
       const relevantScanType = userInfo.nextScan.find(
         (obj) => obj.type === finalType
       );
+
       if (new Date() >= new Date(relevantScanType.date)) {
         res.status(200).json({
-          error: "You need to scan yourself first.",
+          error: `You need to scan your ${finalType} first.`,
         });
         return;
       }
@@ -97,7 +98,19 @@ route.post(
       });
 
       if (!satisfies) {
-        res.status(200).json({ error: condition });
+        let error;
+        switch (type) {
+          case "head":
+            error = `You can only create head improvement tasks in the Head mode. To create other type of tasks change the mode to Body or Health.`;
+            break;
+          case "head":
+            error = `You can only create body improvement tasks in the Body mode. To create other type of tasks change the mode to Head or Health.`;
+            break;
+          case "health":
+            error = `You can only create food and health related tasks in the Health mode. To create other type of tasks change the mode to Head or Body.`;
+            break;
+        }
+        res.status(200).json({ error });
         return;
       }
 

@@ -3,6 +3,7 @@ import { Router, NextFunction } from "express";
 import { db } from "init.js";
 import checkTrackedRBAC from "functions/checkTrackedRBAC.js";
 import { CustomRequest } from "types.js";
+import { ContentModerationStatusEnum } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 
 const route = Router();
@@ -32,7 +33,9 @@ route.get(
         }
       }
 
-      const filter: { [key: string]: any } = {};
+      const filter: { [key: string]: any } = {
+        moderationStatus: ContentModerationStatusEnum.ACTIVE,
+      };
 
       if (followingUserName) {
         filter.name = followingUserName;

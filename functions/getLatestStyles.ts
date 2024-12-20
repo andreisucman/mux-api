@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { StyleAnalysisType } from "types.js";
+import { ContentModerationStatusEnum } from "types.js";
 import httpError from "@/helpers/httpError.js";
 
 type Props = {
@@ -15,7 +16,12 @@ export default async function getLatestStyles({ userId }: Props) {
         await db
           .collection("StyleAnalysis")
           .aggregate([
-            { $match: { userId: new ObjectId(userId) } },
+            {
+              $match: {
+                userId: new ObjectId(userId),
+                moderationStatus: ContentModerationStatusEnum.ACTIVE,
+              },
+            },
             { $sort: { createdAt: -1 } },
             {
               $group: {

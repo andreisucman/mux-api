@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import doWithRetries from "helpers/doWithRetries.js";
 import { SexEnum, PartEnum, TypeEnum } from "types.js";
 import { db } from "init.js";
+import { ContentModerationStatusEnum } from "types.js";
 import httpError from "@/helpers/httpError.js";
 
 type Props = {
@@ -32,6 +33,7 @@ export default async function calculateHigherThanPart({
             $match: {
               userId: { $ne: new ObjectId(userId) },
               type,
+              moderationStatus: ContentModerationStatusEnum.ACTIVE,
               part,
               "demographics.sex": sex,
               "demographics.ageInterval": ageInterval,

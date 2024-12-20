@@ -6,6 +6,7 @@ import { Router, Response } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 import { CustomRequest } from "types.js";
+import { ContentModerationStatusEnum } from "types.js";
 import { db } from "init.js";
 
 const route = Router();
@@ -44,7 +45,11 @@ route.get("/", async (req: CustomRequest, res: Response) => {
     if (ageInterval) match.demographics.ageInterval = ageInterval;
 
     if (otherFilters) {
-      match = { ...match, isPublic: true };
+      match = {
+        ...match,
+        isPublic: true,
+        moderationStatus: ContentModerationStatusEnum.ACTIVE,
+      };
     }
 
     pipeline.push({ $match: match });

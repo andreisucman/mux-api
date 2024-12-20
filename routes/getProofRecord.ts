@@ -5,6 +5,7 @@ import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import { CustomRequest } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
+import { ContentModerationStatusEnum } from "types.js";
 import { db } from "init.js";
 
 const route = Router();
@@ -22,7 +23,10 @@ route.get(
     try {
       const record = await doWithRetries(async () =>
         db.collection("Proof").findOne(
-          { taskId: new ObjectId(taskId) },
+          {
+            taskId: new ObjectId(taskId),
+            moderationStatus: ContentModerationStatusEnum.ACTIVE,
+          },
           {
             projection: {
               contentType: 1,

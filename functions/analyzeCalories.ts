@@ -16,18 +16,19 @@ export default async function analyzeCalories({
   userAbout,
 }: Props) {
   try {
-    const systemContent = `You are a food composition analysis expert. The user gives you an image of food. Your goal is to determine how much energy, protein, carbohydrates and fats it has in as few words as possible. Consider the size of the portion and and the proportion of the products in it. If you can't determine the ingredients make your best guess. Think step-by-step.`;
+    const systemContent = `You are a food composition analysis expert. The user gives you an image of food. Your goal is to determine its amount, and how much energy, protein, carbohydrates and fats it has. Consider:  1. whether the ingredients are cooked or raw, 2. the size of the plate and and the proportion of the products in it. If you can't say for sure make your best guess. Your response must be less than 20 words.`;
 
     const AnalyzeCaloriesResponseFormat = z.object({
-      energy: z.number(),
-      proteins: z.number(),
-      carbohydrates: z.number(),
-      fats: z.number(),
+      amount: z.number().describe("amount of food in the plate in grams"),
+      energy: z.number().describe("number of kcal"),
+      proteins: z.number().describe("number of proteins"),
+      carbohydrates: z.number().describe("number of carbohydrates"),
+      fats: z.number().describe("number of fats"),
     });
 
     const runs: RunType[] = [
       {
-        isMini: false,
+        isMini: true,
         content: [
           {
             type: "image_url",
@@ -40,7 +41,7 @@ export default async function analyzeCalories({
         content: [
           {
             type: "text",
-            text: "Consider whether the ingredients are cooked or raw and how it impacts their nutritional values. Format your response like this: {energy: number of kcal, protein: number of proteins in grams, carbohydrates: number of carbohydrates in grams, fats: number of fats in grams}.",
+            text: "Have you considered the size of the plate and whether the ingredients are raw or cooked? If not, revise your analysis with that in mind.",
           },
         ],
         responseFormat: zodResponseFormat(
@@ -63,7 +64,11 @@ export default async function analyzeCalories({
       const systemContent = `The user gives you an image of a food and the information about them. Your goals are: 1) determine if eating this food is detrimental for the user based on their info and the food's ingredients. 2) Give a one-sentence explanation in the 2nd tense (you/your). Think step-by-step.`;
 
       const ShouldEatResponseFormat = z.object({
-        shouldEat: z.boolean(),
+        shouldEat: z
+          .boolean()
+          .describe(
+            "true if the user can safely eat this food, false if this food is very likely contraindicated for the user"
+          ),
         explanation: z.string(),
       });
 

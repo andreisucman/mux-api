@@ -6,7 +6,7 @@ import aqp from "api-query-params";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import checkTrackedRBAC from "functions/checkTrackedRBAC.js";
-import { CustomRequest } from "types.js";
+import { ContentModerationStatusEnum, CustomRequest } from "types.js";
 import { db } from "init.js";
 
 const route = Router();
@@ -50,7 +50,9 @@ route.get(
         return a;
       }, {});
 
-      const match: { [key: string]: any } = {};
+      const match: { [key: string]: any } = {
+        moderationStatus: ContentModerationStatusEnum.ACTIVE,
+      };
 
       if (followingUserName) {
         match.name = followingUserName;

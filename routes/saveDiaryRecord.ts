@@ -8,6 +8,7 @@ import httpError from "@/helpers/httpError.js";
 import setUtcMidnight from "@/helpers/setUtcMidnight.js";
 import { CustomRequest } from "types.js";
 import { db } from "init.js";
+import { ContentModerationStatusEnum } from "types.js";
 import { daysFrom } from "@/helpers/utils.js";
 
 const route = Router();
@@ -67,7 +68,7 @@ route.post(
         userId: new ObjectId(req.userId),
         transcription: body.message,
         createdAt: midnight,
-        isBlocked: false,
+        moderationStatus: ContentModerationStatusEnum.ACTIVE,
       };
 
       await doWithRetries(async () =>

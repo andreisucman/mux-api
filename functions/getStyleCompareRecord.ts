@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
+import { ContentModerationStatusEnum } from "@/types.js";
 
 type Props = {
   userId: string;
@@ -12,7 +13,10 @@ export default async function getStyleCompareRecord({ userId }: Props) {
     const highestVotedStyleRecord = await doWithRetries(async () =>
       db
         .collection("StyleAnalysis")
-        .find({ userId: new ObjectId(userId) })
+        .find({
+          userId: new ObjectId(userId),
+          moderationStatus: ContentModerationStatusEnum.ACTIVE,
+        })
         .sort({ votes: -1, createdAt: -1 })
         .limit(1)
         .project({

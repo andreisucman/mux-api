@@ -20,6 +20,7 @@ import {
   BeforeAfterType,
   LatestScoresType,
 } from "types.js";
+import { ContentModerationStatusEnum } from "types.js";
 import updateProgressImages from "functions/updateProgressImages.js";
 import { PartResultType } from "@/types/analyzePartTypes.js";
 import { db } from "init.js";
@@ -165,6 +166,7 @@ export default async function analyzePart({
           userId: new ObjectId(userId),
           type,
           part,
+          moderationStatus: ContentModerationStatusEnum.ACTIVE,
         })
         .project({ scores: 1, images: 1, createdAt: 1 })
         .sort({ createdAt: 1 })
@@ -214,7 +216,7 @@ export default async function analyzePart({
       scoresDifference: newScoresDifference,
       specialConsiderations,
       isPublic: false,
-      isBlocked: false,
+      moderationStatus: ContentModerationStatusEnum.ACTIVE,
     };
 
     const beforeAfterUpdate: BeforeAfterType = {

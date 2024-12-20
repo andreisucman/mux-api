@@ -1,6 +1,7 @@
 import { Router, NextFunction } from "express";
 import { db } from "init.js";
 import { CustomRequest } from "types.js";
+import { ContentModerationStatusEnum } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 
 const route = Router();
@@ -9,7 +10,9 @@ route.get("/", async (req: CustomRequest, res, next: NextFunction) => {
   const { type, styleName, skip, sex, ageInterval, ethnicity } = req.query;
 
   try {
-    const filter: { [key: string]: any } = {};
+    const filter: { [key: string]: any } = {
+      moderationStatus: ContentModerationStatusEnum.ACTIVE,
+    };
 
     if (type) filter.type = type;
     if (styleName) filter.styleName = styleName;

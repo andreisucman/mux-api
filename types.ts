@@ -153,7 +153,7 @@ export type StyleAnalysisType = {
   compareAnalysis: { [key: string]: number } | null;
   userName: string | null;
   avatar: { [key: string]: any } | null;
-  isBlocked: boolean;
+  moderationStatus: ContentModerationStatusEnum;
 };
 
 export type StyleGoalsType = {
@@ -347,6 +347,11 @@ export type ProgressImageType = {
   urls: BlurredUrlType[];
 };
 
+export enum ContentModerationStatusEnum {
+  ACTIVE = "active",
+  BLOCKED = "blocked",
+}
+
 export type ProgressType = {
   _id: ObjectId;
   userId: ObjectId;
@@ -364,7 +369,7 @@ export type ProgressType = {
   isPublic: boolean;
   avatar?: { [key: string]: any };
   userName?: string;
-  isBlocked: boolean;
+  moderationStatus: ContentModerationStatusEnum;
 };
 
 export type UserProgressRecordType = {
@@ -523,7 +528,7 @@ export type ProofType = {
   isPublic: boolean;
   latestHeadScoreDifference: number;
   latestBodyScoreDifference: number;
-  isBlocked: boolean;
+  moderationStatus: ContentModerationStatusEnum;
 };
 
 export type SolutionType = {

@@ -20,6 +20,7 @@ import {
   UploadProofUserType,
   UploadProofTaskType,
 } from "types/uploadProofTypes.js";
+import { ContentModerationStatusEnum } from "types.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import analyzeCalories from "functions/analyzeCalories.js";
 import getStreaksToIncrement from "helpers/getStreaksToIncrement.js";
@@ -106,7 +107,10 @@ route.post(
         db
           .collection("Proof")
           .find(
-            { taskKey: taskInfo.key },
+            {
+              taskKey: taskInfo.key,
+              moderationStatus: ContentModerationStatusEnum.ACTIVE,
+            },
             {
               projection: { proofImages: 1 },
             }
@@ -279,7 +283,7 @@ route.post(
         avatar,
         userName: name,
         isPublic: false,
-        isBlocked: false,
+        moderationStatus: ContentModerationStatusEnum.ACTIVE,
         latestBodyScoreDifference: 0,
         latestHeadScoreDifference: 0,
       };

@@ -1,7 +1,12 @@
 import { Router, Response, NextFunction } from "express";
 import { ObjectId } from "mongodb";
 import { db } from "init.js";
-import { CustomRequest, StyleAnalysisType, PrivacyType } from "types.js";
+import {
+  CustomRequest,
+  StyleAnalysisType,
+  PrivacyType,
+  ContentModerationStatusEnum,
+} from "types.js";
 import analyzeStyle from "functions/analyzeStyle.js";
 import { outlookStyles } from "@/data/outlookStyles.js";
 import { createHashKey } from "functions/createHashKey.js";
@@ -133,7 +138,7 @@ route.post(
         currentSuggestion,
         matchSuggestion: null as string,
         isPublic: false,
-        isBlocked: false,
+        moderationStatus: ContentModerationStatusEnum.ACTIVE,
         userName: name,
         avatar,
         votes: 0,

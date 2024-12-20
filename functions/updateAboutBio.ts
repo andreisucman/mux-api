@@ -47,7 +47,7 @@ async function updateBioPart({
       isUpdated: z
         .boolean()
         .describe(
-          `true if the new information is related to the ${finalPartName} and text was updated, otherwise false`
+          `true if the new information is related to the ${finalPartName} and the text was updated, otherwise false`
         ),
       updatedText: z
         .string()
