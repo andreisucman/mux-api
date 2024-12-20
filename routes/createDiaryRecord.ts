@@ -8,6 +8,7 @@ import { CustomRequest } from "types.js";
 import setUtcMidnight from "@/helpers/setUtcMidnight.js";
 import { DiaryActivityType } from "@/types/createDiaryRecordTypes.js";
 import { db } from "init.js";
+import { daysFrom } from "@/helpers/utils.js";
 
 const route = Router();
 
@@ -22,10 +23,10 @@ route.post(
     }
 
     try {
-      const utcDate = setUtcMidnight({ date: new Date() });
+      const usersTodayMidnight = setUtcMidnight({ date: new Date(), timeZone });
 
       const todaysDiaryRecords = await doWithRetries(async () =>
-        db.collection("Diary").findOne({ createdAt: utcDate })
+        db.collection("Diary").findOne({ createdAt: { $gt: usersTodayMidnight } })
       );
 
       if (todaysDiaryRecords) {
@@ -36,10 +37,8 @@ route.post(
         return;
       }
 
-      const usersTodayMidnight = setUtcMidnight({ date: new Date(), timeZone });
       const usersTomorrowMidnight = setUtcMidnight({
-        date: new Date(),
-        isNextDay: true,
+        date: daysFrom({ days: 1 }),
         timeZone,
       });
 

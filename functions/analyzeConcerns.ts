@@ -31,7 +31,7 @@ export default async function analyzeConcerns({
   toAnalyzeObjects,
 }: Props) {
   try {
-    const concernsObjects = (await doWithRetries(async () =>
+    const concernObjects = (await doWithRetries(async () =>
       db
         .collection("Concern")
         .find(
@@ -40,12 +40,14 @@ export default async function analyzeConcerns({
             parts: { $in: [part] },
             $or: [{ sex }, { sex: "all" }],
           },
-          { projection: { key: 1 } }
+          { projection: { _id: 0, name: 1, key: 1 } }
         )
         .toArray()
     )) as unknown as ConcernType[];
 
-    const concerns = concernsObjects.map((obj) => obj.name);
+    const concerns = concernObjects.map((obj) => obj.name);
+
+    console.log("concernObjects", concernObjects);
 
     const systemContent = `You are a ${
       type === "head"
@@ -57,12 +59,25 @@ export default async function analyzeConcerns({
         : sex === "male"
         ? "-" + concerns.join("\n-")
         : "-" + concerns.join("\n-")
-    } are clearly visible on the images. Your response is the name of the concerns and 1 sentence description for each in the 2nd tense (you/your) describing where it is present on the user's photos. Name is the name of the identified concern as it is written in the list. Explanation is your 1 sentence reasoning for choosing this concern in the 2nd tense (you/your). Think step-by-step. Use only the information provided.`;
+    } are clearly visible on the images. Your response is the name of the relevant concerns from the list and 1 sentence description for each in the 2nd tense (you/your) describing where it is present on the user's photos. Think step-by-step. Use only the information provided.`;
+
+    console.log("concerns", concerns);
 
     const ConcernsResponseType = z.object({
-      concerns: z.array(
-        z.object({ name: z.string(), explanation: z.string() })
-      ),
+      concerns: z
+        .array(
+          z.object({
+            name: z
+              .string()
+              .describe("name of the relevant concern from the list"),
+            explanation: z
+              .string()
+              .describe(
+                "1 sentence description of the concern and the explanation of where it was identified on the user's photo, in the 2nd tense (you/your)"
+              ),
+          })
+        )
+        .describe(""),
     });
 
     const userContent = [
@@ -77,7 +92,7 @@ export default async function analyzeConcerns({
         })),
         responseFormat: zodResponseFormat(
           ConcernsResponseType,
-          "concerns_response_type"
+          "ConcernsResponseType"
         ),
         callback: () =>
           incrementProgress({ userId, operationKey: type, increment: 3 }),
@@ -93,12 +108,10 @@ export default async function analyzeConcerns({
       });
 
     const combined: UserConcernType[] = response.concerns.map(
-      (
-        concern: { name: string; key: string; explanation: string },
-        index: number
-      ) => ({
+      (concern: { name: string; explanation: string }, index: number) => ({
         ...concern,
         part,
+        key: concernObjects.find((obj) => obj.name === concern.name).key,
         importance: index + 1,
         isDisabled: false,
         type,

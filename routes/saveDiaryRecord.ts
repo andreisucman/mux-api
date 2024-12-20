@@ -8,20 +8,37 @@ import httpError from "@/helpers/httpError.js";
 import setUtcMidnight from "@/helpers/setUtcMidnight.js";
 import { CustomRequest } from "types.js";
 import { db } from "init.js";
+import { daysFrom } from "@/helpers/utils.js";
 
 const route = Router();
 
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { audio, type, activity } = req.body;
+    const { audio, type, activity, timeZone } = req.body;
 
-    if (!type || !audio) {
+    if (!type || !audio || !activity || !timeZone) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
 
     try {
+      const usersTodayMidnight = setUtcMidnight({ date: new Date(), timeZone });
+
+      const todaysDiaryRecords = await doWithRetries(async () =>
+        db
+          .collection("Diary")
+          .findOne({ createdAt: { $gt: usersTodayMidnight } })
+      );
+
+      if (todaysDiaryRecords) {
+        res.status(200).json({
+          error:
+            "You've already added a diary note for today. Come back tomorrow.",
+        });
+        return;
+      }
+
       const response = await doWithRetries(async () =>
         fetch(`${process.env.PROCESSING_SERVER_URL}/transcribe`, {
           method: "POST",
@@ -40,21 +57,34 @@ route.post(
         throw httpError(body.message);
       }
 
-      const utcDate = setUtcMidnight({ date: new Date() });
+      const midnight = setUtcMidnight({ date: new Date(), timeZone });
 
       const newDiaryRecord = {
         _id: new ObjectId(),
         type,
+        audio,
         activity,
         userId: new ObjectId(req.userId),
         transcription: body.message,
-        audio,
-        createdAt: utcDate,
+        createdAt: midnight,
         isBlocked: false,
       };
 
       await doWithRetries(async () =>
         db.collection("Diary").insertOne(newDiaryRecord)
+      );
+
+      const nextDiaryRecordAfter = setUtcMidnight({
+        date: daysFrom({ days: 1 }),
+      });
+
+      await doWithRetries(async () =>
+        db
+          .collection("User")
+          .updateOne(
+            { _id: new ObjectId(req.userId) },
+            { $set: { nextDiaryRecordAfter } }
+          )
       );
 
       res.status(200).json({

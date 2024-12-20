@@ -74,28 +74,32 @@ export const defaultRequiredProgress = {
       position: PositionEnum.FRONT,
       part: PartEnum.BODY,
       title: "Progress: Body - front",
-      instruction: "Take a full-height picture of your body from the front.",
+      instruction:
+        "Remove all clothes except underwear and take a full-height picture of your body from the front.",
     },
     {
       type: TypeEnum.BODY,
       position: PositionEnum.RIGHT,
       part: PartEnum.BODY,
       title: "Progress: Body - right",
-      instruction: "Take a full-hight picture of your body from the right.",
+      instruction:
+        "Remove all clothes except underwear and take a full-hight picture of your body from the right.",
     },
     {
       type: TypeEnum.BODY,
       position: PositionEnum.LEFT,
       part: PartEnum.BODY,
       title: "Progress: Body - left",
-      instruction: "Take a full-hight picture of your body from the left.",
+      instruction:
+        "Remove all clothes except underwear and take a full-hight picture of your body from the left.",
     },
     {
       type: TypeEnum.BODY,
       position: PositionEnum.BACK,
       part: PartEnum.BODY,
       title: "Progress: Body - back",
-      instruction: "Take a full-hight picture of your body from the back.",
+      instruction:
+        "Remove all clothes except underwear and take a full-hight picture of your body from the back.",
     },
   ],
 };
