@@ -361,6 +361,7 @@ export default async function analyzeAppearance({
     }
 
     console.timeEnd("analyzeAppearance - finalization");
+    return analysesResults.map((p) => p.latestProgress);
   } catch (err) {
     throw httpError(err);
   }

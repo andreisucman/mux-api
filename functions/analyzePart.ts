@@ -18,7 +18,6 @@ import {
   PrivacyType,
   ProgressImageType,
   BeforeAfterType,
-  LatestScoresType,
 } from "types.js";
 import { ContentModerationStatusEnum } from "types.js";
 import updateProgressImages from "functions/updateProgressImages.js";

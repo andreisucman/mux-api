@@ -11,8 +11,10 @@ import sortTasksInScheduleByDate from "@/helpers/sortTasksInScheduleByDate.js";
 import { daysFrom } from "helpers/utils.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import checkIfTaskIsSimilar from "@/functions/checkIfTaskIsSimilar.js";
-import { db } from "init.js";
+import moderateContent from "@/functions/moderateContent.js";
 import httpError from "@/helpers/httpError.js";
+import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
+import { db } from "init.js";
 
 const route = Router();
 
@@ -34,6 +36,18 @@ route.post(
 
     try {
       const text = `Description: ${updatedDescription}.<-->Instruction: ${updatedInstruction}.`;
+
+      const { isSafe, isSuspicious, suspiciousAnalysisResults } =
+        await moderateContent({
+          content: [{ type: "text", text }],
+        });
+
+      if (!isSafe) {
+        res.status(200).json({
+          error: `Your text seems to contain inappropriate language. Please try again.`,
+        });
+        return;
+      }
 
       const { isHarmful, explanation } = await isActivityHarmful({
         userId: req.userId,
@@ -151,6 +165,15 @@ route.post(
       );
 
       res.status(200).end();
+
+      if (isSuspicious) {
+        addSuspiciousRecord({
+          collection: "Task",
+          moderationResult: suspiciousAnalysisResults,
+          recordId: String(taskId),
+          userId: req.userId,
+        });
+      }
     } catch (err) {
       next(err);
     }

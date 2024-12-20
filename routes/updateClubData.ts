@@ -11,6 +11,7 @@ import updatePublicContent from "@/functions/updatePublicContent.js";
 import httpError from "@/helpers/httpError.js";
 import isNameUnique from "@/functions/isNameUnique.js";
 import { db, stripe } from "init.js";
+import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import moderateContent from "@/functions/moderateContent.js";
 
@@ -57,15 +58,25 @@ route.post(
         if (socials) text += `<-->${JSON.stringify(socials)}<-->`;
         if (bio) text += `<-->${JSON.stringify(bio)}<-->`;
 
-        const isSafe = await moderateContent({
-          content: [{ type: "text", text }],
-        });
+        const { isSafe, isSuspicious, suspiciousAnalysisResults } =
+          await moderateContent({
+            content: [{ type: "text", text }],
+          });
 
         if (!isSafe) {
           res.status(200).json({
             error: `It looks like your text contains profanity. Please revise it and try again.`,
           });
           return;
+        }
+
+        if (isSuspicious) {
+          addSuspiciousRecord({
+            collection: "User",
+            moderationResult: suspiciousAnalysisResults,
+            recordId: req.userId,
+            userId: req.userId,
+          });
         }
       }
 
@@ -91,7 +102,6 @@ route.post(
         updatePayload.nextNameUpdateAt = daysFrom({ days: 30 });
 
         const { club } = userInfo;
-
         const { payouts } = club || {};
         const { connectId } = payouts;
 

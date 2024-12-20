@@ -20,6 +20,7 @@ import analyzeAppearance from "functions/analyzeAppearance.js";
 import formatDate from "@/helpers/formatDate.js";
 import moderateContent from "@/functions/moderateContent.js";
 import checkIfSelf from "@/functions/checkIfSelf.js";
+import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 import validateImagePosition from "functions/validateImagePosition.js";
 import { db } from "init.js";
 import httpError from "@/helpers/httpError.js";
@@ -62,9 +63,10 @@ route.post(
     }
 
     try {
-      const isSafe = await moderateContent({
-        content: [{ type: "image_url", image_url: { url: image } }],
-      });
+      const { isSafe, isSuspicious, suspiciousAnalysisResults } =
+        await moderateContent({
+          content: [{ type: "image_url", image_url: { url: image } }],
+        });
 
       if (!isSafe) {
         res.status(200).json({
@@ -220,7 +222,7 @@ route.post(
           },
         });
 
-        await analyzeAppearance({
+        const insertedProgressRecords = await analyzeAppearance({
           name,
           avatar,
           type,
@@ -240,6 +242,23 @@ route.post(
           latestScoresDifference,
           newSpecialConsiderations,
         });
+
+        if (isSuspicious) {
+          for (const record of insertedProgressRecords) {
+            const progressUrls = record.images.map((i) => i.mainUrl.url);
+
+            const relevantModerationResults = suspiciousAnalysisResults.filter(
+              (r) => progressUrls.includes(r.content)
+            );
+
+            addSuspiciousRecord({
+              collection: "Progress",
+              moderationResult: relevantModerationResults,
+              recordId: String(record._id),
+              userId: req.userId,
+            });
+          }
+        }
       } else {
         await doWithRetries(async () =>
           db

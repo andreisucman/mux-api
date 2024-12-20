@@ -9,6 +9,7 @@ import moderateContent from "@/functions/moderateContent.js";
 import { ContentModerationStatusEnum, CustomRequest } from "types.js";
 import { QuestionType } from "@/types/saveAboutResponseTypes.js";
 import doWithRetries from "helpers/doWithRetries.js";
+import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 
 const route = Router();
 
@@ -23,9 +24,10 @@ route.post(
     }
 
     try {
-      const isSafe = await moderateContent({
-        content: [{ type: "text", text: "reply" }],
-      });
+      const { isSafe, isSuspicious, suspiciousAnalysisResults } =
+        await moderateContent({
+          content: [{ type: "text", text: "reply" }],
+        });
 
       if (!isSafe) {
         res.status(200).json({
@@ -35,6 +37,7 @@ route.post(
       }
 
       const newAboutRecord = {
+        _id: new ObjectId(),
         userId: new ObjectId(req.userId),
         reply,
         question,
@@ -96,6 +99,15 @@ route.post(
           { $set: { club: toUpdate } }
         )
       );
+
+      if (isSuspicious) {
+        addSuspiciousRecord({
+          collection: "About",
+          moderationResult: suspiciousAnalysisResults,
+          recordId: String(newAboutRecord._id),
+          userId: req.userId,
+        });
+      }
 
       res.status(200).json({ message: toUpdate });
     } catch (err) {

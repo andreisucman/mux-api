@@ -6,11 +6,11 @@ import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 import setUtcMidnight from "@/helpers/setUtcMidnight.js";
-import { CustomRequest } from "types.js";
-import { db } from "init.js";
 import moderateContent from "@/functions/moderateContent.js";
-import { ContentModerationStatusEnum } from "types.js";
+import { ContentModerationStatusEnum, CustomRequest } from "types.js";
+import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 import { daysFrom } from "@/helpers/utils.js";
+import { db } from "init.js";
 
 const route = Router();
 
@@ -59,9 +59,10 @@ route.post(
         throw httpError(body.message);
       }
 
-      const isSafe = await moderateContent({
-        content: [{ type: "text", text: body.message }],
-      });
+      const { isSafe, isSuspicious, suspiciousAnalysisResults } =
+        await moderateContent({
+          content: [{ type: "text", text: body.message }],
+        });
 
       if (!isSafe) {
         res.status(200).json({
@@ -108,6 +109,15 @@ route.post(
           transcription: newDiaryRecord.transcription,
         },
       });
+
+      if (isSuspicious) {
+        addSuspiciousRecord({
+          collection: "Diary",
+          moderationResult: suspiciousAnalysisResults,
+          recordId: String(newDiaryRecord._id),
+          userId: req.userId,
+        });
+      }
     } catch (err) {
       next(err);
     }

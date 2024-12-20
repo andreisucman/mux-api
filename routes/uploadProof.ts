@@ -8,6 +8,7 @@ import { daysFrom } from "helpers/utils.js";
 import isMajorityOfImagesIdentical from "functions/isMajorityOfImagesIdentical.js";
 import extractImagesFromVideo from "functions/extractImagesFromVideo.js";
 import { extensionTypeMap } from "data/extensionTypeMap.js";
+import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import {
   CustomRequest,
@@ -166,14 +167,15 @@ route.post(
         clearInterval(iId);
       }
 
-      const isVideoSafe = await moderateContent({
-        content: proofImages.map((image: string) => ({
-          type: "image_url",
-          image_url: { url: image },
-        })),
-      });
+      const { isSafe, isSuspicious, suspiciousAnalysisResults } =
+        await moderateContent({
+          content: proofImages.map((image: string) => ({
+            type: "image_url",
+            image_url: { url: image },
+          })),
+        });
 
-      if (!isVideoSafe) {
+      if (!isSafe) {
         await addAnalysisStatusError({
           message: "Video contains prohibited content.",
           userId: req.userId,
@@ -405,6 +407,15 @@ route.post(
           }
         )
       );
+
+      if (isSuspicious) {
+        addSuspiciousRecord({
+          collection: "Proof",
+          moderationResult: suspiciousAnalysisResults,
+          recordId: String(newProof._id),
+          userId: req.userId,
+        });
+      }
     } catch (err) {
       await addAnalysisStatusError({
         userId: String(req.userId),

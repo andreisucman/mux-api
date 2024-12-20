@@ -61,13 +61,13 @@ route.post(
     try {
       const text = `Description: ${description}.<-->Instruction: ${instruction}.`;
 
-      const isSafe = await moderateContent({
+      const { isSafe } = await moderateContent({
         content: [{ type: "text", text }],
       });
 
       if (!isSafe) {
         res.status(200).json({
-          error: `Your text contains inappropriate language. Please try again.`,
+          error: `Your text seems to contain inappropriate language. Please try again.`,
         });
         return;
       }
@@ -146,10 +146,10 @@ route.post(
     7. Which part of the body the task is related to the most?`;
 
       const TaskType = z.object({
-        name: z.string(),
+        name: z.string().describe("the name of the task in imperative form"),
         concern: z.string(),
         nearestConcerns: z.array(z.string()),
-        word: z.string(),
+        word: z.string().describe("one word from node-emoji that best suits the task"),
         requisite: z.string(),
         restDays: z.number(),
         part: z.enum(["face", "mouth", "scalp", "body", "health"]),
@@ -218,6 +218,7 @@ route.post(
         userId: req.userId,
         increment: 25,
       });
+
       await doWithRetries(async () =>
         db.collection("AnalysisStatus").updateOne(
           { userId: new ObjectId(req.userId), operationKey: type },
