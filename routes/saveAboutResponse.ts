@@ -5,6 +5,7 @@ import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import { db } from "init.js";
 import updateAboutBio from "functions/updateAboutBio.js";
+import moderateContent from "@/functions/moderateContent.js";
 import { ContentModerationStatusEnum, CustomRequest } from "types.js";
 import { QuestionType } from "@/types/saveAboutResponseTypes.js";
 import doWithRetries from "helpers/doWithRetries.js";
@@ -22,6 +23,17 @@ route.post(
     }
 
     try {
+      const isSafe = await moderateContent({
+        content: [{ type: "text", text: "reply" }],
+      });
+
+      if (!isSafe) {
+        res.status(200).json({
+          error: `It looks like your text contains profanity. Please revise it and try again.`,
+        });
+        return;
+      }
+
       const newAboutRecord = {
         userId: new ObjectId(req.userId),
         reply,

@@ -18,7 +18,8 @@ import checkCanScan from "@/helpers/checkCanScan.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import analyzeAppearance from "functions/analyzeAppearance.js";
 import formatDate from "@/helpers/formatDate.js";
-import moderateImages from "functions/moderateImages.js";
+import moderateContent from "@/functions/moderateContent.js";
+import checkIfSelf from "@/functions/checkIfSelf.js";
 import validateImagePosition from "functions/validateImagePosition.js";
 import { db } from "init.js";
 import httpError from "@/helpers/httpError.js";
@@ -61,18 +62,25 @@ route.post(
     }
 
     try {
-      // const moderationResponse = await moderateImages({
-      //   userId: String(finalUserId),
-      //   image,
-      //   allowOnlyUser: true,
-      // });
+      const isSafe = await moderateContent({
+        content: [{ type: "image_url", image_url: { url: image } }],
+      });
 
-      // console.log("moderationResponse", moderationResponse);
+      if (!isSafe) {
+        res.status(200).json({
+          error: `It looks like your image contains inappropriate content. Try a different image.`,
+        });
+        return;
+      }
 
-      // if (!moderationResponse.status) {
-      //   res.status(200).json({ error: moderationResponse.message });
-      //   return;
-      // }
+      const isSelf = await checkIfSelf({ image, userId: finalUserId });
+
+      if (!isSelf) {
+        res.status(200).json({
+          error: `You can only upload images of yourself.`,
+        });
+        return;
+      }
 
       // const positionValidationResponse = await validateImagePosition({
       //   image,

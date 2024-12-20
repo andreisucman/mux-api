@@ -8,6 +8,7 @@ import httpError from "@/helpers/httpError.js";
 import setUtcMidnight from "@/helpers/setUtcMidnight.js";
 import { CustomRequest } from "types.js";
 import { db } from "init.js";
+import moderateContent from "@/functions/moderateContent.js";
 import { ContentModerationStatusEnum } from "types.js";
 import { daysFrom } from "@/helpers/utils.js";
 
@@ -56,6 +57,17 @@ route.post(
 
       if (!response.ok) {
         throw httpError(body.message);
+      }
+
+      const isSafe = await moderateContent({
+        content: [{ type: "text", text: body.message }],
+      });
+
+      if (!isSafe) {
+        res.status(200).json({
+          error: `This record contains inappropriate language. Please try again.`,
+        });
+        return;
       }
 
       const midnight = setUtcMidnight({ date: new Date(), timeZone });

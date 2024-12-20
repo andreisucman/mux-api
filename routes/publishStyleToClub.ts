@@ -3,7 +3,7 @@ import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import { CustomRequest } from "types.js";
 import { ContentModerationStatusEnum } from "types.js";
-import moderateImages from "functions/moderateImages.js";
+import moderateImages from "@/functions/checkIfSelf.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { PublishToClubUserInfoType } from "types/pubishStyleToClubTypes.js";
 import httpError from "@/helpers/httpError.js";

@@ -13,8 +13,9 @@ import {
   RoutineType,
   TaskType,
 } from "types.js";
+import { db } from "init.js";
 import askRepeatedly from "functions/askRepeatedly.js";
-import moderateDescription from "@/functions/moderateDescription.js";
+import isActivityHarmful from "@/functions/isActivityHarmful.js";
 import findRelevantSolutions from "functions/findRelevantSolutions.js";
 import setUtcMidnight from "@/helpers/setUtcMidnight.js";
 import distributeSubmissions from "@/helpers/distributeSubmissions.js";
@@ -28,8 +29,7 @@ import generateImage from "functions/generateImage.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import filterRelevantProductTypes from "@/functions/filterRelevantTypes.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
-import { db } from "init.js";
-import httpError from "@/helpers/httpError.js";
+import moderateContent from "@/functions/moderateContent.js";
 
 const route = Router();
 
@@ -61,7 +61,18 @@ route.post(
     try {
       const text = `Description: ${description}.<-->Instruction: ${instruction}.`;
 
-      const { isHarmful, explanation } = await moderateDescription({
+      const isSafe = await moderateContent({
+        content: [{ type: "text", text }],
+      });
+
+      if (!isSafe) {
+        res.status(200).json({
+          error: `Your text contains inappropriate language. Please try again.`,
+        });
+        return;
+      }
+
+      const { isHarmful, explanation } = await isActivityHarmful({
         userId: req.userId,
         text,
       });

@@ -4,7 +4,7 @@ export enum RoleEnum {
   SYSTEM = "system",
 }
 
-type ContentType = {
+export type ContentType = {
   type: "text" | "image_url";
   text?: string;
   image_url?: { url: string; detail: "high" | "low" } | null;

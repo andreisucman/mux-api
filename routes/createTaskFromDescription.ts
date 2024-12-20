@@ -8,7 +8,7 @@ import { zodResponseFormat } from "openai/helpers/zod";
 import { CustomRequest } from "types.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import askRepeatedly from "functions/askRepeatedly.js";
-import moderateDescription from "@/functions/moderateDescription.js";
+import isActivityHarmful from "@/functions/isActivityHarmful.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import checkIfTaskIsRelated from "@/functions/checkIfTaskIsRelated.js";
 import { daysFrom } from "helpers/utils.js";
@@ -71,7 +71,7 @@ route.post(
         return;
       }
 
-      const { isHarmful, explanation } = await moderateDescription({
+      const { isHarmful, explanation } = await isActivityHarmful({
         text: description,
         userId: req.userId,
       });

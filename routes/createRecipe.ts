@@ -5,7 +5,7 @@ import z from "zod";
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
-import moderateDescription from "@/functions/moderateDescription.js";
+import isActivityHarmful from "@/functions/isActivityHarmful.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { RunType } from "types/askOpenaiTypes.js";
 import {
@@ -46,7 +46,7 @@ route.post(
         return;
       }
 
-      const { isHarmful, explanation } = await moderateDescription({
+      const { isHarmful, explanation } = await isActivityHarmful({
         userId: req.userId,
         text: constraints,
       });

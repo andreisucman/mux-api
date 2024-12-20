@@ -4,7 +4,7 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import { CustomRequest } from "types.js";
-import moderateDescription from "@/functions/moderateDescription.js";
+import isActivityHarmful from "@/functions/isActivityHarmful.js";
 import setUtcMidnight from "@/helpers/setUtcMidnight.js";
 import formatDate from "@/helpers/formatDate.js";
 import sortTasksInScheduleByDate from "@/helpers/sortTasksInScheduleByDate.js";
@@ -35,7 +35,7 @@ route.post(
     try {
       const text = `Description: ${updatedDescription}.<-->Instruction: ${updatedInstruction}.`;
 
-      const { isHarmful, explanation } = await moderateDescription({
+      const { isHarmful, explanation } = await isActivityHarmful({
         userId: req.userId,
         text,
       });

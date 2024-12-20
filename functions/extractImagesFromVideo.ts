@@ -10,7 +10,7 @@ export default async function extractImagesFromVideo({ url, userId }: Props) {
   try {
     const response = await doWithRetries(
       async () =>
-        fetch(`${process.env.PROCESSING_SERVER_URL}/analyzeVideo`, {
+        fetch(`${process.env.PROCESSING_SERVER_URL}/processVideo`, {
           headers: {
             Authorization: process.env.PROCESSING_SECRET,
             "Content-Type": "application/json",
@@ -20,6 +20,13 @@ export default async function extractImagesFromVideo({ url, userId }: Props) {
           body: JSON.stringify({ url }),
         }) // don't check network status
     );
+
+    if (!response.ok) {
+      return {
+        status: false,
+        error: "Network request failed. Please try again.",
+      };
+    }
 
     return await response.json();
   } catch (err) {

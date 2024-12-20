@@ -12,7 +12,7 @@ import httpError from "@/helpers/httpError.js";
 import isNameUnique from "@/functions/isNameUnique.js";
 import { db, stripe } from "init.js";
 import getUserInfo from "@/functions/getUserInfo.js";
-import moderateTextProfanity from "@/functions/moderateTextProfanity.js";
+import moderateContent from "@/functions/moderateContent.js";
 
 const route = Router();
 
@@ -57,12 +57,11 @@ route.post(
         if (socials) text += `<-->${JSON.stringify(socials)}<-->`;
         if (bio) text += `<-->${JSON.stringify(bio)}<-->`;
 
-        const { containsProfanity } = await moderateTextProfanity({
-          userId: req.userId,
-          text,
+        const isSafe = await moderateContent({
+          content: [{ type: "text", text }],
         });
 
-        if (containsProfanity) {
+        if (!isSafe) {
           res.status(200).json({
             error: `It looks like your text contains profanity. Please revise it and try again.`,
           });

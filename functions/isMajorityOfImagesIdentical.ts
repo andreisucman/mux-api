@@ -25,7 +25,7 @@ export default async function isMajorityOfImagesIdentical(...urls: string[]) {
     const majority = Math.ceil(urls.length / 2);
     const duplicates = urls.length - uniqueImages.size;
 
-    return duplicates > majority;
+    return duplicates >= majority;
   } catch (error) {
     return false;
   }

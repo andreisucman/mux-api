@@ -20,6 +20,7 @@ import {
   UploadProofUserType,
   UploadProofTaskType,
 } from "types/uploadProofTypes.js";
+import moderateContent from "@/functions/moderateContent.js";
 import { ContentModerationStatusEnum } from "types.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import analyzeCalories from "functions/analyzeCalories.js";
@@ -165,16 +166,21 @@ route.post(
         clearInterval(iId);
       }
 
-      // for (const proofImage of proofImages) { // let it be sequential for token economy
-      //   const response = await moderateImages({
-      //     userId: String(req.userId),
-      //     image: proofImage,
-      //   });
+      const isVideoSafe = await moderateContent({
+        content: proofImages.map((image: string) => ({
+          type: "image_url",
+          image_url: { url: image },
+        })),
+      });
 
-      //   if (!response.status) {
-      //     throw new Error(response.message);
-      //   }
-      // }
+      if (!isVideoSafe) {
+        await addAnalysisStatusError({
+          message: "Video contains prohibited content.",
+          userId: req.userId,
+          operationKey: taskId,
+        });
+        return;
+      }
 
       await incrementProgress({
         operationKey: taskId,
@@ -183,8 +189,8 @@ route.post(
       });
 
       const majorityIdentical = await isMajorityOfImagesIdentical(
-        ...proofImages,
-        ...oldProofImages
+        ...proofImages.slice(0, 4),
+        ...oldProofImages.slice(0, 4)
       );
 
       if (majorityIdentical) {
