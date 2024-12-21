@@ -21,13 +21,6 @@ export default async function extractImagesFromVideo({ url, userId }: Props) {
         }) // don't check network status
     );
 
-    if (!response.ok) {
-      return {
-        status: false,
-        error: "Network request failed. Please try again.",
-      };
-    }
-
     return await response.json();
   } catch (err) {
     throw httpError(err);

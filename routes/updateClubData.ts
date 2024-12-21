@@ -137,7 +137,7 @@ route.post(
           await doWithRetries(() =>
             stripe.accounts.update(connectId, {
               business_profile: {
-                url: `${process.env.CLIENT_URL}/club/${name}`,
+                url: `https://muxout.com/club/${name}`,
               },
             })
           );

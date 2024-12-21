@@ -19,6 +19,12 @@ export default async function isImagePositionValid({
   position,
 }: Props) {
   try {
+    console.log("inputs",{
+      userId,
+      image,
+      part,
+      position,
+    })
     let requirement;
 
     if (position) {
@@ -35,9 +41,11 @@ export default async function isImagePositionValid({
       return { verdict: false, message: "Bad request" };
     }
 
-    const ValidateImagePositionResponseType = z
-      .boolean()
-      .describe("respond with a true if yes and false if not");
+    const ValidateImagePositionResponseType = z.object({
+      verdict: z
+        .boolean()
+        .describe("true if yes and false if not"),
+    });
 
     const runs = [
       {
@@ -58,14 +66,14 @@ export default async function isImagePositionValid({
       },
     ];
 
-    const isValid = await askRepeatedly({
+    const response = await askRepeatedly({
       userId,
       systemContent: requirement.requirement,
       runs: runs as RunType[],
-      functionName: "validateImagePosition",
+      functionName: "isImagePositionValid",
     });
 
-    return { verdict: isValid, message: requirement.message };
+    return { verdict: response.verdict, message: requirement.message };
   } catch (err) {
     throw httpError(err);
   }

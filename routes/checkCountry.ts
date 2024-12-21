@@ -15,11 +15,17 @@ route.post(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { country } = req.body;
     try {
-      const systemContent = `The user gives you the name of their country. If this is a valid country format it by its official name and ISO 3166-1 alpha-2 standard like so: {country: US}. If this is an invalid country return isValid as false and other fields as empty strings.`;
+      const systemContent = `The user gives you the name of their country. If this is a valid country return is ISO 3166-1 alpha-2 code. If this is an invalid country return isValid as false and other fields as empty strings.`;
 
       const ConcernsResponseType = z.object({
-        isValid: z.boolean(),
-        country: z.string(),
+        isValid: z
+          .boolean()
+          .describe("true if the country is valid and false if not"),
+        countryCode: z
+          .string()
+          .describe(
+            "ISO 3166-1 alpha-2 code of the country or empty string if the country is not valid"
+          ),
       });
 
       const userContent = [
@@ -45,7 +51,7 @@ route.post(
         functionName: "checkCountry",
       });
 
-      const { isValid } = response;
+      const { isValid, countryCode } = response;
 
       if (!isValid) {
         res.status(200).json({ error: "Invalid country" });
@@ -60,7 +66,7 @@ route.post(
           },
           {
             $set: {
-              country: response.country,
+              country: countryCode,
             },
           }
         )

@@ -34,11 +34,11 @@ route.post(
           country: country?.toUpperCase(),
           capabilities: {
             transfers: { requested: true },
-            card_payments: { requested: true },
+            card_payments: { requested: false },
           },
           business_profile: {
             mcc: "5734",
-            url: `${process.env.CLIENT_URL}/club/${name}`,
+            url: `https://muxout.com/club/${name}`,
           },
           settings: {
             payments: {
@@ -46,13 +46,6 @@ route.post(
             },
           },
         };
-        const globalCountries = ["US", "GB", "CA", "AU"];
-
-        /* if not in the global countries list */
-        if (country && !globalCountries.includes(country.toUpperCase())) {
-          params.tos_acceptance = { service_agreement: "recipient" };
-          delete params.capabilities.card_payments;
-        }
 
         const account = await stripe.accounts.create(params as any);
 
@@ -64,12 +57,13 @@ route.post(
         });
 
         await doWithRetries(async () =>
-          db
-            .collection("User")
-            .updateOne(
-              { _id: new ObjectId(req.userId), moderationStatus: ModerationStatusEnum.ACTIVE },
-              { $set: { "club.payouts.connectId": account.id } }
-            )
+          db.collection("User").updateOne(
+            {
+              _id: new ObjectId(req.userId),
+              moderationStatus: ModerationStatusEnum.ACTIVE,
+            },
+            { $set: { "club.payouts.connectId": account.id } }
+          )
         );
 
         res.status(200).json({ message: accLink.url });

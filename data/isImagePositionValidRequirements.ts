@@ -19,13 +19,13 @@ export const isImagePositionValidRequirements = [
   },
   {
     part: "mouth",
-    position: "mouth",
-    requirement: "Check if this is a close up image of an open mouth.",
+    position: "front",
+    requirement: "Is this a close up photo of an open mouth only, not of the whole face?",
     message: "This must be a close up photo of your open mouth.",
   },
   {
     part: "scalp",
-    position: "scalp",
+    position: "front",
     requirement:
       "Check if this is a close up image of the top of a human's head.",
     message: "This must be a close up photo of the top of your head.",

@@ -54,7 +54,7 @@ route.post(
           { userId: new ObjectId(req.userId), operationKey: taskId },
           {
             $set: { isRunning: true, progress: 1 },
-            $unset: { isError: "", message: "" },
+            $unset: { isError: null, message: "" },
           },
           { upsert: true }
         )
