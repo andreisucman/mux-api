@@ -2,7 +2,7 @@ import { ObjectId } from "mongodb";
 import doWithRetries from "@/helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 import { db } from "@/init.js";
-import { UserType } from "@/types.js";
+import { ModerationStatusEnum, UserType } from "@/types.js";
 
 type Props = {
   userId?: string;
@@ -18,7 +18,9 @@ export default async function getUserInfo({
   try {
     if (!userId && !userName) throw httpError("No userId and name");
 
-    const filter: { [key: string]: any } = {};
+    const filter: { [key: string]: any } = {
+      moderationStatus: ModerationStatusEnum.ACTIVE,
+    };
 
     if (userId) filter._id = new ObjectId(userId);
     if (userName) filter.name = userName;

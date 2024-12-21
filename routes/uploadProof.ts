@@ -22,7 +22,7 @@ import {
   UploadProofTaskType,
 } from "types/uploadProofTypes.js";
 import moderateContent from "@/functions/moderateContent.js";
-import { ContentModerationStatusEnum } from "types.js";
+import { ModerationStatusEnum } from "types.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import analyzeCalories from "functions/analyzeCalories.js";
 import getStreaksToIncrement from "helpers/getStreaksToIncrement.js";
@@ -63,7 +63,10 @@ route.post(
 
       const userInfo = (await doWithRetries(async () =>
         db.collection("User").findOne(
-          { _id: new ObjectId(req.userId) },
+          {
+            _id: new ObjectId(req.userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
           {
             projection: {
               club: 1,
@@ -111,7 +114,7 @@ route.post(
           .find(
             {
               taskKey: taskInfo.key,
-              moderationStatus: ContentModerationStatusEnum.ACTIVE,
+              moderationStatus: ModerationStatusEnum.ACTIVE,
             },
             {
               projection: { proofImages: 1 },
@@ -291,7 +294,7 @@ route.post(
         avatar,
         userName: name,
         isPublic: false,
-        moderationStatus: ContentModerationStatusEnum.ACTIVE,
+        moderationStatus: ModerationStatusEnum.ACTIVE,
         latestBodyScoreDifference: 0,
         latestHeadScoreDifference: 0,
       };
@@ -377,7 +380,13 @@ route.post(
       await doWithRetries(async () =>
         db
           .collection("User")
-          .updateOne({ _id: new ObjectId(req.userId) }, userUpdatePayload)
+          .updateOne(
+            {
+              _id: new ObjectId(req.userId),
+              moderationStatus: ModerationStatusEnum.ACTIVE,
+            },
+            userUpdatePayload
+          )
       );
 
       await doWithRetries(async () =>

@@ -8,7 +8,7 @@ import { CustomRequest } from "types.js";
 import setUtcMidnight from "@/helpers/setUtcMidnight.js";
 import { DiaryActivityType } from "@/types/createDiaryRecordTypes.js";
 import { db } from "init.js";
-import { ContentModerationStatusEnum } from "types.js";
+import { ModerationStatusEnum } from "types.js";
 import { daysFrom } from "@/helpers/utils.js";
 
 const route = Router();
@@ -27,12 +27,10 @@ route.post(
       const usersTodayMidnight = setUtcMidnight({ date: new Date(), timeZone });
 
       const todaysDiaryRecords = await doWithRetries(async () =>
-        db
-          .collection("Diary")
-          .findOne({
-            createdAt: { $gt: usersTodayMidnight },
-            moderationStatus: ContentModerationStatusEnum.ACTIVE,
-          })
+        db.collection("Diary").findOne({
+          createdAt: { $gt: usersTodayMidnight },
+          moderationStatus: ModerationStatusEnum.ACTIVE,
+        })
       );
 
       if (todaysDiaryRecords) {
@@ -53,7 +51,7 @@ route.post(
       const proofFilters: { [key: string]: any } = {
         userId: new ObjectId(req.userId),
         createdAt: { $gte: usersTodayMidnight, $lt: usersTomorrowMidnight },
-        moderationStatus: ContentModerationStatusEnum.ACTIVE,
+        moderationStatus: ModerationStatusEnum.ACTIVE,
         type,
       };
 
@@ -85,7 +83,7 @@ route.post(
       const styleFilters: { [key: string]: any } = {
         userId: new ObjectId(req.userId),
         createdAt: { $gte: usersTodayMidnight, $lt: usersTomorrowMidnight },
-        moderationStatus: ContentModerationStatusEnum.ACTIVE,
+        moderationStatus: ModerationStatusEnum.ACTIVE,
         type,
       };
 

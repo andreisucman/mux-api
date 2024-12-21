@@ -2,7 +2,7 @@ import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
-import { ContentModerationStatusEnum } from "@/types.js";
+import { ModerationStatusEnum } from "@/types.js";
 
 type Props = {
   userId: string;
@@ -15,7 +15,7 @@ export default async function getStyleCompareRecord({ userId }: Props) {
         .collection("StyleAnalysis")
         .find({
           userId: new ObjectId(userId),
-          moderationStatus: ContentModerationStatusEnum.ACTIVE,
+          moderationStatus: ModerationStatusEnum.ACTIVE,
         })
         .sort({ votes: -1, createdAt: -1 })
         .limit(1)

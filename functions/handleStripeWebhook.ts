@@ -4,6 +4,7 @@ dotenv.config();
 import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
+import { ModerationStatusEnum } from "@/types.js";
 
 async function handleStripeWebhook(event: any) {
   const { type, data } = event;
@@ -20,12 +21,13 @@ async function handleStripeWebhook(event: any) {
   if (!customerId) return;
 
   const userInfo = await doWithRetries(async () =>
-    db
-      .collection("User")
-      .findOne(
-        { stripeUserId: customerId },
-        { projection: { subscriptions: 1, club: 1 } }
-      )
+    db.collection("User").findOne(
+      {
+        stripeUserId: customerId,
+        moderationStatus: ModerationStatusEnum.ACTIVE,
+      },
+      { projection: { subscriptions: 1, club: 1 } }
+    )
   );
 
   if (!userInfo) return;
@@ -107,7 +109,10 @@ async function handleStripeWebhook(event: any) {
 
   const toUpdate = subscriptionsToUpdateWithDates.map((item) => ({
     updateOne: {
-      filter: { stripeUserId: customerId },
+      filter: {
+        stripeUserId: customerId,
+        moderationStatus: ModerationStatusEnum.ACTIVE,
+      },
       update: {
         $set: {
           [`subscriptions.${item.name}.subscriptionId`]: item.subscriptionId,

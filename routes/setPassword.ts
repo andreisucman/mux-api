@@ -7,6 +7,7 @@ import validateCode from "@/functions/validateCode.js";
 import invalidateTheCode from "@/functions/invalidateTheCode.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { db } from "init.js";
+import { ModerationStatusEnum } from "@/types.js";
 
 const route = Router();
 
@@ -42,7 +43,13 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
     await doWithRetries(async () =>
       db
         .collection("User")
-        .updateOne({ _id: new ObjectId(userId) }, updateObject)
+        .updateOne(
+          {
+            _id: new ObjectId(userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
+          updateObject
+        )
     );
 
     invalidateTheCode(accessToken);

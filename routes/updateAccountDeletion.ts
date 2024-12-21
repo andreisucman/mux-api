@@ -4,7 +4,7 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
-import { CustomRequest } from "types.js";
+import { CustomRequest, ModerationStatusEnum } from "types.js";
 import { daysFrom } from "helpers/utils.js";
 import { db } from "init.js";
 
@@ -28,7 +28,13 @@ route.post(
       await doWithRetries(async () =>
         db
           .collection("User")
-          .updateOne({ _id: new ObjectId(req.userId) }, { $set: payload })
+          .updateOne(
+            {
+              _id: new ObjectId(req.userId),
+              moderationStatus: ModerationStatusEnum.ACTIVE,
+            },
+            { $set: payload }
+          )
       );
 
       res.status(200).json({ message: payload.deleteOn });

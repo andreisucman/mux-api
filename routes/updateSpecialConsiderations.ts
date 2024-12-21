@@ -4,7 +4,7 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import { db } from "init.js";
-import { CustomRequest } from "types.js";
+import { CustomRequest, ModerationStatusEnum } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 
 const route = Router();
@@ -24,7 +24,7 @@ route.post(
         db
           .collection("User")
           .updateOne(
-            { _id: new ObjectId(req.userId) },
+            { _id: new ObjectId(req.userId), moderationStatus: ModerationStatusEnum.ACTIVE },
             { $set: { specialConsiderations: text.slice(0, 300) } }
           )
       );

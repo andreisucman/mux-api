@@ -1,7 +1,7 @@
 import { Router, NextFunction } from "express";
 import { db } from "init.js";
 import { CustomRequest } from "types.js";
-import { ContentModerationStatusEnum } from "types.js";
+import { ModerationStatusEnum } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 
 const route = Router();
@@ -11,7 +11,7 @@ route.get("/", async (req: CustomRequest, res, next: NextFunction) => {
 
   try {
     const filter: { [key: string]: any } = {
-      moderationStatus: ContentModerationStatusEnum.ACTIVE,
+      moderationStatus: ModerationStatusEnum.ACTIVE,
     };
 
     if (type) filter.type = type;

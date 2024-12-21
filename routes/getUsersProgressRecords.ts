@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import { NextFunction, Router } from "express";
 import { db } from "init.js";
-import { ContentModerationStatusEnum, CustomRequest } from "types.js";
+import { ModerationStatusEnum, CustomRequest } from "types.js";
 import checkTrackedRBAC from "functions/checkTrackedRBAC.js";
 import doWithRetries from "helpers/doWithRetries.js";
 
@@ -33,7 +33,7 @@ route.get(
       }
 
       const filter: { [key: string]: any } = {
-        moderationStatus: ContentModerationStatusEnum.ACTIVE,
+        moderationStatus: ModerationStatusEnum.ACTIVE,
       };
 
       if (followingUserName) {

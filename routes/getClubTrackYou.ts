@@ -5,7 +5,7 @@ import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import { TrackerType } from "types/getClubTrackYouTypes.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import { CustomRequest } from "types.js";
+import { CustomRequest, ModerationStatusEnum } from "types.js";
 import { db } from "init.js";
 
 const route = Router();
@@ -20,7 +20,10 @@ route.get(
         db
           .collection("User")
           .find(
-            { "club.followingUserId": new ObjectId(req.userId) },
+            {
+              "club.followingUserId": new ObjectId(req.userId),
+              moderationStatus: ModerationStatusEnum.ACTIVE,
+            },
             {
               projection: {
                 "club.bio.intro": 1,

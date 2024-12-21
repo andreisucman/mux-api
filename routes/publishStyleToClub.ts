@@ -2,7 +2,7 @@ import { Router, Response, NextFunction } from "express";
 import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import { CustomRequest } from "types.js";
-import { ContentModerationStatusEnum } from "types.js";
+import { ModerationStatusEnum } from "types.js";
 import moderateImages from "@/functions/checkIfSelf.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { PublishToClubUserInfoType } from "types/pubishStyleToClubTypes.js";
@@ -23,7 +23,10 @@ route.post(
 
       const userInfo = (await doWithRetries(async () =>
         db.collection("User").findOne(
-          { _id: new ObjectId(req.userId) },
+          {
+            _id: new ObjectId(req.userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
           {
             projection: {
               "club.payouts": 1,
@@ -57,7 +60,7 @@ route.post(
           {
             _id: new ObjectId(styleAnalysisId),
             userId: new ObjectId(req.userId),
-            moderationStatus: ContentModerationStatusEnum.ACTIVE,
+            moderationStatus: ModerationStatusEnum.ACTIVE,
           },
           { projection: { image: 1, type: 1, isPublic: 1 } }
         )
@@ -87,12 +90,13 @@ route.post(
       const moderationResponse = await moderateImages({
         userId: String(userInfo._id),
         userImage,
-        allowOnlyUser: true,
         image,
       });
 
-      if (!moderationResponse.status) {
-        res.status(200).json({ error: moderationResponse.message });
+      if (!moderationResponse) {
+        res
+          .status(200)
+          .json({ error: "You can only publish images of yourself" });
         return;
       }
 

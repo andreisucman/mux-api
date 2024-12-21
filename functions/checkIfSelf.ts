@@ -4,7 +4,7 @@ import { ObjectId } from "mongodb";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import askRepeatedly from "functions/askRepeatedly.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import { UserProgressRecordType } from "types.js";
+import { ModerationStatusEnum, UserProgressRecordType } from "types.js";
 import { RunType } from "types/askOpenaiTypes.js";
 import httpError from "@/helpers/httpError.js";
 
@@ -23,7 +23,7 @@ export default async function checkIfSelf({ userImage, image, userId }: Props) {
         db
           .collection("User")
           .findOne(
-            { _id: new ObjectId(userId) },
+            { _id: new ObjectId(userId), moderationStatus: ModerationStatusEnum.ACTIVE },
             { projection: { latestProgress: 1 } }
           )
       )) as unknown as { latestProgress: UserProgressRecordType };

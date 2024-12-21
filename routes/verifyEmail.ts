@@ -7,12 +7,12 @@ import doWithRetries from "helpers/doWithRetries.js";
 import sendConfirmationCode from "@/functions/sendConfirmationCode.js";
 import invalidateTheCode from "@/functions/invalidateTheCode.js";
 import { db } from "init.js";
+import { ModerationStatusEnum } from "@/types.js";
 
 const route = Router();
 
 route.post("/", async (req: Request, res: Response, next: NextFunction) => {
   const { code } = req.body;
-  
 
   if (!code) {
     res.status(400).json({ error: "Bad request" });
@@ -28,7 +28,10 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
           db
             .collection("User")
             .findOne(
-              { _id: new ObjectId(userId) },
+              {
+                _id: new ObjectId(userId),
+                moderationStatus: ModerationStatusEnum.ACTIVE,
+              },
               { projection: { email: 1 } }
             )
         );

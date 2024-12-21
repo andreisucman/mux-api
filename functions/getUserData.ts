@@ -3,7 +3,7 @@ import { ObjectId } from "mongodb";
 import getLatestRoutinesAndTasks from "functions/getLatestRoutineAndTasks.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
-import getUserInfo from "./getUserInfo.js";
+import { ModerationStatusEnum } from "@/types.js";
 
 type Props = {
   userId: string;
@@ -18,7 +18,7 @@ async function getUserData({ userId }: Props) {
         await db
           .collection("User")
           .findOne(
-            { _id: new ObjectId(userId) },
+            { _id: new ObjectId(userId), moderationStatus: ModerationStatusEnum.ACTIVE },
             { projection: { password: 0 } }
           )
     );

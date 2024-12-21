@@ -4,7 +4,12 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
-import { BlurTypeEnum, CustomRequest, TypeEnum } from "types.js";
+import {
+  BlurTypeEnum,
+  CustomRequest,
+  ModerationStatusEnum,
+  TypeEnum,
+} from "types.js";
 import { UploadProgressUserInfo } from "types/uploadProgressTypes.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import analyzeAppearance from "functions/analyzeAppearance.js";
@@ -48,7 +53,10 @@ route.post(
 
       const userInfo = (await doWithRetries(async () =>
         db.collection("User").findOne(
-          { _id: new ObjectId(finalUserId) },
+          {
+            _id: new ObjectId(finalUserId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
           {
             projection: {
               name: 1,

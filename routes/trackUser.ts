@@ -4,7 +4,7 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import { Router, Response, NextFunction } from "express";
-import { CustomRequest, SubscriptionTypeNamesEnum } from "types.js";
+import { CustomRequest, ModerationStatusEnum, SubscriptionTypeNamesEnum } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import checkSubscriptionStatus from "functions/checkSubscription.js";
 import getUserInfo from "@/functions/getUserInfo.js";
@@ -76,7 +76,7 @@ route.post(
       const userUpdates = [
         {
           updateOne: {
-            filter: { _id: new ObjectId(req.userId) },
+            filter: { _id: new ObjectId(req.userId), moderationStatus: ModerationStatusEnum.ACTIVE },
             update: {
               $set: {
                 "club.followingUserName": followingUserName,
@@ -87,7 +87,7 @@ route.post(
         },
         {
           updateOne: {
-            filter: { name: oldFollowingUserName },
+            filter: { name: oldFollowingUserName, moderationStatus: ModerationStatusEnum.ACTIVE },
             update: {
               $set: { $inc: { "club.totalFollowers": -1 } },
             },
@@ -95,7 +95,7 @@ route.post(
         },
         {
           updateOne: {
-            filter: { name: followingUserName },
+            filter: { name: followingUserName, moderationStatus: ModerationStatusEnum.ACTIVE },
             update: {
               $set: { $inc: { "club.totalFollowers": 1 } },
             },

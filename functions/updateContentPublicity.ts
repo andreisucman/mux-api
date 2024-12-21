@@ -2,7 +2,7 @@ import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import calculateDifferenceInPrivacies from "helpers/calculateDifferenceInPrivacies.js";
-import { PrivacyType } from "types.js";
+import { ModerationStatusEnum, PrivacyType } from "types.js";
 import httpError from "@/helpers/httpError.js";
 import getUserInfo from "./getUserInfo.js";
 
@@ -91,7 +91,10 @@ export default async function updateContentPublicity({
       db
         .collection("User")
         .updateOne(
-          { _id: new ObjectId(userId) },
+          {
+            _id: new ObjectId(userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
           { $set: { "club.privacy": newPrivacy } }
         )
     );

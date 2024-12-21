@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb";
 import doWithRetries from "helpers/doWithRetries.js";
-import { UserType } from "types.js";
+import { ModerationStatusEnum, UserType } from "types.js";
 import { db } from "init.js";
 import httpError from "@/helpers/httpError.js";
 
@@ -42,7 +42,12 @@ export default async function checkTrackedRBAC({
       };
 
     const targetUserInfo = await doWithRetries(async () =>
-      db.collection("User").findOne(targetFilter, targetOptions)
+      db
+        .collection("User")
+        .findOne(
+          { ...targetFilter, moderationStatus: ModerationStatusEnum.ACTIVE },
+          targetOptions
+        )
     );
 
     if (!targetUserInfo) {
@@ -77,7 +82,12 @@ export default async function checkTrackedRBAC({
       };
 
     result.userInfo = await doWithRetries(async () =>
-      db.collection("User").findOne(userFilter, userOptions)
+      db
+        .collection("User")
+        .findOne(
+          { ...userFilter, moderationStatus: ModerationStatusEnum.ACTIVE },
+          userOptions
+        )
     );
 
     const { club, name, subscriptions } =

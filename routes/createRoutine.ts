@@ -10,6 +10,7 @@ import {
   UserConcernType,
   CustomRequest,
   SubscriptionTypeNamesEnum,
+  ModerationStatusEnum,
 } from "types.js";
 import updateNextRoutine from "helpers/updateNextRoutine.js";
 import formatDate from "helpers/formatDate.js";
@@ -144,7 +145,7 @@ route.post(
 
       await doWithRetries(async () =>
         db.collection("User").updateOne(
-          { _id: new ObjectId(req.userId) },
+          { _id: new ObjectId(req.userId), moderationStatus: ModerationStatusEnum.ACTIVE },
           {
             $set: {
               nextRoutine: updatedNextRoutine,

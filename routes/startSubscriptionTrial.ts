@@ -4,7 +4,11 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
-import { CustomRequest, SubscriptionType } from "types.js";
+import {
+  CustomRequest,
+  ModerationStatusEnum,
+  SubscriptionType,
+} from "types.js";
 import { daysFrom } from "helpers/utils.js";
 import { db } from "init.js";
 
@@ -29,7 +33,10 @@ route.post(
         db
           .collection("User")
           .findOne(
-            { _id: new ObjectId(req.userId) },
+            {
+              _id: new ObjectId(req.userId),
+              moderationStatus: ModerationStatusEnum.ACTIVE,
+            },
             { projection: { subscriptions: 1 } }
           )
       );
@@ -59,7 +66,7 @@ route.post(
         db
           .collection("User")
           .updateOne(
-            { _id: new ObjectId(req.userId) },
+            { _id: new ObjectId(req.userId), moderationStatus: ModerationStatusEnum.ACTIVE },
             { $set: { subscriptions: updatedSubscriptions } }
           )
       );

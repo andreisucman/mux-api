@@ -5,7 +5,7 @@ import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import { CustomRequest } from "types.js";
-import { ContentModerationStatusEnum } from "types.js";
+import { ModerationStatusEnum } from "types.js";
 import checkTrackedRBAC from "@/functions/checkTrackedRBAC.js";
 import { db } from "init.js";
 
@@ -32,7 +32,7 @@ route.get(
       }
       const filters: { [key: string]: any } = {
         userId: new ObjectId(req.userId),
-        moderationStatus: ContentModerationStatusEnum.ACTIVE,
+        moderationStatus: ModerationStatusEnum.ACTIVE,
       };
 
       if (type) filters.type = type;

@@ -3,7 +3,7 @@ dotenv.config();
 
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
-import { CustomRequest } from "types.js";
+import { CustomRequest, ModerationStatusEnum } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { daysFrom } from "helpers/utils.js";
 import formatDate from "helpers/formatDate.js";
@@ -11,9 +11,50 @@ import updatePublicContent from "@/functions/updatePublicContent.js";
 import httpError from "@/helpers/httpError.js";
 import isNameUnique from "@/functions/isNameUnique.js";
 import { db, stripe } from "init.js";
-import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import moderateContent from "@/functions/moderateContent.js";
+import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
+
+type HandleCheckSafetyProps = {
+  req: CustomRequest;
+  res: Response;
+  text: string;
+  key: string;
+};
+
+const handleCheckSafety = async ({
+  req,
+  res,
+  text,
+  key,
+}: HandleCheckSafetyProps) => {
+  try {
+    const { isSafe, isSuspicious, suspiciousAnalysisResults } =
+      await moderateContent({
+        content: [{ type: "text", text }],
+      });
+
+    if (!isSafe) {
+      res.status(200).json({
+        error: `It looks like your text contains profanity. Please revise it and try again.`,
+      });
+      return false;
+    }
+
+    if (isSuspicious) {
+      addSuspiciousRecord({
+        collection: "User",
+        moderationResult: suspiciousAnalysisResults,
+        recordId: req.userId,
+        userId: req.userId,
+        key,
+      });
+    }
+    return true;
+  } catch (err) {
+    throw httpError(err);
+  }
+};
 
 const route = Router();
 
@@ -57,30 +98,17 @@ route.post(
         if (intro) text += `<-->${intro}<-->`;
         if (socials) text += `<-->${JSON.stringify(socials)}<-->`;
         if (bio) text += `<-->${JSON.stringify(bio)}<-->`;
-
-        const { isSafe, isSuspicious, suspiciousAnalysisResults } =
-          await moderateContent({
-            content: [{ type: "text", text }],
-          });
-
-        if (!isSafe) {
-          res.status(200).json({
-            error: `It looks like your text contains profanity. Please revise it and try again.`,
-          });
-          return;
-        }
-
-        if (isSuspicious) {
-          addSuspiciousRecord({
-            collection: "User",
-            moderationResult: suspiciousAnalysisResults,
-            recordId: req.userId,
-            userId: req.userId,
-          });
-        }
       }
 
       if (name) {
+        const verdict = await handleCheckSafety({
+          req,
+          res,
+          text: name,
+          key: "name",
+        });
+        if (!verdict) return;
+
         if (nextNameUpdateAt > new Date()) {
           const formattedDate = formatDate({ date: nextNameUpdateAt });
           res.status(200).json({
@@ -115,14 +143,36 @@ route.post(
       }
 
       if (intro) {
+        const verdict = await handleCheckSafety({
+          req,
+          res,
+          text: intro,
+          key: "club.bio.intro",
+        });
+        if (!verdict) return;
+
         updatePayload["club.bio.intro"] = intro;
       }
       if (socials) {
+        const verdict = await handleCheckSafety({
+          req,
+          res,
+          text: JSON.stringify(socials),
+          key: "club.bio.socials",
+        });
+        if (!verdict) return;
         updatePayload["club.bio.socials"] = socials;
       }
 
       if (bio) {
         for (const key in bio) {
+          const verdict = await handleCheckSafety({
+            req,
+            res,
+            text: JSON.stringify(socials),
+            key: `club.bio.${key}`,
+          });
+          if (!verdict) return;
           updatePayload[`club.bio.${key}`] = bio[key];
         }
       }
@@ -130,7 +180,13 @@ route.post(
       await doWithRetries(async () =>
         db
           .collection("User")
-          .updateOne({ _id: new ObjectId(req.userId) }, { $set: updatePayload })
+          .updateOne(
+            {
+              _id: new ObjectId(req.userId),
+              moderationStatus: ModerationStatusEnum.ACTIVE,
+            },
+            { $set: updatePayload }
+          )
       );
 
       if (name || avatar) {

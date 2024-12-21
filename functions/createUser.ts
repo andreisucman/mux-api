@@ -2,7 +2,7 @@ import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { defaultUser } from "data/defaultUser.js";
-import { UserType } from "types.js";
+import { ModerationStatusEnum, UserType } from "types.js";
 import httpError from "@/helpers/httpError.js";
 
 async function createUser(props: Partial<UserType>) {
@@ -23,7 +23,7 @@ async function createUser(props: Partial<UserType>) {
         await db
           .collection("User")
           .updateOne(
-            { _id: new ObjectId(userId) },
+            { _id: new ObjectId(userId), moderationStatus: ModerationStatusEnum.ACTIVE },
             { $set: updatePayload },
             { upsert: true }
           )

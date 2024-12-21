@@ -7,6 +7,7 @@ import {
   TypeEnum,
   TaskType,
   PartEnum,
+  ModerationStatusEnum,
 } from "@/types.js";
 import {
   CreateRoutineUserInfoType,
@@ -40,7 +41,7 @@ export default async function createRoutine({
   try {
     const userInfo = (await doWithRetries(async () =>
       db.collection("User").findOne(
-        { _id: new ObjectId(userId) },
+        { _id: new ObjectId(userId), moderationStatus: ModerationStatusEnum.ACTIVE },
         {
           projection: {
             demographics: 1,

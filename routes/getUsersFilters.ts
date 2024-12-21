@@ -6,7 +6,7 @@ import aqp from "api-query-params";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import checkTrackedRBAC from "functions/checkTrackedRBAC.js";
-import { ContentModerationStatusEnum, CustomRequest } from "types.js";
+import { ModerationStatusEnum, CustomRequest } from "types.js";
 import { db } from "init.js";
 
 const route = Router();
@@ -51,7 +51,7 @@ route.get(
       }, {});
 
       const match: { [key: string]: any } = {
-        moderationStatus: ContentModerationStatusEnum.ACTIVE,
+        moderationStatus: ModerationStatusEnum.ACTIVE,
       };
 
       if (followingUserName) {

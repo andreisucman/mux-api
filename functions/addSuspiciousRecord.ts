@@ -15,6 +15,7 @@ type Props = {
     | "Task"
     | "User";
   recordId: string;
+  key?: string;
   moderationResult: ModerationResultType[];
 };
 
@@ -31,6 +32,7 @@ export default async function addSuspiciousRecord({
         recordId: new ObjectId(recordId),
         collection,
         moderationResult,
+        createdAt: new Date(),
       })
     );
   } catch (err) {

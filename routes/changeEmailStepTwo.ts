@@ -2,7 +2,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
-import { CustomRequest } from "types.js";
+import { CustomRequest, ModerationStatusEnum } from "types.js";
 import validateCode from "@/functions/validateCode.js";
 import invalidateTheCode from "@/functions/invalidateTheCode.js";
 import sendConfirmationCode from "@/functions/sendConfirmationCode.js";
@@ -52,7 +52,7 @@ route.post(
         db
           .collection("User")
           .updateOne(
-            { _id: new ObjectId(userId) },
+            { _id: new ObjectId(userId), moderationStatus: ModerationStatusEnum.ACTIVE },
             { $set: { email: newEmail, emailVerified: true } }
           )
       );

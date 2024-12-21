@@ -5,6 +5,7 @@ import {
   PartEnum,
   DemographicsType,
   NextActionType,
+  ModerationStatusEnum,
 } from "types.js";
 
 export const defaultSubscriptions = {
@@ -229,4 +230,5 @@ export const defaultUser: UserType = {
   toAnalyze: { head: [], body: [] },
   coachEnergy: 100000,
   canRejoinClubAfter: null,
+  moderationStatus: ModerationStatusEnum.ACTIVE,
 };

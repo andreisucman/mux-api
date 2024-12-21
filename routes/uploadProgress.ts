@@ -9,6 +9,7 @@ import {
   TypeEnum,
   PartEnum,
   BlurTypeEnum,
+  ModerationStatusEnum,
 } from "types.js";
 import {
   ProgressType,
@@ -100,7 +101,10 @@ route.post(
 
       const userInfo = (await doWithRetries(async () =>
         db.collection("User").findOne(
-          { _id: new ObjectId(finalUserId) },
+          {
+            _id: new ObjectId(finalUserId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
           {
             projection: {
               requiredProgress: 1,
@@ -263,7 +267,13 @@ route.post(
         await doWithRetries(async () =>
           db
             .collection("User")
-            .updateOne({ _id: new ObjectId(finalUserId) }, toUpdate)
+            .updateOne(
+              {
+                _id: new ObjectId(finalUserId),
+                moderationStatus: ModerationStatusEnum.ACTIVE,
+              },
+              toUpdate
+            )
         );
         res.status(200).json({
           message: {

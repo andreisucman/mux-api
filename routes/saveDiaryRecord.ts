@@ -7,7 +7,7 @@ import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 import setUtcMidnight from "@/helpers/setUtcMidnight.js";
 import moderateContent from "@/functions/moderateContent.js";
-import { ContentModerationStatusEnum, CustomRequest } from "types.js";
+import { ModerationStatusEnum, CustomRequest } from "types.js";
 import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 import { daysFrom } from "@/helpers/utils.js";
 import { db } from "init.js";
@@ -81,7 +81,7 @@ route.post(
         userId: new ObjectId(req.userId),
         transcription: body.message,
         createdAt: midnight,
-        moderationStatus: ContentModerationStatusEnum.ACTIVE,
+        moderationStatus: ModerationStatusEnum.ACTIVE,
       };
 
       await doWithRetries(async () =>
@@ -96,7 +96,10 @@ route.post(
         db
           .collection("User")
           .updateOne(
-            { _id: new ObjectId(req.userId) },
+            {
+              _id: new ObjectId(req.userId),
+              moderationStatus: ModerationStatusEnum.ACTIVE,
+            },
             { $set: { nextDiaryRecordAfter } }
           )
       );

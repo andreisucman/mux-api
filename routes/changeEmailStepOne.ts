@@ -2,7 +2,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
-import { CustomRequest } from "types.js";
+import { CustomRequest, ModerationStatusEnum } from "types.js";
 import validateCode from "@/functions/validateCode.js";
 import sendConfirmationCode from "@/functions/sendConfirmationCode.js";
 import doWithRetries from "@/helpers/doWithRetries.js";
@@ -23,7 +23,10 @@ route.post(
 
     try {
       const isAlreadyTaken = await doWithRetries(async () =>
-        db.collection("User").findOne({ email: newEmail })
+        db.collection("User").findOne({
+          email: newEmail,
+          moderationStatus: ModerationStatusEnum.ACTIVE,
+        })
       );
 
       if (isAlreadyTaken) {
@@ -39,7 +42,10 @@ route.post(
         db
           .collection("User")
           .findOne(
-            { _id: new ObjectId(req.userId) },
+            {
+              _id: new ObjectId(req.userId),
+              moderationStatus: ModerationStatusEnum.ACTIVE,
+            },
             { projection: { email: 1 } }
           )
       );

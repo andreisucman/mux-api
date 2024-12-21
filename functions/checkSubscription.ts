@@ -2,7 +2,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import httpError from "@/helpers/httpError.js";
-import { SubscriptionTypeNamesEnum } from "@/types.js";
+import { ModerationStatusEnum, SubscriptionTypeNamesEnum } from "@/types.js";
 import { ObjectId } from "mongodb";
 import doWithRetries from "@/helpers/doWithRetries.js";
 import { db } from "@/init.js";
@@ -31,7 +31,10 @@ async function checkSubscriptionStatus({
     const userInfo = await doWithRetries(() =>
       db
         .collection("User")
-        .findOne(filters, { projection: { subscriptions: 1 } })
+        .findOne(
+          { ...filters, moderationStatus: ModerationStatusEnum.ACTIVE },
+          { projection: { subscriptions: 1 } }
+        )
     );
 
     if (!userInfo) throw httpError(`User ${userId} not found`);

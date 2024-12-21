@@ -5,7 +5,7 @@ import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import formatAmountForStripe from "helpers/formatAmountForStripe.js";
-import { CustomRequest } from "types.js";
+import { CustomRequest, ModerationStatusEnum } from "types.js";
 import { db, stripe } from "init.js";
 
 const route = Router();
@@ -16,7 +16,10 @@ route.post(
     try {
       const userInfo = await doWithRetries(async () =>
         db.collection("User").findOne(
-          { _id: new ObjectId(req.userId) },
+          {
+            _id: new ObjectId(req.userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
           {
             projection: {
               "club.payouts.connectId": 1,
@@ -58,7 +61,10 @@ route.post(
         db
           .collection("User")
           .updateOne(
-            { _id: new ObjectId(req.userId) },
+            {
+              _id: new ObjectId(req.userId),
+              moderationStatus: ModerationStatusEnum.ACTIVE,
+            },
             { $set: { "club.payouts.rewardEarned": 0 } }
           )
       );

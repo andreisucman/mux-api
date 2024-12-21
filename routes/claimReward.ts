@@ -5,7 +5,7 @@ import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import calculateRewardTaskCompletion from "helpers/calculateRewardTaskCompletion.js";
-import { CustomRequest, UserType } from "types.js";
+import { CustomRequest, ModerationStatusEnum, UserType } from "types.js";
 import formatDate from "helpers/formatDate.js";
 import { daysFrom } from "helpers/utils.js";
 import { rewardKeyConditionsMap } from "data/rewardKeyConditionsMap.js";
@@ -103,7 +103,7 @@ route.post(
         db
           .collection("User")
           .updateOne(
-            { _id: new ObjectId(req.userId) },
+            { _id: new ObjectId(req.userId), moderationStatus: ModerationStatusEnum.ACTIVE },
             { $inc: { "club.payouts.rewardEarned": rewardValue } }
           )
       );

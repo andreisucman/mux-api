@@ -6,7 +6,7 @@ import { Router, Response, NextFunction } from "express";
 import { db } from "init.js";
 import updateAboutBio from "functions/updateAboutBio.js";
 import moderateContent from "@/functions/moderateContent.js";
-import { ContentModerationStatusEnum, CustomRequest } from "types.js";
+import { ModerationStatusEnum, CustomRequest } from "types.js";
 import { QuestionType } from "@/types/saveAboutResponseTypes.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
@@ -43,7 +43,7 @@ route.post(
         question,
         audioReplies,
         createdAt: new Date(),
-        moderationStatus: ContentModerationStatusEnum.ACTIVE,
+        moderationStatus: ModerationStatusEnum.ACTIVE,
       };
 
       await doWithRetries(async () =>
@@ -54,6 +54,7 @@ route.post(
         db.collection("User").findOne(
           {
             _id: new ObjectId(req.userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE
           },
           { projection: { club: 1 } }
         )
@@ -95,6 +96,7 @@ route.post(
         db.collection("User").updateOne(
           {
             _id: new ObjectId(req.userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE
           },
           { $set: { club: toUpdate } }
         )

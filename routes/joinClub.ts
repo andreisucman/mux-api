@@ -4,7 +4,7 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import { db } from "init.js";
-import { CustomRequest } from "types.js";
+import { CustomRequest, ModerationStatusEnum } from "types.js";
 import createClubProfile from "functions/createClubProfile.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import formatDate from "@/helpers/formatDate.js";
@@ -20,6 +20,7 @@ route.post(
         db.collection("User").findOne(
           {
             _id: new ObjectId(req.userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE
           },
           { projection: { club: 1, canRejoinClubAfter: 1 } }
         )

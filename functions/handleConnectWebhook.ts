@@ -6,6 +6,7 @@ import updateContentPublicity from "functions/updateContentPublicity.js";
 import { defaultClubPrivacy } from "data/defaultClubPrivacy.js";
 import { db, stripe } from "init.js";
 import httpError from "@/helpers/httpError.js";
+import { ModerationStatusEnum } from "@/types.js";
 
 /* Stripe requires the raw body to construct the event */
 export default async function handleConnectWebhook(event: any) {
@@ -28,7 +29,10 @@ export default async function handleConnectWebhook(event: any) {
 
       await doWithRetries(async () =>
         db.collection("User").updateOne(
-          { "club.payouts.connectId": object.id },
+          {
+            "club.payouts.connectId": object.id,
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
           {
             $set: updatePayload,
           }
@@ -37,12 +41,13 @@ export default async function handleConnectWebhook(event: any) {
 
       if (!payouts_enabled) {
         const userInfo = await doWithRetries(async () =>
-          db
-            .collection("User")
-            .findOne(
-              { "club.payouts.connectId": object.id },
-              { projection: { _id: 1 } }
-            )
+          db.collection("User").findOne(
+            {
+              "club.payouts.connectId": object.id,
+              moderationStatus: ModerationStatusEnum.ACTIVE,
+            },
+            { projection: { _id: 1 } }
+          )
         );
 
         await updateContentPublicity({
@@ -75,7 +80,10 @@ export default async function handleConnectWebhook(event: any) {
 
       await doWithRetries(async () =>
         db.collection("User").updateOne(
-          { "club.payouts.connectId": object.id },
+          {
+            "club.payouts.connectId": object.id,
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
           {
             $set: {
               "club.payouts.balance": Number((sum / 100).toFixed(2)),

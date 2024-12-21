@@ -11,7 +11,7 @@ import doWithRetries from "helpers/doWithRetries.js";
 import createUser from "@/functions/createUser.js";
 import checkIfUserExists from "functions/checkIfUserExists.js";
 import getUsersCountry from "@/helpers/getUsersCountry.js";
-import { CustomRequest, UserType } from "types.js";
+import { CustomRequest, ModerationStatusEnum, UserType } from "types.js";
 import sendConfirmationCode from "@/functions/sendConfirmationCode.js";
 import { getHashedPassword } from "helpers/utils.js";
 import createCsrf from "@/functions/createCsrf.js";
@@ -92,7 +92,13 @@ route.post(
           await doWithRetries(() =>
             db
               .collection("User")
-              .updateOne({ _id: new ObjectId(userId) }, { $set: updatePayload })
+              .updateOne(
+                {
+                  _id: new ObjectId(userId),
+                  moderationStatus: ModerationStatusEnum.ACTIVE,
+                },
+                { $set: updatePayload }
+              )
           );
 
           userData = await getUserData({ userId: String(userId) });

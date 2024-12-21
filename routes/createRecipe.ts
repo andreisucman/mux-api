@@ -10,6 +10,7 @@ import doWithRetries from "helpers/doWithRetries.js";
 import { RunType } from "types/askOpenaiTypes.js";
 import {
   CustomRequest,
+  ModerationStatusEnum,
   SubscriptionTypeNamesEnum,
   UserInfoType,
 } from "types.js";
@@ -68,7 +69,7 @@ route.post(
 
       const userInfo = (await doWithRetries(async () =>
         db.collection("User").findOne(
-          { _id: new ObjectId(req.userId) },
+          { _id: new ObjectId(req.userId), moderationStatus: ModerationStatusEnum.ACTIVE },
           {
             projection: {
               concern: 1,

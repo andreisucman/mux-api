@@ -6,7 +6,7 @@ import { Router, Response, NextFunction } from "express";
 import updateContentPublicity from "functions/updateContentPublicity.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
-import { CustomRequest } from "types.js";
+import { CustomRequest, ModerationStatusEnum } from "types.js";
 import { db } from "init.js";
 
 const route = Router();
@@ -21,7 +21,10 @@ route.post(
         db
           .collection("User")
           .findOne(
-            { _id: new ObjectId(req.userId) },
+            {
+              _id: new ObjectId(req.userId),
+              moderationStatus: ModerationStatusEnum.ACTIVE,
+            },
             { projection: { "club.payouts": 1 } }
           )
       );

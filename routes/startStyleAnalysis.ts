@@ -5,7 +5,7 @@ import {
   CustomRequest,
   StyleAnalysisType,
   PrivacyType,
-  ContentModerationStatusEnum,
+  ModerationStatusEnum,
 } from "types.js";
 import analyzeStyle from "functions/analyzeStyle.js";
 import { outlookStyles } from "@/data/outlookStyles.js";
@@ -42,7 +42,10 @@ route.post(
 
       const userInfo = (await doWithRetries(async () =>
         db.collection("User").findOne(
-          { _id: new ObjectId(req.userId) },
+          {
+            _id: new ObjectId(req.userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
           {
             projection: {
               name: 1,
@@ -138,7 +141,7 @@ route.post(
         currentSuggestion,
         matchSuggestion: null as string,
         isPublic: false,
-        moderationStatus: ContentModerationStatusEnum.ACTIVE,
+        moderationStatus: ModerationStatusEnum.ACTIVE,
         userName: name,
         avatar,
         votes: 0,
@@ -177,7 +180,10 @@ route.post(
           db
             .collection("User")
             .updateOne(
-              { _id: new ObjectId(req.userId) },
+              {
+                _id: new ObjectId(req.userId),
+                moderationStatus: ModerationStatusEnum.ACTIVE,
+              },
               { $set: { latestStyleAnalysis: newLatestAnalysis } }
             )
         );

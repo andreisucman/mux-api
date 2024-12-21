@@ -21,6 +21,7 @@ import { defaultRequiredProgress } from "data/defaultUser.js";
 import updateNextScan from "helpers/updateNextScan.js";
 import getCalorieGoal from "functions/getCalorieGoal.js";
 import { db } from "init.js";
+import { ModerationStatusEnum } from "types.js";
 import getScoreDifference from "@/helpers/getScoreDifference.js";
 import httpError from "@/helpers/httpError.js";
 
@@ -327,7 +328,13 @@ export default async function analyzeAppearance({
     await doWithRetries(async () =>
       db
         .collection("User")
-        .updateOne({ _id: new ObjectId(userId) }, toUpdateUser)
+        .updateOne(
+          {
+            _id: new ObjectId(userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
+          toUpdateUser
+        )
     );
 
     await doWithRetries(async () =>

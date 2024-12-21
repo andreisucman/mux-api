@@ -13,7 +13,6 @@ import doWithRetries from "helpers/doWithRetries.js";
 import checkIfTaskIsSimilar from "@/functions/checkIfTaskIsSimilar.js";
 import moderateContent from "@/functions/moderateContent.js";
 import httpError from "@/helpers/httpError.js";
-import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 import { db } from "init.js";
 
 const route = Router();
@@ -165,15 +164,6 @@ route.post(
       );
 
       res.status(200).end();
-
-      if (isSuspicious) {
-        addSuspiciousRecord({
-          collection: "Task",
-          moderationResult: suspiciousAnalysisResults,
-          recordId: String(taskId),
-          userId: req.userId,
-        });
-      }
     } catch (err) {
       next(err);
     }

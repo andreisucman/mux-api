@@ -7,6 +7,7 @@ import httpError from "@/helpers/httpError.js";
 import { daysFrom } from "@/helpers/utils.js";
 import getUserInfo from "./getUserInfo.js";
 import { db } from "init.js";
+import { ModerationStatusEnum } from "@/types.js";
 
 type Props = {
   userId: string;
@@ -19,17 +20,21 @@ export default async function removeFromClub({ userId }: Props) {
     const canRejoinClubAfter = daysFrom({ days: 7 });
 
     await doWithRetries(async () =>
-      db
-        .collection("User")
-        .updateOne(
-          { userId: new ObjectId(userId) },
-          { $set: { club: null, name: null, canRejoinClubAfter } }
-        )
+      db.collection("User").updateOne(
+        {
+          userId: new ObjectId(userId),
+          moderationStatus: ModerationStatusEnum.ACTIVE,
+        },
+        { $set: { club: null, name: null, canRejoinClubAfter } }
+      )
     );
 
     await doWithRetries(async () =>
       db.collection("User").updateMany(
-        { "club.followingUserId": new ObjectId(userId) },
+        {
+          "club.followingUserId": new ObjectId(userId),
+          moderationStatus: ModerationStatusEnum.ACTIVE,
+        },
         {
           $set: {
             "club.followingUserName": null,

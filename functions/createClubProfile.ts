@@ -1,7 +1,12 @@
 import { ObjectId } from "mongodb";
 import { defaultClubPrivacy } from "data/defaultClubPrivacy.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import { UserType, ClubDataType, ClubBioType } from "types.js";
+import {
+  UserType,
+  ClubDataType,
+  ClubBioType,
+  ModerationStatusEnum,
+} from "types.js";
 import { db } from "init.js";
 import getUserInfo from "./getUserInfo.js";
 import createRandomName from "./createRandomName.js";
@@ -93,7 +98,10 @@ export default async function createClubProfile({ userId, avatar }: Props) {
 
     await doWithRetries(async () =>
       db.collection("User").updateOne(
-        { _id: new ObjectId(userId) },
+        {
+          _id: new ObjectId(userId),
+          moderationStatus: ModerationStatusEnum.ACTIVE,
+        },
         {
           $set: {
             club: defaultClubData,

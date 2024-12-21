@@ -1,6 +1,6 @@
 import z from "zod";
 import { ObjectId } from "mongodb";
-import { CustomRequest } from "types.js";
+import { CustomRequest, ModerationStatusEnum } from "types.js";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import { RunType } from "types/askOpenaiTypes.js";
 import askRepeatedly from "functions/askRepeatedly.js";
@@ -54,7 +54,10 @@ route.post(
 
       await doWithRetries(async () =>
         db.collection("User").updateOne(
-          { _id: new ObjectId(req.userId) },
+          {
+            _id: new ObjectId(req.userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
           {
             $set: {
               country: response.country,

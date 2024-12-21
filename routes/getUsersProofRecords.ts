@@ -6,7 +6,7 @@ import aqp from "api-query-params";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import { CustomRequest } from "types.js";
-import { ContentModerationStatusEnum } from "types.js";
+import { ModerationStatusEnum } from "types.js";
 import checkTrackedRBAC from "functions/checkTrackedRBAC.js";
 import { db } from "init.js";
 
@@ -73,7 +73,7 @@ route.get(
         match = {
           ...match,
           isPublic: true,
-          moderationStatus: ContentModerationStatusEnum.ACTIVE,
+          moderationStatus: ModerationStatusEnum.ACTIVE,
         };
       }
 

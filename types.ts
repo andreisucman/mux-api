@@ -114,6 +114,7 @@ export type UserType = {
   nextAvatarUpdateAt: Date | null;
   nextDiaryRecordAfter: Date | null;
   nextNameUpdateAt: Date | null;
+  moderationStatus: ModerationStatusEnum;
 };
 
 export type ToAnalyzeType = {
@@ -154,7 +155,7 @@ export type StyleAnalysisType = {
   compareAnalysis: { [key: string]: number } | null;
   userName: string | null;
   avatar: { [key: string]: any } | null;
-  moderationStatus: ContentModerationStatusEnum;
+  moderationStatus: ModerationStatusEnum;
 };
 
 export type StyleGoalsType = {
@@ -348,7 +349,7 @@ export type ProgressImageType = {
   urls: BlurredUrlType[];
 };
 
-export enum ContentModerationStatusEnum {
+export enum ModerationStatusEnum {
   ACTIVE = "active",
   BLOCKED = "blocked",
 }
@@ -370,7 +371,7 @@ export type ProgressType = {
   isPublic: boolean;
   avatar?: { [key: string]: any };
   userName?: string;
-  moderationStatus: ContentModerationStatusEnum;
+  moderationStatus: ModerationStatusEnum;
 };
 
 export type UserProgressRecordType = {
@@ -529,7 +530,7 @@ export type ProofType = {
   isPublic: boolean;
   latestHeadScoreDifference: number;
   latestBodyScoreDifference: number;
-  moderationStatus: ContentModerationStatusEnum;
+  moderationStatus: ModerationStatusEnum;
 };
 
 export type SolutionType = {

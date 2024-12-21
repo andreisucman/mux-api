@@ -5,7 +5,7 @@ import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import { db, stripe } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import { CustomRequest } from "types.js";
+import { CustomRequest, ModerationStatusEnum } from "types.js";
 import { ConnectParamsType } from "types/createConnectAccountTypes.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 
@@ -67,7 +67,7 @@ route.post(
           db
             .collection("User")
             .updateOne(
-              { _id: new ObjectId(req.userId) },
+              { _id: new ObjectId(req.userId), moderationStatus: ModerationStatusEnum.ACTIVE },
               { $set: { "club.payouts.connectId": account.id } }
             )
         );

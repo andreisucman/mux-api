@@ -7,7 +7,7 @@ import doWithRetries from "helpers/doWithRetries.js";
 import { StyleAnalysisType } from "types.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import httpError from "@/helpers/httpError.js";
-import { ContentModerationStatusEnum } from "types.js";
+import { ModerationStatusEnum } from "types.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 
 const route = Router();
@@ -34,12 +34,10 @@ route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
     });
 
     const styleAnalysisRecord = (await doWithRetries(async () =>
-      db
-        .collection("StyleAnalysis")
-        .findOne({
-          _id: new ObjectId(analysisId),
-          moderationStatus: ContentModerationStatusEnum.ACTIVE,
-        })
+      db.collection("StyleAnalysis").findOne({
+        _id: new ObjectId(analysisId),
+        moderationStatus: ModerationStatusEnum.ACTIVE,
+      })
     )) as unknown as StyleAnalysisType | null;
 
     if (!styleAnalysisRecord)
@@ -93,7 +91,10 @@ route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
         db
           .collection("User")
           .updateOne(
-            { _id: new ObjectId(userId) },
+            {
+              _id: new ObjectId(userId),
+              moderationStatus: ModerationStatusEnum.ACTIVE,
+            },
             { $set: { latestStyleAnalysis: newLatestAnalysis } }
           )
       );
