@@ -41,7 +41,10 @@ export default async function createRoutine({
   try {
     const userInfo = (await doWithRetries(async () =>
       db.collection("User").findOne(
-        { _id: new ObjectId(userId), moderationStatus: ModerationStatusEnum.ACTIVE },
+        {
+          _id: new ObjectId(userId),
+          moderationStatus: ModerationStatusEnum.ACTIVE,
+        },
         {
           projection: {
             demographics: 1,
@@ -169,7 +172,8 @@ export default async function createRoutine({
   } catch (error) {
     await addAnalysisStatusError({
       userId: String(userId),
-      message: error.message,
+      message: "An unexpected error occured. Please try again.",
+      originalMessage: error.message,
       operationKey: type,
     });
     throw httpError(error);

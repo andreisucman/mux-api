@@ -21,9 +21,11 @@ import {
 } from "types.js";
 import addSuspiciousRecord from "./addSuspiciousRecord.js";
 import { ModerationStatusEnum } from "types.js";
+import moderateContent from "./moderateContent.js";
 import updateProgressImages from "functions/updateProgressImages.js";
 import { PartResultType } from "@/types/analyzePartTypes.js";
 import { db } from "init.js";
+import checkIfSelf from "./checkIfSelf.js";
 import httpError from "@/helpers/httpError.js";
 
 type Props = {
@@ -58,6 +60,33 @@ export default async function analyzePart({
     const partToAnalyzeObjects = toAnalyzeObjects.filter(
       (obj) => obj.part === part
     );
+
+    const suspiciousResults = [];
+
+    for (const object of partToAnalyzeObjects) {
+      const { isSafe, isSuspicious, suspiciousAnalysisResults } =
+        await moderateContent({
+          content: [
+            { type: "image_url", image_url: { url: object.mainUrl.url } },
+          ],
+        });
+
+      if (!isSafe) {
+        throw httpError(
+          `It looks like your image contains inappropriate content. Try a different one.`
+        );
+      }
+
+      const isSelf = await checkIfSelf({ image: object.mainUrl.url, userId });
+
+      if (!isSelf) {
+        throw httpError(`You can only upload images of yourself.`);
+      }
+
+      if (isSuspicious) {
+        suspiciousResults.push(...suspiciousAnalysisResults);
+      }
+    }
 
     const partResult = { part, concerns: [] } as PartResultType;
 
@@ -272,19 +301,10 @@ export default async function analyzePart({
     partResult.scoresDifference = newScoresDifference;
     partResult.latestProgress = recordOfProgress;
 
-    const someAreSuspicious = partToAnalyzeObjects.some(
-      (obj) => obj.suspiciousAnalysisResults
-    );
-
-    if (someAreSuspicious) {
-      const suspicious = partToAnalyzeObjects.filter(
-        (res) => res.suspiciousAnalysisResults
-      );
+    if (suspiciousResults.length > 0) {
       addSuspiciousRecord({
         collection: "Progress",
-        moderationResult: suspicious.flatMap(
-          (p) => p.suspiciousAnalysisResults
-        ),
+        moderationResult: suspiciousResults,
         recordId: String(recordOfProgress._id),
         userId,
       });

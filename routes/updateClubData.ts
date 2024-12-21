@@ -133,13 +133,15 @@ route.post(
         const { payouts } = club || {};
         const { connectId } = payouts;
 
-        await doWithRetries(() =>
-          stripe.accounts.update(connectId, {
-            business_profile: {
-              url: `${process.env.CLIENT_URL}/club/${name}`,
-            },
-          })
-        );
+        if (connectId) {
+          await doWithRetries(() =>
+            stripe.accounts.update(connectId, {
+              business_profile: {
+                url: `${process.env.CLIENT_URL}/club/${name}`,
+              },
+            })
+          );
+        }
       }
 
       if (intro) {
@@ -178,15 +180,13 @@ route.post(
       }
 
       await doWithRetries(async () =>
-        db
-          .collection("User")
-          .updateOne(
-            {
-              _id: new ObjectId(req.userId),
-              moderationStatus: ModerationStatusEnum.ACTIVE,
-            },
-            { $set: updatePayload }
-          )
+        db.collection("User").updateOne(
+          {
+            _id: new ObjectId(req.userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
+          { $set: updatePayload }
+        )
       );
 
       if (name || avatar) {

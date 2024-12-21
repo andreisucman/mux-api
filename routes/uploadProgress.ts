@@ -19,12 +19,9 @@ import checkCanScan from "@/helpers/checkCanScan.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import analyzeAppearance from "functions/analyzeAppearance.js";
 import formatDate from "@/helpers/formatDate.js";
-import moderateContent from "@/functions/moderateContent.js";
-import checkIfSelf from "@/functions/checkIfSelf.js";
-import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
-import validateImagePosition from "functions/validateImagePosition.js";
-import { db } from "init.js";
+import isImagePositionValid from "@/functions/isImagePositionValid.js";
 import httpError from "@/helpers/httpError.js";
+import { db } from "init.js";
 
 const route = Router();
 
@@ -64,45 +61,18 @@ route.post(
     }
 
     try {
-      const { isSafe, isSuspicious, suspiciousAnalysisResults } =
-        await moderateContent({
-          content: [{ type: "image_url", image_url: { url: image } }],
+      const { verdict: isPosiitonValid, message: changePositionMessage } =
+        await isImagePositionValid({
+          image,
+          part,
+          position,
+          userId: finalUserId,
         });
 
-      if (!isSafe) {
-        res.status(200).json({
-          error: `It looks like your image contains inappropriate content. Try a different image.`,
-        });
+      if (!isPosiitonValid) {
+        res.status(200).json({ error: changePositionMessage });
         return;
       }
-
-      // console.log(
-      //   "uploadProgress line 79 suspiciousAnalysisResults",
-      //   suspiciousAnalysisResults
-      // );
-
-      const isSelf = await checkIfSelf({ image, userId: finalUserId });
-
-      if (!isSelf) {
-        res.status(200).json({
-          error: `You can only upload images of yourself.`,
-        });
-        return;
-      }
-
-      // const positionValidationResponse = await validateImagePosition({
-      //   image,
-      //   part,
-      //   position,
-      //   userId: finalUserId,
-      // });
-
-      // console.log("positionValidationResponse", positionValidationResponse);
-
-      // if (!positionValidationResponse.verdict) {
-      //   res.status(200).json({ error: positionValidationResponse.message });
-      //   return;
-      // }
 
       const userInfo = (await doWithRetries(async () =>
         db.collection("User").findOne(
@@ -198,11 +168,6 @@ route.post(
         mainUrl: { url: image, name: "original" },
         contentUrlTypes,
       };
-
-      if (isSuspicious) {
-        newToAnalyzeObject.suspiciousAnalysisResults =
-          suspiciousAnalysisResults;
-      }
 
       const newTypeToAnalyze = [
         ...toAnalyze[type as "head"],

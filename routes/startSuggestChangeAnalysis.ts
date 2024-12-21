@@ -88,15 +88,13 @@ route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
       };
 
       await doWithRetries(async () =>
-        db
-          .collection("User")
-          .updateOne(
-            {
-              _id: new ObjectId(userId),
-              moderationStatus: ModerationStatusEnum.ACTIVE,
-            },
-            { $set: { latestStyleAnalysis: newLatestAnalysis } }
-          )
+        db.collection("User").updateOne(
+          {
+            _id: new ObjectId(userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
+          { $set: { latestStyleAnalysis: newLatestAnalysis } }
+        )
       );
     }
 
@@ -112,7 +110,9 @@ route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
     await addAnalysisStatusError({
       userId: String(userId),
       operationKey: `style-${type}`,
-      message: err.message,
+      message:
+        "An unexpected error occured. Please try again and inform us if the error persists.",
+      originalMessage: err.message,
     });
     next(err);
   }

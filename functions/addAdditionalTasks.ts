@@ -101,7 +101,8 @@ export default async function addAdditionalTasks({
     await addAnalysisStatusError({
       operationKey: type,
       userId: String(userId),
-      message: error.message,
+      message: "An unexpected error occured. Please try again.",
+      originalMessage: error.message,
     });
     throw httpError(error);
   }

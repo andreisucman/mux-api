@@ -2,7 +2,7 @@ import z from "zod";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import askRepeatedly from "functions/askRepeatedly.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
-import { validateImagePositionRequirements } from "data/validateImagePositionRequirements.js";
+import { isImagePositionValidRequirements } from "@/data/isImagePositionValidRequirements.js";
 import httpError from "@/helpers/httpError.js";
 
 type Props = {
@@ -12,7 +12,7 @@ type Props = {
   position: string;
 };
 
-export default async function validateImagePosition({
+export default async function isImagePositionValid({
   userId,
   image,
   part,
@@ -22,11 +22,11 @@ export default async function validateImagePosition({
     let requirement;
 
     if (position) {
-      requirement = validateImagePositionRequirements.find(
+      requirement = isImagePositionValidRequirements.find(
         (obj) => obj.part === part && obj.position === position
       );
     } else {
-      requirement = validateImagePositionRequirements.find(
+      requirement = isImagePositionValidRequirements.find(
         (obj) => obj.part === part
       );
     }
@@ -35,11 +35,9 @@ export default async function validateImagePosition({
       return { verdict: false, message: "Bad request" };
     }
 
-    const samePersonContent = `${requirement.requirement} Format your reponse as a JSON with this structure: {verdict: true if yes, false if not}`;
-
-    const ValidateImagePositionResponseType = z.object({
-      verdict: z.boolean(),
-    });
+    const ValidateImagePositionResponseType = z
+      .boolean()
+      .describe("respond with a true if yes and false if not");
 
     const runs = [
       {
@@ -52,10 +50,6 @@ export default async function validateImagePosition({
               detail: "low",
             },
           },
-          {
-            type: "text",
-            text: requirement.requirement,
-          },
         ],
         responseFormat: zodResponseFormat(
           ValidateImagePositionResponseType,
@@ -64,14 +58,14 @@ export default async function validateImagePosition({
       },
     ];
 
-    const response = await askRepeatedly({
+    const isValid = await askRepeatedly({
       userId,
-      systemContent: samePersonContent,
+      systemContent: requirement.requirement,
       runs: runs as RunType[],
       functionName: "validateImagePosition",
     });
 
-    return { verdict: response.verdict, message: requirement.message };
+    return { verdict: isValid, message: requirement.message };
   } catch (err) {
     throw httpError(err);
   }

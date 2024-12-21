@@ -1,4 +1,4 @@
-export const validateImagePositionRequirements = [
+export const isImagePositionValidRequirements = [
   {
     part: "face",
     position: "front",
@@ -20,14 +20,15 @@ export const validateImagePositionRequirements = [
   {
     part: "mouth",
     position: "mouth",
-    requirement: "Check if this is the image of an open mouth.",
+    requirement: "Check if this is a close up image of an open mouth.",
     message: "This must be a close up photo of your open mouth.",
   },
   {
     part: "scalp",
     position: "scalp",
-    requirement: "Check if this is the image of the top of a human's head.",
-    message: "This must be the photo of the top of your head.",
+    requirement:
+      "Check if this is a close up image of the top of a human's head.",
+    message: "This must be a close up photo of the top of your head.",
   },
   {
     part: "body",

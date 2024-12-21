@@ -150,7 +150,8 @@ export default async function findProducts({
     await addAnalysisStatusError({
       userId: String(userId),
       operationKey: analysisType,
-      message: err.message,
+      originalMessage: err.message,
+      message: "An unexpected error occured. Please try again."
     });
 
     throw httpError(err);

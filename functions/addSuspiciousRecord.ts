@@ -22,6 +22,7 @@ export default async function addSuspiciousRecord({
   collection,
   recordId,
   userId,
+  key,
   moderationResult,
 }: Props) {
   try {
@@ -32,6 +33,7 @@ export default async function addSuspiciousRecord({
         collection,
         moderationResult,
         createdAt: new Date(),
+        key,
       })
     );
   } catch (err) {

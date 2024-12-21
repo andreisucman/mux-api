@@ -15,6 +15,8 @@ import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import analyzeAppearance from "functions/analyzeAppearance.js";
 import formatDate from "@/helpers/formatDate.js";
 import checkCanScan from "@/helpers/checkCanScan.js";
+import moderateContent from "@/functions/moderateContent.js";
+import checkIfSelf from "@/functions/checkIfSelf.js";
 import httpError from "@/helpers/httpError.js";
 import { db } from "init.js";
 
@@ -41,16 +43,6 @@ route.post(
     }
 
     try {
-      // const moderationResponse = await moderateImages({
-      //   userId: String(userId),
-      //   image,
-      // });
-
-      // if (!moderationResponse.status) {
-      //   res.status(200).json({ error: moderationResponse.message });
-      //   return;
-      // }
-
       const userInfo = (await doWithRetries(async () =>
         db.collection("User").findOne(
           {
@@ -146,7 +138,9 @@ route.post(
       await addAnalysisStatusError({
         operationKey: type,
         userId: String(finalUserId),
-        message: error.message,
+        message:
+          "An unexpected error occured. Please try again and inform us if the error persists.",
+        originalMessage: error.message,
       });
       next(error);
     }

@@ -201,8 +201,16 @@ route.post(
 
           isSuspicious = isSuspiciousVerdict;
 
-          if (isSuspicious)
-            suspiciousResults.push(...suspiciousAnalysisResults);
+          if (isSuspicious) {
+            const scoresArray = suspiciousAnalysisResults.map((rec) =>
+              Math.max(...Object.values(rec.scores))
+            );
+            const highestScore = Math.max(...scoresArray);
+            const indexOfHighestResult = scoresArray.indexOf(highestScore);
+            suspiciousResults.push(
+              suspiciousAnalysisResults[indexOfHighestResult]
+            );
+          }
         }
       }
 
@@ -448,7 +456,8 @@ route.post(
       await addAnalysisStatusError({
         userId: String(req.userId),
         operationKey: taskId,
-        message: err.message,
+        message: "An unexpected error occured. Please try again.",
+        originalMessage: err.message,
       });
       next(err);
     }
