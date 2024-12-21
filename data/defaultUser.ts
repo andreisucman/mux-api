@@ -105,27 +105,6 @@ export const defaultRequiredProgress = {
   ],
 };
 
-export const defaultStyleRequirements = {
-  head: [
-    {
-      title: "Style scan: Head",
-      instruction: "Upload a photo of your head how you usually style it.",
-      type: TypeEnum.HEAD,
-      part: PartEnum.STYLE,
-      position: PositionEnum.FRONT,
-    },
-  ],
-  body: [
-    {
-      title: "Style scan: Outfit",
-      instruction: "Take a full body photo of your outfit.",
-      type: TypeEnum.BODY,
-      part: PartEnum.STYLE,
-      position: PositionEnum.FRONT,
-    },
-  ],
-};
-
 const defaultDemographics: DemographicsType = {
   sex: null,
   ageInterval: null,
@@ -214,7 +193,6 @@ export const defaultUser: UserType = {
   streaks: defaultStreaks,
   specialConsiderations: "",
   tosAccepted: false,
-  isBlocked: false,
   nextScan: defaultNextAction,
   nextRoutine: defaultNextAction,
   streakDates: {
@@ -225,7 +203,6 @@ export const defaultUser: UserType = {
   emailVerified: false,
   concerns: [],
   requiredProgress: defaultRequiredProgress,
-  styleRequirements: defaultStyleRequirements,
   subscriptions: defaultSubscriptions,
   toAnalyze: { head: [], body: [] },
   coachEnergy: 100000,

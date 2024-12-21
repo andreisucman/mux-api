@@ -3,7 +3,6 @@ import { ObjectId } from "mongodb";
 import getLatestRoutinesAndTasks from "functions/getLatestRoutineAndTasks.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
-import { ModerationStatusEnum } from "@/types.js";
 
 type Props = {
   userId: string;
@@ -11,14 +10,14 @@ type Props = {
 
 async function getUserData({ userId }: Props) {
   if (!userId) return null;
-  
+
   try {
     const userInfo = await doWithRetries(
       async () =>
         await db
           .collection("User")
           .findOne(
-            { _id: new ObjectId(userId), moderationStatus: ModerationStatusEnum.ACTIVE },
+            { _id: new ObjectId(userId) },
             { projection: { password: 0 } }
           )
     );

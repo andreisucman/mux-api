@@ -73,11 +73,11 @@ export default async function rateFeaturePotential({
       functionName: "rateFeaturePotential",
     });
 
-    const finalSystemContent = `You are given a description of the user's body part and it's current esthetic score. Your goal is to format the description in the 2nd tense (you/your) with a better flow and a more cohesive context. Your response must be entirely based on the information you are given. Don't make things up. Rate is the upper boundary of the highest achievable esthetic score for the body part. Explanation is your description and reasoning. Think step-by-step.`;
+    const finalSystemContent = `You are given a description of the user's body part, it's current esthetic score and its highest achievable esthetics score. Your goal is to format the description in the 2nd tense (you/your) with a better flow and a more cohesive context. Your response must be entirely based on the information you are given. Don't make things up. Think step-by-step.`;
 
     const FormatResponseAsRateAndExplanationType = z.object({
-      rate: z.number(),
-      explanation: z.string(),
+      rate: z.number().describe("the highest achievable esthetic score for the body part"),
+      explanation: z.string().describe("the description of the body part and the reasoning for the rate"),
     });
 
     const finalRuns = [

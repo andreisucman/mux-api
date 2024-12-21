@@ -119,3 +119,20 @@ export function combineSolutions(
 
   return combinedSolutions;
 }
+
+export default function selectItemsAtEqualDistances(
+  arr: any[],
+  distance: number
+) {
+  if (arr.length < distance) {
+    return arr;
+  }
+
+  const selectedItems = [];
+
+  for (let i = 0; i < arr.length; i += distance) {
+    selectedItems.push(arr[i]);
+  }
+
+  return selectedItems;
+}

@@ -15,7 +15,9 @@ import getReadyBlurredUrls from "functions/getReadyBlurredUrls.js";
 import getScoreDifference from "@/helpers/getScoreDifference.js";
 import getStyleCompareRecord from "functions/getStyleCompareRecord.js";
 import { StartStyleAnalysisUserInfoType } from "types/startStyleAnalysisTypes.js";
+import moderateContent from "@/functions/moderateContent.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
+import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 
 const route = Router();
 
@@ -37,6 +39,18 @@ route.post(
             { upsert: true }
           )
       );
+
+      const { isSafe, isSuspicious, suspiciousAnalysisResults } =
+        await moderateContent({
+          content: [{ type: "image_url", image_url: { url: image } }],
+        });
+
+      if (!isSafe) {
+        res.status(200).json({
+          error: `This photo violates our TOS. Try a different one.`,
+        });
+        return;
+      }
 
       res.status(200).json({ message: userId });
 
@@ -177,15 +191,13 @@ route.post(
         };
 
         await doWithRetries(async () =>
-          db
-            .collection("User")
-            .updateOne(
-              {
-                _id: new ObjectId(req.userId),
-                moderationStatus: ModerationStatusEnum.ACTIVE,
-              },
-              { $set: { latestStyleAnalysis: newLatestAnalysis } }
-            )
+          db.collection("User").updateOne(
+            {
+              _id: new ObjectId(req.userId),
+              moderationStatus: ModerationStatusEnum.ACTIVE,
+            },
+            { $set: { latestStyleAnalysis: newLatestAnalysis } }
+          )
         );
       }
 
@@ -201,11 +213,21 @@ route.post(
             { $set: { isRunning: false, progress: 0, isError: null } }
           )
       );
+
+      if (isSuspicious) {
+        addSuspiciousRecord({
+          collection: "StyleAnalysis",
+          moderationResult: suspiciousAnalysisResults,
+          recordId: String(styleAnalysis._id),
+          userId,
+        });
+      }
     } catch (error) {
       await addAnalysisStatusError({
         userId: String(userId),
         operationKey: `style-${type}`,
-        message: error.message,
+        message: "An unexpected error occured. Please try again.",
+        originalMessage: error.message,
       });
       next(error);
     }

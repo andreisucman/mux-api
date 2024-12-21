@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { Request } from "express";
 import { Moderation } from "openai/resources/moderations.mjs";
+import { ModerationResultType } from "./functions/moderateContent.js";
 
 export interface CustomRequest extends Request {
   userId?: string;
@@ -84,10 +85,6 @@ export type UserType = {
     head: RequirementType[];
     body: RequirementType[];
   };
-  styleRequirements: {
-    head: RequirementType[];
-    body: RequirementType[];
-  };
   latestScores: LatestScoresType;
   latestScoresDifference: LatestScoresType;
   club: ClubDataType;
@@ -108,7 +105,6 @@ export type UserType = {
   };
   coachEnergy: number;
   stripeUserId: string;
-  isBlocked: boolean;
   emailVerified: boolean;
   canRejoinClubAfter: Date | null;
   nextAvatarUpdateAt: Date | null;
@@ -124,7 +120,8 @@ export type ToAnalyzeType = {
   contentUrlTypes: BlurredUrlType[];
   position: string;
   part: PartEnum | null;
-  blurType: BlurTypeEnum;
+  blurType?: BlurTypeEnum;
+  suspiciousAnalysisResults?: ModerationResultType[];
 };
 
 export type StyleAnalysisType = {

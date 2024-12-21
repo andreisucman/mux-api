@@ -28,6 +28,7 @@ import analyzeCalories from "functions/analyzeCalories.js";
 import getStreaksToIncrement from "helpers/getStreaksToIncrement.js";
 import getScoreDifference from "helpers/getScoreDifference.js";
 import getReadyBlurredUrls from "functions/getReadyBlurredUrls.js";
+import selectItemsAtEqualDistances from "helpers/utils.js";
 import httpError from "@/helpers/httpError.js";
 
 const route = Router();
@@ -156,11 +157,12 @@ route.post(
           if (status) {
             proofImages = message;
           } else {
-            return await addAnalysisStatusError({
+            await addAnalysisStatusError({
               message: error,
               userId: req.userId,
               operationKey: taskId,
             });
+            return;
           }
         } else if (urlType === "image") {
           proofImages = [url];
@@ -170,21 +172,38 @@ route.post(
         clearInterval(iId);
       }
 
-      const { isSafe, isSuspicious, suspiciousAnalysisResults } =
-        await moderateContent({
-          content: proofImages.map((image: string) => ({
-            type: "image_url",
-            image_url: { url: image },
-          })),
-        });
+      let isSuspicious = false;
+      let suspiciousResults = [];
 
-      if (!isSafe) {
-        await addAnalysisStatusError({
-          message: "Video contains prohibited content.",
-          userId: req.userId,
-          operationKey: taskId,
-        });
-        return;
+      if (proofImages) {
+        for (const image of proofImages) {
+          const {
+            isSafe,
+            isSuspicious: isSuspiciousVerdict,
+            suspiciousAnalysisResults,
+          } = await moderateContent({
+            content: [
+              {
+                type: "image_url",
+                image_url: { url: image },
+              },
+            ],
+          });
+
+          if (!isSafe) {
+            await addAnalysisStatusError({
+              message: "Video contains prohibited content.",
+              userId: req.userId,
+              operationKey: taskId,
+            });
+            return;
+          }
+
+          isSuspicious = isSuspiciousVerdict;
+
+          if (isSuspicious)
+            suspiciousResults.push(...suspiciousAnalysisResults);
+        }
       }
 
       await incrementProgress({
@@ -194,8 +213,8 @@ route.post(
       });
 
       const majorityIdentical = await isMajorityOfImagesIdentical(
-        ...proofImages.slice(0, 4),
-        ...oldProofImages.slice(0, 4)
+        ...proofImages,
+        ...oldProofImages
       );
 
       if (majorityIdentical) {
@@ -209,8 +228,9 @@ route.post(
 
       const verdicts = [];
       const explanations = [];
+      const selectedProofImages = selectItemsAtEqualDistances(proofImages, 4);
 
-      for (const image of proofImages) {
+      for (const image of selectedProofImages) {
         const { verdict: proofAccepted, message: verdictExplanation } =
           await checkProofImage({
             userId: req.userId,
@@ -223,7 +243,8 @@ route.post(
       }
 
       const checkFailed =
-        verdicts.filter(Boolean).length < Math.round(proofImages.length / 2);
+        verdicts.filter(Boolean).length <
+        Math.round(selectedProofImages.length / 2);
 
       // if (checkFailed) {
       //   await addAnalysisStatusError({
@@ -370,7 +391,7 @@ route.post(
         const { dailyCalorieGoal } = userInfo;
         const foodAnalysis = await analyzeCalories({
           userId: req.userId,
-          url: proofImages[0],
+          url: selectedProofImages[0],
         });
         const { energy } = foodAnalysis;
         const newDailyCalorieGoal = Math.max(0, dailyCalorieGoal - energy);
@@ -378,15 +399,13 @@ route.post(
       }
 
       await doWithRetries(async () =>
-        db
-          .collection("User")
-          .updateOne(
-            {
-              _id: new ObjectId(req.userId),
-              moderationStatus: ModerationStatusEnum.ACTIVE,
-            },
-            userUpdatePayload
-          )
+        db.collection("User").updateOne(
+          {
+            _id: new ObjectId(req.userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
+          userUpdatePayload
+        )
       );
 
       await doWithRetries(async () =>
@@ -420,7 +439,7 @@ route.post(
       if (isSuspicious) {
         addSuspiciousRecord({
           collection: "Proof",
-          moderationResult: suspiciousAnalysisResults,
+          moderationResult: suspiciousResults,
           recordId: String(newProof._id),
           userId: req.userId,
         });

@@ -19,6 +19,7 @@ import {
   ProgressImageType,
   BeforeAfterType,
 } from "types.js";
+import addSuspiciousRecord from "./addSuspiciousRecord.js";
 import { ModerationStatusEnum } from "types.js";
 import updateProgressImages from "functions/updateProgressImages.js";
 import { PartResultType } from "@/types/analyzePartTypes.js";
@@ -270,6 +271,24 @@ export default async function analyzePart({
     partResult.latestScores = scores;
     partResult.scoresDifference = newScoresDifference;
     partResult.latestProgress = recordOfProgress;
+
+    const someAreSuspicious = partToAnalyzeObjects.some(
+      (obj) => obj.suspiciousAnalysisResults
+    );
+
+    if (someAreSuspicious) {
+      const suspicious = partToAnalyzeObjects.filter(
+        (res) => res.suspiciousAnalysisResults
+      );
+      addSuspiciousRecord({
+        collection: "Progress",
+        moderationResult: suspicious.flatMap(
+          (p) => p.suspiciousAnalysisResults
+        ),
+        recordId: String(recordOfProgress._id),
+        userId,
+      });
+    }
 
     return partResult;
   } catch (err) {

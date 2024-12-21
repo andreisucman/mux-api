@@ -12,7 +12,6 @@ type Props = {
     | "Proof"
     | "About"
     | "Diary"
-    | "Task"
     | "User";
   recordId: string;
   key?: string;

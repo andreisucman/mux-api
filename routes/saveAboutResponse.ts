@@ -26,7 +26,7 @@ route.post(
     try {
       const { isSafe, isSuspicious, suspiciousAnalysisResults } =
         await moderateContent({
-          content: [{ type: "text", text: "reply" }],
+          content: [{ type: "text", text: reply }],
         });
 
       if (!isSafe) {
@@ -54,7 +54,7 @@ route.post(
         db.collection("User").findOne(
           {
             _id: new ObjectId(req.userId),
-            moderationStatus: ModerationStatusEnum.ACTIVE
+            moderationStatus: ModerationStatusEnum.ACTIVE,
           },
           { projection: { club: 1 } }
         )
@@ -96,7 +96,7 @@ route.post(
         db.collection("User").updateOne(
           {
             _id: new ObjectId(req.userId),
-            moderationStatus: ModerationStatusEnum.ACTIVE
+            moderationStatus: ModerationStatusEnum.ACTIVE,
           },
           { $set: { club: toUpdate } }
         )

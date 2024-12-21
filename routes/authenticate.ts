@@ -59,6 +59,16 @@ route.post(
         filter: checkUserPresenceFilter,
       });
 
+      if (userInfo.moderationStatus === ModerationStatusEnum.BLOCKED) {
+        res
+          .status(200)
+          .json({
+            error:
+              "Your account has been blocked. Please check your email for more details.",
+          });
+        return;
+      }
+
       if (userInfo) {
         // if the registration happens as a result of the analysis
         userData = userInfo;
@@ -90,15 +100,13 @@ route.post(
           }
 
           await doWithRetries(() =>
-            db
-              .collection("User")
-              .updateOne(
-                {
-                  _id: new ObjectId(userId),
-                  moderationStatus: ModerationStatusEnum.ACTIVE,
-                },
-                { $set: updatePayload }
-              )
+            db.collection("User").updateOne(
+              {
+                _id: new ObjectId(userId),
+                moderationStatus: ModerationStatusEnum.ACTIVE,
+              },
+              { $set: updatePayload }
+            )
           );
 
           userData = await getUserData({ userId: String(userId) });

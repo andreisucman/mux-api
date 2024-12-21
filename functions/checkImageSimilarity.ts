@@ -52,8 +52,6 @@ export default async function checkImageSimilarity({
       db.collection(collection).aggregate(pipeline).next()
     );
 
-    console.log("closestDocument", closestDocument);
-
     if (closestDocument) {
       if (closestDocument.score >= 90) {
         return { status: false, record: closestDocument };

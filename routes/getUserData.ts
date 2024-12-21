@@ -1,7 +1,8 @@
 import { Router, Response, NextFunction } from "express";
-import { CustomRequest } from "types.js";
+import { CustomRequest, ModerationStatusEnum } from "types.js";
 import getUserData from "functions/getUserData.js";
 import doWithRetries from "helpers/doWithRetries.js";
+import signOut from "@/functions/signOut.js";
 
 const route = Router();
 
@@ -12,6 +13,11 @@ route.get(
       const userData = await doWithRetries(
         async () => await getUserData({ userId: req.userId })
       );
+
+      if (userData.moderationStatus === ModerationStatusEnum.BLOCKED) {
+        signOut(res, 402, "Account blocked");
+        return;
+      }
 
       res.status(200).json({ message: userData });
     } catch (err) {

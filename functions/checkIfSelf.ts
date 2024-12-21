@@ -15,17 +15,18 @@ type Props = {
 };
 
 export default async function checkIfSelf({ userImage, image, userId }: Props) {
-  let isSame = false;
+  let isSelf = true;
 
   try {
     if (!userImage) {
       const userInfo = (await doWithRetries(async () =>
-        db
-          .collection("User")
-          .findOne(
-            { _id: new ObjectId(userId), moderationStatus: ModerationStatusEnum.ACTIVE },
-            { projection: { latestProgress: 1 } }
-          )
+        db.collection("User").findOne(
+          {
+            _id: new ObjectId(userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
+          { projection: { latestProgress: 1 } }
+        )
       )) as unknown as { latestProgress: UserProgressRecordType };
 
       const { latestProgress } = userInfo || {};
@@ -78,7 +79,7 @@ export default async function checkIfSelf({ userImage, image, userId }: Props) {
         },
       ];
 
-      isSame = await askRepeatedly({
+      isSelf = await askRepeatedly({
         userId,
         systemContent: samePersonContent,
         runs: runs as RunType[],
@@ -88,6 +89,6 @@ export default async function checkIfSelf({ userImage, image, userId }: Props) {
   } catch (err) {
     throw httpError(err);
   } finally {
-    return isSame;
+    return isSelf;
   }
 }

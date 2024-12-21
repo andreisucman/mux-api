@@ -76,6 +76,11 @@ route.post(
         return;
       }
 
+      // console.log(
+      //   "uploadProgress line 79 suspiciousAnalysisResults",
+      //   suspiciousAnalysisResults
+      // );
+
       const isSelf = await checkIfSelf({ image, userId: finalUserId });
 
       if (!isSelf) {
@@ -185,19 +190,28 @@ route.post(
       }
 
       /* add the current uploaded info to the info to analyze */
+      const newToAnalyzeObject: ToAnalyzeType = {
+        type,
+        part,
+        position,
+        createdAt: new Date(),
+        mainUrl: { url: image, name: "original" },
+        contentUrlTypes,
+      };
+
+      if (isSuspicious) {
+        newToAnalyzeObject.suspiciousAnalysisResults =
+          suspiciousAnalysisResults;
+      }
+
+      const newTypeToAnalyze = [
+        ...toAnalyze[type as "head"],
+        newToAnalyzeObject,
+      ];
+
       const newToAnalyze: { head: ToAnalyzeType[]; body: ToAnalyzeType[] } = {
         ...toAnalyze,
-        [type]: [
-          ...toAnalyze[type as "head"],
-          {
-            type,
-            part,
-            position,
-            createdAt: new Date(),
-            mainUrl: { url: image, name: "original" },
-            contentUrlTypes,
-          },
-        ],
+        [type]: newTypeToAnalyze,
       };
 
       let toUpdate: { $set: { [key: string]: any } } = {
@@ -226,7 +240,7 @@ route.post(
           },
         });
 
-        const insertedProgressRecords = await analyzeAppearance({
+        await analyzeAppearance({
           name,
           avatar,
           type,
@@ -246,34 +260,15 @@ route.post(
           latestScoresDifference,
           newSpecialConsiderations,
         });
-
-        if (isSuspicious) {
-          for (const record of insertedProgressRecords) {
-            const progressUrls = record.images.map((i) => i.mainUrl.url);
-
-            const relevantModerationResults = suspiciousAnalysisResults.filter(
-              (r) => progressUrls.includes(r.content)
-            );
-
-            addSuspiciousRecord({
-              collection: "Progress",
-              moderationResult: relevantModerationResults,
-              recordId: String(record._id),
-              userId: req.userId,
-            });
-          }
-        }
       } else {
         await doWithRetries(async () =>
-          db
-            .collection("User")
-            .updateOne(
-              {
-                _id: new ObjectId(finalUserId),
-                moderationStatus: ModerationStatusEnum.ACTIVE,
-              },
-              toUpdate
-            )
+          db.collection("User").updateOne(
+            {
+              _id: new ObjectId(finalUserId),
+              moderationStatus: ModerationStatusEnum.ACTIVE,
+            },
+            toUpdate
+          )
         );
         res.status(200).json({
           message: {
@@ -286,7 +281,8 @@ route.post(
       await addAnalysisStatusError({
         operationKey: type,
         userId: String(finalUserId),
-        message: err.message,
+        message: "An unexprected error occured. Please try again.",
+        originalMessage: err.message,
       });
       next(err);
     }

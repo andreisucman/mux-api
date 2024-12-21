@@ -39,29 +39,29 @@ export default async function moderateContent({ content }: Props) {
       const { category_scores } = results[i];
       const values = Object.values(category_scores);
 
-      for (const value of values) {
-        if (value >= Number(process.env.MODERATION_UPPER_BOUNDARY)) {
-          isSafe = false;
-        }
+      isSafe = !values.some(
+        (v) => v >= Number(process.env.MODERATION_UPPER_BOUNDARY)
+      );
 
-        isSuspicious =
-          value >= Number(process.env.MODERATION_LOWER_BOUNDARY) &&
-          value < Number(process.env.MODERATION_UPPER_BOUNDARY);
+      isSuspicious = values.some(
+        (v) =>
+          v >= Number(process.env.MODERATION_LOWER_BOUNDARY) &&
+          v < Number(process.env.MODERATION_UPPER_BOUNDARY)
+      );
 
-        if (isSuspicious) {
-          if (content[i].type === "text") {
-            suspiciousAnalysisResults.push({
-              type: content[i].type,
-              content: (content[i] as ModerationTextInput).text,
-              scores: results[i].category_scores,
-            });
-          } else {
-            suspiciousAnalysisResults.push({
-              type: content[i].type,
-              content: (content[i] as ModerationImageURLInput).image_url.url,
-              scores: results[i].category_scores,
-            });
-          }
+      if (isSuspicious) {
+        if (content[i].type === "text") {
+          suspiciousAnalysisResults.push({
+            type: content[i].type,
+            content: (content[i] as ModerationTextInput).text,
+            scores: results[i].category_scores,
+          });
+        } else {
+          suspiciousAnalysisResults.push({
+            type: content[i].type,
+            content: (content[i] as ModerationImageURLInput).image_url.url,
+            scores: results[i].category_scores,
+          });
         }
       }
     }

@@ -326,15 +326,13 @@ export default async function analyzeAppearance({
     toUpdateUser.$set.toAnalyze[type] = [];
 
     await doWithRetries(async () =>
-      db
-        .collection("User")
-        .updateOne(
-          {
-            _id: new ObjectId(userId),
-            moderationStatus: ModerationStatusEnum.ACTIVE,
-          },
-          toUpdateUser
-        )
+      db.collection("User").updateOne(
+        {
+          _id: new ObjectId(userId),
+          moderationStatus: ModerationStatusEnum.ACTIVE,
+        },
+        toUpdateUser
+      )
     );
 
     await doWithRetries(async () =>
@@ -368,7 +366,6 @@ export default async function analyzeAppearance({
     }
 
     console.timeEnd("analyzeAppearance - finalization");
-    return analysesResults.map((p) => p.latestProgress);
   } catch (err) {
     throw httpError(err);
   }

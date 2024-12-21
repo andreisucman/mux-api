@@ -18,7 +18,7 @@ export default async function isActivityHarmful({ userId, text }: Props) {
       explanation: z
         .string()
         .describe(
-          "one sentence explanation of why you think this text is harmful"
+          "if harmful one sentence explanation of why you think this text is harmful, else empty string"
         ),
     });
 

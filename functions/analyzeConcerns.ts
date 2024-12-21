@@ -47,8 +47,6 @@ export default async function analyzeConcerns({
 
     const concerns = concernObjects.map((obj) => obj.name);
 
-    console.log("concernObjects", concernObjects);
-
     const systemContent = `You are a ${
       type === "head"
         ? "esthetician-dermatologist-dentist"
@@ -60,8 +58,6 @@ export default async function analyzeConcerns({
         ? "-" + concerns.join("\n-")
         : "-" + concerns.join("\n-")
     } are clearly visible on the images. Your response is the name of the relevant concerns from the list and 1 sentence description for each in the 2nd tense (you/your) describing where it is present on the user's photos. Think step-by-step. Use only the information provided.`;
-
-    console.log("concerns", concerns);
 
     const ConcernsResponseType = z.object({
       concerns: z
