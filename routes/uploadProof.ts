@@ -443,7 +443,7 @@ route.post(
         addSuspiciousRecord({
           collection: "Proof",
           moderationResult: [theMostSuspiciousResult],
-          recordId: String(newProof._id),
+          contentId: String(newProof._id),
           userId: req.userId,
         });
       }

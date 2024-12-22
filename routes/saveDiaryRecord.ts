@@ -117,7 +117,7 @@ route.post(
         addSuspiciousRecord({
           collection: "Diary",
           moderationResult: suspiciousAnalysisResults,
-          recordId: String(newDiaryRecord._id),
+          contentId: String(newDiaryRecord._id),
           userId: req.userId,
         });
       }

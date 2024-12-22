@@ -106,7 +106,7 @@ route.post(
         addSuspiciousRecord({
           collection: "About",
           moderationResult: suspiciousAnalysisResults,
-          recordId: String(newAboutRecord._id),
+          contentId: String(newAboutRecord._id),
           userId: req.userId,
         });
       }

@@ -218,7 +218,7 @@ route.post(
         addSuspiciousRecord({
           collection: "StyleAnalysis",
           moderationResult: suspiciousAnalysisResults,
-          recordId: String(styleAnalysis._id),
+          contentId: String(styleAnalysis._id),
           userId,
         });
       }

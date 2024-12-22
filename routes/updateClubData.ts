@@ -45,7 +45,7 @@ const handleCheckSafety = async ({
       addSuspiciousRecord({
         collection: "User",
         moderationResult: suspiciousAnalysisResults,
-        recordId: req.userId,
+        contentId: req.userId,
         userId: req.userId,
         key,
       });

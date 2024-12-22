@@ -3,6 +3,7 @@ import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 import { ModerationResultType } from "./moderateContent.js";
 import { adminDb } from "init.js";
+import { ModerationStatusEnum } from "@/types.js";
 
 type Props = {
   userId: string;
@@ -13,14 +14,14 @@ type Props = {
     | "About"
     | "Diary"
     | "User";
-  recordId: string;
+  contentId: string;
   key?: string;
   moderationResult: ModerationResultType[];
 };
 
 export default async function addSuspiciousRecord({
   collection,
-  recordId,
+  contentId,
   userId,
   key,
   moderationResult,
@@ -29,9 +30,10 @@ export default async function addSuspiciousRecord({
     await doWithRetries(async () =>
       adminDb.collection("SuspiciousRecord").insertOne({
         userId: new ObjectId(userId),
-        recordId: new ObjectId(recordId),
+        contentId: new ObjectId(contentId),
         collection,
         moderationResult,
+        moderationsStatus: ModerationStatusEnum.ACTIVE,
         createdAt: new Date(),
         key,
       })

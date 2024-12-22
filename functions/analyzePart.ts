@@ -305,7 +305,7 @@ export default async function analyzePart({
       addSuspiciousRecord({
         collection: "Progress",
         moderationResult: suspiciousResults,
-        recordId: String(recordOfProgress._id),
+        contentId: String(recordOfProgress._id),
         userId,
       });
     }
