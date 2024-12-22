@@ -33,7 +33,7 @@ export default async function addSuspiciousRecord({
         contentId: new ObjectId(contentId),
         collection,
         moderationResult,
-        moderationsStatus: ModerationStatusEnum.ACTIVE,
+        moderationStatus: ModerationStatusEnum.ACTIVE,
         createdAt: new Date(),
         key,
       })
