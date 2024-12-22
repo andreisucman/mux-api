@@ -172,23 +172,19 @@ route.post(
         clearInterval(iId);
       }
 
-      let isSuspicious = false;
-      let suspiciousResults = [];
+      const suspiciousResults = [];
 
       if (proofImages) {
         for (const image of proofImages) {
-          const {
-            isSafe,
-            isSuspicious: isSuspiciousVerdict,
-            suspiciousAnalysisResults,
-          } = await moderateContent({
-            content: [
-              {
-                type: "image_url",
-                image_url: { url: image },
-              },
-            ],
-          });
+          const { isSafe, isSuspicious, suspiciousAnalysisResults } =
+            await moderateContent({
+              content: [
+                {
+                  type: "image_url",
+                  image_url: { url: image },
+                },
+              ],
+            });
 
           if (!isSafe) {
             await addAnalysisStatusError({
@@ -199,17 +195,8 @@ route.post(
             return;
           }
 
-          isSuspicious = isSuspiciousVerdict;
-
           if (isSuspicious) {
-            const scoresArray = suspiciousAnalysisResults.map((rec) =>
-              Math.max(...Object.values(rec.scores))
-            );
-            const highestScore = Math.max(...scoresArray);
-            const indexOfHighestResult = scoresArray.indexOf(highestScore);
-            suspiciousResults.push(
-              suspiciousAnalysisResults[indexOfHighestResult]
-            );
+            suspiciousResults.push(...suspiciousAnalysisResults);
           }
         }
       }
@@ -444,10 +431,18 @@ route.post(
         )
       );
 
-      if (isSuspicious) {
+      if (suspiciousResults.length > 0) {
+        const scoresArray = suspiciousResults.map((rec) =>
+          Math.max(...Object.values(rec.scores))
+        );
+        const highestScore = Math.max(...scoresArray);
+        const indexOfHighestResult = scoresArray.indexOf(highestScore);
+
+        const theMostSuspiciousResult = suspiciousResults[indexOfHighestResult];
+
         addSuspiciousRecord({
           collection: "Proof",
-          moderationResult: suspiciousResults,
+          moderationResult: [theMostSuspiciousResult],
           recordId: String(newProof._id),
           userId: req.userId,
         });

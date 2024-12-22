@@ -81,13 +81,6 @@ async function askOpenai({
       userId,
     });
 
-    console.log(
-      `${functionName}`,
-      "isJson",
-      isJson,
-      completion.choices[0].message.content
-    );
-
     return isJson
       ? JSON.parse(completion.choices[0].message.content)
       : completion.choices[0].message.content;

@@ -131,7 +131,7 @@ route.post(
 
         const { club } = userInfo;
         const { payouts } = club || {};
-        const { connectId } = payouts;
+        const { connectId } = payouts || {};
 
         if (connectId) {
           await doWithRetries(() =>

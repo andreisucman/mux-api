@@ -19,12 +19,6 @@ export default async function isImagePositionValid({
   position,
 }: Props) {
   try {
-    console.log("inputs",{
-      userId,
-      image,
-      part,
-      position,
-    })
     let requirement;
 
     if (position) {
@@ -42,9 +36,7 @@ export default async function isImagePositionValid({
     }
 
     const ValidateImagePositionResponseType = z.object({
-      verdict: z
-        .boolean()
-        .describe("true if yes and false if not"),
+      verdict: z.boolean().describe("true if yes and false if not"),
     });
 
     const runs = [

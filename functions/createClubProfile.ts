@@ -86,11 +86,11 @@ export default async function createClubProfile({ userId, avatar }: Props) {
       followingUserId: null,
       bio: clubBio,
       payouts: {
-        connectId: "",
+        connectId: null,
         rewardEarned: 0,
         payoutsEnabled: false,
         detailsSubmitted: false,
-        disabledReason: "",
+        disabledReason: null,
       },
       privacy: defaultClubPrivacy,
       totalFollowers: 0,

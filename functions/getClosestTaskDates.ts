@@ -16,6 +16,7 @@ export default async function getClosestTaskDates({ userId }: Props) {
           {
             $match: {
               userId: new ObjectId(userId),
+              expiresAt: { $gte: new Date() }
               // $or: [
               //   {
               //     status: "active",

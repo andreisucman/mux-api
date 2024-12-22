@@ -27,9 +27,6 @@ route.post(
 
     if (!concerns || !type) {
       res.status(400).json({ error: "Bad request" });
-      console.log(
-        `Error in createRoutineRoute: Concerns: ${concerns}, type: ${type}`
-      );
       return;
     }
 
@@ -145,7 +142,10 @@ route.post(
 
       await doWithRetries(async () =>
         db.collection("User").updateOne(
-          { _id: new ObjectId(req.userId), moderationStatus: ModerationStatusEnum.ACTIVE },
+          {
+            _id: new ObjectId(req.userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
           {
             $set: {
               nextRoutine: updatedNextRoutine,
