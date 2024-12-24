@@ -8,11 +8,13 @@ import httpError from "@/helpers/httpError.js";
 type Props = {
   toAnalyzeObjects: ToAnalyzeType[];
   userId: string;
+  categoryName: string;
 };
 
 export default async function getCalorieGoal({
   toAnalyzeObjects,
   userId,
+  categoryName,
 }: Props) {
   try {
     const systemContent = `You are a dietician. You are given an image of a person and a set of their physical concerns. Your goal is to determine how much calories this person should consume to improve their physical concerns best. Assume that the person is going to exercise for improving their concerns. Respond with a number representing the total kcal for a day. Think step-by-step`;
@@ -53,6 +55,7 @@ export default async function getCalorieGoal({
       systemContent,
       runs: runs as RunType[],
       userId,
+      categoryName,
       functionName: "getCalorieGoal",
     });
     return response;

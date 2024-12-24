@@ -9,12 +9,14 @@ type Props = {
   text: string;
   type: TypeEnum;
   userId: string;
+  categoryName: string;
 };
 
 export default async function checkIfTaskIsRelated({
   userId,
   type,
   text,
+  categoryName
 }: Props) {
   const condition =
     type === "head"
@@ -43,6 +45,7 @@ export default async function checkIfTaskIsRelated({
 
     const response = await askRepeatedly({
       userId,
+      categoryName,
       systemContent: systemContent,
       runs: runs as RunType[],
       functionName: "checkIfTaskIsRelated",

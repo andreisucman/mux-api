@@ -5,9 +5,14 @@ import askRepeatedly from "functions/askRepeatedly.js";
 type Props = {
   userNote: string;
   userId: string;
+  categoryName: string;
 };
 
-export default async function rephraseUserNote({ userNote, userId }: Props) {
+export default async function rephraseUserNote({
+  userNote,
+  userId,
+  categoryName,
+}: Props) {
   try {
     let systemContent = `The user gives you a text. Your goal is to check if this text contains any references to dates (or point in time) such as 'yesterday', 'two weeks ago' and alike.`;
 
@@ -36,7 +41,8 @@ export default async function rephraseUserNote({ userNote, userId }: Props) {
       systemContent,
       runs: runs as RunType[],
       userId,
-      functionName: "rephraseUserNote"
+      categoryName,
+      functionName: "rephraseUserNote",
     });
 
     if (!verdict) {
@@ -77,9 +83,10 @@ export default async function rephraseUserNote({ userNote, userId }: Props) {
 
     const { rephrasedText } = await askRepeatedly({
       userId,
+      categoryName,
       systemContent,
       runs: runs as RunType[],
-      functionName: "rephraseUserNote"
+      functionName: "rephraseUserNote",
     });
 
     return rephrasedText;

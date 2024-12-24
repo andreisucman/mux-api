@@ -9,9 +9,14 @@ import httpError from "@/helpers/httpError.js";
 type Props = {
   description: string;
   userId: string;
+  categoryName: string;
 };
 
-export default async function generateImage({ description, userId }: Props) {
+export default async function generateImage({
+  description,
+  categoryName,
+  userId,
+}: Props) {
   try {
     const messages = [
       {
@@ -27,6 +32,7 @@ export default async function generateImage({ description, userId }: Props) {
     const prompt = await askTogether({
       messages,
       userId,
+      categoryName,
       model: "meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo",
       functionName: "generateImage",
     });
@@ -58,6 +64,7 @@ export default async function generateImage({ description, userId }: Props) {
       units,
       functionName: "generateImage",
       modelName: model.split(".").join("_"),
+      categoryName,
     });
 
     const image = imageResponse.data[0].url;

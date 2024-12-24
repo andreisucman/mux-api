@@ -8,12 +8,14 @@ type Props = {
   image: string;
   requisite: string;
   userId: string;
+  categoryName: string;
 };
 
 export default async function checkProofImage({
   image,
   requisite,
   userId,
+  categoryName,
 }: Props) {
   try {
     const systemContent = `You are given a frame from the video. Does it depict the following: ${requisite}? Format your response as a JSON object with the following structure: {verdict: false if not, true if yes, explanation: explain to the user what is wrong with the video in the 2nd tense (you/your) and ask to retry}.`;
@@ -42,6 +44,7 @@ export default async function checkProofImage({
     const response = await askRepeatedly({
       userId,
       systemContent,
+      categoryName,
       runs: runs as RunType[],
       functionName: "checkProofImage",
     });

@@ -20,6 +20,7 @@ type Props = {
   allSolutions: CreateRoutineAllSolutionsType[];
   concerns: UserConcernType[];
   demographics: DemographicsType;
+  categoryName: string;
   type: TypeEnum;
   part: PartEnum;
 };
@@ -31,6 +32,7 @@ export default async function getAdditionalSolutionsAndFrequencies({
   userId,
   type,
   part,
+  categoryName,
   demographics,
 }: Props) {
   const { sex } = demographics;
@@ -108,6 +110,7 @@ export default async function getAdditionalSolutionsAndFrequencies({
 
     const findSolutionsResponse = await askRepeatedly({
       userId,
+      categoryName,
       systemContent: findSolutionsInstruction,
       runs: findSolutionsContentArray as RunType[],
       functionName: "getAdditionalSolutionsAndFrequencies",
@@ -203,6 +206,7 @@ export default async function getAdditionalSolutionsAndFrequencies({
 
     const findAdditionalSolutionsResponse = await askRepeatedly({
       userId,
+      categoryName,
       systemContent: findAdditionalSolutionsInstruction,
       runs: findAdditionalSolutionsContentArray as RunType[],
       functionName: "getAdditionalSolutionsAndFrequencies",
@@ -303,6 +307,7 @@ export default async function getAdditionalSolutionsAndFrequencies({
 
     let findFrequencyResponse = await askRepeatedly({
       userId,
+      categoryName,
       systemContent: findFrequenciesInstruction,
       runs: findFrequenciesContentArray as RunType[],
       functionName: "getAdditionalSolutionsAndFrequencies",

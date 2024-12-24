@@ -7,7 +7,8 @@ import httpError from "@/helpers/httpError.js";
 
 export default async function createImageEmbedding(
   imageUrl: string,
-  userId: string
+  userId: string,
+  categoryName: string
 ): Promise<number[]> {
   try {
     const payload: { [key: string]: any } = {
@@ -26,6 +27,7 @@ export default async function createImageEmbedding(
     updateSpend({
       functionName: "createImageEmbedding",
       modelName: model,
+      categoryName,
       unitCost,
       units: 1,
       userId,

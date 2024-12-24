@@ -350,7 +350,7 @@ export type ProgressImageType = {
 export enum ModerationStatusEnum {
   ACTIVE = "active",
   BLOCKED = "blocked",
-  S
+  SUSPENDED = "suspended"
 }
 
 export type ProgressType = {

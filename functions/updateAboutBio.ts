@@ -10,6 +10,7 @@ type UpdateAboutBioProps = {
   userId: string;
   question: string;
   reply: string;
+  categoryName: string;
   currentBio: {
     philosophy: string;
     style: string;
@@ -23,12 +24,14 @@ type UpdateBioPartProps = {
   question: string;
   reply: string;
   userId: string;
+  categoryName: string;
 };
 
 async function updateBioPart({
   partName,
   currentPart,
   question,
+  categoryName,
   reply,
   userId,
 }: UpdateBioPartProps) {
@@ -87,6 +90,7 @@ async function updateBioPart({
         systemContent,
         runs: runs as RunType[],
         userId,
+        categoryName,
         functionName: "updateAboutBio",
       });
 
@@ -106,6 +110,7 @@ export default async function updateAboutBio({
   userId,
   question,
   reply,
+  categoryName,
   currentBio,
 }: UpdateAboutBioProps) {
   try {
@@ -117,6 +122,7 @@ export default async function updateAboutBio({
           reply,
           question,
           userId,
+          categoryName,
           partName: key,
           currentPart: currentBio[key as "philosophy"],
         })

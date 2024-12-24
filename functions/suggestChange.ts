@@ -9,12 +9,14 @@ type Props = {
   image: string;
   currentStyle: string;
   type: TypeEnum;
+  categoryName: string;
   styleGoals: StyleGoalsType;
 };
 
 export default async function suggestChange({
   image,
   type,
+  categoryName,
   currentStyle,
   styleGoals,
   userId,
@@ -105,6 +107,7 @@ export default async function suggestChange({
 
     const response = await askRepeatedly({
       userId,
+      categoryName,
       systemContent: analysisSystemContent,
       runs: runs as RunType[],
       isResultString: true,
@@ -134,6 +137,7 @@ export default async function suggestChange({
 
     const rephrased = await askRepeatedly({
       userId,
+      categoryName,
       systemContent: formattingSystemContent,
       runs: formattingRuns,
       isResultString: true,

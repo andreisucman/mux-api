@@ -32,4 +32,5 @@ export type AskOpenaiProps = {
   isMini: boolean;
   isJson: boolean;
   functionName: string;
+  categoryName: string;
 };

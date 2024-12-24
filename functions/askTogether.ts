@@ -14,6 +14,7 @@ type AskTogetherProps = {
   messages: { role: RoleEnum; content: string }[];
   isJson?: boolean;
   functionName: string;
+  categoryName: string;
 };
 
 const { LLAMA_2_11B_VISION_PRICE } = process.env;
@@ -28,6 +29,7 @@ async function askTogether({
   messages,
   model,
   functionName,
+  categoryName,
   userId,
 }: AskTogetherProps) {
   try {
@@ -52,6 +54,7 @@ async function askTogether({
     updateSpend({
       functionName,
       modelName: modelKey,
+      categoryName,
       unitCost,
       units: inputTokens + outputTokens,
       userId,

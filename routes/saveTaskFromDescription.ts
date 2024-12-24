@@ -75,6 +75,7 @@ route.post(
       const { isHarmful, explanation } = await isActivityHarmful({
         userId: req.userId,
         text,
+        categoryName: "tasks",
       });
 
       if (isHarmful) {
@@ -96,6 +97,7 @@ route.post(
         userId: req.userId,
         text,
         type,
+        categoryName: "tasks",
       });
 
       if (!satisfies) {
@@ -149,7 +151,9 @@ route.post(
         name: z.string().describe("the name of the task in imperative form"),
         concern: z.string(),
         nearestConcerns: z.array(z.string()),
-        word: z.string().describe("one word from node-emoji that best suits the task"),
+        word: z
+          .string()
+          .describe("one word from node-emoji that best suits the task"),
         requisite: z.string(),
         restDays: z.number(),
         part: z.enum(["face", "mouth", "scalp", "body", "health"]),
@@ -176,6 +180,7 @@ route.post(
         systemContent: systemContent,
         runs: runs as RunType[],
         userId: req.userId,
+        categoryName: "tasks",
         functionName: "saveTaskFromDescription",
       });
 
@@ -188,7 +193,11 @@ route.post(
       const { word, ...otherResponse } = response || {};
 
       const color = generateRandomPastelColor();
-      const image = await generateImage({ description, userId: req.userId });
+      const image = await generateImage({
+        description,
+        userId: req.userId,
+        categoryName: "tasks",
+      });
 
       const generalTaskInfo: TaskType = {
         ...otherResponse,
@@ -211,6 +220,7 @@ route.post(
       const embedding = await createTextEmbedding({
         userId: req.userId,
         text: info,
+        categoryName: "tasks",
       });
 
       await incrementProgress({
@@ -234,6 +244,7 @@ route.post(
         const filteredProductTypes = await filterRelevantProductTypes({
           userId: req.userId,
           info,
+          categoryName: "tasks",
           productTypes: relevantSolutions.map((s) => s.prouductTypes),
         });
 

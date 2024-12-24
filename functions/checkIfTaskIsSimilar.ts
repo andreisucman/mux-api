@@ -10,6 +10,7 @@ type Props = {
   newDescription: string;
   instruction: string;
   newInstruction: string;
+  categoryName: string;
 };
 
 export default async function checkIfTaskIsSimilar({
@@ -17,6 +18,7 @@ export default async function checkIfTaskIsSimilar({
   description,
   newDescription,
   instruction,
+  categoryName,
   newInstruction,
 }: Props) {
   const condition =
@@ -43,6 +45,7 @@ export default async function checkIfTaskIsSimilar({
     const response = await askRepeatedly({
       systemContent: systemContent,
       runs: runs as RunType[],
+      categoryName,
       userId,
       functionName: "checkIfTaskIsSimilar",
     });

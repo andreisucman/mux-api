@@ -50,6 +50,7 @@ route.post(
       const { isHarmful, explanation } = await isActivityHarmful({
         userId: req.userId,
         text: constraints,
+        categoryName: "tasks",
       });
 
       if (isHarmful) {
@@ -69,7 +70,10 @@ route.post(
 
       const userInfo = (await doWithRetries(async () =>
         db.collection("User").findOne(
-          { _id: new ObjectId(req.userId), moderationStatus: ModerationStatusEnum.ACTIVE },
+          {
+            _id: new ObjectId(req.userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
           {
             projection: {
               concern: 1,
@@ -280,6 +284,7 @@ route.post(
       const response = await askRepeatedly({
         runs,
         systemContent,
+        categoryName: "tasks",
         userId: req.userId,
         functionName: "createRecipe",
       });
@@ -287,6 +292,7 @@ route.post(
       const image = await generateImage({
         description: `A plate of ${response.name}.`,
         userId: req.userId,
+        categoryName: "tasks",
       });
 
       await incrementProgress({

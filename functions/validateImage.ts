@@ -7,12 +7,14 @@ import httpError from "@/helpers/httpError.js";
 type Props = {
   userId: string;
   image: string;
+  categoryName: string;
   condition: string;
 };
 
 export default async function validateImage({
   userId,
   image,
+  categoryName,
   condition,
 }: Props) {
   try {
@@ -47,6 +49,7 @@ export default async function validateImage({
 
     const response = await askRepeatedly({
       userId,
+      categoryName,
       systemContent,
       runs: runs as RunType[],
       functionName: "validateImage",

@@ -17,6 +17,7 @@ type Props = {
   meta?: string;
   seed?: number;
   userId: string;
+  categoryName: string;
   functionName: string;
   systemContent: string;
   isResultString?: boolean;
@@ -29,6 +30,7 @@ async function askRepeatedly({
   seed,
   userId,
   functionName,
+  categoryName,
   systemContent,
   isResultString,
 }: Props) {
@@ -37,7 +39,7 @@ async function askRepeatedly({
       throw httpError("Invalid userId format and no meta");
 
     let result;
-    
+
     let conversation: MessageType[] = [
       { role: "system" as RoleEnum, content: systemContent },
     ];
@@ -51,6 +53,7 @@ async function askRepeatedly({
       const payload: AskOpenaiProps = {
         userId,
         functionName,
+        categoryName,
         seed: seed || defaultSeed,
         messages: conversation,
         isMini: runs[i].isMini,

@@ -46,6 +46,7 @@ route.post(
 
       const response = await askRepeatedly({
         systemContent,
+        categoryName: "other",
         runs: userContent as RunType[],
         userId: req.userId,
         functionName: "checkCountry",

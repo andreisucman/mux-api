@@ -12,6 +12,7 @@ type Props = {
   concerns: UserConcernType[];
   userId: string;
   type: TypeEnum;
+  categoryName: string;
   specialConsiderations: string;
 };
 
@@ -20,6 +21,7 @@ export default async function polishRawSchedule({
   concerns,
   userId,
   type,
+  categoryName,
   specialConsiderations,
 }: Props) {
   try {
@@ -114,6 +116,7 @@ export default async function polishRawSchedule({
 
     return await askRepeatedly({
       userId,
+      categoryName,
       systemContent,
       runs: userContent,
       functionName: "polishRawSchedule",

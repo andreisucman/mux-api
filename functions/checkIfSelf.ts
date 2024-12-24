@@ -12,9 +12,15 @@ type Props = {
   userImage?: string;
   image: string;
   userId: string;
+  categoryName: string;
 };
 
-export default async function checkIfSelf({ userImage, image, userId }: Props) {
+export default async function checkIfSelf({
+  userImage,
+  categoryName,
+  image,
+  userId,
+}: Props) {
   let isSelf = true;
 
   try {
@@ -81,6 +87,7 @@ export default async function checkIfSelf({ userImage, image, userId }: Props) {
 
       isSelf = await askRepeatedly({
         userId,
+        categoryName,
         systemContent: samePersonContent,
         runs: runs as RunType[],
         functionName: "checkIfSelf",

@@ -13,6 +13,7 @@ import httpError from "@/helpers/httpError.js";
 type Props = {
   key: string;
   analysisType: string;
+  categoryName: string;
   userInfo: UserInfoType;
   validProducts: ProductType[];
   commonListOfFeatures: string[];
@@ -26,6 +27,7 @@ export default async function findTheBestVariant({
   concerns,
   criteria,
   userInfo,
+  categoryName,
   analysisType,
   validProducts,
   taskDescription,
@@ -187,6 +189,7 @@ export default async function findTheBestVariant({
       systemContent,
       runs,
       userId: String(userId),
+      categoryName,
       functionName: "findTheBestVariant",
     });
 

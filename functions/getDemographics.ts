@@ -9,12 +9,14 @@ type Props = {
   toAnalyzeObjects: ToAnalyzeType[];
   userId: string;
   type: TypeEnum;
+  categoryName: string;
 };
 
 export default async function getDemographics({
   toAnalyzeObjects,
   userId,
   type,
+  categoryName,
 }: Props) {
   let systemContent = "";
 
@@ -83,6 +85,7 @@ export default async function getDemographics({
     const response: DemographicsType = await askRepeatedly({
       userId,
       systemContent,
+      categoryName,
       runs: runs as RunType[],
       functionName: "getDemographics",
     });

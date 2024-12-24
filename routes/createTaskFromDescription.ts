@@ -74,6 +74,7 @@ route.post(
       const { isHarmful, explanation } = await isActivityHarmful({
         text: description,
         userId: req.userId,
+        categoryName: "tasks",
       });
 
       if (isHarmful) {
@@ -94,6 +95,7 @@ route.post(
       const { satisfies, condition } = await checkIfTaskIsRelated({
         userId: req.userId,
         text: description,
+        categoryName: "tasks",
         type,
       });
 
@@ -143,6 +145,7 @@ route.post(
         systemContent: systemContent,
         runs: runs as RunType[],
         userId: req.userId,
+        categoryName: "tasks",
         functionName: "createTaskFromDescription",
       });
 

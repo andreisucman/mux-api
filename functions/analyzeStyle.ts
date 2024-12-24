@@ -12,9 +12,15 @@ type Props = {
   type: TypeEnum;
   userId: string;
   image: string;
+  categoryName: string;
 };
 
-export default async function analyzeStyle({ image, type, userId }: Props) {
+export default async function analyzeStyle({
+  image,
+  categoryName,
+  type,
+  userId,
+}: Props) {
   try {
     let analysisSystemContent = `You are given the names and descriptions of different outlook styles. Your goals are: 1) rate the user's appearance from 0 to 10 for each style based on how closely it matches that style 2) tell which style from the list the user is closest to in one word (e.g. minimalist).`;
 
@@ -76,6 +82,7 @@ export default async function analyzeStyle({ image, type, userId }: Props) {
       systemContent: analysisSystemContent,
       runs: runs as RunType[],
       isResultString: true,
+      categoryName,
       functionName: "analyzeStyle",
     });
 
@@ -131,6 +138,7 @@ export default async function analyzeStyle({ image, type, userId }: Props) {
       systemContent: currentSuggestionsSystemContent,
       runs: suggestionRuns as RunType[],
       isResultString: true,
+      categoryName,
       functionName: "analyzeStyle",
     });
 
@@ -182,6 +190,7 @@ export default async function analyzeStyle({ image, type, userId }: Props) {
       systemContent: formattingSystemContent,
       runs: formattingRuns,
       seed: 481331555,
+      categoryName,
       functionName: "analyzeStyle",
     });
 

@@ -7,9 +7,14 @@ import httpError from "@/helpers/httpError.js";
 type Props = {
   text: string;
   userId: string;
+  categoryName: string;
 };
 
-export default async function isActivityHarmful({ userId, text }: Props) {
+export default async function isActivityHarmful({
+  userId,
+  text,
+  categoryName,
+}: Props) {
   try {
     const systemContent = `The user gives you a description of an activity. Your goal is to check if it has an intent of harming the person who performs it. An activity has an intent of harming if it usually leads to health damage when performed by laymen.`;
 
@@ -42,6 +47,7 @@ export default async function isActivityHarmful({ userId, text }: Props) {
       systemContent: systemContent,
       runs: runs as RunType[],
       userId,
+      categoryName,
       functionName: "isActivityHarmful",
     });
 

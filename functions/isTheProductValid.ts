@@ -6,10 +6,12 @@ type Props = {
   userId: string;
   variantData: { name: string; description: string; suggestion: string };
   taskDescription: string;
+  categoryName: string;
 };
 
 export default async function isTheProductValid({
   userId,
+  categoryName,
   variantData,
   taskDescription,
 }: Props) {
@@ -34,6 +36,7 @@ export default async function isTheProductValid({
       systemContent,
       runs,
       userId,
+      categoryName,
       functionName: "isTheProductValid",
     });
 

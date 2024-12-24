@@ -9,11 +9,13 @@ import updateSpend from "./updateSpend.js";
 type Props = {
   userId: string;
   text: string;
+  categoryName: string;
 };
 
 export default async function createTextEmbedding({
   userId,
   text,
+  categoryName,
 }: Props): Promise<number[]> {
   if (!text) throw httpError("Text not provided");
 
@@ -37,6 +39,7 @@ export default async function createTextEmbedding({
       units,
       functionName: "createTextEmbedding",
       modelName: model,
+      categoryName,
     });
 
     return embeddingObject.data[0].embedding;

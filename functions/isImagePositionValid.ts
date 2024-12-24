@@ -8,6 +8,7 @@ import httpError from "@/helpers/httpError.js";
 type Props = {
   userId: string;
   image: string;
+  categoryName: string;
   part: string;
   position: string;
 };
@@ -16,6 +17,7 @@ export default async function isImagePositionValid({
   userId,
   image,
   part,
+  categoryName,
   position,
 }: Props) {
   try {
@@ -60,6 +62,7 @@ export default async function isImagePositionValid({
 
     const response = await askRepeatedly({
       userId,
+      categoryName,
       systemContent: requirement.requirement,
       runs: runs as RunType[],
       functionName: "isImagePositionValid",

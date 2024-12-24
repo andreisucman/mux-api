@@ -7,12 +7,14 @@ import { toSentenceCase } from "@/helpers/utils.js";
 
 type Props = {
   userId: string;
+  categoryName: string;
   extractedVariantFeatures: { featuresAndFunctionalities: string }[];
 };
 
 export default async function createACommonTableOfProductFeatures({
   userId,
   extractedVariantFeatures,
+  categoryName,
 }: Props) {
   const CommonTableFeaturesType = z.object({
     commonFeaturesList: z
@@ -75,6 +77,7 @@ export default async function createACommonTableOfProductFeatures({
       systemContent,
       runs,
       userId,
+      categoryName,
       functionName: "createACommonTableOfProductFeatures",
     });
 

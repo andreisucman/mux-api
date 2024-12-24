@@ -20,6 +20,7 @@ type Props = {
   sex: SexEnum;
   part: PartEnum;
   type: TypeEnum;
+  categoryName: string;
   toAnalyzeObjects: ToAnalyzeType[];
 };
 
@@ -28,6 +29,7 @@ export default async function analyzeConcerns({
   type,
   userId,
   part,
+  categoryName,
   toAnalyzeObjects,
 }: Props) {
   try {
@@ -101,6 +103,7 @@ export default async function analyzeConcerns({
         systemContent,
         runs: userContent as RunType[],
         functionName: "analyzeConcerns",
+        categoryName,
       });
 
     const combined: UserConcernType[] = response.concerns.map(

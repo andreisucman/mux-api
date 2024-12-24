@@ -12,6 +12,7 @@ type Props = {
   sex: SexEnum;
   feature: string;
   part: PartEnum;
+  categoryName: string;
   toAnalyzeObjects: ToAnalyzeType[];
   type: TypeEnum;
 };
@@ -22,6 +23,7 @@ export default async function analyzeFeature({
   toAnalyzeObjects,
   part,
   type,
+  categoryName,
   userId,
 }: Props) {
   try {
@@ -60,6 +62,7 @@ export default async function analyzeFeature({
       systemContent,
       userId,
       runs,
+      categoryName,
       functionName: "analyzeFeature",
     });
 

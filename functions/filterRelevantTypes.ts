@@ -7,12 +7,14 @@ import httpError from "@/helpers/httpError.js";
 type Props = {
   userId: string;
   info: string;
+  categoryName: string;
   productTypes: string[];
 };
 
 export default async function filterRelevantProductTypes({
   userId,
   info,
+  categoryName,
   productTypes,
 }: Props) {
   try {
@@ -46,6 +48,7 @@ export default async function filterRelevantProductTypes({
       systemContent: systemContent,
       runs: runs as RunType[],
       userId,
+      categoryName,
       functionName: "filterRelevantProductTypes",
     });
 

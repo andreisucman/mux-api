@@ -23,6 +23,7 @@ async function askOpenai({
   seed,
   model,
   functionName,
+  categoryName,
   isMini,
   userId,
   responseFormat,
@@ -76,6 +77,7 @@ async function askOpenai({
     updateSpend({
       functionName,
       modelName: finalModel,
+      categoryName,
       unitCost,
       units: inputTokens + outputTokens,
       userId,

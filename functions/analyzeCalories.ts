@@ -8,12 +8,14 @@ type Props = {
   userId: string;
   url: string;
   userAbout?: string;
+  categoryName: string;
 };
 
 export default async function analyzeCalories({
   url,
   userId,
   userAbout,
+  categoryName,
 }: Props) {
   try {
     const systemContent = `You are a food composition analysis expert. The user gives you an image of food. Your goal is to determine its amount, and how much energy, protein, carbohydrates and fats it has. Consider:  1. whether the ingredients are cooked or raw, 2. the size of the plate and and the proportion of the products in it. If you can't say for sure make your best guess. Your response must be less than 20 words.`;
@@ -55,6 +57,7 @@ export default async function analyzeCalories({
       runs,
       userId,
       systemContent,
+      categoryName,
       functionName: "analyzeCalories",
     });
 
@@ -92,6 +95,7 @@ export default async function analyzeCalories({
       shouldEatResponse = await askRepeatedly({
         runs,
         userId,
+        categoryName,
         systemContent,
         functionName: "analyzeCalories",
       });

@@ -9,6 +9,7 @@ import httpError from "helpers/httpError.js";
 type Props = {
   userId: string;
   type: TypeEnum;
+  categoryName: string;
   rawNewSchedule: { [key: string]: { key: string; concern: string }[] };
   currentSchedule: {
     [key: string]: { key: string; concern: string }[];
@@ -18,6 +19,7 @@ type Props = {
 export default async function mergeSchedules({
   type,
   userId,
+  categoryName,
   rawNewSchedule,
   currentSchedule,
 }: Props) {
@@ -80,6 +82,7 @@ export default async function mergeSchedules({
 
     return await askRepeatedly({
       userId,
+      categoryName,
       systemContent,
       runs: userContent,
       functionName: "mergeSchedules",

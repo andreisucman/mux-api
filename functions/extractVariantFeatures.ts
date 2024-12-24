@@ -6,6 +6,7 @@ import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
+  categoryName: string;
   variantData: { name: string; description: string };
   taskDescription: string;
 };
@@ -13,6 +14,7 @@ type Props = {
 export default async function extractVariantFeatures({
   userId,
   variantData,
+  categoryName,
   taskDescription,
 }: Props) {
   const { name, description } = variantData;
@@ -71,6 +73,7 @@ export default async function extractVariantFeatures({
       systemContent,
       runs,
       userId,
+      categoryName,
       functionName: "extractVariantFeatures",
     });
 

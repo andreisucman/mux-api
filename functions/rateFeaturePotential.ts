@@ -14,6 +14,7 @@ type RateFeaturePotentialProps = {
   type: TypeEnum;
   currentScore: number;
   feature: string;
+  categoryName: string;
   ageInterval: string;
   images: string[];
 };
@@ -24,6 +25,7 @@ export default async function rateFeaturePotential({
   type,
   currentScore,
   feature,
+  categoryName,
   ageInterval,
   images,
 }: RateFeaturePotentialProps) {
@@ -67,6 +69,7 @@ export default async function rateFeaturePotential({
 
     const initialResponse = await askRepeatedly({
       userId,
+      categoryName,
       systemContent: initialSystemContent,
       runs: initialRuns as RunType[],
       isResultString: true,
@@ -76,8 +79,14 @@ export default async function rateFeaturePotential({
     const finalSystemContent = `You are given a description of the user's body part, it's current esthetic score and its highest achievable esthetics score. Your goal is to format the description in the 2nd tense (you/your) with a better flow and a more cohesive context. Your response must be entirely based on the information you are given. Don't make things up. Think step-by-step.`;
 
     const FormatResponseAsRateAndExplanationType = z.object({
-      rate: z.number().describe("the highest achievable esthetic score for the body part"),
-      explanation: z.string().describe("the description of the body part and the reasoning for the rate"),
+      rate: z
+        .number()
+        .describe("the highest achievable esthetic score for the body part"),
+      explanation: z
+        .string()
+        .describe(
+          "the description of the body part and the reasoning for the rate"
+        ),
     });
 
     const finalRuns = [
@@ -107,6 +116,7 @@ export default async function rateFeaturePotential({
     const finalResponse: { rate: number; explanation: string } =
       await askRepeatedly({
         userId,
+        categoryName,
         systemContent: finalSystemContent,
         runs: finalRuns as RunType[],
         seed: 263009886,

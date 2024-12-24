@@ -7,6 +7,7 @@ import httpError from "helpers/httpError.js";
 type Props = {
   description: string;
   type: TypeEnum;
+  categoryName: string;
   instruction: string;
   userInfo: { [key: string]: any };
   name: string;
@@ -16,6 +17,7 @@ export default async function personalizeInstruction({
   description,
   instruction,
   userInfo,
+  categoryName,
   name,
   type,
 }: Props) {
@@ -97,6 +99,7 @@ export default async function personalizeInstruction({
     const response: string = await askRepeatedly({
       userId,
       systemContent,
+      categoryName,
       runs: userContentArray as RunType[],
       isResultString: true,
       functionName: "personalizeInstruction",
