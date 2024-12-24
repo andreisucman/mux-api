@@ -14,8 +14,11 @@ route.get(
         async () => await getUserData({ userId: req.userId })
       );
 
-      if (userData.moderationStatus === ModerationStatusEnum.BLOCKED) {
-        signOut(res, 402, "Account blocked");
+      if (
+        userData.moderationStatus === ModerationStatusEnum.BLOCKED ||
+        userData.moderationStatus === ModerationStatusEnum.SUSPENDED
+      ) {
+        signOut(res, 402, `Account ${userData.moderationStatus}`);
         return;
       }
 

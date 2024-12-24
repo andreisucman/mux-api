@@ -2,6 +2,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import { Response, NextFunction } from "express";
+import { ObjectId } from "mongodb";
 import csrf from "csrf";
 import { db } from "init.js";
 import signOut from "functions/signOut.js";
@@ -65,7 +66,18 @@ async function checkAccess(
       return;
     }
 
-    if (!expired) req.userId = session?.userId;
+    if (!expired) {
+      req.userId = session?.userId;
+
+      doWithRetries(async () =>
+        db
+          .collection("User")
+          .updateOne(
+            { _id: new ObjectId(req.userId) },
+            { $set: { lastActiveOn: new Date() } }
+          )
+      );
+    }
 
     next();
   } catch (err) {

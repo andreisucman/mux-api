@@ -59,13 +59,13 @@ route.post(
         filter: checkUserPresenceFilter,
       });
 
-      if (userInfo.moderationStatus === ModerationStatusEnum.BLOCKED) {
-        res
-          .status(200)
-          .json({
-            error:
-              "Your account has been blocked. Please check your email for more details.",
-          });
+      if (
+        userInfo.moderationStatus === ModerationStatusEnum.BLOCKED ||
+        userInfo.moderationStatus === ModerationStatusEnum.SUSPENDED
+      ) {
+        res.status(200).json({
+          error: `Your account has been ${userInfo.moderationStatus}. Please check your email for details.`,
+        });
         return;
       }
 

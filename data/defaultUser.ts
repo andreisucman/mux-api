@@ -207,5 +207,6 @@ export const defaultUser: UserType = {
   toAnalyze: { head: [], body: [] },
   coachEnergy: 100000,
   canRejoinClubAfter: null,
+  lastActiveOn: null,
   moderationStatus: ModerationStatusEnum.ACTIVE,
 };

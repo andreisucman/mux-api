@@ -111,6 +111,7 @@ export type UserType = {
   nextDiaryRecordAfter: Date | null;
   nextNameUpdateAt: Date | null;
   moderationStatus: ModerationStatusEnum;
+  lastActiveOn: Date | null;
 };
 
 export type ToAnalyzeType = {
@@ -349,6 +350,7 @@ export type ProgressImageType = {
 export enum ModerationStatusEnum {
   ACTIVE = "active",
   BLOCKED = "blocked",
+  S
 }
 
 export type ProgressType = {
