@@ -66,14 +66,16 @@ export default async function findProducts({
       )
     ) as Promise<ValidProductType>[];
 
-    await doWithRetries(async () =>
-      db
-        .collection("AnalysisStatus")
-        .updateOne(
-          { userId: new ObjectId(userId), operationKey: analysisType },
-          { $inc: { progress: 2 } }
-        )
-    );
+    if (analysisType !== "findProductsForGeneralTasks") {
+      await doWithRetries(async () =>
+        db
+          .collection("AnalysisStatus")
+          .updateOne(
+            { userId: new ObjectId(userId), operationKey: analysisType },
+            { $inc: { progress: 2 } }
+          )
+      );
+    }
 
     const productCheckObjectsArray: ValidProductType[] = await Promise.all(
       productCheckPromises
@@ -113,14 +115,16 @@ export default async function findProducts({
         extractFeaturesPromises
       );
 
-      await doWithRetries(async () =>
-        db
-          .collection("AnalysisStatus")
-          .updateOne(
-            { userId: new ObjectId(userId), operationKey: analysisType },
-            { $inc: { progress: 3 } }
-          )
-      );
+      if (analysisType !== "findProductsForGeneralTasks") {
+        await doWithRetries(async () =>
+          db
+            .collection("AnalysisStatus")
+            .updateOne(
+              { userId: new ObjectId(userId), operationKey: analysisType },
+              { $inc: { progress: 3 } }
+            )
+        );
+      }
 
       const commonListOfFeatures = await createACommonTableOfProductFeatures({
         userId: String(userId),
@@ -128,14 +132,16 @@ export default async function findProducts({
         categoryName,
       });
 
-      await doWithRetries(async () =>
-        db
-          .collection("AnalysisStatus")
-          .updateOne(
-            { userId: new ObjectId(userId), operationKey: analysisType },
-            { $inc: { progress: 15 } }
-          )
-      );
+      if (analysisType !== "findProductsForGeneralTasks") {
+        await doWithRetries(async () =>
+          db
+            .collection("AnalysisStatus")
+            .updateOne(
+              { userId: new ObjectId(userId), operationKey: analysisType },
+              { $inc: { progress: 15 } }
+            )
+        );
+      }
 
       const resultArray = await findTheBestVariant({
         commonListOfFeatures,
@@ -154,12 +160,14 @@ export default async function findProducts({
 
     return chosenProducts;
   } catch (err) {
-    await addAnalysisStatusError({
-      userId: String(userId),
-      operationKey: analysisType,
-      originalMessage: err.message,
-      message: "An unexpected error occured. Please try again.",
-    });
+    if (analysisType !== "findProductsForGeneralTasks") {
+      await addAnalysisStatusError({
+        userId: String(userId),
+        operationKey: analysisType,
+        originalMessage: err.message,
+        message: "An unexpected error occured. Please try again.",
+      });
+    }
 
     throw httpError(err);
   }

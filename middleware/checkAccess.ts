@@ -20,18 +20,19 @@ async function checkAccess(
   const accessToken = req.cookies["MUX_accessToken"];
   const csrfTokenFromClient = req.cookies["MUX_csrfToken"];
   const csrfSecret = req.cookies["MUX_csrfSecret"];
+  const authorizationHeader = req.headers["authorization"];
 
   if (!rejectUnauthorized && !accessToken) {
     next();
     return;
   }
 
-  if (!accessToken) {
+  if (!accessToken && !authorizationHeader) {
     res.status(401).json({ error: "No authorization token" });
     return;
   }
 
-  if (rejectUnauthorized) {
+  if (rejectUnauthorized && !authorizationHeader) {
     const csrfVerificationPassed = csrfProtection.verify(
       csrfSecret,
       csrfTokenFromClient as string
@@ -43,41 +44,43 @@ async function checkAccess(
     }
   }
 
+  const validAuthorizationHeader =
+    authorizationHeader !== process.env.API_SECRET;
+
+  if (validAuthorizationHeader) {
+    next();
+    return;
+  }
+
   try {
-    const session = await doWithRetries(
-      async () =>
-        await db.collection("Session").findOne(
-          {
-            accessToken,
-          },
-          { projection: { userId: 1, expiresOn: 1 } }
-        )
+    const session = await doWithRetries(async () =>
+      db
+        .collection("Session")
+        .findOne({ accessToken }, { projection: { userId: 1, expiresOn: 1 } })
     );
 
     if (!session && rejectUnauthorized) {
-      signOut(res, 403, "Invalid access token");
+      signOut(res, 403, "Invalid or expired access token");
       return;
     }
 
     const expired = new Date() > new Date(session?.expiresOn);
 
-    if (expired && rejectUnauthorized) {
+    if (expired) {
       signOut(res, 403, "Access token expired");
       return;
     }
 
-    if (!expired) {
-      req.userId = session?.userId;
+    req.userId = session.userId;
 
-      doWithRetries(async () =>
-        db
-          .collection("User")
-          .updateOne(
-            { _id: new ObjectId(req.userId) },
-            { $set: { lastActiveOn: new Date() } }
-          )
-      );
-    }
+    doWithRetries(async () =>
+      db
+        .collection("User")
+        .updateOne(
+          { _id: new ObjectId(req.userId) },
+          { $set: { lastActiveOn: new Date() } }
+        )
+    );
 
     next();
   } catch (err) {

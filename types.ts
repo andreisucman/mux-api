@@ -360,7 +360,6 @@ export enum CategoryNameEnum {
   STYLESCAN = "styleScan",
   PRODUCTS = "products",
   ADVISOR = "advisor",
-  DIARY = "diary",
   ABOUT = "about",
   PROOF = "proof",
   OTHER = "other"

@@ -6,7 +6,6 @@ import doWithRetries from "helpers/doWithRetries.js";
 import checkProofImage from "functions/checkProofImage.js";
 import { daysFrom } from "helpers/utils.js";
 import isMajorityOfImagesIdentical from "functions/isMajorityOfImagesIdentical.js";
-import extractImagesFromVideo from "functions/extractImagesFromVideo.js";
 import { extensionTypeMap } from "data/extensionTypeMap.js";
 import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
@@ -31,6 +30,7 @@ import getScoreDifference from "helpers/getScoreDifference.js";
 import getReadyBlurredUrls from "functions/getReadyBlurredUrls.js";
 import selectItemsAtEqualDistances from "helpers/utils.js";
 import httpError from "@/helpers/httpError.js";
+import extractImagesAndTextFromVideo from "@/functions/extractImagesAndTextFromVideo.js";
 
 const route = Router();
 
@@ -145,18 +145,21 @@ route.post(
         });
       }, 5000);
 
+      let transcription;
       let proofImages;
       const urlType = extensionTypeMap[urlExtension];
 
       try {
         if (urlType === "video") {
-          const { status, message, error } = await extractImagesFromVideo({
-            url,
-            userId: req.userId,
-          });
+          const { status, message, error } =
+            await extractImagesAndTextFromVideo({
+              url,
+              userId: req.userId,
+            });
 
           if (status) {
-            proofImages = message;
+            transcription = message.transcription;
+            proofImages = message.urls;
           } else {
             await addAnalysisStatusError({
               message: error,
@@ -190,6 +193,30 @@ route.post(
           if (!isSafe) {
             await addAnalysisStatusError({
               message: "Video contains prohibited content.",
+              userId: req.userId,
+              operationKey: taskId,
+            });
+            return;
+          }
+
+          if (isSuspicious) {
+            suspiciousResults.push(...suspiciousAnalysisResults);
+          }
+        }
+        if (transcription) {
+          const { isSafe, isSuspicious, suspiciousAnalysisResults } =
+            await moderateContent({
+              content: [
+                {
+                  type: "text",
+                  text: transcription,
+                },
+              ],
+            });
+
+          if (!isSafe) {
+            await addAnalysisStatusError({
+              message: "Audio contains prohibited content.",
               userId: req.userId,
               operationKey: taskId,
             });

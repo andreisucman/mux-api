@@ -25,7 +25,7 @@ export default async function updateSpend({
 
   try {
     await doWithRetries(async () =>
-      adminDb.collection("UserCost").updateOne(
+      adminDb.collection("UserStats").updateOne(
         { userId: new ObjectId(userId), createdAt: today },
         {
           $inc: {
@@ -47,7 +47,7 @@ export default async function updateSpend({
     );
 
     await doWithRetries(async () =>
-      adminDb.collection("TotalCost").updateOne(
+      adminDb.collection("TotalStats").updateOne(
         { createdAt: today },
         {
           $inc: {

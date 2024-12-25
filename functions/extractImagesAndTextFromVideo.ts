@@ -6,7 +6,10 @@ type Props = {
   userId: string;
 };
 
-export default async function extractImagesFromVideo({ url, userId }: Props) {
+export default async function extractImagesAndTextFromVideo({
+  url,
+  userId,
+}: Props) {
   try {
     const response = await doWithRetries(
       async () =>
