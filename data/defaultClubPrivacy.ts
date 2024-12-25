@@ -18,12 +18,4 @@ export const defaultClubPrivacy = [
     value: false,
     parts: [{ name: "health", value: false }],
   },
-  {
-    name: "style",
-    value: false,
-    parts: [
-      { name: "face", value: false },
-      { name: "body", value: false },
-    ],
-  },
 ];

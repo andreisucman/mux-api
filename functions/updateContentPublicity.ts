@@ -31,9 +31,8 @@ export default async function updateContentPublicity({
       newPrivacy
     );
 
-    const toUpdateProgresProofBa = difference
-      .filter((typePrivacyObj) => typePrivacyObj.name !== "style")
-      .map((obj: { name: string; type: string; value: boolean }) => ({
+    const toUpdateProgresProofBa = difference.map(
+      (obj: { name: string; type: string; value: boolean }) => ({
         updateOne: {
           filter: {
             userId: new ObjectId(userId),
@@ -48,11 +47,29 @@ export default async function updateContentPublicity({
             },
           },
         },
-      }));
+      })
+    );
 
-    const toUpdateStyle = difference
-      .filter((typePrivacyObj) => typePrivacyObj.name === "style")
-      .map((obj: { name: string; type: string; value: boolean }) => ({
+    const toUpdateDiary = difference.map(
+      (obj: { name: string; type: string; value: boolean }) => ({
+        updateOne: {
+          filter: {
+            userId: new ObjectId(userId),
+            type: obj.type,
+          },
+          update: {
+            $set: {
+              isPublic: obj.value,
+              userName: name,
+              avatar,
+            },
+          },
+        },
+      })
+    );
+
+    const toUpdateStyle = difference.map(
+      (obj: { name: string; type: string; value: boolean }) => ({
         updateOne: {
           filter: {
             userId: new ObjectId(userId),
@@ -65,7 +82,8 @@ export default async function updateContentPublicity({
             },
           },
         },
-      }));
+      })
+    );
 
     if (toUpdateProgresProofBa.length > 0)
       await doWithRetries(async () =>
@@ -87,16 +105,19 @@ export default async function updateContentPublicity({
         db.collection("StyleAnalysis").bulkWrite(toUpdateStyle)
       );
 
+    if (toUpdateDiary.length > 0)
+      await doWithRetries(async () =>
+        db.collection("Diary").bulkWrite(toUpdateDiary)
+      );
+
     await doWithRetries(async () =>
-      db
-        .collection("User")
-        .updateOne(
-          {
-            _id: new ObjectId(userId),
-            moderationStatus: ModerationStatusEnum.ACTIVE,
-          },
-          { $set: { "club.privacy": newPrivacy } }
-        )
+      db.collection("User").updateOne(
+        {
+          _id: new ObjectId(userId),
+          moderationStatus: ModerationStatusEnum.ACTIVE,
+        },
+        { $set: { "club.privacy": newPrivacy } }
+      )
     );
   } catch (err) {
     throw httpError(err);

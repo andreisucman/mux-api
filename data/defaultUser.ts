@@ -13,21 +13,25 @@ export const defaultSubscriptions = {
     isTrialUsed: false,
     subscriptionId: null as string | null,
     validUntil: null as Date | null,
+    failCount: 0,
   },
   peek: {
     isTrialUsed: false,
     subscriptionId: null as string | null,
     validUntil: null as Date | null,
+    failCount: 0,
   },
   analyst: {
     isTrialUsed: false,
     subscriptionId: null as string | null,
     validUntil: null as Date | null,
+    failCount: 0,
   },
   advisor: {
     isTrialUsed: false,
     subscriptionId: null as string | null,
     validUntil: null as Date | null,
+    failCount: 0,
   },
 };
 

@@ -15,6 +15,9 @@ import {
 import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 import { daysFrom } from "@/helpers/utils.js";
 import { db } from "init.js";
+import { PrivacyType } from "types.js";
+import { DiaryRecordType } from "@/types/saveDiaryRecordTypes.js";
+import getUserInfo from "@/functions/getUserInfo.js";
 
 const route = Router();
 
@@ -78,11 +81,19 @@ route.post(
         return;
       }
 
+      const userInfo = await getUserInfo({
+        userId: req.userId,
+        projection: { name: 1, avatar: 1, "club.privacy": 1 },
+      });
+
       const midnight = setUtcMidnight({ date: new Date(), timeZone });
 
-      const newDiaryRecord = {
+      const newDiaryRecord: DiaryRecordType = {
         _id: new ObjectId(),
         type,
+        userName: null,
+        avatar: null,
+        isPublic: false,
         audio,
         activity,
         userId: new ObjectId(req.userId),
@@ -90,6 +101,19 @@ route.post(
         createdAt: midnight,
         moderationStatus: ModerationStatusEnum.ACTIVE,
       };
+
+      const { name, avatar, club } = userInfo;
+      if (name) newDiaryRecord.userName = name;
+      if (avatar) newDiaryRecord.avatar = avatar;
+
+      const { privacy } = club;
+      const relevantTypePrivacy = privacy?.find(
+        (typePrivacyObj: PrivacyType) => typePrivacyObj.name === type
+      );
+
+      if (relevantTypePrivacy) {
+        newDiaryRecord.isPublic = relevantTypePrivacy.value;
+      }
 
       await doWithRetries(async () =>
         db.collection("Diary").insertOne(newDiaryRecord)

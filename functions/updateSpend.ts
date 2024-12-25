@@ -29,6 +29,8 @@ export default async function updateSpend({
         { userId: new ObjectId(userId), createdAt: today },
         {
           $inc: {
+            totalCost: units * unitCost,
+            totalUnits: units,
             [`units.functions.${functionName}`]: units,
             [`cost.functions.${functionName}`]: units * unitCost,
             [`unitCost.functions.${functionName}`]: unitCost,
@@ -51,6 +53,8 @@ export default async function updateSpend({
         { createdAt: today },
         {
           $inc: {
+            totalCost: units * unitCost,
+            totalUnits: units,
             [`units.functions.${functionName}`]: units,
             [`cost.functions.${functionName}`]: units * unitCost,
             [`unitCost.functions.${functionName}`]: unitCost,

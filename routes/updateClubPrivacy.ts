@@ -18,22 +18,20 @@ route.post(
 
     try {
       const userInfo = await doWithRetries(async () =>
-        db
-          .collection("User")
-          .findOne(
-            {
-              _id: new ObjectId(req.userId),
-              moderationStatus: ModerationStatusEnum.ACTIVE,
-            },
-            { projection: { "club.payouts": 1 } }
-          )
+        db.collection("User").findOne(
+          {
+            _id: new ObjectId(req.userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
+          { projection: { "club.payouts": 1 } }
+        )
       );
 
       if (!userInfo) throw httpError(`User ${req.userId} not found`);
       if (!userInfo.club)
         throw httpError(`User ${req.userId} is not in the club`);
 
-      const { club, name } = userInfo;
+      const { club } = userInfo;
       const { payouts } = club;
       const { payoutsEnabled } = payouts;
 

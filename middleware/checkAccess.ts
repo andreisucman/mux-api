@@ -47,7 +47,11 @@ async function checkAccess(
   const validAuthorizationHeader =
     authorizationHeader === process.env.API_SECRET;
 
-  if (validAuthorizationHeader) {
+  if (
+    rejectUnauthorized &&
+    validAuthorizationHeader &&
+    req.path === "/findProductsForGeneralTasks"
+  ) {
     next();
     return;
   }
@@ -71,16 +75,18 @@ async function checkAccess(
       return;
     }
 
-    req.userId = session.userId;
+    if (session) {
+      req.userId = session.userId;
 
-    doWithRetries(async () =>
-      db
-        .collection("User")
-        .updateOne(
-          { _id: new ObjectId(req.userId) },
-          { $set: { lastActiveOn: new Date() } }
-        )
-    );
+      doWithRetries(async () =>
+        db
+          .collection("User")
+          .updateOne(
+            { _id: new ObjectId(req.userId) },
+            { $set: { lastActiveOn: new Date() } }
+          )
+      );
+    }
 
     next();
   } catch (err) {

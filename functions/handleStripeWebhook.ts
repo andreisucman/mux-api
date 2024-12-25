@@ -4,6 +4,7 @@ dotenv.config();
 import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
+import updateRevenue from "./updateRevenue.js";
 import { ModerationStatusEnum } from "@/types.js";
 
 async function handleStripeWebhook(event: any) {
@@ -40,6 +41,9 @@ async function handleStripeWebhook(event: any) {
 
   const paymentPrices = object.lines.data.map((item: any) => item.price);
   const paymentPriceIds = paymentPrices.map((price: any) => price.id);
+  const paymentValues = paymentPrices
+    .map((price: any) => price.unit_amount / 100)
+    .reduce((a: number, c: number) => a + c, 0);
 
   if (!subscriptionId || !customerId)
     throw httpError(
@@ -126,6 +130,8 @@ async function handleStripeWebhook(event: any) {
     await doWithRetries(
       async () => await db.collection("User").bulkWrite(toUpdate)
     );
+
+  updateRevenue({ userId: String(userInfo._id), value: paymentValues });
 }
 
 export default handleStripeWebhook;

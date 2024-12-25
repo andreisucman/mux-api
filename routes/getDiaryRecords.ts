@@ -35,6 +35,7 @@ route.get(
         moderationStatus: ModerationStatusEnum.ACTIVE,
       };
 
+      if (userName) filters.isPublic = true;
       if (type) filters.type = type;
 
       const diary = await doWithRetries(async () =>

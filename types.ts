@@ -173,6 +173,7 @@ export type SubscriptionType = {
   subscriptionId: string | null;
   validUntil: Date | null;
   isTrialUsed: boolean;
+  failCount: number;
 };
 
 export type PrivacyType = {
