@@ -1,7 +1,7 @@
 import z from "zod";
 import askRepeatedly from "functions/askRepeatedly.js";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
-import { ToAnalyzeType, DemographicsType, TypeEnum } from "types.js";
+import { ToAnalyzeType, DemographicsType, TypeEnum, CategoryNameEnum } from "types.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import httpError from "@/helpers/httpError.js";
 
@@ -9,7 +9,7 @@ type Props = {
   toAnalyzeObjects: ToAnalyzeType[];
   userId: string;
   type: TypeEnum;
-  categoryName: string;
+  categoryName: CategoryNameEnum;
 };
 
 export default async function getDemographics({

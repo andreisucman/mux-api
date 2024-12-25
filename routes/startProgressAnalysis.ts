@@ -6,6 +6,7 @@ import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import {
   BlurTypeEnum,
+  CategoryNameEnum,
   CustomRequest,
   ModerationStatusEnum,
   TypeEnum,
@@ -15,8 +16,6 @@ import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import analyzeAppearance from "functions/analyzeAppearance.js";
 import formatDate from "@/helpers/formatDate.js";
 import checkCanScan from "@/helpers/checkCanScan.js";
-import moderateContent from "@/functions/moderateContent.js";
-import checkIfSelf from "@/functions/checkIfSelf.js";
 import httpError from "@/helpers/httpError.js";
 import { db } from "init.js";
 
@@ -92,16 +91,16 @@ route.post(
         specialConsiderations,
       } = userInfo;
 
-      // const { canScan, canScanDate } =
-      //   checkCanScan({ nextScan, toAnalyze, type }) || {};
+      const { canScan, canScanDate } =
+        checkCanScan({ nextScan, toAnalyze, type }) || {};
 
-      // if (!canScan) {
-      //   const date = formatDate({ date: canScanDate });
-      //   res.status(200).json({
-      //     error: `You have already analyzed yourself. Try again after ${date}.`,
-      //   });
-      //   return;
-      // }
+      if (!canScan) {
+        const date = formatDate({ date: canScanDate });
+        res.status(200).json({
+          error: `You have already analyzed yourself. Try again after ${date}.`,
+        });
+        return;
+      }
 
       await doWithRetries(async () =>
         db
@@ -125,6 +124,7 @@ route.post(
         nextScan,
         potential,
         blurType,
+        categoryName: CategoryNameEnum.PROGRESSSCAN,
         demographics,
         toAnalyze,
         latestScores,

@@ -2,6 +2,7 @@ import z from "zod";
 import askRepeatedly from "functions/askRepeatedly.js";
 import { TypeEnum } from "types.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
+import { CategoryNameEnum } from "types.js";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import httpError from "@/helpers/httpError.js";
 
@@ -9,14 +10,14 @@ type Props = {
   text: string;
   type: TypeEnum;
   userId: string;
-  categoryName: string;
+  categoryName: CategoryNameEnum;
 };
 
 export default async function checkIfTaskIsRelated({
   userId,
   type,
   text,
-  categoryName
+  categoryName,
 }: Props) {
   const condition =
     type === "head"

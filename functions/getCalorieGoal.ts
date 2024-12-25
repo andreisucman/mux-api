@@ -1,14 +1,14 @@
 import z from "zod";
 import askRepeatedly from "functions/askRepeatedly.js";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
-import { ToAnalyzeType } from "types.js";
+import { ToAnalyzeType, CategoryNameEnum } from "types.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import httpError from "@/helpers/httpError.js";
 
 type Props = {
   toAnalyzeObjects: ToAnalyzeType[];
   userId: string;
-  categoryName: string;
+  categoryName: CategoryNameEnum;
 };
 
 export default async function getCalorieGoal({

@@ -1,9 +1,9 @@
 import { Router, Response, NextFunction } from "express";
 import { ObjectId } from "mongodb";
 import { db } from "init.js";
-import { CustomRequest } from "types.js";
+import { CategoryNameEnum, CustomRequest } from "types.js";
 import { ModerationStatusEnum } from "types.js";
-import moderateImages from "@/functions/checkIfSelf.js";
+import checkIfSelf from "@/functions/checkIfSelf.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { PublishToClubUserInfoType } from "types/pubishStyleToClubTypes.js";
 import httpError from "@/helpers/httpError.js";
@@ -87,10 +87,11 @@ route.post(
         (imageObj) => imageObj.position === "front"
       ).mainUrl.url;
 
-      const moderationResponse = await moderateImages({
+      const moderationResponse = await checkIfSelf({
         userId: String(userInfo._id),
         userImage,
         image,
+        categoryName: CategoryNameEnum.STYLESCAN,
       });
 
       if (!moderationResponse) {

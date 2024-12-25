@@ -8,6 +8,7 @@ import {
   TaskType,
   PartEnum,
   ModerationStatusEnum,
+  CategoryNameEnum,
 } from "@/types.js";
 import {
   CreateRoutineUserInfoType,
@@ -25,6 +26,7 @@ type Props = {
   userId: string;
   type: TypeEnum;
   part: PartEnum;
+  categoryName: CategoryNameEnum,
   partConcerns: UserConcernType[];
   specialConsiderations: string;
 };
@@ -33,6 +35,7 @@ export default async function createRoutine({
   type,
   part,
   userId,
+  categoryName,
   partConcerns,
   specialConsiderations,
 }: Props) {
@@ -146,6 +149,7 @@ export default async function createRoutine({
           concerns: partConcerns,
           userInfo,
           allSolutions,
+          categoryName,
           specialConsiderations,
         });
       } else {
@@ -156,6 +160,7 @@ export default async function createRoutine({
           userInfo,
           allSolutions,
           tasksToProlong: draftTasksToProlong,
+          categoryName,
         });
       }
     } else {
@@ -167,6 +172,7 @@ export default async function createRoutine({
         concerns: partConcerns,
         allSolutions,
         specialConsiderations,
+        categoryName,
       });
     }
   } catch (error) {

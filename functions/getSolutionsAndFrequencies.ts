@@ -8,6 +8,7 @@ import {
   TypeEnum,
   UserInfoType,
   PartEnum,
+  CategoryNameEnum
 } from "types.js";
 import { RunType } from "types/askOpenaiTypes.js";
 import { CreateRoutineAllSolutionsType } from "types/createRoutineTypes.js";
@@ -19,7 +20,7 @@ type Props = {
   concerns: UserConcernType[];
   type: TypeEnum;
   part: PartEnum;
-  categoryName: string;
+  categoryName: CategoryNameEnum;
   userInfo: UserInfoType;
 };
 

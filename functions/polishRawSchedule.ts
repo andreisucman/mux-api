@@ -3,7 +3,7 @@ dotenv.config();
 
 import askRepeatedly from "functions/askRepeatedly.js";
 import incrementProgress from "helpers/incrementProgress.js";
-import { UserConcernType, TypeEnum } from "types.js";
+import { UserConcernType, TypeEnum, CategoryNameEnum } from "types.js";
 import { RunType } from "types/askOpenaiTypes.js";
 import httpError from "helpers/httpError.js";
 
@@ -12,7 +12,7 @@ type Props = {
   concerns: UserConcernType[];
   userId: string;
   type: TypeEnum;
-  categoryName: string;
+  categoryName: CategoryNameEnum;
   specialConsiderations: string;
 };
 

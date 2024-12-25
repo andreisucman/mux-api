@@ -1,6 +1,6 @@
 import z from "zod";
 import { ObjectId } from "mongodb";
-import { CustomRequest, ModerationStatusEnum } from "types.js";
+import { CategoryNameEnum, CustomRequest, ModerationStatusEnum } from "types.js";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import { RunType } from "types/askOpenaiTypes.js";
 import askRepeatedly from "functions/askRepeatedly.js";
@@ -46,7 +46,7 @@ route.post(
 
       const response = await askRepeatedly({
         systemContent,
-        categoryName: "other",
+        categoryName: CategoryNameEnum.OTHER,
         runs: userContent as RunType[],
         userId: req.userId,
         functionName: "checkCountry",

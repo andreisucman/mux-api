@@ -8,6 +8,7 @@ import {
   TaskType,
   TypeEnum,
   PartEnum,
+  CategoryNameEnum,
 } from "types.js";
 import addAdditionalTasks from "functions/addAdditionalTasks.js";
 import deactivatePreviousRoutineAndTasks from "functions/deactivatePreviousRoutineAndTasks.js";
@@ -21,6 +22,7 @@ import { db } from "init.js";
 type Props = {
   type: TypeEnum;
   part: PartEnum;
+  categoryName: CategoryNameEnum;
   concerns: UserConcernType[];
   tasksToProlong: TaskType[];
   allSolutions: CreateRoutineAllSolutionsType[];
@@ -31,6 +33,7 @@ export default async function prolongPreviousRoutine({
   type,
   part,
   concerns,
+  categoryName,
   allSolutions,
   userInfo,
   tasksToProlong,
@@ -148,6 +151,7 @@ export default async function prolongPreviousRoutine({
           userInfo,
           type,
           part,
+          categoryName,
           currentTasks: resetTasks,
           currentSchedule: schedule,
         });

@@ -3,10 +3,11 @@ import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import askRepeatedly from "functions/askRepeatedly.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import httpError from "@/helpers/httpError.js";
+import { CategoryNameEnum } from "@/types.js";
 
 type Props = {
   userId: string;
-  categoryName: string;
+  categoryName: CategoryNameEnum;
   variantData: { name: string; description: string };
   taskDescription: string;
 };

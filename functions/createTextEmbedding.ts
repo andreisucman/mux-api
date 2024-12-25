@@ -4,12 +4,13 @@ dotenv.config();
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 import { openai } from "init.js";
+import { CategoryNameEnum } from "@/types.js";
 import updateSpend from "./updateSpend.js";
 
 type Props = {
   userId: string;
   text: string;
-  categoryName: string;
+  categoryName: CategoryNameEnum;
 };
 
 export default async function createTextEmbedding({

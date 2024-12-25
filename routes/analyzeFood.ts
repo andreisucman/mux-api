@@ -3,7 +3,7 @@ dotenv.config();
 
 import { Router, Response, NextFunction } from "express";
 import { ObjectId } from "mongodb";
-import { CustomRequest } from "types.js";
+import { CategoryNameEnum, CustomRequest } from "types.js";
 import { createHashKey } from "@/functions/createHashKey.js";
 import createImageEmbedding from "@/functions/createImageEmbedding.js";
 import checkImageSimilarity from "functions/checkImageSimilarity.js";
@@ -39,6 +39,7 @@ route.post(
         condition: "This is a photo of a ready to eat food",
         image: url,
         userId: req.userId,
+        categoryName: CategoryNameEnum.FOODSCAN,
       });
 
       if (!isValid) {
@@ -49,7 +50,11 @@ route.post(
       }
 
       const hash = await createHashKey(url);
-      const embedding = await createImageEmbedding(url, req.userId);
+      const embedding = await createImageEmbedding(
+        url,
+        req.userId,
+        CategoryNameEnum.FOODSCAN
+      );
 
       const checkSimilarityPayload: CheckImageSimilarityProps = {
         hash,
@@ -98,6 +103,7 @@ route.post(
         url,
         userId: req.userId,
         userAbout,
+        categoryName: CategoryNameEnum.FOODSCAN
       });
 
       const newRecord: { [key: string]: any } = {

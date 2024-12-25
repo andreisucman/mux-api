@@ -4,6 +4,7 @@ dotenv.config();
 import doWithRetries from "helpers/doWithRetries.js";
 import { RoleEnum } from "@/types/askOpenaiTypes.js";
 import { together } from "init.js";
+import { CategoryNameEnum } from "@/types.js";
 import updateSpend from "./updateSpend.js";
 import httpError from "@/helpers/httpError.js";
 
@@ -14,7 +15,7 @@ type AskTogetherProps = {
   messages: { role: RoleEnum; content: string }[];
   isJson?: boolean;
   functionName: string;
-  categoryName: string;
+  categoryName: CategoryNameEnum;
 };
 
 const { LLAMA_2_11B_VISION_PRICE } = process.env;

@@ -1,12 +1,13 @@
 import askRepeatedly from "functions/askRepeatedly.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import httpError from "@/helpers/httpError.js";
+import { CategoryNameEnum } from "@/types.js";
 
 type Props = {
   userId: string;
   variantData: { name: string; description: string; suggestion: string };
   taskDescription: string;
-  categoryName: string;
+  categoryName: CategoryNameEnum;
 };
 
 export default async function isTheProductValid({

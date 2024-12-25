@@ -5,7 +5,7 @@ import polishRawSchedule from "functions/polishRawSchedule.js";
 import createTasks from "functions/createTasks.js";
 import getSolutionsAndFrequencies from "functions/getSolutionsAndFrequencies.js";
 import deactivatePreviousRoutineAndTasks from "functions/deactivatePreviousRoutineAndTasks.js";
-import { UserConcernType, TypeEnum, PartEnum } from "types.js";
+import { UserConcernType, TypeEnum, PartEnum, CategoryNameEnum } from "types.js";
 import {
   CreateRoutineUserInfoType,
   CreateRoutineAllSolutionsType,
@@ -20,6 +20,7 @@ type Props = {
   userInfo: CreateRoutineUserInfoType;
   concerns: UserConcernType[];
   specialConsiderations: string;
+  categoryName: CategoryNameEnum;
   allSolutions: CreateRoutineAllSolutionsType[];
 };
 
@@ -29,6 +30,7 @@ export default async function makeANewRoutine({
   part,
   userInfo,
   concerns,
+  categoryName,
   specialConsiderations,
   allSolutions,
 }: Props) {
@@ -41,6 +43,7 @@ export default async function makeANewRoutine({
         userInfo,
         type,
         part,
+        categoryName
       })
     );
 
@@ -75,6 +78,7 @@ export default async function makeANewRoutine({
         type,
         userId,
         concerns,
+        categoryName,
         rawSchedule,
         specialConsiderations,
       })
@@ -117,6 +121,7 @@ export default async function makeANewRoutine({
         allSolutions,
         finalSchedule,
         userInfo,
+        categoryName
       })
     );
 

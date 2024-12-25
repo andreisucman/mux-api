@@ -3,7 +3,7 @@ import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import askRepeatedly from "functions/askRepeatedly.js";
 import criteria from "data/featureCriteria.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
-import { SexEnum, TypeEnum } from "types.js";
+import { SexEnum, TypeEnum, CategoryNameEnum } from "types.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import { FeaturePotentialAnalysisType } from "@/types/rateFeaturePotentialTypes.js";
 import httpError from "@/helpers/httpError.js";
@@ -14,7 +14,7 @@ type RateFeaturePotentialProps = {
   type: TypeEnum;
   currentScore: number;
   feature: string;
-  categoryName: string;
+  categoryName: CategoryNameEnum;
   ageInterval: string;
   images: string[];
 };

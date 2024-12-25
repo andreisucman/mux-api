@@ -6,14 +6,14 @@ import {
   ProductType,
   SimplifiedProductType,
 } from "@/types/findTheBestVariant.js";
-import { UserInfoType, SuggestionType, UserConcernType } from "types.js";
+import { UserInfoType, SuggestionType, UserConcernType, CategoryNameEnum } from "types.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import httpError from "@/helpers/httpError.js";
 
 type Props = {
   key: string;
   analysisType: string;
-  categoryName: string;
+  categoryName: CategoryNameEnum;
   userInfo: UserInfoType;
   validProducts: ProductType[];
   commonListOfFeatures: string[];

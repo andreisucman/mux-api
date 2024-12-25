@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import doWithRetries from "helpers/doWithRetries.js";
 import { calculateDaysDifference } from "helpers/utils.js";
-import { UserConcernType, TypeEnum, PartEnum } from "types.js";
+import { UserConcernType, TypeEnum, PartEnum, CategoryNameEnum } from "types.js";
 import getSolutionsAndFrequencies from "functions/getSolutionsAndFrequencies.js";
 import getRawSchedule from "functions/getRawSchedule.js";
 import createTasks from "functions/createTasks.js";
@@ -21,6 +21,7 @@ type Props = {
   allSolutions: CreateRoutineAllSolutionsType[];
   userInfo: CreateRoutineUserInfoType;
   specialConsiderations: string;
+  categoryName: CategoryNameEnum;
 };
 
 export default async function updateCurrentRoutine({
@@ -30,6 +31,7 @@ export default async function updateCurrentRoutine({
   routineId,
   allSolutions,
   userInfo,
+  categoryName,
   specialConsiderations,
 }: Props) {
   const { _id: userId } = userInfo;
@@ -52,6 +54,7 @@ export default async function updateCurrentRoutine({
       getSolutionsAndFrequencies({
         specialConsiderations,
         allSolutions,
+        categoryName,
         concerns,
         userInfo,
         type,
@@ -72,6 +75,7 @@ export default async function updateCurrentRoutine({
         rawNewSchedule: rawSchedule,
         currentSchedule: currentRoutine.finalSchedule,
         userId: String(userId),
+        categoryName,
         type,
       })
     );
@@ -102,6 +106,7 @@ export default async function updateCurrentRoutine({
       allSolutions,
       concerns,
       finalSchedule: mergedSchedule,
+      categoryName,
       part,
       type,
       userInfo,

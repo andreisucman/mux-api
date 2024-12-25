@@ -9,6 +9,7 @@ import {
   AllTaskType,
   DemographicsType,
   PartEnum,
+  CategoryNameEnum,
 } from "@/types.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import { CreateRoutineAllSolutionsType } from "types/createRoutineTypes.js";
@@ -20,7 +21,7 @@ type Props = {
   allSolutions: CreateRoutineAllSolutionsType[];
   concerns: UserConcernType[];
   demographics: DemographicsType;
-  categoryName: string;
+  categoryName: CategoryNameEnum;
   type: TypeEnum;
   part: PartEnum;
 };

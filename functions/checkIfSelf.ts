@@ -4,6 +4,7 @@ import { ObjectId } from "mongodb";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import askRepeatedly from "functions/askRepeatedly.js";
 import doWithRetries from "helpers/doWithRetries.js";
+import { CategoryNameEnum } from "types.js";
 import { ModerationStatusEnum, UserProgressRecordType } from "types.js";
 import { RunType } from "types/askOpenaiTypes.js";
 import httpError from "@/helpers/httpError.js";
@@ -12,7 +13,7 @@ type Props = {
   userImage?: string;
   image: string;
   userId: string;
-  categoryName: string;
+  categoryName: CategoryNameEnum;
 };
 
 export default async function checkIfSelf({

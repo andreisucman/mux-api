@@ -4,7 +4,13 @@ import createTasks from "functions/createTasks.js";
 import mergeSchedules from "functions/mergeSchedules.js";
 import getRawSchedule from "functions/getRawSchedule.js";
 import getAdditionalSolutionsAndFrequencies from "functions/getAdditionalSolutionsAndFrequencies.js";
-import { UserConcernType, TaskType, TypeEnum, PartEnum } from "@/types.js";
+import {
+  UserConcernType,
+  TaskType,
+  TypeEnum,
+  PartEnum,
+  CategoryNameEnum,
+} from "@/types.js";
 import addAnalysisStatusError from "functions/addAnalysisStatusError.js";
 import {
   CreateRoutineUserInfoType,
@@ -16,6 +22,7 @@ import httpError from "@/helpers/httpError.js";
 type Props = {
   type: TypeEnum;
   part: PartEnum;
+  categoryName: CategoryNameEnum;
   concerns: UserConcernType[];
   currentTasks: TaskType[];
   currentSchedule: { [key: string]: { key: string; concern: string }[] };
@@ -30,6 +37,7 @@ export default async function addAdditionalTasks({
   concerns,
   currentSchedule,
   allSolutions,
+  categoryName,
 }: Props) {
   const { _id: userId, specialConsiderations, demographics } = userInfo;
 
@@ -43,6 +51,7 @@ export default async function addAdditionalTasks({
         specialConsiderations,
         allSolutions,
         demographics,
+        categoryName,
       })
     );
 
@@ -69,6 +78,7 @@ export default async function addAdditionalTasks({
         currentSchedule,
         userId: String(userId),
         type,
+        categoryName,
       })
     );
 
@@ -85,6 +95,7 @@ export default async function addAdditionalTasks({
       createTasks({
         finalSchedule: mergedSchedule,
         allSolutions,
+        categoryName,
         userInfo,
         concerns,
         type,

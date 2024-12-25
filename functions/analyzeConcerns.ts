@@ -10,6 +10,7 @@ import {
   PartEnum,
   ConcernType,
   UserConcernType,
+  CategoryNameEnum,
 } from "types.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import { db } from "init.js";
@@ -20,7 +21,7 @@ type Props = {
   sex: SexEnum;
   part: PartEnum;
   type: TypeEnum;
-  categoryName: string;
+  categoryName: CategoryNameEnum;
   toAnalyzeObjects: ToAnalyzeType[];
 };
 

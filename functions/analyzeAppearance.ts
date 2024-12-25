@@ -14,6 +14,7 @@ import {
   HigherThanType,
   NextActionType,
   BlurTypeEnum,
+  CategoryNameEnum,
 } from "types.js";
 import calculateHigherThanType from "functions/calculateHigherThanType.js";
 import analyzePart from "functions/analyzePart.js";
@@ -30,6 +31,7 @@ type Props = {
   name: string;
   avatar: { [key: string]: any } | null;
   type: TypeEnum;
+  categoryName: CategoryNameEnum;
   blurType: BlurTypeEnum;
   defaultToUpdateUser?: { $set: { [key: string]: unknown } };
   club: ClubDataType;
@@ -58,6 +60,7 @@ export default async function analyzeAppearance({
   club,
   blurType,
   concerns,
+  categoryName,
   nextScan,
   latestProgress,
   potential,
@@ -99,6 +102,7 @@ export default async function analyzeAppearance({
       rephrasedSpecialConsiderations = await rephraseUserNote({
         userId,
         userNote: newSpecialConsiderations,
+        categoryName,
       });
 
     if (!demographics || !demographics.bodyType) {
@@ -106,6 +110,7 @@ export default async function analyzeAppearance({
         userId,
         toAnalyzeObjects,
         type,
+        categoryName,
       });
 
       demographics = { ...(demographics || {}), ...newDemographics };
@@ -122,7 +127,11 @@ export default async function analyzeAppearance({
       toUpdateUser.$set.demographics = demographics;
     }
     if (type === "body") {
-      const calories = await getCalorieGoal({ userId, toAnalyzeObjects });
+      const calories = await getCalorieGoal({
+        userId,
+        toAnalyzeObjects,
+        categoryName,
+      });
       toUpdateUser.$set.dailyCalorieGoal = calories;
     }
 
@@ -139,6 +148,7 @@ export default async function analyzeAppearance({
           userId,
           concerns,
           blurType,
+          categoryName,
           demographics,
           toAnalyzeObjects,
           specialConsiderations: rephrasedSpecialConsiderations,

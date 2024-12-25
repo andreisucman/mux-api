@@ -1,8 +1,8 @@
 import { ObjectId } from "mongodb";
 import doWithRetries from "helpers/doWithRetries.js";
 import { ModerationStatusEnum, UserType } from "types.js";
-import { db } from "init.js";
 import httpError from "@/helpers/httpError.js";
+import { db } from "init.js";
 
 type Props = {
   userId: string;

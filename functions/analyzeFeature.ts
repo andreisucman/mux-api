@@ -3,7 +3,7 @@ import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import criteria from "data/featureCriteria.js";
 import askRepeatedly from "./askRepeatedly.js";
 import filterImagesByFeature from "@/helpers/filterImagesByFeature.js";
-import { SexEnum, TypeEnum, PartEnum, ToAnalyzeType } from "types.js";
+import { SexEnum, TypeEnum, PartEnum, ToAnalyzeType, CategoryNameEnum } from "types.js";
 import { FeatureAnalysisResultType } from "@/types/analyzeFeatureType.js";
 import httpError from "@/helpers/httpError.js";
 
@@ -12,7 +12,7 @@ type Props = {
   sex: SexEnum;
   feature: string;
   part: PartEnum;
-  categoryName: string;
+  categoryName: CategoryNameEnum;
   toAnalyzeObjects: ToAnalyzeType[];
   type: TypeEnum;
 };

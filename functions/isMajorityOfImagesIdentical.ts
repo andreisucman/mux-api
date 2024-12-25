@@ -2,6 +2,7 @@ import doWithRetries from "@/helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 
 export default async function isMajorityOfImagesIdentical(...urls: string[]) {
+  let isValid = false;
   try {
     const responses = await Promise.all(
       urls.map((url) =>
@@ -25,8 +26,10 @@ export default async function isMajorityOfImagesIdentical(...urls: string[]) {
     const majority = Math.ceil(urls.length / 2);
     const duplicates = urls.length - uniqueImages.size;
 
-    return duplicates >= majority;
+    isValid = duplicates >= majority;
   } catch (error) {
-    return false;
+    throw httpError(error);
+  } finally {
+    return isValid;
   }
 }

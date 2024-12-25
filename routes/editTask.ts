@@ -3,7 +3,7 @@ dotenv.config();
 
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
-import { CustomRequest } from "types.js";
+import { CategoryNameEnum, CustomRequest } from "types.js";
 import isActivityHarmful from "@/functions/isActivityHarmful.js";
 import setUtcMidnight from "@/helpers/setUtcMidnight.js";
 import formatDate from "@/helpers/formatDate.js";
@@ -50,6 +50,7 @@ route.post(
 
       const { isHarmful, explanation } = await isActivityHarmful({
         userId: req.userId,
+        categoryName: CategoryNameEnum.TASKS,
         text,
       });
 
@@ -90,6 +91,7 @@ route.post(
         userId: req.userId,
         description,
         instruction,
+        categoryName: CategoryNameEnum.TASKS,
         newDescription: updatedDescription,
         newInstruction: updatedInstruction,
       });

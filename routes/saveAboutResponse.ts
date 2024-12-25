@@ -6,7 +6,7 @@ import { Router, Response, NextFunction } from "express";
 import { db } from "init.js";
 import updateAboutBio from "functions/updateAboutBio.js";
 import moderateContent from "@/functions/moderateContent.js";
-import { ModerationStatusEnum, CustomRequest } from "types.js";
+import { ModerationStatusEnum, CustomRequest, CategoryNameEnum } from "types.js";
 import { QuestionType } from "@/types/saveAboutResponseTypes.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
@@ -82,6 +82,7 @@ route.post(
             style: bio.style,
             tips: bio.tips,
           },
+          categoryName: CategoryNameEnum.ABOUT,
           question,
           reply,
         });

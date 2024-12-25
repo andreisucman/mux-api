@@ -1,11 +1,12 @@
 import httpError from "@/helpers/httpError.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
+import { CategoryNameEnum } from "@/types.js";
 import askRepeatedly from "functions/askRepeatedly.js";
 
 type Props = {
   userNote: string;
   userId: string;
-  categoryName: string;
+  categoryName: CategoryNameEnum;
 };
 
 export default async function rephraseUserNote({

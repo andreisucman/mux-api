@@ -18,6 +18,7 @@ import {
   PrivacyType,
   ProgressImageType,
   BeforeAfterType,
+  CategoryNameEnum,
 } from "types.js";
 import addSuspiciousRecord from "./addSuspiciousRecord.js";
 import { ModerationStatusEnum } from "types.js";
@@ -40,6 +41,7 @@ type Props = {
   concerns: UserConcernType[];
   demographics: DemographicsType;
   toAnalyzeObjects: ToAnalyzeType[];
+  categoryName: CategoryNameEnum;
 };
 
 export default async function analyzePart({
@@ -51,6 +53,7 @@ export default async function analyzePart({
   part,
   blurType,
   concerns,
+  categoryName,
   demographics,
   specialConsiderations,
   toAnalyzeObjects,
@@ -77,7 +80,11 @@ export default async function analyzePart({
         );
       }
 
-      const isSelf = await checkIfSelf({ image: object.mainUrl.url, userId });
+      const isSelf = await checkIfSelf({
+        image: object.mainUrl.url,
+        userId,
+        categoryName,
+      });
 
       if (!isSelf) {
         throw httpError(`You can only upload images of yourself.`);
@@ -105,6 +112,7 @@ export default async function analyzePart({
               part,
               userId,
               feature,
+              categoryName,
               sex: demographics.sex,
               toAnalyzeObjects: partToAnalyzeObjects,
             })
@@ -126,6 +134,7 @@ export default async function analyzePart({
       type,
       part,
       userId,
+      categoryName,
       sex: demographics.sex,
       toAnalyzeObjects: partToAnalyzeObjects,
     });
@@ -149,6 +158,7 @@ export default async function analyzePart({
       /* create the potential of the person */
       scoresAndExplanations = await analyzePotential({
         userId,
+        categoryName,
         type: type as TypeEnum,
         sex: demographics.sex,
         toAnalyzeObjects: partToAnalyzeObjects,

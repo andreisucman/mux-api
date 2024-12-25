@@ -1,7 +1,7 @@
 import incrementProgress from "@/helpers/incrementProgress.js";
 import askRepeatedly from "functions/askRepeatedly.js";
 import { RunType } from "types/askOpenaiTypes.js";
-import { StyleGoalsType, TypeEnum } from "types.js";
+import { StyleGoalsType, TypeEnum, CategoryNameEnum } from "types.js";
 import httpError from "@/helpers/httpError.js";
 
 type Props = {
@@ -9,7 +9,7 @@ type Props = {
   image: string;
   currentStyle: string;
   type: TypeEnum;
-  categoryName: string;
+  categoryName: CategoryNameEnum;
   styleGoals: StyleGoalsType;
 };
 

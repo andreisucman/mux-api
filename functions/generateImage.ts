@@ -4,12 +4,13 @@ import askTogether from "functions/askTogether.js";
 import { RoleEnum } from "@/types/askOpenaiTypes.js";
 import { together } from "init.js";
 import updateSpend from "./updateSpend.js";
+import { CategoryNameEnum } from "@/types.js";
 import httpError from "@/helpers/httpError.js";
 
 type Props = {
   description: string;
   userId: string;
-  categoryName: string;
+  categoryName: CategoryNameEnum;
 };
 
 export default async function generateImage({

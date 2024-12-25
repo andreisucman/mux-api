@@ -1,3 +1,5 @@
+import { CategoryNameEnum } from "@/types.js";
+
 export enum RoleEnum {
   USER = "user",
   ASSISTANT = "assistant",
@@ -32,5 +34,5 @@ export type AskOpenaiProps = {
   isMini: boolean;
   isJson: boolean;
   functionName: string;
-  categoryName: string;
+  categoryName: CategoryNameEnum;
 };

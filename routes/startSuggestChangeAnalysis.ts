@@ -1,7 +1,7 @@
 import { Router, NextFunction } from "express";
 import { ObjectId } from "mongodb";
 import { db } from "init.js";
-import { CustomRequest } from "types.js";
+import { CategoryNameEnum, CustomRequest } from "types.js";
 import suggestChange from "functions/suggestChange.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { StyleAnalysisType } from "types.js";
@@ -62,6 +62,7 @@ route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
       currentStyle: styleName,
       image: mainUrl.url,
       styleGoals: goal,
+      categoryName: CategoryNameEnum.STYLESCAN,
       type,
     });
 

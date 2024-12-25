@@ -6,6 +6,7 @@ import { Router, Response, NextFunction } from "express";
 import findProducts from "functions/findProducts.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import {
+  CategoryNameEnum,
   CustomRequest,
   SolutionType,
   SubscriptionTypeNamesEnum,
@@ -93,6 +94,7 @@ route.post(
           timeZone,
           concerns,
         },
+        categoryName: CategoryNameEnum.PRODUCTS,
         analysisType: taskKey,
         criteria,
       });

@@ -6,6 +6,7 @@ import {
   StyleAnalysisType,
   PrivacyType,
   ModerationStatusEnum,
+  CategoryNameEnum,
 } from "types.js";
 import analyzeStyle from "functions/analyzeStyle.js";
 import { outlookStyles } from "@/data/outlookStyles.js";
@@ -90,6 +91,7 @@ route.post(
         userId,
         image,
         type,
+        categoryName: CategoryNameEnum.STYLESCAN
       });
 
       const {

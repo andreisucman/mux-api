@@ -9,6 +9,7 @@ import isActivityHarmful from "@/functions/isActivityHarmful.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { RunType } from "types/askOpenaiTypes.js";
 import {
+  CategoryNameEnum,
   CustomRequest,
   ModerationStatusEnum,
   SubscriptionTypeNamesEnum,
@@ -50,7 +51,7 @@ route.post(
       const { isHarmful, explanation } = await isActivityHarmful({
         userId: req.userId,
         text: constraints,
-        categoryName: "tasks",
+        categoryName: CategoryNameEnum.TASKS,
       });
 
       if (isHarmful) {
@@ -284,7 +285,7 @@ route.post(
       const response = await askRepeatedly({
         runs,
         systemContent,
-        categoryName: "tasks",
+        categoryName: CategoryNameEnum.TASKS,
         userId: req.userId,
         functionName: "createRecipe",
       });
@@ -292,7 +293,7 @@ route.post(
       const image = await generateImage({
         description: `A plate of ${response.name}.`,
         userId: req.userId,
-        categoryName: "tasks",
+        categoryName: CategoryNameEnum.TASKS,
       });
 
       await incrementProgress({
@@ -311,6 +312,7 @@ route.post(
           description: response.description,
           productTypes: response.productTypes,
         },
+        categoryName: CategoryNameEnum.TASKS,
         analysisType,
       });
 

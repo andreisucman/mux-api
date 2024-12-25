@@ -15,6 +15,7 @@ import {
   ProofType,
   TaskStatusEnum,
   PrivacyType,
+  CategoryNameEnum,
 } from "types.js";
 import { db } from "init.js";
 import {
@@ -231,6 +232,7 @@ route.post(
             userId: req.userId,
             requisite: taskInfo.requisite,
             image,
+            categoryName: CategoryNameEnum.PROOF,
           });
 
         verdicts.push(proofAccepted);
@@ -387,6 +389,7 @@ route.post(
         const foodAnalysis = await analyzeCalories({
           userId: req.userId,
           url: selectedProofImages[0],
+          categoryName: CategoryNameEnum.PROOF,
         });
         const { energy } = foodAnalysis;
         const newDailyCalorieGoal = Math.max(0, dailyCalorieGoal - energy);

@@ -3,12 +3,13 @@ import { RunType } from "@/types/askOpenaiTypes.js";
 import askRepeatedly from "functions/askRepeatedly.js";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import httpError from "@/helpers/httpError.js";
+import { CategoryNameEnum } from "@/types.js";
 
 type Props = {
   image: string;
   requisite: string;
   userId: string;
-  categoryName: string;
+  categoryName: CategoryNameEnum;
 };
 
 export default async function checkProofImage({

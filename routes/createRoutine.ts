@@ -11,6 +11,7 @@ import {
   CustomRequest,
   SubscriptionTypeNamesEnum,
   ModerationStatusEnum,
+  CategoryNameEnum,
 } from "types.js";
 import updateNextRoutine from "helpers/updateNextRoutine.js";
 import formatDate from "helpers/formatDate.js";
@@ -103,6 +104,7 @@ route.post(
           userId: req.userId,
           partConcerns: selectedConcerns,
           specialConsiderations,
+          categoryName: CategoryNameEnum.TASKS,
         });
 
         updatedNextRoutine = updateNextRoutine({
@@ -127,6 +129,7 @@ route.post(
                 part: partKey,
                 partConcerns: selectedConcerns,
                 specialConsiderations,
+                categoryName: CategoryNameEnum.TASKS,
               })
           )
         );

@@ -9,6 +9,7 @@ import {
   RoleEnum,
   RunType,
 } from "types/askOpenaiTypes.js";
+import { CategoryNameEnum } from "@/types.js";
 import askOpenai from "./askOpenai.js";
 import httpError from "@/helpers/httpError.js";
 
@@ -17,7 +18,7 @@ type Props = {
   meta?: string;
   seed?: number;
   userId: string;
-  categoryName: string;
+  categoryName: CategoryNameEnum;
   functionName: string;
   systemContent: string;
   isResultString?: boolean;

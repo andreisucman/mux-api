@@ -8,6 +8,7 @@ import { Router, Response, NextFunction } from "express";
 import { zodResponseFormat } from "openai/helpers/zod";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import {
+  CategoryNameEnum,
   CustomRequest,
   RoutineStatusEnum,
   RoutineType,
@@ -75,7 +76,7 @@ route.post(
       const { isHarmful, explanation } = await isActivityHarmful({
         userId: req.userId,
         text,
-        categoryName: "tasks",
+        categoryName: CategoryNameEnum.TASKS,
       });
 
       if (isHarmful) {
@@ -97,7 +98,7 @@ route.post(
         userId: req.userId,
         text,
         type,
-        categoryName: "tasks",
+        categoryName: CategoryNameEnum.TASKS,
       });
 
       if (!satisfies) {
@@ -180,7 +181,7 @@ route.post(
         systemContent: systemContent,
         runs: runs as RunType[],
         userId: req.userId,
-        categoryName: "tasks",
+        categoryName: CategoryNameEnum.TASKS,
         functionName: "saveTaskFromDescription",
       });
 
@@ -196,7 +197,7 @@ route.post(
       const image = await generateImage({
         description,
         userId: req.userId,
-        categoryName: "tasks",
+        categoryName: CategoryNameEnum.TASKS,
       });
 
       const generalTaskInfo: TaskType = {
@@ -220,7 +221,7 @@ route.post(
       const embedding = await createTextEmbedding({
         userId: req.userId,
         text: info,
-        categoryName: "tasks",
+        categoryName: CategoryNameEnum.TASKS,
       });
 
       await incrementProgress({
@@ -244,7 +245,7 @@ route.post(
         const filteredProductTypes = await filterRelevantProductTypes({
           userId: req.userId,
           info,
-          categoryName: "tasks",
+          categoryName: CategoryNameEnum.TASKS,
           productTypes: relevantSolutions.map((s) => s.prouductTypes),
         });
 

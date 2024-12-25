@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 import { db } from "init.js";
+import { RoutineStatusEnum, TaskStatusEnum } from "@/types.js";
 
 export default async function deactivatePreviousRoutineAndTasks(
   routineId: string
@@ -12,7 +13,7 @@ export default async function deactivatePreviousRoutineAndTasks(
         {
           _id: new ObjectId(routineId),
         },
-        { $set: { status: "inactive" } }
+        { $set: { status: RoutineStatusEnum.INACTIVE } }
       )
     );
 
@@ -21,7 +22,7 @@ export default async function deactivatePreviousRoutineAndTasks(
         {
           routineId: new ObjectId(routineId),
         },
-        { $set: { status: "inactive" } }
+        { $set: { status: TaskStatusEnum.CANCELED } }
       )
     );
   } catch (err) {

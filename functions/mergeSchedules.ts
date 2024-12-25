@@ -3,13 +3,13 @@ dotenv.config();
 
 import askRepeatedly from "functions/askRepeatedly.js";
 import { RunType } from "types/askOpenaiTypes.js";
-import { TypeEnum } from "types.js";
+import { TypeEnum, CategoryNameEnum } from "types.js";
 import httpError from "helpers/httpError.js";
 
 type Props = {
   userId: string;
   type: TypeEnum;
-  categoryName: string;
+  categoryName: CategoryNameEnum;
   rawNewSchedule: { [key: string]: { key: string; concern: string }[] };
   currentSchedule: {
     [key: string]: { key: string; concern: string }[];

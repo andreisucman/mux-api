@@ -2,12 +2,13 @@ import z from "zod";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import askRepeatedly from "functions/askRepeatedly.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
+import { CategoryNameEnum } from "@/types.js";
 import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
   image: string;
-  categoryName: string;
+  categoryName: CategoryNameEnum;
   condition: string;
 };
 

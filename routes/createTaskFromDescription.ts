@@ -5,7 +5,7 @@ import { ObjectId } from "mongodb";
 import { z } from "zod";
 import { Router, Response, NextFunction } from "express";
 import { zodResponseFormat } from "openai/helpers/zod";
-import { CustomRequest } from "types.js";
+import { CategoryNameEnum, CustomRequest } from "types.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import askRepeatedly from "functions/askRepeatedly.js";
 import isActivityHarmful from "@/functions/isActivityHarmful.js";
@@ -74,7 +74,7 @@ route.post(
       const { isHarmful, explanation } = await isActivityHarmful({
         text: description,
         userId: req.userId,
-        categoryName: "tasks",
+        categoryName: CategoryNameEnum.TASKS,
       });
 
       if (isHarmful) {
@@ -92,10 +92,10 @@ route.post(
         return;
       }
 
-      const { satisfies, condition } = await checkIfTaskIsRelated({
+      const { satisfies } = await checkIfTaskIsRelated({
         userId: req.userId,
         text: description,
-        categoryName: "tasks",
+        categoryName: CategoryNameEnum.TASKS,
         type,
       });
 
@@ -145,7 +145,7 @@ route.post(
         systemContent: systemContent,
         runs: runs as RunType[],
         userId: req.userId,
-        categoryName: "tasks",
+        categoryName: CategoryNameEnum.TASKS,
         functionName: "createTaskFromDescription",
       });
 

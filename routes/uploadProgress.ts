@@ -10,6 +10,7 @@ import {
   PartEnum,
   BlurTypeEnum,
   ModerationStatusEnum,
+  CategoryNameEnum,
 } from "types.js";
 import {
   ProgressType,
@@ -67,6 +68,7 @@ route.post(
           part,
           position,
           userId: finalUserId,
+          categoryName: CategoryNameEnum.PROGRESSSCAN,
         });
 
       if (!isPosiitonValid) {
@@ -222,6 +224,7 @@ route.post(
           toAnalyze: newToAnalyze,
           latestScores,
           latestProgress,
+          categoryName: CategoryNameEnum.PROGRESSSCAN,
           latestScoresDifference,
           newSpecialConsiderations,
         });

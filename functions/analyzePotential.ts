@@ -7,6 +7,7 @@ import {
   TypeEnum,
   ToAnalyzeType,
   FormattedRatingType,
+  CategoryNameEnum,
 } from "types.js";
 import { FeatureAnalysisType } from "@/types/analyzePotentialTypes.js";
 import httpError from "@/helpers/httpError.js";
@@ -19,12 +20,14 @@ type Props = {
   analysisResults: FeatureAnalysisType[];
   toAnalyzeObjects: ToAnalyzeType[];
   listOfFeatures: string[];
+  categoryName: CategoryNameEnum;
 };
 
 export default async function analyzePotential({
   userId,
   sex,
   type,
+  categoryName,
   analysisResults,
   ageInterval,
   toAnalyzeObjects,
@@ -52,6 +55,7 @@ export default async function analyzePotential({
               feature,
               currentScore,
               ageInterval,
+              categoryName,
               images: filteredImages,
             })
           );

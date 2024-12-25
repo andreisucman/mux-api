@@ -3,6 +3,7 @@ import askRepeatedly from "@/functions/askRepeatedly.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import httpError from "@/helpers/httpError.js";
+import { CategoryNameEnum } from "@/types.js";
 
 type Props = {
   userId: string;
@@ -10,7 +11,7 @@ type Props = {
   newDescription: string;
   instruction: string;
   newInstruction: string;
-  categoryName: string;
+  categoryName: CategoryNameEnum;
 };
 
 export default async function checkIfTaskIsSimilar({

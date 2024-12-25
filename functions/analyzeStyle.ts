@@ -1,7 +1,7 @@
 import z from "zod";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import incrementProgress from "@/helpers/incrementProgress.js";
-import { TypeEnum } from "types.js";
+import { CategoryNameEnum, TypeEnum } from "types.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import { outlookStyles } from "data/outlookStyles.js";
 import { sortObjectByNumberValue } from "helpers/utils.js";
@@ -12,7 +12,7 @@ type Props = {
   type: TypeEnum;
   userId: string;
   image: string;
-  categoryName: string;
+  categoryName: CategoryNameEnum;
 };
 
 export default async function analyzeStyle({

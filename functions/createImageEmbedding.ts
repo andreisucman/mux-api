@@ -4,11 +4,12 @@ dotenv.config();
 import { replicate } from "init.js";
 import updateSpend from "./updateSpend.js";
 import httpError from "@/helpers/httpError.js";
+import { CategoryNameEnum } from "@/types.js";
 
 export default async function createImageEmbedding(
   imageUrl: string,
   userId: string,
-  categoryName: string
+  categoryName: CategoryNameEnum
 ): Promise<number[]> {
   try {
     const payload: { [key: string]: any } = {

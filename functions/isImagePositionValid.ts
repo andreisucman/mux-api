@@ -4,11 +4,12 @@ import askRepeatedly from "functions/askRepeatedly.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import { isImagePositionValidRequirements } from "@/data/isImagePositionValidRequirements.js";
 import httpError from "@/helpers/httpError.js";
+import { CategoryNameEnum } from "@/types.js";
 
 type Props = {
   userId: string;
   image: string;
-  categoryName: string;
+  categoryName: CategoryNameEnum;
   part: string;
   position: string;
 };

@@ -8,6 +8,7 @@ import { ProductType, SuggestionVariant } from "@/types/findTheBestVariant.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import httpError from "@/helpers/httpError.js";
 import { UserInfoType } from "types.js";
+import { CategoryNameEnum } from "types.js";
 import { db } from "init.js";
 
 interface ValidProductType extends ProductType {
@@ -19,6 +20,7 @@ type Props = {
   taskData: { productTypes: string[]; description: string; key: string };
   analysisType: string;
   criteria: string;
+  categoryName: CategoryNameEnum;
 };
 
 export default async function findProducts({
@@ -26,6 +28,7 @@ export default async function findProducts({
   taskData,
   analysisType,
   criteria,
+  categoryName,
 }: Props) {
   const { productTypes, description: taskDescription, key } = taskData;
 
@@ -58,6 +61,7 @@ export default async function findProducts({
           userId: String(userId),
           taskDescription,
           variantData: v as ProductType,
+          categoryName,
         })
       )
     ) as Promise<ValidProductType>[];
@@ -101,6 +105,7 @@ export default async function findProducts({
           userId: String(userId),
           taskDescription,
           variantData: v,
+          categoryName,
         })
       );
 
@@ -120,6 +125,7 @@ export default async function findProducts({
       const commonListOfFeatures = await createACommonTableOfProductFeatures({
         userId: String(userId),
         extractedVariantFeatures: extractedFeaturesObjectsArray,
+        categoryName,
       });
 
       await doWithRetries(async () =>
@@ -136,6 +142,7 @@ export default async function findProducts({
         taskDescription,
         validProducts: filteredProducts,
         analysisType,
+        categoryName,
         userInfo,
         criteria,
         concerns,
@@ -151,7 +158,7 @@ export default async function findProducts({
       userId: String(userId),
       operationKey: analysisType,
       originalMessage: err.message,
-      message: "An unexpected error occured. Please try again."
+      message: "An unexpected error occured. Please try again.",
     });
 
     throw httpError(err);

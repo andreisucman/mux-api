@@ -350,7 +350,20 @@ export type ProgressImageType = {
 export enum ModerationStatusEnum {
   ACTIVE = "active",
   BLOCKED = "blocked",
-  SUSPENDED = "suspended"
+  SUSPENDED = "suspended",
+}
+
+export enum CategoryNameEnum {
+  TASKS = "tasks",
+  PROGRESSSCAN = "progressScan",
+  FOODSCAN = "foodScan",
+  STYLESCAN = "styleScan",
+  PRODUCTS = "products",
+  ADVISOR = "advisor",
+  DIARY = "diary",
+  ABOUT = "about",
+  PROOF = "proof",
+  OTHER = "other"
 }
 
 export type ProgressType = {

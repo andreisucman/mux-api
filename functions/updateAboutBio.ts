@@ -4,13 +4,14 @@ import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import { RunType } from "types/askOpenaiTypes.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { upperFirst } from "helpers/utils.js";
+import { CategoryNameEnum } from "@/types.js";
 import httpError from "@/helpers/httpError.js";
 
 type UpdateAboutBioProps = {
   userId: string;
   question: string;
   reply: string;
-  categoryName: string;
+  categoryName: CategoryNameEnum;
   currentBio: {
     philosophy: string;
     style: string;
@@ -24,7 +25,7 @@ type UpdateBioPartProps = {
   question: string;
   reply: string;
   userId: string;
-  categoryName: string;
+  categoryName: CategoryNameEnum;
 };
 
 async function updateBioPart({

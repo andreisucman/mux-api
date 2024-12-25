@@ -1,12 +1,13 @@
 import doWithRetries from "@/helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 import { adminDb } from "@/init.js";
+import { CategoryNameEnum } from "@/types.js";
 import { ObjectId } from "mongodb";
 
 type Props = {
   userId: string;
   functionName: string;
-  categoryName: string;
+  categoryName: CategoryNameEnum;
   modelName: string;
   units: number;
   unitCost: number;

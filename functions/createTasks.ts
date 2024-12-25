@@ -15,6 +15,7 @@ import {
   TaskType,
   PartEnum,
   TaskStatusEnum,
+  CategoryNameEnum,
 } from "types.js";
 import {
   CreateRoutineAllSolutionsType,
@@ -35,6 +36,7 @@ type Props = {
   finalSchedule: { [key: string]: { key: string; concern: string }[] };
   allSolutions: CreateRoutineAllSolutionsType[];
   createOnlyTheseKeys?: string[];
+  categoryName: CategoryNameEnum;
 };
 
 export default async function createTasks({
@@ -44,6 +46,7 @@ export default async function createTasks({
   userInfo,
   finalSchedule,
   allSolutions,
+  categoryName,
   createOnlyTheseKeys,
 }: Props) {
   const { _id: userId } = userInfo;
@@ -96,6 +99,7 @@ export default async function createTasks({
         const personalInstruction = await personalizeInstruction({
           type,
           userInfo,
+          categoryName,
           name: draftTask.name,
           instruction: draftTask.instruction,
           description: draftTask.description,
