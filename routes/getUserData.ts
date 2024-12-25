@@ -10,6 +10,7 @@ route.get(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
+      
       const userData = await doWithRetries(
         async () => await getUserData({ userId: req.userId })
       );

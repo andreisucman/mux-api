@@ -45,7 +45,7 @@ async function checkAccess(
   }
 
   const validAuthorizationHeader =
-    authorizationHeader !== process.env.API_SECRET;
+    authorizationHeader === process.env.API_SECRET;
 
   if (validAuthorizationHeader) {
     next();

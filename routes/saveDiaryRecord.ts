@@ -7,7 +7,11 @@ import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 import setUtcMidnight from "@/helpers/setUtcMidnight.js";
 import moderateContent from "@/functions/moderateContent.js";
-import { ModerationStatusEnum, CustomRequest } from "types.js";
+import {
+  ModerationStatusEnum,
+  CustomRequest,
+  CategoryNameEnum,
+} from "types.js";
 import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 import { daysFrom } from "@/helpers/utils.js";
 import { db } from "init.js";
@@ -49,7 +53,10 @@ route.post(
             Authorization: process.env.PROCESSING_SECRET,
             UserId: req.userId,
           },
-          body: JSON.stringify({ audioFile: audio }),
+          body: JSON.stringify({
+            audioFile: audio,
+            categoryName: CategoryNameEnum.DIARY,
+          }),
         })
       );
 
@@ -93,15 +100,13 @@ route.post(
       });
 
       await doWithRetries(async () =>
-        db
-          .collection("User")
-          .updateOne(
-            {
-              _id: new ObjectId(req.userId),
-              moderationStatus: ModerationStatusEnum.ACTIVE,
-            },
-            { $set: { nextDiaryRecordAfter } }
-          )
+        db.collection("User").updateOne(
+          {
+            _id: new ObjectId(req.userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
+          { $set: { nextDiaryRecordAfter } }
+        )
       );
 
       res.status(200).json({

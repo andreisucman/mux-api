@@ -362,6 +362,7 @@ export enum CategoryNameEnum {
   ADVISOR = "advisor",
   ABOUT = "about",
   PROOF = "proof",
+  DIARY = "diary",
   OTHER = "other"
 }
 

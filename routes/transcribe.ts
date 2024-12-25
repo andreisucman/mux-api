@@ -9,7 +9,7 @@ import { CustomRequest } from "@/types.js";
 const route = Router();
 
 route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
-  const { url } = req.body;
+  const { url, categoryName } = req.body;
 
   try {
     const response = await doWithRetries(() =>
@@ -20,7 +20,7 @@ route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
           Authorization: process.env.PROCESSING_SECRET,
           UserId: req.userId,
         },
-        body: JSON.stringify({ audioFile: url }),
+        body: JSON.stringify({ audioFile: url, categoryName }),
       })
     );
 
