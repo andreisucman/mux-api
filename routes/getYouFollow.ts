@@ -2,7 +2,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import { Router, Response, NextFunction } from "express";
-import { GetClubYouTrackUserType } from "types/getClubYouTrackTypes.js";
+import { GetYouFollowUserType } from "@/types/getYouFollowTypes.js";
 import { ClubBioType, CustomRequest, UserType } from "types.js";
 import checkTrackedRBAC from "@/functions/checkTrackedRBAC.js";
 import httpError from "@/helpers/httpError.js";
@@ -74,7 +74,7 @@ route.get(
       if (!userInfo) throw httpError(`User ${followingUserName} not found`);
 
       const { _id, club, name, avatar, latestScores, latestScoresDifference } =
-        userInfo as GetClubYouTrackUserType;
+        userInfo as GetYouFollowUserType;
 
       const { bio, privacy } = club;
 

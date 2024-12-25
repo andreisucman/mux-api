@@ -1,6 +1,6 @@
 import { LatestScoresType, PrivacyType } from "types.js";
 
-export type TrackerType = {
+export type FollowerType = {
   _id: 1;
   name: string;
   avatar: { [key: string]: any };

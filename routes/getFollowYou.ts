@@ -3,7 +3,7 @@ dotenv.config();
 
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
-import { TrackerType } from "types/getClubTrackYouTypes.js";
+import { FollowerType } from "@/types/getFollowYouTypes.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { CustomRequest, ModerationStatusEnum } from "types.js";
 import { db } from "init.js";
@@ -16,13 +16,14 @@ route.get(
     const { skip } = req.query;
 
     try {
-      const trackers = (await doWithRetries(async () =>
+      const followers = (await doWithRetries(async () =>
         db
           .collection("User")
           .find(
             {
               "club.followingUserId": new ObjectId(req.userId),
               moderationStatus: ModerationStatusEnum.ACTIVE,
+              "subscriptions.peek.validUntil": { $gte: new Date() },
             },
             {
               projection: {
@@ -38,9 +39,9 @@ route.get(
           .limit(11)
           .skip(Number(skip) || 0)
           .toArray()
-      )) as unknown as TrackerType[];
+      )) as unknown as FollowerType[];
 
-      const results = trackers.map((rec) => {
+      const results = followers.map((rec) => {
         const {
           club,
           name,
