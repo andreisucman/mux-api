@@ -3,6 +3,7 @@ import { defaultClubPrivacy } from "data/defaultClubPrivacy.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import {
   UserType,
+  ClubPayoutDataType,
   ClubDataType,
   ClubBioType,
   ModerationStatusEnum,
@@ -15,6 +16,14 @@ import httpError from "@/helpers/httpError.js";
 type Props = {
   userId: string;
   avatar: { [key: string]: any };
+};
+
+export const defaultClubPayoutData: ClubPayoutDataType = {
+  connectId: null,
+  balance: 0,
+  payoutsEnabled: false,
+  detailsSubmitted: false,
+  disabledReason: null,
 };
 
 export default async function createClubProfile({ userId, avatar }: Props) {
@@ -85,13 +94,7 @@ export default async function createClubProfile({ userId, avatar }: Props) {
       followingUserName: null,
       followingUserId: null,
       bio: clubBio,
-      payouts: {
-        connectId: null,
-        balance: 0,
-        payoutsEnabled: false,
-        detailsSubmitted: false,
-        disabledReason: null,
-      },
+      payouts: defaultClubPayoutData,
       privacy: defaultClubPrivacy,
       totalFollowers: 0,
     };

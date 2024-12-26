@@ -90,6 +90,7 @@ import createDiaryRecord from "routes/createDiaryRecord.js";
 import getFoodAnalysis from "routes/getFoodAnalysis.js";
 import saveDiaryRecord from "routes/saveDiaryRecord.js";
 import transcribe from "routes/transcribe.js";
+import changeCountry from "routes/changeCountry.js";
 import findProductsForGeneralTasks from "routes/findProductsForGeneralTasks.js";
 
 import { client } from "init.js";
@@ -179,6 +180,7 @@ app.use("/getAllProofRecords", getAllProofRecords);
 
 // protected routes
 app.use((req, res, next) => checkAccess(req, res, next, true));
+app.use("/changeCountry", changeCountry);
 app.use("/findProductsForGeneralTasks", findProductsForGeneralTasks);
 app.use("/saveDiaryRecord", saveDiaryRecord);
 app.use("/createDiaryRecord", createDiaryRecord);

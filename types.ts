@@ -1,6 +1,5 @@
 import { ObjectId } from "mongodb";
 import { Request } from "express";
-import { Moderation } from "openai/resources/moderations.mjs";
 import { ModerationResultType } from "./functions/moderateContent.js";
 
 export interface CustomRequest extends Request {
@@ -190,17 +189,19 @@ export type ClubBioType = {
   socials: { value: string; label: string }[];
 };
 
+export type ClubPayoutDataType = {
+  connectId: string;
+  balance: number;
+  payoutsEnabled: boolean;
+  detailsSubmitted: boolean;
+  disabledReason: string;
+};
+
 export type ClubDataType = {
   followingUserName: string;
   followingUserId: ObjectId;
   bio: ClubBioType;
-  payouts: {
-    connectId: string;
-    balance: number;
-    payoutsEnabled: boolean;
-    detailsSubmitted: boolean;
-    disabledReason: string;
-  };
+  payouts: ClubPayoutDataType;
   privacy: PrivacyType[];
   totalFollowers: number;
 };
@@ -363,7 +364,7 @@ export enum CategoryNameEnum {
   ABOUT = "about",
   PROOF = "proof",
   DIARY = "diary",
-  OTHER = "other"
+  OTHER = "other",
 }
 
 export type ProgressType = {
