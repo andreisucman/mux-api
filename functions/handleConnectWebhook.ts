@@ -7,10 +7,24 @@ import { defaultClubPrivacy } from "data/defaultClubPrivacy.js";
 import { db, stripe } from "init.js";
 import httpError from "@/helpers/httpError.js";
 import { ModerationStatusEnum } from "@/types.js";
+import updateWithdrawn from "./updateWithdrawn.js";
 
 /* Stripe requires the raw body to construct the event */
 export default async function handleConnectWebhook(event: any) {
   const object = event.data.object;
+
+  if (event.type !== "account.updated" && event.type !== "transfer.paid")
+    return;
+
+  const userInfo = await doWithRetries(async () =>
+    db.collection("User").findOne(
+      {
+        "club.payouts.connectId": object.id,
+        moderationStatus: ModerationStatusEnum.ACTIVE,
+      },
+      { projection: { _id: 1 } }
+    )
+  );
 
   if (event.type === "account.updated") {
     try {
@@ -40,16 +54,6 @@ export default async function handleConnectWebhook(event: any) {
       );
 
       if (!payouts_enabled) {
-        const userInfo = await doWithRetries(async () =>
-          db.collection("User").findOne(
-            {
-              "club.payouts.connectId": object.id,
-              moderationStatus: ModerationStatusEnum.ACTIVE,
-            },
-            { projection: { _id: 1 } }
-          )
-        );
-
         await updateContentPublicity({
           userId: String(userInfo._id),
           newPrivacy: defaultClubPrivacy,
@@ -91,6 +95,11 @@ export default async function handleConnectWebhook(event: any) {
           }
         )
       );
+
+      updateWithdrawn({
+        userId: String(userInfo._id),
+        amount: amount / 100,
+      });
     } catch (err) {
       throw httpError(err);
     }

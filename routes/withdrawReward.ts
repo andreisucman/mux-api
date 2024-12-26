@@ -23,7 +23,7 @@ route.post(
           {
             projection: {
               "club.payouts.connectId": 1,
-              "club.payouts.rewardEarned": 1,
+              "club.payouts.balance": 1,
             },
           }
         )
@@ -31,7 +31,7 @@ route.post(
 
       const { club } = userInfo;
       const { payouts } = club || {};
-      const { connectId, rewardEarned, payoutsEnabled } = payouts;
+      const { connectId, balance, payoutsEnabled } = payouts;
 
       if (!payoutsEnabled) {
         res.status(200).json({
@@ -41,7 +41,7 @@ route.post(
         return;
       }
 
-      if (rewardEarned === 0) {
+      if (balance === 0) {
         res.status(200).json({
           error:
             "Your balance is zero. Check your wallet for the payout history.",
@@ -53,24 +53,22 @@ route.post(
         stripe.transfers.create({
           currency: "usd",
           destination: connectId,
-          amount: formatAmountForStripe(rewardEarned, "usd"),
+          amount: formatAmountForStripe(balance, "usd"),
         })
       );
 
       await doWithRetries(async () =>
-        db
-          .collection("User")
-          .updateOne(
-            {
-              _id: new ObjectId(req.userId),
-              moderationStatus: ModerationStatusEnum.ACTIVE,
-            },
-            { $set: { "club.payouts.rewardEarned": 0 } }
-          )
+        db.collection("User").updateOne(
+          {
+            _id: new ObjectId(req.userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
+          { $set: { "club.payouts.balance": 0 } }
+        )
       );
 
       res.status(200).json({
-        message: `You have initiated a withdrawal of $${rewardEarned}. For details check your wallet.`,
+        message: `You have initiated a withdrawal of $${balance}. For details check your wallet.`,
       });
     } catch (err) {
       next(err);

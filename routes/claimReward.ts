@@ -104,7 +104,7 @@ route.post(
           .collection("User")
           .updateOne(
             { _id: new ObjectId(req.userId), moderationStatus: ModerationStatusEnum.ACTIVE },
-            { $inc: { "club.payouts.rewardEarned": rewardValue } }
+            { $inc: { "club.payouts.balance": rewardValue } }
           )
       );
 

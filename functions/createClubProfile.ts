@@ -87,7 +87,7 @@ export default async function createClubProfile({ userId, avatar }: Props) {
       bio: clubBio,
       payouts: {
         connectId: null,
-        rewardEarned: 0,
+        balance: 0,
         payoutsEnabled: false,
         detailsSubmitted: false,
         disabledReason: null,

@@ -106,7 +106,7 @@ route.post(
       if (name) newDiaryRecord.userName = name;
       if (avatar) newDiaryRecord.avatar = avatar;
 
-      const { privacy } = club;
+      const { privacy } = club || {};
       const relevantTypePrivacy = privacy?.find(
         (typePrivacyObj: PrivacyType) => typePrivacyObj.name === type
       );

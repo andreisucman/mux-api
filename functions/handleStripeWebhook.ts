@@ -1,7 +1,7 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import { db } from "init.js";
+import { db, stripe } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 import updateRevenue from "./updateRevenue.js";
@@ -10,10 +10,7 @@ import { ModerationStatusEnum } from "@/types.js";
 async function handleStripeWebhook(event: any) {
   const { type, data } = event;
 
-  if (type !== "invoice.payment_succeeded" && type !== "invoice.payment_failed")
-    return;
-
-  const isPaymentSuccess = type === "invoice.payment_succeeded";
+  if (type !== "invoice.payment_succeeded") return;
 
   const object = data.object;
   const customerId = object.customer;
@@ -41,9 +38,6 @@ async function handleStripeWebhook(event: any) {
 
   const paymentPrices = object.lines.data.map((item: any) => item.price);
   const paymentPriceIds = paymentPrices.map((price: any) => price.id);
-  const paymentValues = paymentPrices
-    .map((price: any) => price.unit_amount / 100)
-    .reduce((a: number, c: number) => a + c, 0);
 
   if (!subscriptionId || !customerId)
     throw httpError(
@@ -81,25 +75,20 @@ async function handleStripeWebhook(event: any) {
         ? new Date(item.validUntil)
         : new Date();
 
-      let subscriptionId = null;
-      let newDate = null;
+      const newDate = new Date(currentValidUntil.getTime());
+      newDate.setMonth(newDate.getMonth() + 1);
 
-      if (isPaymentSuccess) {
-        newDate = new Date(currentValidUntil.getTime());
-        newDate.setMonth(newDate.getMonth() + 1);
+      // Find the corresponding line item for this subscription
+      const relatedLineItem = object.lines.data.find(
+        (lineItem: any) => lineItem.price.id === item.priceId
+      );
 
-        // Find the corresponding line item for this subscription
-        const relatedLineItem = object.lines.data.find(
-          (lineItem: any) => lineItem.price.id === item.priceId
+      if (!relatedLineItem)
+        throw httpError(
+          `No line item found for priceId ${item.priceId} and customerId: ${customerId}.`
         );
 
-        if (!relatedLineItem)
-          throw httpError(
-            `No line item found for priceId ${item.priceId} and customerId: ${customerId}.`
-          );
-
-        subscriptionId = relatedLineItem.subscription;
-      }
+      const subscriptionId = relatedLineItem.subscription;
 
       const data = {
         ...item,
@@ -131,7 +120,27 @@ async function handleStripeWebhook(event: any) {
       async () => await db.collection("User").bulkWrite(toUpdate)
     );
 
-  updateRevenue({ userId: String(userInfo._id), value: paymentValues });
+  const { payment_intent: paymentIntentId } = object;
+
+  const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
+    expand: ["charges.data.balance_transaction"],
+  });
+
+  const latestCharge = paymentIntent.latest_charge;
+
+  if (typeof latestCharge === "string") return;
+
+  const transaction = latestCharge.balance_transaction;
+
+  if (typeof transaction === "string") return;
+
+  const { net, fee } = transaction;
+
+  updateRevenue({
+    userId: String(userInfo._id),
+    netRevenue: net,
+    processingFee: fee,
+  });
 }
 
 export default handleStripeWebhook;

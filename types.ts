@@ -196,7 +196,7 @@ export type ClubDataType = {
   bio: ClubBioType;
   payouts: {
     connectId: string;
-    rewardEarned: number;
+    balance: number;
     payoutsEnabled: boolean;
     detailsSubmitted: boolean;
     disabledReason: string;

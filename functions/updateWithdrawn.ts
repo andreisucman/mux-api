@@ -5,15 +5,10 @@ import { adminDb } from "@/init.js";
 
 type Props = {
   userId: string;
-  netRevenue: number;
-  processingFee: number;
+  amount: number;
 };
 
-export default async function updateRevenue({
-  userId,
-  netRevenue,
-  processingFee,
-}: Props) {
+export default async function updateWithdrawn({ userId, amount }: Props) {
   const today = new Date().toDateString();
 
   try {
@@ -22,8 +17,7 @@ export default async function updateRevenue({
         { userId: new ObjectId(userId), createdAt: today },
         {
           $inc: {
-            totalRevenue: netRevenue,
-            totalProcessingFee: processingFee,
+            totalWithdrawn: amount,
           },
         },
         {
@@ -37,8 +31,7 @@ export default async function updateRevenue({
         { createdAt: today },
         {
           $inc: {
-            totalRevenue: netRevenue,
-            totalProcessingFee: processingFee,
+            totalWithdrawn: amount,
           },
         },
         {
