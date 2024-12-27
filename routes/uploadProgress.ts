@@ -138,11 +138,6 @@ route.post(
         return;
       }
 
-      updateAnalytics({
-        userId: String(finalUserId),
-        incrementPayload: { "dashboard.content.totalUploaded": 1 },
-      });
-
       /* remove the current uploaded info from the remaining requirements */
       const typeProgressRequirements = requiredProgress[type as "head"];
 
@@ -251,6 +246,8 @@ route.post(
           },
         });
       }
+
+      updateAnalytics({ "dashboard.usage.progressScans": 1 });
     } catch (err) {
       await addAnalysisStatusError({
         operationKey: type,

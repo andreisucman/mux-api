@@ -132,11 +132,8 @@ route.post(
       );
 
       updateAnalytics({
-        userId: req.userId,
-        incrementPayload: {
-          "accounting.totalReward": rewardValue,
-          "dashboard.accounting.totalReward": rewardValue,
-        },
+        "accounting.totalReward": rewardValue,
+        "dashboard.accounting.totalReward": rewardValue,
       });
 
       res.status(200).json({

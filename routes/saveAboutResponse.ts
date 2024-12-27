@@ -13,7 +13,7 @@ import {
 } from "types.js";
 import { QuestionType } from "@/types/saveAboutResponseTypes.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import saveModerationResult from "@/functions/saveModerationResult.js";
+import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.js";
 import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 
 const route = Router();
@@ -36,8 +36,16 @@ route.post(
       );
 
       if (!isSafe) {
+        addModerationAnalyticsData({
+          userId: req.userId,
+          categoryName: CategoryNameEnum.ABOUT,
+          isSafe,
+          moderationResults,
+          isSuspicious,
+        });
+
         res.status(200).json({
-          error: `It looks like your text contains profanity. Please revise it and try again.`,
+          error: `It appears that your text contains profanity. Please revise it and try again.`,
         });
         return;
       }
@@ -110,7 +118,7 @@ route.post(
       );
 
       if (moderationResults.length > 0) {
-        saveModerationResult({
+        addModerationAnalyticsData({
           userId: req.userId,
           categoryName: CategoryNameEnum.ABOUT,
           isSafe,

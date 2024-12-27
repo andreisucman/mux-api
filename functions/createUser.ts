@@ -21,22 +21,17 @@ async function createUser(props: Partial<UserType>) {
 
     await doWithRetries(
       async () =>
-        await db
-          .collection("User")
-          .updateOne(
-            {
-              _id: new ObjectId(userId),
-              moderationStatus: ModerationStatusEnum.ACTIVE,
-            },
-            { $set: updatePayload },
-            { upsert: true }
-          )
+        await db.collection("User").updateOne(
+          {
+            _id: new ObjectId(userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
+          { $set: updatePayload },
+          { upsert: true }
+        )
     );
 
-    updateAnalytics({
-      userId: String(userId),
-      incrementPayload: { "dashboard.user.totalUsers": 1 },
-    });
+    updateAnalytics({ "dashboard.user.totalUsers": 1 });
 
     return { ...updatePayload, _id: userId };
   } catch (err) {

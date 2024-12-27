@@ -10,9 +10,15 @@ import checkImageSimilarity from "functions/checkImageSimilarity.js";
 import analyzeCalories from "functions/analyzeCalories.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import validateImage from "functions/validateImage.js";
+import moderateContent, {
+  ModerationResultType,
+} from "@/functions/moderateContent.js";
 import { CheckImageSimilarityProps } from "functions/checkImageSimilarity.js";
 import { db } from "init.js";
 import getUserInfo from "@/functions/getUserInfo.js";
+import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.js";
+import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
+import updateAnalytics from "@/functions/updateAnalytics.js";
 
 const route = Router();
 
@@ -27,13 +33,34 @@ route.post(
         return;
       }
 
-      // const localFile = await saveLocally(url);
-      // const isProhibited = await checkForProhibitedContent(localFile);
+      let isSafe = false;
+      let isSuspicious = false;
+      let moderationResults: ModerationResultType[] = [];
 
-      // if (isProhibited) {
-      //   res.status(200).json({ error: "This image contains prohibited content" });
-      //   return;
-      // }
+      if (req.userId) {
+        const moderationResponse = await moderateContent({
+          content: [{ type: "image_url", image_url: { url } }],
+        });
+
+        isSafe = moderationResponse.isSafe;
+        isSuspicious = moderationResponse.isSuspicious;
+        moderationResults = moderationResponse.moderationResults;
+
+        if (!isSafe) {
+          addModerationAnalyticsData({
+            userId: req.userId,
+            categoryName: CategoryNameEnum.FOODSCAN,
+            isSafe,
+            moderationResults,
+            isSuspicious,
+          });
+
+          res.status(200).json({
+            error: `It appears that this photo violates our TOS. Try a different one.`,
+          });
+          return;
+        }
+      }
 
       const { verdict: isValid } = await validateImage({
         condition: "This is a photo of a ready to eat food",
@@ -97,13 +124,15 @@ route.post(
             userAbout += ` My special considerations are: ${specialConsiderations}.`;
           }
         }
+
+        updateAnalytics({ "dashboard.usage.foodScans": 1 });
       }
 
       const analysis = await analyzeCalories({
         url,
         userId: req.userId,
         userAbout,
-        categoryName: CategoryNameEnum.FOODSCAN
+        categoryName: CategoryNameEnum.FOODSCAN,
       });
 
       const newRecord: { [key: string]: any } = {
@@ -120,6 +149,25 @@ route.post(
       doWithRetries(async () =>
         db.collection("FoodAnalysis").insertOne(newRecord)
       );
+
+      if (moderationResults.length > 0) {
+        addModerationAnalyticsData({
+          userId: req.userId,
+          categoryName: CategoryNameEnum.FOODSCAN,
+          isSafe,
+          moderationResults,
+          isSuspicious,
+        });
+
+        if (isSuspicious) {
+          addSuspiciousRecord({
+            collection: "FoodAnalysis",
+            moderationResults,
+            contentId: String(newRecord._id),
+            userId: req.userId,
+          });
+        }
+      }
 
       res.status(200).json({
         message: {

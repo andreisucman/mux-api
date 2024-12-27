@@ -11,6 +11,7 @@ import {
 } from "types.js";
 import { daysFrom } from "helpers/utils.js";
 import { db } from "init.js";
+import updateAnalytics from "@/functions/updateAnalytics.js";
 
 const route = Router();
 
@@ -30,15 +31,13 @@ route.post(
 
     try {
       const userInfo = await doWithRetries(async () =>
-        db
-          .collection("User")
-          .findOne(
-            {
-              _id: new ObjectId(req.userId),
-              moderationStatus: ModerationStatusEnum.ACTIVE,
-            },
-            { projection: { subscriptions: 1 } }
-          )
+        db.collection("User").findOne(
+          {
+            _id: new ObjectId(req.userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
+          { projection: { subscriptions: 1 } }
+        )
       );
 
       const { subscriptions } = userInfo;
@@ -50,6 +49,10 @@ route.post(
         res.status(400).json({ error: "Bad request" });
         return;
       }
+
+      updateAnalytics({
+        [`dashboard.subscription.${subscriptionName}Tried`]: 1,
+      });
 
       const updatedSubscription = {
         ...relevantSubscription,
@@ -63,12 +66,13 @@ route.post(
       };
 
       await doWithRetries(async () =>
-        db
-          .collection("User")
-          .updateOne(
-            { _id: new ObjectId(req.userId), moderationStatus: ModerationStatusEnum.ACTIVE },
-            { $set: { subscriptions: updatedSubscriptions } }
-          )
+        db.collection("User").updateOne(
+          {
+            _id: new ObjectId(req.userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
+          { $set: { subscriptions: updatedSubscriptions } }
+        )
       );
 
       res.status(200).end();

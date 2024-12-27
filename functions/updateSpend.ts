@@ -24,6 +24,7 @@ export default async function updateSpend({
   const today = new Date().toDateString();
 
   const incrementPayload = {
+    "dashboard.accounting.totalCost": units * unitCost,
     "accounting.totalCost": units * unitCost,
     "accounting.totalUnits": units,
     [`accounting.units.functions.${functionName}`]: units,

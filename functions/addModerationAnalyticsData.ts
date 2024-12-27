@@ -10,12 +10,12 @@ import { CategoryNameEnum } from "@/types.js";
 type Props = {
   userId: string;
   categoryName: CategoryNameEnum;
+  moderationResults: ModerationResultType[];
   isSuspicious: boolean;
   isSafe: boolean;
-  moderationResults: ModerationResultType[];
 };
 
-export default async function saveModerationResult({
+export default async function addModerationAnalyticsData({
   categoryName,
   moderationResults,
   isSuspicious,
@@ -26,39 +26,43 @@ export default async function saveModerationResult({
     let analyticIncrementPayload: {
       [key: string]: number;
     } = {
-      "dashboard.content.totalUploaded": 1,
+      "dashboard.moderation.totalUploaded": 1,
     };
 
-    analyticIncrementPayload[`dashboard.content.uploaded.${categoryName}`] = 1;
+    analyticIncrementPayload[
+      `dashboard.moderation.uploaded.${categoryName}`
+    ] = 1;
 
     if (!isSafe) {
-      analyticIncrementPayload[`dashboard.content.blocked.${categoryName}`] = 1;
+      analyticIncrementPayload[
+        `dashboard.moderation.blocked.${categoryName}`
+      ] = 1;
 
       const blockedReasons = getModerationLabelsOverThreshold({
         moderationResults,
         upperBoundary: Number(process.env.MODERATION_UPPER_BOUNDARY),
-        key: "dashboard.content.blockedReasons",
+        key: "dashboard.moderation.blockedReasons",
       });
 
       analyticIncrementPayload = { ...blockedReasons };
     } else {
       if (isSuspicious) {
         analyticIncrementPayload[
-          `dashboard.content.suspicious.${categoryName}`
+          `dashboard.moderation.suspicious.${categoryName}`
         ] = 1;
 
         const suspiciousReasons = getModerationLabelsOverThreshold({
           moderationResults,
           upperBoundary: Number(process.env.MODERATION_UPPER_BOUNDARY),
           lowerBoundary: Number(process.env.MODERATION_LOWER_BOUNDARY),
-          key: "dashboard.content.suspiciousReasons",
+          key: "dashboard.moderation.suspiciousReasons",
         });
 
         analyticIncrementPayload = { ...suspiciousReasons };
       }
     }
 
-    updateAnalytics({ userId, incrementPayload: analyticIncrementPayload });
+    updateAnalytics(analyticIncrementPayload);
   } catch (err) {
     throw httpError(err);
   }

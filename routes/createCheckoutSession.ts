@@ -4,8 +4,10 @@ dotenv.config();
 import { Router, Response, NextFunction } from "express";
 import cancelSubscription from "functions/cancelSubscription.js";
 import { CustomRequest } from "types.js";
-import { stripe } from "init.js";
+import { db, stripe } from "init.js";
 import getUserInfo from "@/functions/getUserInfo.js";
+import updateAnalytics from "@/functions/updateAnalytics.js";
+import doWithRetries from "@/helpers/doWithRetries.js";
 
 const route = Router();
 
@@ -22,7 +24,7 @@ route.post(
     try {
       const userInfo = await getUserInfo({
         userId: req.userId,
-        projection: { stripeUserId: 1, subscriptions: 1 },
+        projection: { stripeUserId: 1 },
       });
 
       const { stripeUserId } = userInfo;
@@ -61,6 +63,18 @@ route.post(
           res.status(200).json({ message: { redirectUrl: session.url } });
         }
       } else {
+        const plans = await doWithRetries(async () =>
+          db.collection("Plan").find().toArray()
+        );
+
+        const relatedPlan = plans.find((plan) => plan.priceId === priceId);
+
+        if (relatedPlan) {
+          updateAnalytics({
+            [`dashboard.subscription.${relatedPlan.name}Added`]: 1,
+          });
+        }
+
         const session = await stripe.checkout.sessions.create({
           billing_address_collection: "auto",
           payment_method_types: ["card"],
@@ -70,7 +84,7 @@ route.post(
           cancel_url: cancelUrl,
           customer: stripeUserId,
         });
-        
+
         res.status(200).json({ message: { redirectUrl: session.url } });
       }
     } catch (err) {

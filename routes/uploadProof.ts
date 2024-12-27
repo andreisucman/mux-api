@@ -32,7 +32,7 @@ import selectItemsAtEqualDistances from "helpers/utils.js";
 import httpError from "@/helpers/httpError.js";
 import extractImagesAndTextFromVideo from "@/functions/extractImagesAndTextFromVideo.js";
 import getTheMostSuspiciousResult from "@/helpers/getTheMostSuspiciousResult.js";
-import saveModerationResult from "@/functions/saveModerationResult.js";
+import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.js";
 
 const route = Router();
 
@@ -198,6 +198,14 @@ route.post(
           moderationResults.push(...imageModerationResponse.moderationResults);
 
           if (!isSafe) {
+            addModerationAnalyticsData({
+              userId: req.userId,
+              categoryName: CategoryNameEnum.PROOF,
+              isSafe,
+              moderationResults,
+              isSuspicious,
+            });
+
             await addAnalysisStatusError({
               message: "Video contains prohibited content.",
               userId: req.userId,
@@ -216,7 +224,18 @@ route.post(
             ],
           });
 
+          isSafe = audioModerationResponse.isSafe;
+          isSuspicious = audioModerationResponse.isSuspicious;
+          moderationResults.push(...audioModerationResponse.moderationResults);
+
           if (!isSafe) {
+            addModerationAnalyticsData({
+              userId: req.userId,
+              categoryName: CategoryNameEnum.PROOF,
+              isSafe,
+              moderationResults,
+              isSuspicious,
+            });
             await addAnalysisStatusError({
               message: "Audio contains prohibited content.",
               userId: req.userId,
@@ -224,10 +243,6 @@ route.post(
             });
             return;
           }
-
-          isSafe = audioModerationResponse.isSafe;
-          isSuspicious = audioModerationResponse.isSuspicious;
-          moderationResults.push(...audioModerationResponse.moderationResults);
         }
       }
 
@@ -464,7 +479,7 @@ route.post(
       );
 
       if (moderationResults.length > 0) {
-        saveModerationResult({
+        addModerationAnalyticsData({
           userId: req.userId,
           categoryName: CategoryNameEnum.PROOF,
           isSafe,

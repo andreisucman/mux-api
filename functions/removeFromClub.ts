@@ -3,11 +3,12 @@ import doWithRetries from "helpers/doWithRetries.js";
 import updateContentPublicity from "functions/updateContentPublicity.js";
 import cancelSubscription from "functions/cancelSubscription.js";
 import { defaultClubPrivacy } from "data/defaultClubPrivacy.js";
+import { ModerationStatusEnum } from "@/types.js";
 import httpError from "@/helpers/httpError.js";
 import { daysFrom } from "@/helpers/utils.js";
 import getUserInfo from "./getUserInfo.js";
 import { db } from "init.js";
-import { ModerationStatusEnum } from "@/types.js";
+import updateAnalytics from "./updateAnalytics.js";
 
 type Props = {
   userId: string;
@@ -63,6 +64,8 @@ export default async function removeFromClub({ userId }: Props) {
     doWithRetries(async () =>
       db.collection("FollowHistory").bulkWrite(removeFromFollowHistoryBatch)
     );
+
+    updateAnalytics({ "dashboard.club.left": 1 });
   } catch (err) {
     throw httpError(err);
   }

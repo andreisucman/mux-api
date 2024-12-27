@@ -8,6 +8,7 @@ import createClubProfile from "functions/createClubProfile.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import formatDate from "@/helpers/formatDate.js";
 import { db } from "init.js";
+import updateAnalytics from "@/functions/updateAnalytics.js";
 
 const route = Router();
 
@@ -34,6 +35,12 @@ route.post(
           .status(200)
           .json({ error: `You can rejoin the Club after ${rejoinDate}.` });
         return;
+      }
+
+      if (canRejoinClubAfter) {
+        updateAnalytics({ "dashboard.club.rejoined": 1 });
+      } else {
+        updateAnalytics({ "dashboard.club.joined": 1 });
       }
 
       let clubData = userInfo.club;

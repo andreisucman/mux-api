@@ -20,7 +20,7 @@ import {
   BeforeAfterType,
   CategoryNameEnum,
 } from "types.js";
-import saveModerationResult from "./saveModerationResult.js";
+import addModerationAnalyticsData from "./addModerationAnalyticsData.js";
 import addSuspiciousRecord from "./addSuspiciousRecord.js";
 import { ModerationStatusEnum } from "types.js";
 import moderateContent, { ModerationResultType } from "./moderateContent.js";
@@ -83,7 +83,7 @@ export default async function analyzePart({
       moderationResults.push(...moderationResponse.moderationResults);
 
       if (!isSafe) {
-        saveModerationResult({
+        addModerationAnalyticsData({
           userId,
           categoryName,
           isSafe,
@@ -323,7 +323,7 @@ export default async function analyzePart({
     partResult.latestProgress = recordOfProgress;
 
     if (moderationResults.length > 0) {
-      saveModerationResult({
+      addModerationAnalyticsData({
         userId,
         categoryName,
         isSafe,

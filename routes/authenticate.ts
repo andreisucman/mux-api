@@ -22,11 +22,31 @@ import updateAnalytics from "@/functions/updateAnalytics.js";
 
 const route = Router();
 
+const allowedReferrers = [
+  "scanFood",
+  "analysisStyleResult",
+  "analysisProgress",
+  "clubRoutines",
+  "clubAbout",
+  "clubProgress",
+  "clubStyle",
+  "clubProof",
+  "clubDiary",
+  "authPage",
+  "scanIndex",
+];
+
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
-      let { code, timeZone, localUserId, state, email, password } = req.body;
+      let { code, timeZone, localUserId, referrer, state, email, password } =
+        req.body;
+
+      if (!allowedReferrers.includes(referrer)) {
+        res.status(400).json({ error: "Bad request" });
+        return;
+      }
 
       let userData = null;
       let accessToken = crypto.randomBytes(32).toString("hex");
@@ -35,11 +55,17 @@ route.post(
 
       const { country, city } = await getUsersCountry(req);
 
+      const parsedState = state
+        ? JSON.parse(decodeURIComponent(state as string))
+        : {};
+
+      const { redirectPath } = parsedState;
+
       if (code) {
         const { email, accessToken: googleAccessToken } =
           await getOAuthAuthenticationData({
             code,
-            state,
+            redirectPath,
           });
 
         accessToken = googleAccessToken;
@@ -65,7 +91,7 @@ route.post(
         userInfo.moderationStatus === ModerationStatusEnum.SUSPENDED
       ) {
         res.status(200).json({
-          error: `Your account has been ${userInfo.moderationStatus}. Please check your email for details.`,
+          error: userInfo.moderationStatus,
         });
         return;
       }
@@ -116,6 +142,10 @@ route.post(
             await sendConfirmationCode({ userId: String(userData._id), email });
           }
         }
+
+        updateAnalytics({
+          [`dashboard.acquisition.signins.${referrer}`]: 1,
+        });
       } else {
         // if the registration happes from the sign in page
         if (auth === "e") {
@@ -147,8 +177,8 @@ route.post(
         }
 
         updateAnalytics({
-          userId: String(userData._id),
-          incrementPayload: { "dashboard.user.registeredUsers": 1 },
+          "dashboard.user.registeredUsers": 1,
+          [`dashboard.acquisition.signups.${referrer}`]: 1,
         });
       }
 

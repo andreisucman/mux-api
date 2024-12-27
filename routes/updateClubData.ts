@@ -18,7 +18,6 @@ import { db, stripe } from "init.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import moderateContent from "@/functions/moderateContent.js";
 import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
-import saveModerationResult from "@/functions/saveModerationResult.js";
 
 type HandleCheckSafetyProps = {
   req: CustomRequest;

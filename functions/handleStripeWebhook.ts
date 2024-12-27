@@ -2,12 +2,13 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import { db, stripe } from "init.js";
+import Stripe from "stripe";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 import updateAnalytics from "./updateAnalytics.js";
 import { ModerationStatusEnum } from "@/types.js";
 
-async function handleStripeWebhook(event: any) {
+async function handleStripeWebhook(event: Stripe.Event) {
   const { type, data } = event;
 
   if (type !== "invoice.payment_succeeded") return;
@@ -31,7 +32,7 @@ async function handleStripeWebhook(event: any) {
   if (!userInfo) return;
 
   const plans = await doWithRetries(async () =>
-    db.collection("Plan").find({}).toArray()
+    db.collection("Plan").find().toArray()
   );
 
   const { subscriptions } = userInfo;
@@ -120,11 +121,14 @@ async function handleStripeWebhook(event: any) {
       async () => await db.collection("User").bulkWrite(toUpdate)
     );
 
-  const { payment_intent: paymentIntentId } = object;
+  const { payment_intent } = object;
 
-  const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
-    expand: ["charges.data.balance_transaction"],
-  });
+  const paymentIntent = await stripe.paymentIntents.retrieve(
+    payment_intent.toString(),
+    {
+      expand: ["charges.data.balance_transaction"],
+    }
+  );
 
   const latestCharge = paymentIntent.latest_charge;
 
@@ -138,15 +142,27 @@ async function handleStripeWebhook(event: any) {
   const totalRevenue = net / 100;
   const totalProcessingFee = fee / 100;
 
-  updateAnalytics({
-    userId: String(userInfo._id),
-    incrementPayload: {
-      "dashboard.accounting.totalRevenue": totalRevenue,
-      "dashboard.accounting.totalProcessingFee": totalProcessingFee,
-      "accounting.totalRevenue": totalRevenue,
-      "accounting.totalProcessingFee": totalProcessingFee,
-    },
-  });
+  const incrementPayload: { [key: string]: number } = {
+    "dashboard.accounting.totalRevenue": totalRevenue,
+    "dashboard.accounting.totalProcessingFee": totalProcessingFee,
+    "accounting.totalRevenue": totalRevenue,
+    "accounting.totalProcessingFee": totalProcessingFee,
+  };
+
+  for (const plan of relatedPlans) {
+    incrementPayload[`dashboard.subscription.${plan.name}Bought`] = 1;
+
+    if (plan.name === "peek") {
+      const relatedLineItem = object.lines.data.find(
+        (lineItem) => lineItem.price.id === plan.priceId
+      );
+
+      incrementPayload[`dashboard.accounting.totalPayable`] =
+        relatedLineItem.amount / 100 / 2;
+    }
+  }
+
+  updateAnalytics(incrementPayload);
 }
 
 export default handleStripeWebhook;

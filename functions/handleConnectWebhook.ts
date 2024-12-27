@@ -22,12 +22,23 @@ export default async function handleConnectWebhook(event: any) {
         "club.payouts.connectId": object.id,
         moderationStatus: ModerationStatusEnum.ACTIVE,
       },
-      { projection: { _id: 1 } }
+      {
+        projection: {
+          _id: 1,
+          "club.payouts.details_submitted": 1,
+          "club.payouts.payouts_enabled": 1,
+        },
+      }
     )
   );
 
   if (event.type === "account.updated") {
     try {
+      const {
+        payoutsEnabled: currentPayoutsEnabled,
+        detailsSubmitted: currentDetailsSubmitted,
+      } = userInfo.club;
+
       const { payouts_enabled, requirements, details_submitted } = object || {};
       const { disabled_reason } = requirements || {};
 
@@ -53,8 +64,16 @@ export default async function handleConnectWebhook(event: any) {
         )
       );
 
+      if (!currentDetailsSubmitted && details_submitted) {
+        updateAnalytics({ "dashboard.club.detailsSubmitted": 1 });
+      }
+
+      if (!currentPayoutsEnabled && payouts_enabled) {
+        updateAnalytics({ "dashboard.club.payoutsEnabled": 1 });
+      }
+
       if (!payouts_enabled) {
-        await updateContentPublicity({
+        updateContentPublicity({
           userId: String(userInfo._id),
           newPrivacy: defaultClubPrivacy,
         });
@@ -87,11 +106,9 @@ export default async function handleConnectWebhook(event: any) {
       const totalWithdrawn = amount / 100;
 
       updateAnalytics({
-        userId: String(userInfo._id),
-        incrementPayload: {
-          "accounting.totalWithdrawn": totalWithdrawn,
-          "dashboard.analytics.totalWithdrawn": totalWithdrawn,
-        },
+        "accounting.totalWithdrawn": totalWithdrawn,
+        "dashboard.accounting.totalWithdrawn": totalWithdrawn,
+        "dashboard.club.withdrawed": 1,
       });
     } catch (err) {
       throw httpError(err);

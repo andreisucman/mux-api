@@ -20,7 +20,7 @@ import moderateContent from "@/functions/moderateContent.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
-import saveModerationResult from "@/functions/saveModerationResult.js";
+import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.js";
 
 const route = Router();
 
@@ -55,6 +55,14 @@ route.post(
       );
 
       if (!isSafe) {
+        addModerationAnalyticsData({
+          userId: req.userId,
+          categoryName: CategoryNameEnum.STYLESCAN,
+          isSafe,
+          moderationResults,
+          isSuspicious,
+        });
+
         res.status(200).json({
           error: `This photo violates our TOS. Try a different one.`,
         });
@@ -228,13 +236,10 @@ route.post(
         )
       );
 
-      updateAnalytics({
-        userId: finalUserId,
-        incrementPayload: { "dashboard.content.totalUploaded": 1 },
-      });
+      updateAnalytics({ "dashboard.usage.styleScans": 1 });
 
       if (moderationResults.length > 0) {
-        saveModerationResult({
+        addModerationAnalyticsData({
           userId: req.userId,
           categoryName: CategoryNameEnum.STYLESCAN,
           isSafe,

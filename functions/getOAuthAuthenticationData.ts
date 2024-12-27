@@ -4,17 +4,13 @@ import httpError from "@/helpers/httpError.js";
 
 type Props = {
   code: string;
-  state: string;
+  redirectPath: string;
 };
 
 async function getOAuthAuthenticationData(props: Props) {
-  const { code, state } = props;
+  const { code, redirectPath } = props;
   try {
-    const parsedState = state
-      ? JSON.parse(decodeURIComponent(state as string))
-      : {};
 
-    const { redirectPath } = parsedState;
 
     const redirectUrl = getOauthRedirectUri(redirectPath);
 

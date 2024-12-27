@@ -17,7 +17,8 @@ type Props = {
     | "Proof"
     | "About"
     | "Diary"
-    | "User";
+    | "User"
+    | "FoodAnalysis";
   contentId: string;
   key?: string;
   moderationResults: ModerationResultType[];

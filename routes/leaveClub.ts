@@ -12,12 +12,6 @@ route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
-      const userInfo = await getUserInfo({
-        userId: req.userId,
-        projection: { name: 1 },
-      });
-
-      const { name } = userInfo;
       await removeFromClub({ userId: req.userId });
       res.status(200).end();
     } catch (err) {

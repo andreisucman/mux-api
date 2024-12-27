@@ -8,6 +8,7 @@ import doWithRetries from "helpers/doWithRetries.js";
 import { CustomRequest, ModerationStatusEnum } from "types.js";
 import { ConnectParamsType } from "types/createConnectAccountTypes.js";
 import getUserInfo from "@/functions/getUserInfo.js";
+import updateAnalytics from "@/functions/updateAnalytics.js";
 
 const route = Router();
 
@@ -65,6 +66,8 @@ route.post(
             { $set: { "club.payouts.connectId": account.id } }
           )
         );
+
+        updateAnalytics({ [`dashboard.club.country.${country}`]: 1 });
 
         res.status(200).json({ message: accLink.url });
         return;

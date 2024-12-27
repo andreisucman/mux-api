@@ -15,6 +15,7 @@ import httpError from "@/helpers/httpError.js";
 import { db } from "init.js";
 import checkSubscriptionStatus from "@/functions/checkSubscription.js";
 import getUserInfo from "@/functions/getUserInfo.js";
+import updateAnalytics from "@/functions/updateAnalytics.js";
 
 const route = Router();
 
@@ -123,6 +124,8 @@ route.post(
           }
         )
       );
+
+      updateAnalytics({ "dashboard.usage.productAnalyses": 1 });
     } catch (error) {
       next(error);
     }

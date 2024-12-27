@@ -49,7 +49,7 @@ route.post(
         functionName: "checkCountry",
       });
 
-      const { isValid, countryCode } = response;
+      const { isValid } = response;
 
       if (!isValid) {
         res.status(200).json({ error: "Invalid country" });

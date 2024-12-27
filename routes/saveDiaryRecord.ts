@@ -15,7 +15,7 @@ import {
 import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 import { daysFrom } from "@/helpers/utils.js";
 import { db } from "init.js";
-import saveModerationResult from "@/functions/saveModerationResult.js";
+import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.js";
 import { PrivacyType } from "types.js";
 import { DiaryRecordType } from "@/types/saveDiaryRecordTypes.js";
 import getUserInfo from "@/functions/getUserInfo.js";
@@ -77,8 +77,16 @@ route.post(
       );
 
       if (!isSafe) {
+        addModerationAnalyticsData({
+          userId: req.userId,
+          categoryName: CategoryNameEnum.DIARY,
+          isSafe,
+          moderationResults,
+          isSuspicious,
+        });
+
         res.status(200).json({
-          error: `This record contains inappropriate language. Please try again.`,
+          error: `It appears that this record contains inappropriate language. Please try again.`,
         });
         return;
       }
@@ -145,7 +153,7 @@ route.post(
       });
 
       if (moderationResults.length > 0) {
-        saveModerationResult({
+        addModerationAnalyticsData({
           userId: req.userId,
           categoryName: CategoryNameEnum.DIARY,
           isSafe,
