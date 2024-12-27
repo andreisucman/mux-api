@@ -15,6 +15,7 @@ import {
 import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 import { daysFrom } from "@/helpers/utils.js";
 import { db } from "init.js";
+import saveModerationResult from "@/functions/saveModerationResult.js";
 import { PrivacyType } from "types.js";
 import { DiaryRecordType } from "@/types/saveDiaryRecordTypes.js";
 import getUserInfo from "@/functions/getUserInfo.js";
@@ -69,10 +70,11 @@ route.post(
         throw httpError(body.message);
       }
 
-      const { isSafe, isSuspicious, suspiciousAnalysisResults } =
-        await moderateContent({
+      const { isSafe, isSuspicious, moderationResults } = await moderateContent(
+        {
           content: [{ type: "text", text: body.message }],
-        });
+        }
+      );
 
       if (!isSafe) {
         res.status(200).json({
@@ -142,13 +144,23 @@ route.post(
         },
       });
 
-      if (isSuspicious) {
-        addSuspiciousRecord({
-          collection: "Diary",
-          moderationResult: suspiciousAnalysisResults,
-          contentId: String(newDiaryRecord._id),
+      if (moderationResults.length > 0) {
+        saveModerationResult({
           userId: req.userId,
+          categoryName: CategoryNameEnum.DIARY,
+          isSafe,
+          moderationResults,
+          isSuspicious,
         });
+
+        if (isSuspicious) {
+          addSuspiciousRecord({
+            collection: "Diary",
+            moderationResults,
+            contentId: String(newDiaryRecord._id),
+            userId: req.userId,
+          });
+        }
       }
     } catch (err) {
       next(err);

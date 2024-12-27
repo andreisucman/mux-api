@@ -1,8 +1,12 @@
+import * as dotenv from "dotenv";
+dotenv.config();
+
 import { ObjectId } from "mongodb";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 import { ModerationResultType } from "./moderateContent.js";
 import { adminDb } from "init.js";
+import getTheMostSuspiciousResult from "@/helpers/getTheMostSuspiciousResult.js";
 import { ModerationStatusEnum } from "@/types.js";
 
 type Props = {
@@ -16,7 +20,7 @@ type Props = {
     | "User";
   contentId: string;
   key?: string;
-  moderationResult: ModerationResultType[];
+  moderationResults: ModerationResultType[];
 };
 
 export default async function addSuspiciousRecord({
@@ -24,17 +28,20 @@ export default async function addSuspiciousRecord({
   contentId,
   userId,
   key,
-  moderationResult,
+  moderationResults,
 }: Props) {
   try {
+    const theMostSuspiciousResult =
+      getTheMostSuspiciousResult(moderationResults);
+
     await doWithRetries(async () =>
       adminDb.collection("SuspiciousRecord").insertOne({
         userId: new ObjectId(userId),
         contentId: new ObjectId(contentId),
-        collection,
-        moderationResult,
+        moderationResults: [theMostSuspiciousResult],
         moderationStatus: ModerationStatusEnum.ACTIVE,
         createdAt: new Date(),
+        collection,
         key,
       })
     );

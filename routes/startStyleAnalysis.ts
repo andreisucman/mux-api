@@ -19,6 +19,8 @@ import { StartStyleAnalysisUserInfoType } from "types/startStyleAnalysisTypes.js
 import moderateContent from "@/functions/moderateContent.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
+import updateAnalytics from "@/functions/updateAnalytics.js";
+import saveModerationResult from "@/functions/saveModerationResult.js";
 
 const route = Router();
 
@@ -27,24 +29,30 @@ route.post(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { image, type, blurType, localUserId } = req.body;
 
-    let userId = req.userId || localUserId;
-    if (!userId) userId = String(new ObjectId());
+    const finalUserId = req.userId || localUserId;
+
+    if (!finalUserId) {
+      res.status(400).json({ error: "Bad request" });
+      return;
+    }
 
     try {
       await doWithRetries(async () =>
-        db
-          .collection("AnalysisStatus")
-          .updateOne(
-            { userId: new ObjectId(userId), operationKey: `style-${type}` },
-            { $set: { isRunning: true, progress: 1, isError: null } },
-            { upsert: true }
-          )
+        db.collection("AnalysisStatus").updateOne(
+          {
+            userId: new ObjectId(finalUserId),
+            operationKey: `style-${type}`,
+          },
+          { $set: { isRunning: true, progress: 1, isError: null } },
+          { upsert: true }
+        )
       );
 
-      const { isSafe, isSuspicious, suspiciousAnalysisResults } =
-        await moderateContent({
+      const { isSafe, isSuspicious, moderationResults } = await moderateContent(
+        {
           content: [{ type: "image_url", image_url: { url: image } }],
-        });
+        }
+      );
 
       if (!isSafe) {
         res.status(200).json({
@@ -53,12 +61,12 @@ route.post(
         return;
       }
 
-      res.status(200).json({ message: userId });
+      res.status(200).json({ message: finalUserId });
 
       const userInfo = (await doWithRetries(async () =>
         db.collection("User").findOne(
           {
-            _id: new ObjectId(req.userId),
+            _id: new ObjectId(finalUserId),
             moderationStatus: ModerationStatusEnum.ACTIVE,
           },
           {
@@ -88,10 +96,10 @@ route.post(
       const { privacy } = club || {};
 
       const styleAnalysisResponse = await analyzeStyle({
-        userId,
+        userId: finalUserId,
         image,
         type,
-        categoryName: CategoryNameEnum.STYLESCAN
+        categoryName: CategoryNameEnum.STYLESCAN,
       });
 
       const {
@@ -117,7 +125,10 @@ route.post(
         urls = blurredResponse.urls;
       }
 
-      const compareStyleRecord = await getStyleCompareRecord({ userId });
+      const compareStyleRecord = await getStyleCompareRecord({
+        userId: finalUserId,
+      });
+
       const {
         mainUrl: compareMainUrl,
         urls: compareUrls,
@@ -133,7 +144,7 @@ route.post(
 
       const styleAnalysis: StyleAnalysisType = {
         _id: new ObjectId(),
-        userId: new ObjectId(userId),
+        userId: new ObjectId(finalUserId),
         ...restExisting,
         demographics: userInfo.demographics,
         latestHeadScoreDifference: 0,
@@ -208,25 +219,41 @@ route.post(
       );
 
       await doWithRetries(async () =>
-        db
-          .collection("AnalysisStatus")
-          .updateOne(
-            { userId: new ObjectId(userId), operationKey: `style-${type}` },
-            { $set: { isRunning: false, progress: 0, isError: null } }
-          )
+        db.collection("AnalysisStatus").updateOne(
+          {
+            userId: new ObjectId(finalUserId),
+            operationKey: `style-${type}`,
+          },
+          { $set: { isRunning: false, progress: 0, isError: null } }
+        )
       );
 
-      if (isSuspicious) {
-        addSuspiciousRecord({
-          collection: "StyleAnalysis",
-          moderationResult: suspiciousAnalysisResults,
-          contentId: String(styleAnalysis._id),
-          userId,
+      updateAnalytics({
+        userId: finalUserId,
+        incrementPayload: { "dashboard.content.totalUploaded": 1 },
+      });
+
+      if (moderationResults.length > 0) {
+        saveModerationResult({
+          userId: req.userId,
+          categoryName: CategoryNameEnum.STYLESCAN,
+          isSafe,
+          moderationResults,
+          isSuspicious,
         });
+
+        if (isSuspicious) {
+          addSuspiciousRecord({
+            collection: "StyleAnalysis",
+            moderationResults,
+            contentId: String(styleAnalysis._id),
+            userId: finalUserId,
+          });
+        }
       }
     } catch (error) {
       await addAnalysisStatusError({
-        userId: String(userId),
+        userId: String(finalUserId),
         operationKey: `style-${type}`,
         message: "An unexpected error occured. Please try again.",
         originalMessage: error.message,

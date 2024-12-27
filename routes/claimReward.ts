@@ -10,6 +10,7 @@ import formatDate from "helpers/formatDate.js";
 import { daysFrom } from "helpers/utils.js";
 import { rewardKeyConditionsMap } from "data/rewardKeyConditionsMap.js";
 import { db } from "init.js";
+import updateAnalytics from "@/functions/updateAnalytics.js";
 import httpError from "@/helpers/httpError.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 
@@ -40,7 +41,7 @@ route.post(
           });
 
           res.status(200).json({
-            error: `You have already claimed this reward. Try again after ${formattedDate}`,
+            error: `You have already claimed this reward. Try again after ${formattedDate}.`,
           });
 
           return;
@@ -100,12 +101,13 @@ route.post(
       }
 
       await doWithRetries(async () =>
-        db
-          .collection("User")
-          .updateOne(
-            { _id: new ObjectId(req.userId), moderationStatus: ModerationStatusEnum.ACTIVE },
-            { $inc: { "club.payouts.balance": rewardValue } }
-          )
+        db.collection("User").updateOne(
+          {
+            _id: new ObjectId(req.userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
+          { $inc: { "club.payouts.balance": rewardValue } }
+        )
       );
 
       await doWithRetries(async () =>
@@ -128,6 +130,14 @@ route.post(
           { $inc: { left: -1 } }
         )
       );
+
+      updateAnalytics({
+        userId: req.userId,
+        incrementPayload: {
+          "accounting.totalReward": rewardValue,
+          "dashboard.accounting.totalReward": rewardValue,
+        },
+      });
 
       res.status(200).json({
         message: `The reward of $${rewardValue} has been added to your Club balance.`,

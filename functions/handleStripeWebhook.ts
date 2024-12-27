@@ -4,7 +4,7 @@ dotenv.config();
 import { db, stripe } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
-import updateRevenue from "./updateRevenue.js";
+import updateAnalytics from "./updateAnalytics.js";
 import { ModerationStatusEnum } from "@/types.js";
 
 async function handleStripeWebhook(event: any) {
@@ -135,11 +135,17 @@ async function handleStripeWebhook(event: any) {
   if (typeof transaction === "string") return;
 
   const { net, fee } = transaction;
+  const totalRevenue = net / 100;
+  const totalProcessingFee = fee / 100;
 
-  updateRevenue({
+  updateAnalytics({
     userId: String(userInfo._id),
-    netRevenue: net,
-    processingFee: fee,
+    incrementPayload: {
+      "dashboard.accounting.totalRevenue": totalRevenue,
+      "dashboard.accounting.totalProcessingFee": totalProcessingFee,
+      "accounting.totalRevenue": totalRevenue,
+      "accounting.totalProcessingFee": totalProcessingFee,
+    },
   });
 }
 

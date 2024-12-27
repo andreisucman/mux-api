@@ -22,6 +22,7 @@ import analyzeAppearance from "functions/analyzeAppearance.js";
 import formatDate from "@/helpers/formatDate.js";
 import isImagePositionValid from "@/functions/isImagePositionValid.js";
 import httpError from "@/helpers/httpError.js";
+import updateAnalytics from "@/functions/updateAnalytics.js";
 import { db } from "init.js";
 
 const route = Router();
@@ -136,6 +137,11 @@ route.post(
         });
         return;
       }
+
+      updateAnalytics({
+        userId: String(finalUserId),
+        incrementPayload: { "dashboard.content.totalUploaded": 1 },
+      });
 
       /* remove the current uploaded info from the remaining requirements */
       const typeProgressRequirements = requiredProgress[type as "head"];

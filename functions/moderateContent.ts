@@ -33,7 +33,7 @@ export default async function moderateContent({ content }: Props) {
 
     let isSafe = true;
     let isSuspicious = false;
-    const suspiciousAnalysisResults: ModerationResultType[] = [];
+    const moderationResults: ModerationResultType[] = [];
 
     for (let i = 0; i < results.length; i++) {
       const { category_scores } = results[i];
@@ -49,24 +49,22 @@ export default async function moderateContent({ content }: Props) {
           v < Number(process.env.MODERATION_UPPER_BOUNDARY)
       );
 
-      if (isSuspicious) {
-        if (content[i].type === "text") {
-          suspiciousAnalysisResults.push({
-            type: content[i].type,
-            content: (content[i] as ModerationTextInput).text,
-            scores: results[i].category_scores,
-          });
-        } else {
-          suspiciousAnalysisResults.push({
-            type: content[i].type,
-            content: (content[i] as ModerationImageURLInput).image_url.url,
-            scores: results[i].category_scores,
-          });
-        }
+      if (content[i].type === "text") {
+        moderationResults.push({
+          type: content[i].type,
+          content: (content[i] as ModerationTextInput).text,
+          scores: results[i].category_scores,
+        });
+      } else {
+        moderationResults.push({
+          type: content[i].type,
+          content: (content[i] as ModerationImageURLInput).image_url.url,
+          scores: results[i].category_scores,
+        });
       }
     }
 
-    return { isSafe, isSuspicious, suspiciousAnalysisResults };
+    return { isSafe, isSuspicious, moderationResults };
   } catch (err) {
     throw httpError(err);
   }

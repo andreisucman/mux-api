@@ -1,12 +1,9 @@
 import z from "zod";
-import { ObjectId } from "mongodb";
-import { CategoryNameEnum, CustomRequest, ModerationStatusEnum } from "types.js";
+import { CategoryNameEnum, CustomRequest } from "types.js";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import { RunType } from "types/askOpenaiTypes.js";
 import askRepeatedly from "functions/askRepeatedly.js";
 import { Router, Response, NextFunction } from "express";
-import doWithRetries from "helpers/doWithRetries.js";
-import { db } from "init.js";
 
 const route = Router();
 
@@ -58,20 +55,6 @@ route.post(
         res.status(200).json({ error: "Invalid country" });
         return;
       }
-
-      await doWithRetries(async () =>
-        db.collection("User").updateOne(
-          {
-            _id: new ObjectId(req.userId),
-            moderationStatus: ModerationStatusEnum.ACTIVE,
-          },
-          {
-            $set: {
-              country: countryCode,
-            },
-          }
-        )
-      );
 
       res.status(200).end();
     } catch (error) {

@@ -5,19 +5,22 @@ import { adminDb } from "@/init.js";
 
 type Props = {
   userId: string;
-  amount: number;
+  incrementPayload: { [key: string]: number };
 };
 
-export default async function updateWithdrawn({ userId, amount }: Props) {
+export default async function updateAnalytics({
+  userId,
+  incrementPayload,
+}: Props) {
   const today = new Date().toDateString();
 
   try {
     await doWithRetries(async () =>
-      adminDb.collection("UserStats").updateOne(
+      adminDb.collection("UserAnalytics").updateOne(
         { userId: new ObjectId(userId), createdAt: today },
         {
           $inc: {
-            totalWithdrawn: amount,
+            ...incrementPayload,
           },
         },
         {
@@ -27,11 +30,11 @@ export default async function updateWithdrawn({ userId, amount }: Props) {
     );
 
     await doWithRetries(async () =>
-      adminDb.collection("TotalStats").updateOne(
+      adminDb.collection("TotalAnalytics").updateOne(
         { createdAt: today },
         {
           $inc: {
-            totalWithdrawn: amount,
+            ...incrementPayload,
           },
         },
         {

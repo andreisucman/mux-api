@@ -6,9 +6,14 @@ import { Router, Response, NextFunction } from "express";
 import { db } from "init.js";
 import updateAboutBio from "functions/updateAboutBio.js";
 import moderateContent from "@/functions/moderateContent.js";
-import { ModerationStatusEnum, CustomRequest, CategoryNameEnum } from "types.js";
+import {
+  ModerationStatusEnum,
+  CustomRequest,
+  CategoryNameEnum,
+} from "types.js";
 import { QuestionType } from "@/types/saveAboutResponseTypes.js";
 import doWithRetries from "helpers/doWithRetries.js";
+import saveModerationResult from "@/functions/saveModerationResult.js";
 import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 
 const route = Router();
@@ -24,10 +29,11 @@ route.post(
     }
 
     try {
-      const { isSafe, isSuspicious, suspiciousAnalysisResults } =
-        await moderateContent({
+      const { isSafe, isSuspicious, moderationResults } = await moderateContent(
+        {
           content: [{ type: "text", text: reply }],
-        });
+        }
+      );
 
       if (!isSafe) {
         res.status(200).json({
@@ -103,13 +109,23 @@ route.post(
         )
       );
 
-      if (isSuspicious) {
-        addSuspiciousRecord({
-          collection: "About",
-          moderationResult: suspiciousAnalysisResults,
-          contentId: String(newAboutRecord._id),
+      if (moderationResults.length > 0) {
+        saveModerationResult({
           userId: req.userId,
+          categoryName: CategoryNameEnum.ABOUT,
+          isSafe,
+          moderationResults,
+          isSuspicious,
         });
+
+        if (isSuspicious) {
+          addSuspiciousRecord({
+            collection: "About",
+            moderationResults,
+            contentId: String(newAboutRecord._id),
+            userId: req.userId,
+          });
+        }
       }
 
       res.status(200).json({ message: toUpdate });

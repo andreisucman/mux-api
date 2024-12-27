@@ -31,6 +31,8 @@ import getReadyBlurredUrls from "functions/getReadyBlurredUrls.js";
 import selectItemsAtEqualDistances from "helpers/utils.js";
 import httpError from "@/helpers/httpError.js";
 import extractImagesAndTextFromVideo from "@/functions/extractImagesAndTextFromVideo.js";
+import getTheMostSuspiciousResult from "@/helpers/getTheMostSuspiciousResult.js";
+import saveModerationResult from "@/functions/saveModerationResult.js";
 
 const route = Router();
 
@@ -176,19 +178,24 @@ route.post(
         clearInterval(iId);
       }
 
-      const suspiciousResults = [];
+      let moderationResults = [];
+      let isSafe = false;
+      let isSuspicious = false;
 
       if (proofImages) {
         for (const image of proofImages) {
-          const { isSafe, isSuspicious, suspiciousAnalysisResults } =
-            await moderateContent({
-              content: [
-                {
-                  type: "image_url",
-                  image_url: { url: image },
-                },
-              ],
-            });
+          const imageModerationResponse = await moderateContent({
+            content: [
+              {
+                type: "image_url",
+                image_url: { url: image },
+              },
+            ],
+          });
+
+          isSafe = imageModerationResponse.isSafe;
+          isSuspicious = imageModerationResponse.isSuspicious;
+          moderationResults.push(...imageModerationResponse.moderationResults);
 
           if (!isSafe) {
             await addAnalysisStatusError({
@@ -198,21 +205,16 @@ route.post(
             });
             return;
           }
-
-          if (isSuspicious) {
-            suspiciousResults.push(...suspiciousAnalysisResults);
-          }
         }
         if (transcription) {
-          const { isSafe, isSuspicious, suspiciousAnalysisResults } =
-            await moderateContent({
-              content: [
-                {
-                  type: "text",
-                  text: transcription,
-                },
-              ],
-            });
+          const audioModerationResponse = await moderateContent({
+            content: [
+              {
+                type: "text",
+                text: transcription,
+              },
+            ],
+          });
 
           if (!isSafe) {
             await addAnalysisStatusError({
@@ -223,9 +225,9 @@ route.post(
             return;
           }
 
-          if (isSuspicious) {
-            suspiciousResults.push(...suspiciousAnalysisResults);
-          }
+          isSafe = audioModerationResponse.isSafe;
+          isSuspicious = audioModerationResponse.isSuspicious;
+          moderationResults.push(...audioModerationResponse.moderationResults);
         }
       }
 
@@ -461,21 +463,23 @@ route.post(
         )
       );
 
-      if (suspiciousResults.length > 0) {
-        const scoresArray = suspiciousResults.map((rec) =>
-          Math.max(...Object.values(rec.scores))
-        );
-        const highestScore = Math.max(...scoresArray);
-        const indexOfHighestResult = scoresArray.indexOf(highestScore);
-
-        const theMostSuspiciousResult = suspiciousResults[indexOfHighestResult];
-
-        addSuspiciousRecord({
-          collection: "Proof",
-          moderationResult: [theMostSuspiciousResult],
-          contentId: String(newProof._id),
+      if (moderationResults.length > 0) {
+        saveModerationResult({
           userId: req.userId,
+          categoryName: CategoryNameEnum.PROOF,
+          isSafe,
+          moderationResults,
+          isSuspicious,
         });
+
+        if (isSuspicious) {
+          addSuspiciousRecord({
+            collection: "Proof",
+            moderationResults,
+            contentId: String(newProof._id),
+            userId: req.userId,
+          });
+        }
       }
     } catch (err) {
       await addAnalysisStatusError({

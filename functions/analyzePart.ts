@@ -20,9 +20,10 @@ import {
   BeforeAfterType,
   CategoryNameEnum,
 } from "types.js";
+import saveModerationResult from "./saveModerationResult.js";
 import addSuspiciousRecord from "./addSuspiciousRecord.js";
 import { ModerationStatusEnum } from "types.js";
-import moderateContent from "./moderateContent.js";
+import moderateContent, { ModerationResultType } from "./moderateContent.js";
 import updateProgressImages from "functions/updateProgressImages.js";
 import { PartResultType } from "@/types/analyzePartTypes.js";
 import { db } from "init.js";
@@ -64,17 +65,31 @@ export default async function analyzePart({
       (obj) => obj.part === part
     );
 
-    const suspiciousResults = [];
+    let isSuspicious = false;
+    let isSafe = false;
+    let moderationResults: ModerationResultType[] = [];
 
     for (const object of partToAnalyzeObjects) {
-      const { isSafe, isSuspicious, suspiciousAnalysisResults } =
-        await moderateContent({
-          content: [
-            { type: "image_url", image_url: { url: object.mainUrl.url } },
-          ],
-        });
+      const moderationResponse = await moderateContent({
+        content: [
+          { type: "image_url", image_url: { url: object.mainUrl.url } },
+        ],
+      });
+
+      isSafe = moderationResponse.isSafe;
+      isSuspicious = isSuspicious
+        ? isSuspicious
+        : moderationResponse.isSuspicious;
+      moderationResults.push(...moderationResponse.moderationResults);
 
       if (!isSafe) {
+        saveModerationResult({
+          userId,
+          categoryName,
+          isSafe,
+          moderationResults,
+          isSuspicious,
+        });
         throw httpError(
           `It looks like your image contains inappropriate content. Try a different one.`
         );
@@ -88,10 +103,6 @@ export default async function analyzePart({
 
       if (!isSelf) {
         throw httpError(`You can only upload images of yourself.`);
-      }
-
-      if (isSuspicious) {
-        suspiciousResults.push(...suspiciousAnalysisResults);
       }
     }
 
@@ -311,13 +322,23 @@ export default async function analyzePart({
     partResult.scoresDifference = newScoresDifference;
     partResult.latestProgress = recordOfProgress;
 
-    if (suspiciousResults.length > 0) {
-      addSuspiciousRecord({
-        collection: "Progress",
-        moderationResult: suspiciousResults,
-        contentId: String(recordOfProgress._id),
+    if (moderationResults.length > 0) {
+      saveModerationResult({
         userId,
+        categoryName,
+        isSafe,
+        moderationResults,
+        isSuspicious,
       });
+
+      if (isSuspicious) {
+        addSuspiciousRecord({
+          collection: "Progress",
+          moderationResults,
+          contentId: String(recordOfProgress._id),
+          userId,
+        });
+      }
     }
 
     return partResult;

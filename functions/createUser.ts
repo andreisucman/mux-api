@@ -3,6 +3,7 @@ import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { defaultUser } from "data/defaultUser.js";
 import { ModerationStatusEnum, UserType } from "types.js";
+import updateAnalytics from "./updateAnalytics.js";
 import httpError from "@/helpers/httpError.js";
 
 async function createUser(props: Partial<UserType>) {
@@ -23,11 +24,19 @@ async function createUser(props: Partial<UserType>) {
         await db
           .collection("User")
           .updateOne(
-            { _id: new ObjectId(userId), moderationStatus: ModerationStatusEnum.ACTIVE },
+            {
+              _id: new ObjectId(userId),
+              moderationStatus: ModerationStatusEnum.ACTIVE,
+            },
             { $set: updatePayload },
             { upsert: true }
           )
     );
+
+    updateAnalytics({
+      userId: String(userId),
+      incrementPayload: { "dashboard.user.totalUsers": 1 },
+    });
 
     return { ...updatePayload, _id: userId };
   } catch (err) {

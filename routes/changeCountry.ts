@@ -3,7 +3,9 @@ import { CustomRequest, ModerationStatusEnum } from "types.js";
 import { defaultClubPayoutData } from "@/functions/createClubProfile.js";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
-import { db } from "init.js";
+import { db, stripe } from "init.js";
+import getUserInfo from "@/functions/getUserInfo.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -12,6 +14,13 @@ route.post(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { newCountry } = req.body;
     try {
+      const userInfo = await getUserInfo({
+        userId: req.userId,
+        projection: { "club.payouts.connectId": 1 },
+      });
+
+      if (!userInfo) throw httpError(`User ${req.userId} not found`);
+
       await doWithRetries(async () =>
         db.collection("User").updateOne(
           {
@@ -26,6 +35,14 @@ route.post(
           }
         )
       );
+
+      const { club } = userInfo;
+      const { payouts } = club || {};
+      const { connectId } = payouts || {};
+
+      if (connectId) {
+        await stripe.accounts.del(connectId);
+      }
 
       res.status(200).json({ message: defaultClubPayoutData });
     } catch (error) {

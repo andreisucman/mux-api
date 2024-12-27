@@ -18,6 +18,7 @@ import createCsrf from "@/functions/createCsrf.js";
 import { defaultUser } from "@/data/defaultUser.js";
 import getUserData from "@/functions/getUserData.js";
 import getOAuthAuthenticationData from "@/functions/getOAuthAuthenticationData.js";
+import updateAnalytics from "@/functions/updateAnalytics.js";
 
 const route = Router();
 
@@ -144,6 +145,11 @@ route.post(
         if (auth === "e") {
           await sendConfirmationCode({ userId: String(userData._id), email });
         }
+
+        updateAnalytics({
+          userId: String(userData._id),
+          incrementPayload: { "dashboard.user.registeredUsers": 1 },
+        });
       }
 
       const sessionExpiry = daysFrom({ days: 720 });

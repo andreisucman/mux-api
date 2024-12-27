@@ -6,6 +6,7 @@ import doWithRetries from "helpers/doWithRetries.js";
 import getUsersCountry from "@/helpers/getUsersCountry.js";
 import checkIfUserExists from "@/functions/checkIfUserExists.js";
 import createUser from "@/functions/createUser.js";
+import { db } from "init.js";
 import { UserType } from "types.js";
 
 const route = Router();
@@ -20,15 +21,33 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
   const { tosAccepted, timeZone, fingerprint }: Props = req.body;
 
   try {
-    if (fingerprint) {
-      const userData = await checkIfUserExists({ filter: { fingerprint } });
+    if (!fingerprint) {
+      res.status(200).json({
+        error:
+          "Sorry, but your device is not supported. Try again using a different device.",
+      });
+      return;
+    }
 
-      if (userData) {
-        res.status(200).json({
-          message: userData,
-        });
-        return;
-      }
+    const fingerprintIsSupended = await doWithRetries(async () =>
+      db.collection("SuspendedFingerprint").findOne({ fingerprint })
+    );
+
+    if (fingerprintIsSupended) {
+      res.status(200).json({
+        error:
+          "Sorry, but you can't use our platform due to your violations of our TOS in the past. If you think this is a mistake contact us at info@muxout.com",
+      });
+      return;
+    }
+
+    let userData = await checkIfUserExists({ filter: { fingerprint } });
+
+    if (userData) {
+      res.status(200).json({
+        message: userData,
+      });
+      return;
     }
 
     const { country, city } = await getUsersCountry(req);
@@ -44,7 +63,7 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
         })
     );
 
-    const userData = (await doWithRetries(async () =>
+    userData = (await doWithRetries(async () =>
       getUserData({ userId: String(createUserResponse._id) })
     )) as unknown as UserType;
 

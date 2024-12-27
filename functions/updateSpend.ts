@@ -23,24 +23,23 @@ export default async function updateSpend({
 }: Props) {
   const today = new Date().toDateString();
 
+  const incrementPayload = {
+    "accounting.totalCost": units * unitCost,
+    "accounting.totalUnits": units,
+    [`accounting.units.functions.${functionName}`]: units,
+    [`accounting.cost.functions.${functionName}`]: units * unitCost,
+    [`accounting.units.models.${modelName}`]: units,
+    [`accounting.cost.models.${modelName}`]: units * unitCost,
+    [`accounting.units.categories.${categoryName}`]: units,
+    [`accounting.cost.categories.${categoryName}`]: units * unitCost,
+  };
+
   try {
     await doWithRetries(async () =>
-      adminDb.collection("UserStats").updateOne(
+      adminDb.collection("UserAnalytics").updateOne(
         { userId: new ObjectId(userId), createdAt: today },
         {
-          $inc: {
-            totalCost: units * unitCost,
-            totalUnits: units,
-            [`units.functions.${functionName}`]: units,
-            [`cost.functions.${functionName}`]: units * unitCost,
-            [`unitCost.functions.${functionName}`]: unitCost,
-            [`units.models.${modelName}`]: units,
-            [`cost.models.${modelName}`]: units * unitCost,
-            [`unitCost.models.${modelName}`]: unitCost,
-            [`units.categories.${categoryName}`]: units,
-            [`cost.categories.${categoryName}`]: units * unitCost,
-            [`unitCost.categories.${categoryName}`]: unitCost,
-          },
+          $inc: incrementPayload,
         },
         {
           upsert: true,
@@ -49,22 +48,10 @@ export default async function updateSpend({
     );
 
     await doWithRetries(async () =>
-      adminDb.collection("TotalStats").updateOne(
+      adminDb.collection("TotalAnalytics").updateOne(
         { createdAt: today },
         {
-          $inc: {
-            totalCost: units * unitCost,
-            totalUnits: units,
-            [`units.functions.${functionName}`]: units,
-            [`cost.functions.${functionName}`]: units * unitCost,
-            [`unitCost.functions.${functionName}`]: unitCost,
-            [`units.models.${modelName}`]: units,
-            [`cost.models.${modelName}`]: units * unitCost,
-            [`unitCost.models.${modelName}`]: unitCost,
-            [`units.categories.${categoryName}`]: units,
-            [`cost.categories.${categoryName}`]: units * unitCost,
-            [`unitCost.categories.${categoryName}`]: unitCost,
-          },
+          $inc: incrementPayload,
         },
         {
           upsert: true,

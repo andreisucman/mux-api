@@ -3,7 +3,11 @@ dotenv.config();
 
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
-import { CustomRequest, ModerationStatusEnum } from "types.js";
+import {
+  CategoryNameEnum,
+  CustomRequest,
+  ModerationStatusEnum,
+} from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { daysFrom } from "helpers/utils.js";
 import formatDate from "helpers/formatDate.js";
@@ -14,6 +18,7 @@ import { db, stripe } from "init.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import moderateContent from "@/functions/moderateContent.js";
 import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
+import saveModerationResult from "@/functions/saveModerationResult.js";
 
 type HandleCheckSafetyProps = {
   req: CustomRequest;
@@ -29,10 +34,9 @@ const handleCheckSafety = async ({
   key,
 }: HandleCheckSafetyProps) => {
   try {
-    const { isSafe, isSuspicious, suspiciousAnalysisResults } =
-      await moderateContent({
-        content: [{ type: "text", text }],
-      });
+    const { isSafe, isSuspicious, moderationResults } = await moderateContent({
+      content: [{ type: "text", text }],
+    });
 
     if (!isSafe) {
       res.status(200).json({
@@ -41,15 +45,18 @@ const handleCheckSafety = async ({
       return false;
     }
 
-    if (isSuspicious) {
-      addSuspiciousRecord({
-        collection: "User",
-        moderationResult: suspiciousAnalysisResults,
-        contentId: req.userId,
-        userId: req.userId,
-        key,
-      });
+    if (moderationResults.length > 0) {
+      if (isSuspicious) {
+        addSuspiciousRecord({
+          collection: "User",
+          moderationResults,
+          contentId: req.userId,
+          userId: req.userId,
+          key,
+        });
+      }
     }
+
     return true;
   } catch (err) {
     throw httpError(err);
