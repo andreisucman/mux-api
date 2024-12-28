@@ -13,7 +13,7 @@ import { db } from "init.js";
 
 const route = Router();
 
-route.get("/:followingUserName", async (req: CustomRequest, res: Response) => {
+route.get("/:followingUserName?", async (req: CustomRequest, res: Response) => {
   const { followingUserName } = req.params;
   const { filter, skip } = aqp(req.query);
   const { onlyCheck, showType, query } = filter || {};
@@ -32,8 +32,8 @@ route.get("/:followingUserName", async (req: CustomRequest, res: Response) => {
           followingUserName,
         });
 
-      if (!inClub || !isFollowing || !subscriptionActive) {
-        res.status(200).json({ message: [] });
+      if (!isSelf && (!inClub || !isFollowing || !subscriptionActive)) {
+        res.status(200).json({ message: { questions: [] } });
         return;
       }
 
@@ -45,20 +45,34 @@ route.get("/:followingUserName", async (req: CustomRequest, res: Response) => {
     }
 
     if (onlyCheck) {
+      const hasNewQuestionsFilters: { [key: string]: any } = {
+        answer: null,
+        skipped: false,
+      };
+
+      if (followingUserName) {
+        hasNewQuestionsFilters.userName = followingUserName;
+      } else {
+        hasNewQuestionsFilters.userId = new ObjectId(req.userId);
+      }
+
       const hasNewQuestions = await doWithRetries(async () =>
-        db.collection("About").findOne({
-          userId: new ObjectId(req.userId),
-          answer: null,
-          skipped: false,
-        })
+        db.collection("About").findOne(hasNewQuestionsFilters)
       );
 
+      const hasAnswersFilters: { [key: string]: any } = {
+        answer: { $ne: null },
+        skipped: false,
+      };
+
+      if (followingUserName) {
+        hasAnswersFilters.userName = followingUserName;
+      } else {
+        hasAnswersFilters.userId = new ObjectId(req.userId);
+      }
+
       const hasAnswers = await doWithRetries(async () =>
-        db.collection("About").findOne({
-          userId: new ObjectId(req.userId),
-          answer: { $ne: null },
-          skipped: false,
-        })
+        db.collection("About").findOne(hasAnswersFilters)
       );
 
       res.status(200).json({
@@ -115,11 +129,11 @@ route.get("/:followingUserName", async (req: CustomRequest, res: Response) => {
 
     pipeline.push({ $sort: { createdAt: -1 } }, { $limit: 21 });
 
-    const proof = await doWithRetries(async () =>
-      db.collection("Proof").aggregate(pipeline).toArray()
+    const questions = await doWithRetries(async () =>
+      db.collection("About").aggregate(pipeline).toArray()
     );
 
-    res.status(200).json({ message: proof });
+    res.status(200).json({ message: { questions } });
   } catch (err) {
     throw httpError(err);
   }

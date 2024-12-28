@@ -12,16 +12,16 @@ route.post(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { country } = req.body;
     try {
-      const systemContent = `The user gives you the name of their country. If this is a valid country return is ISO 3166-1 alpha-2 code. If this is an invalid country return isValid as false and other fields as empty strings.`;
+      const systemContent = `The user gives you the name of their country. If this is a valid country return its ISO 3166-1 alpha-2 code. If this is an invalid country return isValid as false and other fields as empty strings.`;
 
-      const ConcernsResponseType = z.object({
+      const CheckCountryResponseType = z.object({
         isValid: z
           .boolean()
           .describe("true if the country is valid and false if not"),
         countryCode: z
           .string()
           .describe(
-            "ISO 3166-1 alpha-2 code of the country or empty string if the country is not valid"
+            "Return the ISO 3166-1 alpha-2 code of the country or empty string if the country is not valid"
           ),
       });
 
@@ -35,7 +35,7 @@ route.post(
             },
           ],
           responseFormat: zodResponseFormat(
-            ConcernsResponseType,
+            CheckCountryResponseType,
             "validateAddress"
           ),
         },
@@ -49,14 +49,14 @@ route.post(
         functionName: "checkCountry",
       });
 
-      const { isValid } = response;
+      const { isValid, countryCode } = response;
 
       if (!isValid) {
         res.status(200).json({ error: "Invalid country" });
         return;
       }
 
-      res.status(200).end();
+      res.status(200).json({ message: countryCode });
     } catch (error) {
       next(error);
     }

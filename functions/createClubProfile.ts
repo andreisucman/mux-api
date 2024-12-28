@@ -41,7 +41,7 @@ export default async function createClubProfile({ userId, avatar }: Props) {
 
     const defaultQuestions = [
       "What is your life philosophy? Are you outgoing or maybe love being alone? Why? ",
-      "Some aim to make a statement when they dress, others just put something on. What is that you are trying to convey? Why?",
+      "Some aim to make a statement when they dress, others just put something on. How about you? Why?",
       `How do you choose your ${
         sex === "male"
           ? "clothing and accessories"
@@ -51,21 +51,25 @@ export default async function createClubProfile({ userId, avatar }: Props) {
       "Imageine you became much fatter than your are now. Describe how you would adapt your style. What type of clothing, colors, or brands would you change and why?",
       "Imageine you became much thinner than your are now. Describe how you would adapt your style. What type of clothing, colors, or brands would you change and why?",
       "Imagine that your ethnicity changed. Would you change anything in your outlook? Why?",
-      "If you were born as an opposite sex, how would you look? Talk about height, weight, personality, facial features, etc.",
+      `If you were ${
+        sex === "male" ? "female" : "male"
+      }, how would you look? Talk about height, weight, personality, facial features, etc.`,
     ];
+
+    const randomName = await createRandomName();
 
     const aboutQuestions: AboutQuestionType[] = defaultQuestions.map((q) => ({
       _id: new ObjectId(),
       question: q,
       userId: new ObjectId(userId),
+      userName: randomName,
       updatedAt: new Date(),
       asking: "coach",
       isPublic: false,
       skipped: false,
       answer: null as string | null,
+      moderationStatus: ModerationStatusEnum.ACTIVE,
     }));
-
-    const randomName = await createRandomName();
 
     const clubBio: ClubBioType = {
       intro: "I love working out and eating healthy.",

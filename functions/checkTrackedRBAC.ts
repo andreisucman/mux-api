@@ -59,7 +59,7 @@ export default async function checkTrackedRBAC({
       result.inClub = false;
     }
 
-    if (String(targetUserInfo._id) === userId) {
+    if (String(targetUserInfo?._id) === userId) {
       result.isSelf = true;
       return result;
     }
