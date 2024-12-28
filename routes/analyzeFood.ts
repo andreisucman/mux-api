@@ -125,7 +125,7 @@ route.post(
           }
         }
 
-        updateAnalytics({ "dashboard.usage.foodScans": 1 });
+        updateAnalytics({ "overview.usage.foodScans": 1 });
       }
 
       const analysis = await analyzeCalories({

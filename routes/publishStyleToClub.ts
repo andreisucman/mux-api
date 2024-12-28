@@ -29,10 +29,10 @@ route.post(
           },
           {
             projection: {
-              "club.payouts": 1,
-              "club.privacy": 1,
               name: 1,
               avatar: 1,
+              "club.payouts": 1,
+              "club.privacy": 1,
               "demographics.sex": 1,
               latestStyleAnalysis: 1,
               latestProgress: 1,
@@ -120,9 +120,9 @@ route.post(
           { _id: new ObjectId(styleAnalysisId) },
           {
             $set: {
+              avatar,
               isPublic: true,
               userName: name,
-              avatar,
               latestHeadScoreDifference: headScoreDifference.overall,
               latestBodyScoreDifference: bodyScoreDifference.overall,
             },

@@ -31,7 +31,7 @@ async function createUser(props: Partial<UserType>) {
         )
     );
 
-    updateAnalytics({ "dashboard.user.totalUsers": 1 });
+    updateAnalytics({ "overview.user.totalUsers": 1 });
 
     return { ...updatePayload, _id: userId };
   } catch (err) {

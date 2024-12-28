@@ -143,21 +143,21 @@ async function handleStripeWebhook(event: Stripe.Event) {
   const totalProcessingFee = fee / 100;
 
   const incrementPayload: { [key: string]: number } = {
-    "dashboard.accounting.totalRevenue": totalRevenue,
-    "dashboard.accounting.totalProcessingFee": totalProcessingFee,
+    "overview.accounting.totalRevenue": totalRevenue,
+    "overview.accounting.totalProcessingFee": totalProcessingFee,
     "accounting.totalRevenue": totalRevenue,
     "accounting.totalProcessingFee": totalProcessingFee,
   };
 
   for (const plan of relatedPlans) {
-    incrementPayload[`dashboard.subscription.${plan.name}Bought`] = 1;
+    incrementPayload[`overview.subscription.${plan.name}Bought`] = 1;
 
     if (plan.name === "peek") {
       const relatedLineItem = object.lines.data.find(
         (lineItem) => lineItem.price.id === plan.priceId
       );
 
-      incrementPayload[`dashboard.accounting.totalPayable`] =
+      incrementPayload[`overview.accounting.totalPayable`] =
         relatedLineItem.amount / 100 / 2;
     }
   }

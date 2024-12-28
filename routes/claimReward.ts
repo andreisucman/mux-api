@@ -133,7 +133,7 @@ route.post(
 
       updateAnalytics({
         "accounting.totalReward": rewardValue,
-        "dashboard.accounting.totalReward": rewardValue,
+        "overview.accounting.totalReward": rewardValue,
       });
 
       res.status(200).json({

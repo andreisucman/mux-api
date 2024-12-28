@@ -17,8 +17,7 @@ route.get(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { followingUserName } = req.params;
     const { filter, skip } = aqp(req.query);
-    const { routineId, taskKey, concern, type, part, query, ...otherFilters } =
-      filter || {};
+    const { routineId, taskKey, concern, type, part, query } = filter || {};
 
     if (!followingUserName && !req.userId) {
       res.status(400).json({ error: "Bad request" });
@@ -26,8 +25,13 @@ route.get(
     }
 
     try {
+      const match: { [key: string]: any } = {
+        isPublic: true,
+        moderationStatus: ModerationStatusEnum.ACTIVE,
+      };
+
       if (followingUserName) {
-        const { inClub, isFollowing, subscriptionActive } =
+        const { inClub, isFollowing, isSelf, subscriptionActive } =
           await checkTrackedRBAC({
             userId: req.userId,
             followingUserName,
@@ -37,11 +41,13 @@ route.get(
           res.status(200).json({ message: [] });
           return;
         }
+
+        if (isSelf) {
+          delete match.isPublic;
+        }
       }
 
       const pipeline: any = [];
-
-      let match: { [key: string]: any } = {};
 
       if (query) {
         match.$text = {
@@ -69,15 +75,9 @@ route.get(
       if (type) match.type = type;
       if (part) match.part = part;
 
-      if (otherFilters) {
-        match = {
-          ...match,
-          isPublic: true,
-          moderationStatus: ModerationStatusEnum.ACTIVE,
-        };
-      }
-
-      pipeline.push({ $match: match });
+      pipeline.push({
+        $match: match,
+      });
 
       if (skip) {
         pipeline.push({ $skip: skip });

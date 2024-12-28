@@ -144,7 +144,7 @@ route.post(
         }
 
         updateAnalytics({
-          [`dashboard.acquisition.signins.${referrer}`]: 1,
+          [`overview.acquisition.signins.${referrer}`]: 1,
         });
       } else {
         // if the registration happes from the sign in page
@@ -177,8 +177,8 @@ route.post(
         }
 
         updateAnalytics({
-          "dashboard.user.registeredUsers": 1,
-          [`dashboard.acquisition.signups.${referrer}`]: 1,
+          "overview.user.registeredUsers": 1,
+          [`overview.acquisition.signups.${referrer}`]: 1,
         });
       }
 

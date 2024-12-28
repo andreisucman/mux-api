@@ -38,9 +38,9 @@ route.post(
       }
 
       if (canRejoinClubAfter) {
-        updateAnalytics({ "dashboard.club.rejoined": 1 });
+        updateAnalytics({ "overview.club.rejoined": 1 });
       } else {
-        updateAnalytics({ "dashboard.club.joined": 1 });
+        updateAnalytics({ "overview.club.joined": 1 });
       }
 
       let clubData = userInfo.club;

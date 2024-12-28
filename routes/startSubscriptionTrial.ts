@@ -51,7 +51,7 @@ route.post(
       }
 
       updateAnalytics({
-        [`dashboard.subscription.${subscriptionName}Tried`]: 1,
+        [`overview.subscription.${subscriptionName}Tried`]: 1,
       });
 
       const updatedSubscription = {

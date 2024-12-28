@@ -65,11 +65,11 @@ export default async function handleConnectWebhook(event: any) {
       );
 
       if (!currentDetailsSubmitted && details_submitted) {
-        updateAnalytics({ "dashboard.club.detailsSubmitted": 1 });
+        updateAnalytics({ "overview.club.detailsSubmitted": 1 });
       }
 
       if (!currentPayoutsEnabled && payouts_enabled) {
-        updateAnalytics({ "dashboard.club.payoutsEnabled": 1 });
+        updateAnalytics({ "overview.club.payoutsEnabled": 1 });
       }
 
       if (!payouts_enabled) {
@@ -107,8 +107,8 @@ export default async function handleConnectWebhook(event: any) {
 
       updateAnalytics({
         "accounting.totalWithdrawn": totalWithdrawn,
-        "dashboard.accounting.totalWithdrawn": totalWithdrawn,
-        "dashboard.club.withdrawed": 1,
+        "overview.accounting.totalWithdrawn": totalWithdrawn,
+        "overview.club.withdrawed": 1,
       });
     } catch (err) {
       throw httpError(err);

@@ -125,7 +125,7 @@ route.post(
         )
       );
 
-      updateAnalytics({ "dashboard.usage.productAnalyses": 1 });
+      updateAnalytics({ "overview.usage.productAnalyses": 1 });
     } catch (error) {
       next(error);
     }

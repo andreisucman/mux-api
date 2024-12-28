@@ -65,7 +65,7 @@ export default async function removeFromClub({ userId }: Props) {
       db.collection("FollowHistory").bulkWrite(removeFromFollowHistoryBatch)
     );
 
-    updateAnalytics({ "dashboard.club.left": 1 });
+    updateAnalytics({ "overview.club.left": 1 });
   } catch (err) {
     throw httpError(err);
   }

@@ -67,7 +67,7 @@ route.post(
           )
         );
 
-        updateAnalytics({ [`dashboard.club.country.${country}`]: 1 });
+        updateAnalytics({ [`overview.club.country.${country}`]: 1 });
 
         res.status(200).json({ message: accLink.url });
         return;

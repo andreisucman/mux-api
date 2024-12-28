@@ -1,9 +1,9 @@
 import { ObjectId } from "mongodb";
 import { NextFunction, Router } from "express";
-import { db } from "init.js";
 import { ModerationStatusEnum, CustomRequest } from "types.js";
 import checkTrackedRBAC from "functions/checkTrackedRBAC.js";
 import doWithRetries from "helpers/doWithRetries.js";
+import { db } from "init.js";
 
 const route = Router();
 
@@ -19,8 +19,13 @@ route.get(
     }
 
     try {
+      const filter: { [key: string]: any } = {
+        isPublic: true,
+        moderationStatus: ModerationStatusEnum.ACTIVE,
+      };
+
       if (followingUserName) {
-        const { inClub, isFollowing, subscriptionActive } =
+        const { inClub, isFollowing, isSelf, subscriptionActive } =
           await checkTrackedRBAC({
             userId: req.userId,
             followingUserName,
@@ -30,11 +35,11 @@ route.get(
           res.status(200).json({ message: [] });
           return;
         }
-      }
 
-      const filter: { [key: string]: any } = {
-        moderationStatus: ModerationStatusEnum.ACTIVE,
-      };
+        if (isSelf) {
+          delete filter.isPublic;
+        }
+      }
 
       if (followingUserName) {
         filter.name = followingUserName;

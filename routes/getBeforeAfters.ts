@@ -14,8 +14,6 @@ route.get("/", async (req: CustomRequest, res, next: NextFunction) => {
   try {
     const pipeline: any = [];
 
-    const match = { $match: {} };
-
     const filter: { [key: string]: any } = {
       isPublic: true,
     };
@@ -28,10 +26,8 @@ route.get("/", async (req: CustomRequest, res, next: NextFunction) => {
     if (type) filter.type = type;
     if (part) filter.part = part;
 
-    match.$match = { ...match.$match, ...filter };
-
     pipeline.push(
-      match,
+      { $match: filter },
       { $sort: { updatedAt: -1 } },
       { $skip: skip || 0 },
       { $limit: 21 }

@@ -236,7 +236,7 @@ route.post(
         )
       );
 
-      updateAnalytics({ "dashboard.usage.styleScans": 1 });
+      updateAnalytics({ "overview.usage.styleScans": 1 });
 
       if (moderationResults.length > 0) {
         addModerationAnalyticsData({

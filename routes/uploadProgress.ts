@@ -247,7 +247,7 @@ route.post(
         });
       }
 
-      updateAnalytics({ "dashboard.usage.progressScans": 1 });
+      updateAnalytics({ "overview.usage.progressScans": 1 });
     } catch (err) {
       await addAnalysisStatusError({
         operationKey: type,

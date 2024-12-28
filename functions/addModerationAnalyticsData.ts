@@ -26,36 +26,36 @@ export default async function addModerationAnalyticsData({
     let analyticIncrementPayload: {
       [key: string]: number;
     } = {
-      "dashboard.moderation.totalUploaded": 1,
+      "overview.moderation.totalUploaded": 1,
     };
 
     analyticIncrementPayload[
-      `dashboard.moderation.uploaded.${categoryName}`
+      `overview.moderation.uploaded.${categoryName}`
     ] = 1;
 
     if (!isSafe) {
       analyticIncrementPayload[
-        `dashboard.moderation.blocked.${categoryName}`
+        `overview.moderation.blocked.${categoryName}`
       ] = 1;
 
       const blockedReasons = getModerationLabelsOverThreshold({
         moderationResults,
         upperBoundary: Number(process.env.MODERATION_UPPER_BOUNDARY),
-        key: "dashboard.moderation.blockedReasons",
+        key: "overview.moderation.blockedReasons",
       });
 
       analyticIncrementPayload = { ...blockedReasons };
     } else {
       if (isSuspicious) {
         analyticIncrementPayload[
-          `dashboard.moderation.suspicious.${categoryName}`
+          `overview.moderation.suspicious.${categoryName}`
         ] = 1;
 
         const suspiciousReasons = getModerationLabelsOverThreshold({
           moderationResults,
           upperBoundary: Number(process.env.MODERATION_UPPER_BOUNDARY),
           lowerBoundary: Number(process.env.MODERATION_LOWER_BOUNDARY),
-          key: "dashboard.moderation.suspiciousReasons",
+          key: "overview.moderation.suspiciousReasons",
         });
 
         analyticIncrementPayload = { ...suspiciousReasons };

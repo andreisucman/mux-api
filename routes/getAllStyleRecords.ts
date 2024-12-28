@@ -11,6 +11,7 @@ route.get("/", async (req: CustomRequest, res, next: NextFunction) => {
 
   try {
     const filter: { [key: string]: any } = {
+      isPublic: true,
       moderationStatus: ModerationStatusEnum.ACTIVE,
     };
 

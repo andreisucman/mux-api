@@ -13,21 +13,16 @@ const route = Router();
 
 route.get("/", async (req: CustomRequest, res: Response) => {
   const { filter, skip } = aqp(req.query);
-  const {
-    concern,
-    ageInterval,
-    sex,
-    type,
-    part,
-    query,
-    bodyType,
-    ...otherFilters
-  } = filter || {};
+  const { concern, ageInterval, sex, type, part, query, bodyType } =
+    filter || {};
 
   try {
     const pipeline: any = [];
 
-    let match: { [key: string]: any } = {};
+    const match: { [key: string]: any } = {
+      isPublic: true,
+      moderationStatus: ModerationStatusEnum.ACTIVE,
+    };
 
     if (query) {
       match.$text = {
@@ -44,15 +39,9 @@ route.get("/", async (req: CustomRequest, res: Response) => {
     if (bodyType) match.demographics.bodyType = bodyType;
     if (ageInterval) match.demographics.ageInterval = ageInterval;
 
-    if (otherFilters) {
-      match = {
-        ...match,
-        isPublic: true,
-        moderationStatus: ModerationStatusEnum.ACTIVE,
-      };
-    }
-
-    pipeline.push({ $match: match });
+    pipeline.push({
+      $match: match,
+    });
 
     if (skip) {
       pipeline.push({ $skip: skip });

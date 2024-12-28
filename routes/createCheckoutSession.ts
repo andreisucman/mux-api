@@ -71,7 +71,7 @@ route.post(
 
         if (relatedPlan) {
           updateAnalytics({
-            [`dashboard.subscription.${relatedPlan.name}Added`]: 1,
+            [`overview.subscription.${relatedPlan.name}Added`]: 1,
           });
         }
 

@@ -25,6 +25,7 @@ route.get(
         db.collection("Proof").findOne(
           {
             taskId: new ObjectId(taskId),
+            userId: new ObjectId(req.userId),
             moderationStatus: ModerationStatusEnum.ACTIVE,
           },
           {
