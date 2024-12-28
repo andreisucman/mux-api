@@ -185,8 +185,12 @@ export type ClubBioType = {
   philosophy: string;
   style: string;
   tips: string;
-  questions: { asking: string; question: string }[];
   socials: { value: string; label: string }[];
+  nextRegenerateBio: {
+    philosophy: string | null;
+    style: string | null;
+    tips: string | null;
+  };
 };
 
 export type ClubPayoutDataType = {

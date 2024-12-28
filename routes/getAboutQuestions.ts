@@ -1,15 +1,15 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
+import { ObjectId } from "mongodb";
 import aqp from "api-query-params";
 import { Router, Response } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 import { CustomRequest } from "types.js";
 import { ModerationStatusEnum } from "types.js";
-import { db } from "init.js";
 import checkTrackedRBAC from "@/functions/checkTrackedRBAC.js";
-import { ObjectId } from "mongodb";
+import { db } from "init.js";
 
 const route = Router();
 
@@ -45,17 +45,28 @@ route.get("/:followingUserName", async (req: CustomRequest, res: Response) => {
     }
 
     if (onlyCheck) {
-      const newQuestionsCount = await doWithRetries(async () =>
-        db.collection("About").countDocuments({
+      const hasNewQuestions = await doWithRetries(async () =>
+        db.collection("About").findOne({
           userId: new ObjectId(req.userId),
-          answer: { $exists: false },
+          answer: null,
           skipped: false,
         })
       );
 
-      res
-        .status(200)
-        .json({ message: { hasNewQuestions: newQuestionsCount > 0 } });
+      const hasAnswers = await doWithRetries(async () =>
+        db.collection("About").findOne({
+          userId: new ObjectId(req.userId),
+          answer: { $ne: null },
+          skipped: false,
+        })
+      );
+
+      res.status(200).json({
+        message: {
+          hasNewQuestions: !!hasNewQuestions,
+          hasAnswers: !!hasAnswers,
+        },
+      });
       return;
     }
 

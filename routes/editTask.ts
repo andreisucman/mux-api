@@ -36,10 +36,11 @@ route.post(
     try {
       const text = `Description: ${updatedDescription}.<-->Instruction: ${updatedInstruction}.`;
 
-      const { isSafe, isSuspicious, suspiciousAnalysisResults } =
-        await moderateContent({
+      const { isSafe } = await moderateContent(
+        {
           content: [{ type: "text", text }],
-        });
+        }
+      );
 
       if (!isSafe) {
         res.status(200).json({
@@ -98,7 +99,7 @@ route.post(
 
       if (!isSimilar) {
         const reply =
-          "Task can't be changed entirely. If you need a new task use the plus button.";
+          "Task can't be changed entirely. If you need to make a new task use the plus button.";
         res.status(200).json({ error: reply });
         return;
       }

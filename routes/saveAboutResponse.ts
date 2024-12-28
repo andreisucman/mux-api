@@ -3,12 +3,12 @@ dotenv.config();
 
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
-import { db } from "init.js";
 import moderateContent from "@/functions/moderateContent.js";
 import { CustomRequest, CategoryNameEnum } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.js";
 import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
+import { db } from "init.js";
 
 const route = Router();
 

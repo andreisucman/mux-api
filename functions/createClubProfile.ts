@@ -12,6 +12,7 @@ import { db } from "init.js";
 import getUserInfo from "./getUserInfo.js";
 import createRandomName from "./createRandomName.js";
 import httpError from "@/helpers/httpError.js";
+import { AboutQuestionType } from "@/types/saveAboutResponseTypes.js";
 
 type Props = {
   userId: string;
@@ -38,55 +39,44 @@ export default async function createClubProfile({ userId, avatar }: Props) {
     const { demographics } = (userInfo as unknown as Partial<UserType>) || {};
     const { sex } = demographics;
 
-    const randomName = await createRandomName();
-
     const defaultQuestions = [
-      {
-        asking: "coach",
-        question:
-          "What is your life philosophy? Are you outgoing or maybe introverted and love hanging out alone? Why? ",
-      },
-      {
-        asking: "coach",
-        question:
-          "What are you aiming for when you groom and dress? Some aim to make a statement, others try to look clean and simple. What is that you are trying to convey?",
-      },
-      {
-        asking: "coach",
-        question: `How do you choose your ${
-          sex === "male"
-            ? "clothing and accessories"
-            : "makeup, clothing and accessories"
-        }? What are the colors, materials, size, or shapes you look for and avoid. Why?`,
-      },
-      {
-        asking: "coach",
-        question:
-          "What are the places and brands you usually shop at and how frequently do you do that? Why you shop there?",
-      },
-      {
-        asking: "coach",
-        question:
-          "Do you think you would have a different style if you were much fatter or thinner than your are now? Talk about whether weight matters for your current face and outfit style, and if yes, why?",
-      },
-      {
-        asking: "coach",
-        question:
-          "Imagine that suddenly your ethnicity changed. Would you change anything in your outlook and why?",
-      },
-      {
-        asking: "coach",
-        question:
-          "Imagine that you've been given a chance to be born again as an opposite sex. Describe how you look? Talk about height, weight, personality, facial features, etc.",
-      },
+      "What is your life philosophy? Are you outgoing or maybe love being alone? Why? ",
+      "Some aim to make a statement when they dress, others just put something on. What is that you are trying to convey? Why?",
+      `How do you choose your ${
+        sex === "male"
+          ? "clothing and accessories"
+          : "makeup, clothing and accessories"
+      }? What are the colors, materials, size, or shapes you look for and avoid. Why?`,
+      "What are the places and brands you usually shop at and how frequently do you do that? Why do you shop there?",
+      "Imageine you became much fatter than your are now. Describe how you would adapt your style. What type of clothing, colors, or brands would you change and why?",
+      "Imageine you became much thinner than your are now. Describe how you would adapt your style. What type of clothing, colors, or brands would you change and why?",
+      "Imagine that your ethnicity changed. Would you change anything in your outlook? Why?",
+      "If you were born as an opposite sex, how would you look? Talk about height, weight, personality, facial features, etc.",
     ];
+
+    const aboutQuestions: AboutQuestionType[] = defaultQuestions.map((q) => ({
+      _id: new ObjectId(),
+      question: q,
+      userId: new ObjectId(userId),
+      updatedAt: new Date(),
+      asking: "coach",
+      isPublic: false,
+      skipped: false,
+      answer: null as string | null,
+    }));
+
+    const randomName = await createRandomName();
 
     const clubBio: ClubBioType = {
       intro: "I love working out and eating healthy.",
       philosophy: "",
       style: "",
       tips: "",
-      questions: defaultQuestions,
+      nextRegenerateBio: {
+        philosophy: null,
+        style: null,
+        tips: null,
+      },
       socials: [],
     };
 
@@ -113,6 +103,10 @@ export default async function createClubProfile({ userId, avatar }: Props) {
           },
         }
       )
+    );
+
+    await doWithRetries(async () =>
+      db.collection("About").insertMany(aboutQuestions)
     );
 
     return defaultClubData;

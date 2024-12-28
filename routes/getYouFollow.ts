@@ -49,9 +49,7 @@ route.get(
           if (club) {
             const newBio = Object.keys(club.bio).reduce((a: ClubBioType, c) => {
               if (c !== "intro") {
-                if (c === "questions") {
-                  a[c] = [];
-                } else if (c === "socials") {
+                if (c === "socials") {
                   const newSocials = userInfo.club.bio[c].map((item) => ({
                     label: "******",
                     value: "******",

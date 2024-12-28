@@ -55,6 +55,8 @@ import publishStyleToClub from "routes/publishStyleToClub.js";
 import redirectToWallet from "routes/redirectToWallet.js";
 import replaceRoutine from "routes/replaceRoutine.js";
 import saveAboutResponse from "routes/saveAboutResponse.js";
+import skipAboutQuestion from "routes/skipAboutQuestion.js";
+import getAboutQuestions from "routes/getAboutQuestions.js";
 import saveTaskFromDescription from "routes/saveTaskFromDescription.js";
 import trackUser from "routes/trackUser.js";
 import updateAccountDeletion from "routes/updateAccountDeletion.js";
@@ -180,6 +182,8 @@ app.use("/getAllProofRecords", getAllProofRecords);
 
 // protected routes
 app.use((req, res, next) => checkAccess(req, res, next, true));
+app.use("/getAboutQuestions", getAboutQuestions);
+app.use("/skipAboutQuestion", skipAboutQuestion);
 app.use("/changeCountry", changeCountry);
 app.use("/findProductsForGeneralTasks", findProductsForGeneralTasks);
 app.use("/saveDiaryRecord", saveDiaryRecord);

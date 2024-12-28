@@ -73,6 +73,12 @@ route.post(
 
       const { coach, other } = relatedAnswers;
 
+      let text = "";
+
+      for (const record of [...coach, ...other]) {
+        text += `Question: ${record.question}\nUser replies: ${record.answer}\n\n`;
+      }
+
       const generatedContent = await generateBioContent({
         categoryName: CategoryNameEnum.ABOUT,
         segment,
@@ -80,7 +86,7 @@ route.post(
         userId: req.userId,
       });
 
-      res.status(200).json({ message: updatePayload });
+      res.status(200).json({ message: generatedContent });
     } catch (err) {
       next(err);
     }
