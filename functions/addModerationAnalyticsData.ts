@@ -8,7 +8,6 @@ import updateAnalytics from "./updateAnalytics.js";
 import { CategoryNameEnum } from "@/types.js";
 
 type Props = {
-  userId: string;
   categoryName: CategoryNameEnum;
   moderationResults: ModerationResultType[];
   isSuspicious: boolean;
@@ -20,7 +19,6 @@ export default async function addModerationAnalyticsData({
   moderationResults,
   isSuspicious,
   isSafe,
-  userId,
 }: Props) {
   try {
     let analyticIncrementPayload: {

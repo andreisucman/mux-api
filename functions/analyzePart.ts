@@ -84,7 +84,6 @@ export default async function analyzePart({
 
       if (!isSafe) {
         addModerationAnalyticsData({
-          userId,
           categoryName,
           isSafe,
           moderationResults,
@@ -324,7 +323,6 @@ export default async function analyzePart({
 
     if (moderationResults.length > 0) {
       addModerationAnalyticsData({
-        userId,
         categoryName,
         isSafe,
         moderationResults,

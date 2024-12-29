@@ -78,7 +78,6 @@ route.post(
 
       if (!isSafe) {
         addModerationAnalyticsData({
-          userId: req.userId,
           categoryName: CategoryNameEnum.DIARY,
           isSafe,
           moderationResults,
@@ -154,7 +153,6 @@ route.post(
 
       if (moderationResults.length > 0) {
         addModerationAnalyticsData({
-          userId: req.userId,
           categoryName: CategoryNameEnum.DIARY,
           isSafe,
           moderationResults,

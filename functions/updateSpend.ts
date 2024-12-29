@@ -1,6 +1,7 @@
 import doWithRetries from "@/helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 import { adminDb } from "@/init.js";
+import setUtcMidnight from "@/helpers/setUtcMidnight.js";
 import { CategoryNameEnum } from "@/types.js";
 import { ObjectId } from "mongodb";
 
@@ -21,7 +22,7 @@ export default async function updateSpend({
   units,
   unitCost,
 }: Props) {
-  const today = new Date().toDateString();
+  const createdAt = setUtcMidnight({ date: new Date() });
 
   const incrementPayload = {
     "overview.accounting.totalCost": units * unitCost,
@@ -38,7 +39,7 @@ export default async function updateSpend({
   try {
     await doWithRetries(async () =>
       adminDb.collection("UserAnalytics").updateOne(
-        { userId: new ObjectId(userId), createdAt: today },
+        { userId: new ObjectId(userId), createdAt },
         {
           $inc: incrementPayload,
         },
@@ -50,7 +51,7 @@ export default async function updateSpend({
 
     await doWithRetries(async () =>
       adminDb.collection("TotalAnalytics").updateOne(
-        { createdAt: today },
+        { createdAt },
         {
           $inc: incrementPayload,
         },
