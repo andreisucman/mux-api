@@ -101,9 +101,6 @@ route.get("/:followingUserName?", async (req: CustomRequest, res: Response) => {
                   query,
                   path: "question",
                   tokenOrder: "sequential",
-                  fuzzy: {
-                    maxEdits: 2,
-                  },
                 },
               },
               {
@@ -111,13 +108,9 @@ route.get("/:followingUserName?", async (req: CustomRequest, res: Response) => {
                   query,
                   path: "answer",
                   tokenOrder: "sequential",
-                  fuzzy: {
-                    maxEdits: 2,
-                  },
                 },
               },
             ],
-            minimumShouldMatch: 1,
           },
         },
       });

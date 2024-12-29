@@ -114,7 +114,7 @@ route.post(
       res.status(200).json({
         message: {
           content: generatedContent,
-          nextRegenerateBio: { segment: nextDate },
+          nextRegenerateBio: { [segment]: nextDate },
         },
       });
     } catch (err) {
