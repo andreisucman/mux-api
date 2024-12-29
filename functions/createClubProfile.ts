@@ -48,8 +48,8 @@ export default async function createClubProfile({ userId, avatar }: Props) {
           : "makeup, clothing and accessories"
       }? What are the colors, materials, size, or shapes you look for and avoid. Why?`,
       "What are the places and brands you usually shop at and how frequently do you do that? Why do you shop there?",
-      "Imageine you became much fatter than your are now. Describe how you would adapt your style. What type of clothing, colors, or brands would you change and why?",
-      "Imageine you became much thinner than your are now. Describe how you would adapt your style. What type of clothing, colors, or brands would you change and why?",
+      "Imagine you became much fatter than your are now. Describe how you adapt your style to your new weight. What type of clothing, colors, or brands would you change and why?",
+      "Imagine you became much thinner than your are now. Describe how you adapt your style to your new weight. What type of clothing, colors, or brands would you change and why?",
       "Imagine that your ethnicity changed. Would you change anything in your outlook? Why?",
       `If you were ${
         sex === "male" ? "female" : "male"

@@ -46,6 +46,7 @@ route.post(
 
       const updatePayload = {
         answer,
+        skipped: false,
         updatedAt: new Date(),
       };
 

@@ -20,6 +20,7 @@ route.get("/:followingUserName?", async (req: CustomRequest, res: Response) => {
 
   try {
     const match: { [key: string]: any } = {
+      answer: { $ne: null },
       skipped: false,
       isPublic: true,
       moderationStatus: ModerationStatusEnum.ACTIVE,
@@ -39,10 +40,12 @@ route.get("/:followingUserName?", async (req: CustomRequest, res: Response) => {
 
       if (isSelf) {
         delete match.isPublic;
-        if (showType === "skipped") delete match.skipped;
-        if (showType === "new") match.answer = { $exists: false };
+        if (showType === "skipped") match.skipped = true;
+        if (showType === "new") match.answer = null;
       }
     }
+
+    console.log("match", match);
 
     if (onlyCheck) {
       const hasNewQuestionsFilters: { [key: string]: any } = {
