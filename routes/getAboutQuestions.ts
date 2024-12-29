@@ -40,12 +40,13 @@ route.get("/:followingUserName?", async (req: CustomRequest, res: Response) => {
 
       if (isSelf) {
         delete match.isPublic;
-        if (showType === "skipped") match.skipped = true;
+        if (showType === "skipped") {
+          delete match.answer;
+          match.skipped = true;
+        }
         if (showType === "new") match.answer = null;
       }
     }
-
-    console.log("match", match);
 
     if (onlyCheck) {
       const hasNewQuestionsFilters: { [key: string]: any } = {

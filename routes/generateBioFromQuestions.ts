@@ -4,12 +4,11 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import { db } from "init.js";
-import moderateContent from "@/functions/moderateContent.js";
 import { CustomRequest, CategoryNameEnum } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import generateBioContent from "@/functions/generateBioContent.js";
-import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.js";
-import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
+import { daysFrom } from "@/helpers/utils.js";
+import getUserInfo from "@/functions/getUserInfo.js";
 
 const route = Router();
 
@@ -24,6 +23,21 @@ route.post(
     }
 
     try {
+      const userInfo = await getUserInfo({
+        userId: req.userId,
+        projection: { [`club.bio.nextRegenerateBio.${segment}`]: 1 },
+      });
+
+      const { club } = userInfo || {};
+      const { bio } = club || {};
+      const { nextRegenerateBio } = bio || {};
+      const nextCanGenerateDate = nextRegenerateBio[segment as "philosophy"];
+
+      if (new Date() < new Date(nextCanGenerateDate)) {
+        res.status(400).json({ error: "Bad request" });
+        return;
+      }
+
       const relatedAnswers = await doWithRetries(async () =>
         db
           .collection("About")
@@ -61,12 +75,6 @@ route.post(
                 ],
               },
             },
-            {
-              $project: {
-                coach: { $ifNull: [{ $arrayElementAt: ["$coach", 0] }, []] },
-                other: { $ifNull: [{ $arrayElementAt: ["$other", 0] }, []] },
-              },
-            },
           ])
           .next()
       );
@@ -75,18 +83,40 @@ route.post(
 
       let text = "";
 
-      for (const record of [...coach, ...other]) {
+      const allReplies = [...coach, ...other].filter((r) => !!r.answer);
+
+      for (const record of allReplies) {
         text += `Question: ${record.question}\nUser replies: ${record.answer}\n\n`;
       }
 
       const generatedContent = await generateBioContent({
+        userId: req.userId,
         categoryName: CategoryNameEnum.ABOUT,
         segment,
         text,
-        userId: req.userId,
       });
 
-      res.status(200).json({ message: generatedContent });
+      const nextDate = daysFrom({
+        days: 7,
+      });
+
+      await doWithRetries(async () =>
+        db.collection("User").updateOne(
+          { _id: new ObjectId(req.userId) },
+          {
+            $set: {
+              [`club.bio.nextRegenerateBio.${segment}`]: nextDate,
+            },
+          }
+        )
+      );
+
+      res.status(200).json({
+        message: {
+          content: generatedContent,
+          nextRegenerateBio: { segment: nextDate },
+        },
+      });
     } catch (err) {
       next(err);
     }

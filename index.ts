@@ -79,6 +79,7 @@ import setPassword from "routes/setPassword.js";
 import changeEmailStepOne from "routes/changeEmailStepOne.js";
 import changeEmailStepTwo from "routes/changeEmailStepTwo.js";
 import verifyEmail from "routes/verifyEmail.js";
+import generateBioFromQuestions from "routes/generateBioFromQuestions.js";
 import sendConfirmationCode from "routes/sendConfirmationCode.js";
 import getAllProofRecords from "routes/getAllProofRecords.js";
 import getUsersProgressRecords from "routes/getUsersProgressRecords.js";
@@ -182,6 +183,7 @@ app.use("/getAllProofRecords", getAllProofRecords);
 
 // protected routes
 app.use((req, res, next) => checkAccess(req, res, next, true));
+app.use("/generateBioFromQuestions", generateBioFromQuestions);
 app.use("/getAboutQuestions", getAboutQuestions);
 app.use("/skipAboutQuestion", skipAboutQuestion);
 app.use("/changeCountry", changeCountry);

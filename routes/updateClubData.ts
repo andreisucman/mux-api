@@ -20,15 +20,13 @@ import moderateContent from "@/functions/moderateContent.js";
 import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 
 type HandleCheckSafetyProps = {
-  req: CustomRequest;
-  res: Response;
+  userId: string;
   text: string;
   key: string;
 };
 
 const handleCheckSafety = async ({
-  req,
-  res,
+  userId,
   text,
   key,
 }: HandleCheckSafetyProps) => {
@@ -37,20 +35,15 @@ const handleCheckSafety = async ({
       content: [{ type: "text", text }],
     });
 
-    if (!isSafe) {
-      res.status(200).json({
-        error: `It looks like your text contains profanity. Please revise it and try again.`,
-      });
-      return false;
-    }
+    if (!isSafe) return false;
 
     if (moderationResults.length > 0) {
       if (isSuspicious) {
         addSuspiciousRecord({
           collection: "User",
           moderationResults,
-          contentId: req.userId,
-          userId: req.userId,
+          contentId: userId,
+          userId,
           key,
         });
       }
@@ -108,12 +101,18 @@ route.post(
 
       if (name) {
         const verdict = await handleCheckSafety({
-          req,
-          res,
+          userId: req.userId,
           text: name,
           key: "name",
         });
-        if (!verdict) return;
+
+        if (!verdict) {
+          res.status(200).json({
+            error:
+              "It appears that your text contains profanity. Please revise and try again.",
+          });
+          return;
+        }
 
         if (nextNameUpdateAt > new Date()) {
           const formattedDate = formatDate({ date: nextNameUpdateAt });
@@ -152,35 +151,57 @@ route.post(
 
       if (intro) {
         const verdict = await handleCheckSafety({
-          req,
-          res,
+          userId: req.userId,
           text: intro,
           key: "club.bio.intro",
         });
-        if (!verdict) return;
+
+        if (!verdict) {
+          res.status(200).json({
+            error:
+              "It appears that your text contains profanity. Please revise and try again.",
+          });
+          return;
+        }
 
         updatePayload["club.bio.intro"] = intro;
       }
       if (socials) {
         const verdict = await handleCheckSafety({
-          req,
-          res,
+          userId: req.userId,
           text: JSON.stringify(socials),
           key: "club.bio.socials",
         });
-        if (!verdict) return;
+
+        if (!verdict) {
+          res.status(200).json({
+            error:
+              "It appears that your text contains profanity. Please revise and try again.",
+          });
+          return;
+        }
+
         updatePayload["club.bio.socials"] = socials;
       }
 
       if (bio) {
         for (const key in bio) {
+          const text = key === "socials" ? JSON.stringify(socials) : bio[key];
+
           const verdict = await handleCheckSafety({
-            req,
-            res,
-            text: JSON.stringify(socials),
+            userId: req.userId,
+            text,
             key: `club.bio.${key}`,
           });
-          if (!verdict) return;
+
+          if (!verdict) {
+            res.status(200).json({
+              error:
+                "It appears that your text contains profanity. Please revise and try again.",
+            });
+            return;
+          }
+
           updatePayload[`club.bio.${key}`] = bio[key];
         }
       }

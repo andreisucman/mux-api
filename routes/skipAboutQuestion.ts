@@ -12,7 +12,7 @@ const route = Router();
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { questionId } = req.body;
+    const { questionId, isSkipped } = req.body;
 
     if (!questionId) {
       res.status(400).json({ error: "Bad request" });
@@ -25,7 +25,7 @@ route.post(
           .collection("About")
           .updateOne(
             { _id: new ObjectId(questionId), userId: new ObjectId(req.userId) },
-            { $set: { skipped: true } }
+            { $set: { skipped: isSkipped } }
           )
       );
 
