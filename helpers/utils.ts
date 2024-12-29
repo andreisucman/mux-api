@@ -7,8 +7,8 @@ export function delayExecution(ms: number) {
 
 export function getExponentialBackoffDelay(
   attempt: number,
-  baseDelay = 1000,
-  maxDelay = 12000
+  baseDelay = 3000,
+  maxDelay = 15000
 ) {
   const rawDelay = baseDelay * Math.pow(2, attempt);
   const jitter = Math.random() * baseDelay - baseDelay / 2;

@@ -6,6 +6,7 @@ import doWithRetries from "helpers/doWithRetries.js";
 import { AskOpenaiProps } from "types/askOpenaiTypes.js";
 import httpError from "@/helpers/httpError.js";
 import updateSpend from "./updateSpend.js";
+import { ChatCompletionCreateParams } from "openai/resources/index.mjs";
 
 const {
   DEFAULT_4O_MINI_INPUT_PRICE,
@@ -36,7 +37,7 @@ async function askOpenai({
       ? process.env.MODEL_MINI
       : process.env.MODEL;
 
-    const options: { [key: string]: any } = {
+    const options: ChatCompletionCreateParams = {
       messages,
       seed,
       model: finalModel,
@@ -47,7 +48,7 @@ async function askOpenai({
     if (responseFormat) options.response_format = responseFormat;
 
     const completion = await doWithRetries(async () =>
-      openai.chat.completions.create(options as any)
+      openai.chat.completions.create(options)
     );
 
     const inputTokens = completion.usage.prompt_tokens;

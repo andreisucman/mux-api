@@ -3,14 +3,10 @@ dotenv.config();
 
 import { ObjectId } from "mongodb";
 import doWithRetries from "helpers/doWithRetries.js";
-import {
-  AskOpenaiProps,
-  MessageType,
-  RoleEnum,
-  RunType,
-} from "types/askOpenaiTypes.js";
+import { AskOpenaiProps, RunType } from "types/askOpenaiTypes.js";
 import { CategoryNameEnum } from "@/types.js";
 import askOpenai from "./askOpenai.js";
+import { ChatCompletionMessageParam } from "openai/resources/index.mjs";
 import httpError from "@/helpers/httpError.js";
 
 type Props = {
@@ -41,15 +37,15 @@ async function askRepeatedly({
 
     let result;
 
-    let conversation: MessageType[] = [
-      { role: "system" as RoleEnum, content: systemContent },
+    let conversation: ChatCompletionMessageParam[] = [
+      { role: "system", content: systemContent },
     ];
 
     for (let i = 0; i < runs.length; i++) {
       conversation.push({
         role: "user",
         content: runs[i].content,
-      } as MessageType);
+      });
 
       const payload: AskOpenaiProps = {
         userId,
@@ -68,7 +64,7 @@ async function askRepeatedly({
       result = await doWithRetries(async () => askOpenai(payload));
 
       conversation.push({
-        role: "assistant" as RoleEnum,
+        role: "assistant",
         content: [
           {
             type: "text",
