@@ -50,6 +50,7 @@ import getTasksProducts from "routes/getTasksProducts.js";
 import getFollowingRoutines from "@/routes/getFollowingRoutines.js";
 import getUserData from "routes/getUserData.js";
 import joinClub from "routes/joinClub.js";
+import updateConcernStatus from "routes/updateConcernStatus.js";
 import leaveClub from "routes/leaveClub.js";
 import publishStyleToClub from "routes/publishStyleToClub.js";
 import redirectToWallet from "routes/redirectToWallet.js";
@@ -183,6 +184,7 @@ app.use("/getAllProofRecords", getAllProofRecords);
 
 // protected routes
 app.use((req, res, next) => checkAccess(req, res, next, true));
+app.use("/updateConcernStatus", updateConcernStatus);
 app.use("/generateBioFromQuestions", generateBioFromQuestions);
 app.use("/getAboutQuestions", getAboutQuestions);
 app.use("/skipAboutQuestion", skipAboutQuestion);

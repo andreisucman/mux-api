@@ -12,9 +12,10 @@ import {
   UserConcernType,
   CategoryNameEnum,
 } from "types.js";
-import { RunType } from "@/types/askOpenaiTypes.js";
 import { db } from "init.js";
+import { RunType } from "@/types/askOpenaiTypes.js";
 import httpError from "@/helpers/httpError.js";
+import updateConcernsAnalytics from "./updateConcernsAnalytics.js";
 
 type Props = {
   userId: string;
@@ -117,6 +118,8 @@ export default async function analyzeConcerns({
         type,
       })
     );
+
+    updateConcernsAnalytics(combined);
 
     return combined;
   } catch (err) {
