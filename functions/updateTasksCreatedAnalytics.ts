@@ -4,36 +4,40 @@ import { TaskType } from "@/types.js";
 
 export default async function updateTasksAnalytics(
   tasksToInsert: Partial<TaskType>[],
-  keyOne: string,
-  keyTwo: string
+  keyOne?: string,
+  keyTwo?: string
 ) {
   try {
-    const partsCreatedTasks = tasksToInsert
-      .map((t) => t.part)
-      .reduce((a: { [key: string]: number }, c: string) => {
-        const key = `overview.tasks.part.${keyOne}.${c}`; // tasksCreated
-        if (a[key]) {
-          a[key] += 1;
-        } else {
-          a[key] = 1;
-        }
+    const partsCreatedTasks = keyOne
+      ? tasksToInsert
+          .map((t) => t.part)
+          .reduce((a: { [key: string]: number }, c: string) => {
+            const key = `overview.tasks.part.${keyOne}.${c}`; // tasksCreated
+            if (a[key]) {
+              a[key] += 1;
+            } else {
+              a[key] = 1;
+            }
 
-        return a;
-      }, {});
+            return a;
+          }, {})
+      : {};
 
-    const partsCreatedManualTasks = tasksToInsert
-      .filter((t) => t.isCreated)
-      .map((t) => t.part)
-      .reduce((a: { [key: string]: number }, c: string) => {
-        const key = `overview.tasks.part.${keyTwo}.${c}`; // manuallyTasksCreated
-        if (a[key]) {
-          a[key] += 1;
-        } else {
-          a[key] = 1;
-        }
+    const partsCreatedManualTasks = keyTwo
+      ? tasksToInsert
+          .filter((t) => t.isCreated)
+          .map((t) => t.part)
+          .reduce((a: { [key: string]: number }, c: string) => {
+            const key = `overview.tasks.part.${keyTwo}.${c}`; // manuallyTasksCreated
+            if (a[key]) {
+              a[key] += 1;
+            } else {
+              a[key] = 1;
+            }
 
-        return a;
-      }, {});
+            return a;
+          }, {})
+      : {};
 
     updateAnalytics({
       [`overview.usage.${keyOne}`]: tasksToInsert.length,

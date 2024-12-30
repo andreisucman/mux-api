@@ -247,6 +247,7 @@ route.post(
         userId: req.userId,
       });
 
+      updateTasksAnalytics(replacementTaskWithDates, "tasksCreated");
       updateTasksAnalytics(
         replacementTaskWithDates,
         "tasksStolen",

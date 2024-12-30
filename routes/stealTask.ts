@@ -184,7 +184,7 @@ route.post(
         db.collection("Task").insertMany(draftTasks)
       );
 
-      updateTasksAnalytics(draftTasks, "tasksCreated", "manuallyTasksCreated");
+      updateTasksAnalytics(draftTasks, "tasksCreated");
       updateTasksAnalytics(draftTasks, "tasksStolen", "manualTasksStolen");
 
       res.status(200).json({

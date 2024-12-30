@@ -1,9 +1,15 @@
 import z from "zod";
 import askRepeatedly from "functions/askRepeatedly.js";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
-import { ToAnalyzeType, DemographicsType, TypeEnum, CategoryNameEnum } from "types.js";
+import {
+  ToAnalyzeType,
+  DemographicsType,
+  TypeEnum,
+  CategoryNameEnum,
+} from "types.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import httpError from "@/helpers/httpError.js";
+import updateAnalytics from "./updateAnalytics.js";
 
 type Props = {
   toAnalyzeObjects: ToAnalyzeType[];
@@ -89,6 +95,15 @@ export default async function getDemographics({
       runs: runs as RunType[],
       functionName: "getDemographics",
     });
+
+    updateAnalytics({
+      [`overview.demographics.sex.${response.sex}`]: 1,
+      [`overview.demographics.ethnicity.${response.ethnicity}`]: 1,
+      [`overview.demographics.skinType.${response.skinType}`]: 1,
+      [`overview.demographics.ageInterval.${response.ageInterval}`]: 1,
+      [`overview.demographics.bodyType.${response.bodyType}`]: 1,
+    });
+
     return response;
   } catch (err) {
     throw httpError(err);

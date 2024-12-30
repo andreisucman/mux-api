@@ -8,7 +8,6 @@ import updateConcernsAnalytics from "../functions/updateConcernsAnalytics.js";
 
 type Props = {
   key: string;
-  userId: string;
   part: string;
   isDisabled: boolean;
 };
@@ -20,7 +19,7 @@ const allowedParts = ["face", "scalp", "mouth", "body", "health"];
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { key, userId, part, isDisabled }: Props = req.body;
+    const { key, part, isDisabled }: Props = req.body;
 
     if (!allowedParts.includes(part)) {
       res.status(400).json({ error: "Bad request" });
@@ -32,7 +31,7 @@ route.post(
         db
           .collection("User")
           .findOne(
-            { userId: new ObjectId(userId) },
+            { userId: new ObjectId(req.userId) },
             { projection: { concerns: 1 } }
           )
       );
@@ -43,7 +42,7 @@ route.post(
 
       await doWithRetries(async () =>
         db.collection("User").updateOne(
-          { userId: new ObjectId(userId) },
+          { userId: new ObjectId(req.userId) },
           {
             $set: { concerns: updatedConcerns },
           }
