@@ -201,7 +201,7 @@ export const defaultUser: UserType = {
   },
   password: null,
   emailVerified: false,
-  concerns: [],
+  concerns: null,
   requiredProgress: defaultRequiredProgress,
   subscriptions: defaultSubscriptions,
   toAnalyze: { head: [], body: [] },

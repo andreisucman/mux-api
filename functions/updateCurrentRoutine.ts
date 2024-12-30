@@ -1,7 +1,12 @@
 import { ObjectId } from "mongodb";
 import doWithRetries from "helpers/doWithRetries.js";
 import { calculateDaysDifference } from "helpers/utils.js";
-import { UserConcernType, TypeEnum, PartEnum, CategoryNameEnum } from "types.js";
+import {
+  UserConcernType,
+  TypeEnum,
+  PartEnum,
+  CategoryNameEnum,
+} from "types.js";
 import getSolutionsAndFrequencies from "functions/getSolutionsAndFrequencies.js";
 import getRawSchedule from "functions/getRawSchedule.js";
 import createTasks from "functions/createTasks.js";
@@ -12,6 +17,7 @@ import {
 } from "types/createRoutineTypes.js";
 import httpError from "helpers/httpError.js";
 import { db } from "init.js";
+import updateTasksAnalytics from "./updateTasksCreatedAnalytics.js";
 
 type Props = {
   type: TypeEnum;
@@ -120,6 +126,12 @@ export default async function updateCurrentRoutine({
 
     await doWithRetries(async () =>
       db.collection("Task").insertMany(newTasksToInsert)
+    );
+
+    updateTasksAnalytics(
+      newTasksToInsert,
+      "tasksCreated",
+      "manuallyTasksCreated"
     );
   } catch (err) {
     throw httpError(err);

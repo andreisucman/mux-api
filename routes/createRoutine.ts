@@ -49,7 +49,11 @@ route.post(
 
       if (!userInfo) throw httpError("User not found");
 
-      const { nextRoutine, nextScan, concerns: existingConcerns } = userInfo;
+      const {
+        nextRoutine,
+        nextScan,
+        concerns: existingConcerns = [],
+      } = userInfo;
       const relevantTypeRoutine = nextRoutine.find((obj) => obj.type === type);
 
       const cooldown = new Date() < new Date(relevantTypeRoutine.date);

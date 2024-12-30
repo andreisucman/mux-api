@@ -18,6 +18,7 @@ import {
 } from "types/createRoutineTypes.js";
 import httpError from "helpers/httpError.js";
 import { db } from "init.js";
+import updateTasksAnalytics from "./updateTasksCreatedAnalytics.js";
 
 type Props = {
   type: TypeEnum;
@@ -188,6 +189,8 @@ export default async function prolongPreviousRoutine({
     await doWithRetries(async () =>
       db.collection("Task").insertMany(finalTasks)
     );
+
+    updateTasksAnalytics(finalTasks, "tasksCreated", "manuallyTasksCreated");
   } catch (err) {
     throw httpError(err);
   }

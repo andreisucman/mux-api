@@ -5,13 +5,19 @@ import polishRawSchedule from "functions/polishRawSchedule.js";
 import createTasks from "functions/createTasks.js";
 import getSolutionsAndFrequencies from "functions/getSolutionsAndFrequencies.js";
 import deactivatePreviousRoutineAndTasks from "functions/deactivatePreviousRoutineAndTasks.js";
-import { UserConcernType, TypeEnum, PartEnum, CategoryNameEnum } from "types.js";
+import {
+  UserConcernType,
+  TypeEnum,
+  PartEnum,
+  CategoryNameEnum,
+} from "types.js";
 import {
   CreateRoutineUserInfoType,
   CreateRoutineAllSolutionsType,
 } from "types/createRoutineTypes.js";
 import { db } from "init.js";
 import httpError from "helpers/httpError.js";
+import updateTasksAnalytics from "./updateTasksCreatedAnalytics.js";
 
 type Props = {
   userId: string;
@@ -43,7 +49,7 @@ export default async function makeANewRoutine({
         userInfo,
         type,
         part,
-        categoryName
+        categoryName,
       })
     );
 
@@ -121,7 +127,7 @@ export default async function makeANewRoutine({
         allSolutions,
         finalSchedule,
         userInfo,
-        categoryName
+        categoryName,
       })
     );
 
@@ -150,6 +156,8 @@ export default async function makeANewRoutine({
     await doWithRetries(async () =>
       db.collection("Task").insertMany(tasksToInsert)
     );
+
+    updateTasksAnalytics(tasksToInsert, "tasksCreated", "manuallyTasksCreated");
   } catch (err) {
     throw httpError(err);
   }

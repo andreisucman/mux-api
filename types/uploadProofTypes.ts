@@ -1,3 +1,4 @@
+import { ObjectId } from "mongodb";
 import {
   ClubDataType,
   DemographicsType,
@@ -30,8 +31,9 @@ export type UploadProofTaskType = {
   icon: string;
   concern: string;
   requisite: string;
-  routineId: string;
+  routineId: ObjectId;
   isRecipe: boolean;
   requiredSubmissions: RequiredSubmissionType[];
   restDays: number;
+  isCreated: boolean;
 };

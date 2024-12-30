@@ -21,7 +21,7 @@ import findRelevantSolutions from "functions/findRelevantSolutions.js";
 import setUtcMidnight from "@/helpers/setUtcMidnight.js";
 import distributeSubmissions from "@/helpers/distributeSubmissions.js";
 import sortTasksInScheduleByDate from "@/helpers/sortTasksInScheduleByDate.js";
-import { daysFrom } from "helpers/utils.js";
+import { daysFrom, toSnakeCase } from "helpers/utils.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import createTextEmbedding from "functions/createTextEmbedding.js";
 import checkIfTaskIsRelated from "functions/checkIfTaskIsRelated.js";
@@ -31,6 +31,7 @@ import incrementProgress from "@/helpers/incrementProgress.js";
 import filterRelevantProductTypes from "@/functions/filterRelevantTypes.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import moderateContent from "@/functions/moderateContent.js";
+import updateTasksAnalytics from "@/functions/updateTasksCreatedAnalytics.js";
 
 const route = Router();
 
@@ -138,26 +139,46 @@ route.post(
           .findOne({ userId: new ObjectId(req.userId), type, status: "active" })
       )) || { _id: new ObjectId() };
 
-      const systemContent = `The user gives you the description and instruction of an activity and a list of concerns. Your goal is to create a task based on this info.
-    Here is what you should to:
-    1. Come up with a short name for the task in imperative form.
-    2. Come up with one word from node-emoji that best suits the task.
-    3. Choose one the most relevant concern for the task from the list of concerns provided.
-    4. Choose all related concerns for the task from the list of concerns provided.
-    5. Describe what requisite the user has to provide to prove the completion of the activity.
-    6. How many days the user should rest before repeating this activity?
-    7. Which part of the body the task is related to the most?`;
+      const systemContent = `The user gives you the description and instruction of an activity and a list of concerns. Your goal is to create a task based on this info.`;
+      // Here is what you should to:
+      // 1. Come up with a short name for the task in imperative form.
+      // 2. Come up with a single keyword for emoji based on the task description for the closest emoji search (e.g. tomato, potato, shoe, weights... etc. ).
+      // 3. Choose one the most relevant concern for the task from the list of concerns provided.
+      // 4. Choose all related concerns for the task from the list of concerns provided.
+      // 5. Describe what requisite the user has to provide to prove the completion of the activity.
+      // 6. How many days the user should rest before repeating this activity?
+      // 7. Which part of the body the task is related to the most?`;
 
       const TaskType = z.object({
-        name: z.string().describe("the name of the task in imperative form"),
-        concern: z.string(),
-        nearestConcerns: z.array(z.string()),
+        name: z.string().describe("The name of the task in an imperative form"),
+        concern: z
+          .string()
+          .describe(
+            "One the most relevant concern for the task from the list of concerns provided."
+          ),
+        nearestConcerns: z
+          .array(z.string())
+          .describe(
+            "All related concerns for the task from the list of concerns provided"
+          ),
         word: z
           .string()
-          .describe("one word from node-emoji that best suits the task"),
-        requisite: z.string(),
-        restDays: z.number(),
-        part: z.enum(["face", "mouth", "scalp", "body", "health"]),
+          .describe(
+            "A single word based on the description that can be userd for the closest emoji search (e.g. tomato, potato, shoe, weights... etc. )"
+          ),
+        requisite: z
+          .string()
+          .describe(
+            "The requisite that the user has to provide to prove the completion of the task"
+          ),
+        restDays: z
+          .number()
+          .describe(
+            "Number of days the user should rest before repeating this activity"
+          ),
+        part: z
+          .enum(["face", "mouth", "scalp", "body", "health"])
+          .describe("The part of the body the task is most related to"),
       });
 
       const runs = [
@@ -208,7 +229,7 @@ route.post(
         productsPersonalized: false,
         proofEnabled: true,
         status: "active",
-        key: otherResponse.name.toLowerCase(),
+        key: toSnakeCase(otherResponse.name),
         description,
         instruction,
         isCreated: true,
@@ -292,7 +313,7 @@ route.post(
       const finalStartDate =
         new Date(startDate) > latestDateOfWeeek ? latestDateOfWeeek : startDate;
 
-      const icon = relevantSolutions?.[0]?.icon || findEmoji(word) || "🙌";
+      const icon = relevantSolutions?.[0]?.icon || findEmoji(word) || "🚩";
 
       generalTaskInfo.icon = icon;
 
@@ -411,6 +432,8 @@ route.post(
         db.collection("Task").insertMany(draftTasks)
       );
 
+      updateTasksAnalytics(draftTasks, "tasksCreated", "manuallyTasksCreated");
+
       await doWithRetries(async () =>
         db.collection("AnalysisStatus").updateOne(
           { userId: new ObjectId(req.userId), operationKey: type },
@@ -423,8 +446,7 @@ route.post(
     } catch (err) {
       await addAnalysisStatusError({
         userId: req.userId,
-        message:
-          "An unexpected error occured. Please try again and inform us if the error persists.",
+        message: "An unexpected error occured. Please try again.",
         originalMessage: err.message,
         operationKey: type,
       });

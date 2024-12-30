@@ -17,6 +17,8 @@ import setUtcMidnight from "helpers/setUtcMidnight.js";
 import { daysFrom } from "helpers/utils.js";
 import httpError from "@/helpers/httpError.js";
 import getUserInfo from "@/functions/getUserInfo.js";
+import updateAnalytics from "@/functions/updateAnalytics.js";
+import updateTasksAnalytics from "@/functions/updateTasksCreatedAnalytics.js";
 
 const route = Router();
 
@@ -54,6 +56,7 @@ route.post(
             { userId: new ObjectId(req.userId), type, status: "active" },
             { projection: { _id: 1 } }
           )
+          .sort({ _id: -1 })
           .next()
       );
 
@@ -242,6 +245,17 @@ route.post(
 
       const { routines, tasks } = await getLatestRoutinesAndTasks({
         userId: req.userId,
+      });
+
+      updateTasksAnalytics(
+        replacementTaskWithDates,
+        "tasksStolen",
+        "manualTasksStolen"
+      );
+
+      updateAnalytics({
+        "overview.usage.routinesStolen": 1,
+        [`overview.tasks.part.routinesStolen.${type}`]: 1,
       });
 
       res.status(200).json({ message: { routines, tasks } });

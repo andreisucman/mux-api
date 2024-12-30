@@ -77,7 +77,7 @@ export type UserType = {
       [key: string]: Date;
     };
   };
-  concerns: UserConcernType[];
+  concerns: UserConcernType[] | null;
   potential: UserPotentialRecordType;
   tosAccepted: boolean;
   requiredProgress: {

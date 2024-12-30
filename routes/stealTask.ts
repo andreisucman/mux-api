@@ -17,6 +17,8 @@ import {
 import { db } from "init.js";
 import httpError from "@/helpers/httpError.js";
 import getUserInfo from "@/functions/getUserInfo.js";
+import updateAnalytics from "@/functions/updateAnalytics.js";
+import updateTasksAnalytics from "@/functions/updateTasksCreatedAnalytics.js";
 
 const route = Router();
 
@@ -181,6 +183,9 @@ route.post(
       await doWithRetries(async () =>
         db.collection("Task").insertMany(draftTasks)
       );
+
+      updateTasksAnalytics(draftTasks, "tasksCreated", "manuallyTasksCreated");
+      updateTasksAnalytics(draftTasks, "tasksStolen", "manualTasksStolen");
 
       res.status(200).json({
         message: {

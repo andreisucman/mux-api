@@ -6,6 +6,7 @@ import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import { CustomRequest } from "types.js";
 import { db } from "init.js";
+import updateAnalytics from "@/functions/updateAnalytics.js";
 
 const route = Router();
 
@@ -88,6 +89,8 @@ route.post(
               }
             )
           );
+
+          updateAnalytics({ "overview.usage.styleVotes": 1 });
         }
       }
 

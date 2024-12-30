@@ -15,6 +15,7 @@ import {
   TaskStatusEnum,
   PrivacyType,
   CategoryNameEnum,
+  TaskType,
 } from "types.js";
 import { db } from "init.js";
 import {
@@ -33,6 +34,8 @@ import httpError from "@/helpers/httpError.js";
 import extractImagesAndTextFromVideo from "@/functions/extractImagesAndTextFromVideo.js";
 import getTheMostSuspiciousResult from "@/helpers/getTheMostSuspiciousResult.js";
 import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.js";
+import updateAnalytics from "@/functions/updateAnalytics.js";
+import updateTasksAnalytics from "@/functions/updateTasksCreatedAnalytics.js";
 
 const route = Router();
 
@@ -104,6 +107,7 @@ route.post(
               requiredSubmissions: 1,
               restDays: 1,
               isRecipe: 1,
+              isCreated: 1,
             },
           }
         )
@@ -418,6 +422,12 @@ route.post(
         taskUpdate.$set.nextCanStartDate = daysFrom({
           days: taskInfo.restDays,
         });
+
+        updateTasksAnalytics(
+          [taskInfo] as Partial<TaskType>[],
+          "tasksCompleted",
+          "manualTasksCompleted"
+        );
       }
 
       const userUpdatePayload = {

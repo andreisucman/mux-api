@@ -53,7 +53,7 @@ export default async function analyzePart({
   type,
   part,
   blurType,
-  concerns,
+  concerns = [],
   categoryName,
   demographics,
   specialConsiderations,
