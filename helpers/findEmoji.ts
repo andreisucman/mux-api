@@ -1,12 +1,28 @@
 import * as emoji from "node-emoji";
-import * as newEmoji from "node-emoji-new";
+import searchEmojilib from "./searchEmojilib.js";
+import emojiDictionary from "emoji-dictionary";
+import emojione from "emojione";
 
-export default function findEmoji(key: string) {
-  if (!key) return;
+export default async function findEmoji(key: string) {
+  if (!key) return null;
 
-  let current = emoji.find(key)?.emoji;
-  if (!current) current = newEmoji.find(key)?.emoji;
-  if (!current) current = emoji.search(key)[0]?.emoji;
-  if (!current) current = newEmoji.search(key)[0]?.emoji;
-  return current;
+  let current = null;
+
+  current = emoji.find(key)?.emoji;
+
+  if (!current) {
+    current = searchEmojilib(key)[0]?.name;
+  }
+
+  if (!current) {
+    current = emojiDictionary.getUnicode(key);
+  }
+
+  if (!current) {
+    current = emojione.shortnameToUnicode(":" + key + ":");
+  }
+
+  if (current.startsWith(":")) current = null;
+
+  return current || null;
 }
