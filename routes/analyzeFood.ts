@@ -3,7 +3,11 @@ dotenv.config();
 
 import { Router, Response, NextFunction } from "express";
 import { ObjectId } from "mongodb";
-import { CategoryNameEnum, CustomRequest } from "types.js";
+import {
+  CategoryNameEnum,
+  CustomRequest,
+  ModerationStatusEnum,
+} from "types.js";
 import { createHashKey } from "@/functions/createHashKey.js";
 import createImageEmbedding from "@/functions/createImageEmbedding.js";
 import checkImageSimilarity from "functions/checkImageSimilarity.js";
@@ -140,6 +144,7 @@ route.post(
         analysis,
         url,
         embedding,
+        moderationStatus: ModerationStatusEnum.ACTIVE,
         hash,
       };
 

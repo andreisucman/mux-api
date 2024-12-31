@@ -3,7 +3,7 @@ dotenv.config();
 
 import { Router, Response, NextFunction } from "express";
 import { ObjectId } from "mongodb";
-import { CustomRequest } from "types.js";
+import { CustomRequest, ModerationStatusEnum } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { db } from "init.js";
 
@@ -21,7 +21,12 @@ route.get(
       }
 
       const foodAnalysisRecord = await doWithRetries(async () =>
-        db.collection("FoodAnalysis").findOne({ _id: new ObjectId(analysisId) })
+        db
+          .collection("FoodAnalysis")
+          .findOne({
+            _id: new ObjectId(analysisId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          })
       );
 
       res.status(200).json({ message: foodAnalysisRecord });

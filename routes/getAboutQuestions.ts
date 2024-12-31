@@ -22,7 +22,6 @@ route.get("/:followingUserName?", async (req: CustomRequest, res: Response) => {
     const match: { [key: string]: any } = {
       answer: { $ne: null },
       skipped: false,
-      isPublic: true,
       moderationStatus: ModerationStatusEnum.ACTIVE,
     };
 

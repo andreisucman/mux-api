@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import doWithRetries from "helpers/doWithRetries.js";
 import { db } from "init.js";
 import httpError from "@/helpers/httpError.js";
+import { ModerationStatusEnum } from "@/types.js";
 
 export type CheckImageSimilarityProps = {
   userId?: string;
@@ -38,7 +39,10 @@ export default async function checkImageSimilarity({
           numCandidates: 150,
           limit: 1,
           distanceMetric: "cosine",
-          filter: { userId: new ObjectId(userId) },
+          filter: {
+            userId: new ObjectId(userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
         },
       },
       {

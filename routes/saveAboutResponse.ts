@@ -8,6 +8,7 @@ import { CustomRequest, CategoryNameEnum } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.js";
 import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
+import createTextEmbedding from "@/functions/createTextEmbedding.js";
 import { db } from "init.js";
 
 const route = Router();
@@ -17,7 +18,7 @@ route.post(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { questionId, answer } = req.body;
 
-    if (!questionId || !answer) {
+    if (!questionId || !ObjectId.isValid(questionId) || !answer) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
@@ -43,8 +44,31 @@ route.post(
         return;
       }
 
+      const questionObject = await doWithRetries(async () =>
+        db
+          .collection("About")
+          .findOne(
+            { _id: new ObjectId(questionId), userId: new ObjectId(req.userId) },
+            { projection: { question: 1 } }
+          )
+      );
+
+      if (!questionObject) return;
+
+      const { question } = questionObject;
+
+      const text = `Question: ${question}. Answer: ${answer}.`;
+
+      const embedding = await createTextEmbedding({
+        text,
+        userId: req.userId,
+        categoryName: CategoryNameEnum.ABOUT,
+        dimensions: 1536,
+      });
+
       const updatePayload = {
         answer,
+        embedding,
         skipped: false,
         updatedAt: new Date(),
       };

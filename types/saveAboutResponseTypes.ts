@@ -7,6 +7,5 @@ export type AboutQuestionType = {
   question: string;
   answer: string | null;
   skipped: boolean;
-  isPublic: boolean;
   asking: string;
 };

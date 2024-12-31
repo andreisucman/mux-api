@@ -65,7 +65,6 @@ export default async function createClubProfile({ userId, avatar }: Props) {
       userName: randomName,
       updatedAt: new Date(),
       asking: "coach",
-      isPublic: false,
       skipped: false,
       answer: null as string | null,
       moderationStatus: ModerationStatusEnum.ACTIVE,

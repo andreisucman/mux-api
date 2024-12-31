@@ -10,12 +10,14 @@ import updateSpend from "./updateSpend.js";
 type Props = {
   userId: string;
   text: string;
+  dimensions: number;
   categoryName: CategoryNameEnum;
 };
 
 export default async function createTextEmbedding({
   userId,
   text,
+  dimensions,
   categoryName,
 }: Props): Promise<number[]> {
   if (!text) throw httpError("Text not provided");
@@ -27,6 +29,7 @@ export default async function createTextEmbedding({
       openai.embeddings.create({
         model,
         input: text,
+        dimensions,
         encoding_format: "float",
       })
     );

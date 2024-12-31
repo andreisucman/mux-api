@@ -242,6 +242,7 @@ route.post(
       const embedding = await createTextEmbedding({
         userId: req.userId,
         text: info,
+        dimensions: 1536,
         categoryName: CategoryNameEnum.TASKS,
       });
 
