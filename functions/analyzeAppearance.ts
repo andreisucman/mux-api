@@ -35,7 +35,7 @@ type Props = {
   blurType: BlurTypeEnum;
   defaultToUpdateUser?: { $set: { [key: string]: unknown } };
   club: ClubDataType;
-  concerns: UserConcernType[];
+  concerns: UserConcernType[] | null;
   toAnalyze: {
     head: ToAnalyzeType[];
     body: ToAnalyzeType[];
@@ -59,7 +59,7 @@ export default async function analyzeAppearance({
   type,
   club,
   blurType,
-  concerns,
+  concerns = [],
   categoryName,
   nextScan,
   latestProgress,

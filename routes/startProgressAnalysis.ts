@@ -120,7 +120,7 @@ route.post(
         userId,
         name,
         avatar,
-        concerns,
+        concerns: concerns || [],
         nextScan,
         potential,
         blurType,

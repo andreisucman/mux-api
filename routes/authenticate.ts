@@ -86,17 +86,16 @@ route.post(
         filter: checkUserPresenceFilter,
       });
 
-      if (
-        userInfo.moderationStatus === ModerationStatusEnum.BLOCKED ||
-        userInfo.moderationStatus === ModerationStatusEnum.SUSPENDED
-      ) {
-        res.status(200).json({
-          error: userInfo.moderationStatus,
-        });
-        return;
-      }
-
       if (userInfo) {
+        if (
+          userInfo.moderationStatus === ModerationStatusEnum.BLOCKED ||
+          userInfo.moderationStatus === ModerationStatusEnum.SUSPENDED
+        ) {
+          res.status(200).json({
+            error: userInfo.moderationStatus,
+          });
+          return;
+        }
         // if the registration happens as a result of the analysis
         userData = userInfo;
 

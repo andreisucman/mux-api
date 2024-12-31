@@ -27,7 +27,12 @@ route.post(
         )
       );
 
-      const { canRejoinClubAfter } = userInfo;
+      const { club, canRejoinClubAfter } = userInfo;
+
+      if (!!club) {
+        res.status(400).json({ error: `Bad request` });
+        return;
+      }
 
       if (new Date(canRejoinClubAfter || 0) > new Date()) {
         const rejoinDate = formatDate({ date: canRejoinClubAfter });

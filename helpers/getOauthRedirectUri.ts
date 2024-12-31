@@ -23,6 +23,9 @@ export default function getOauthRedirectUri(redirectPath: string) {
     case "/club/about":
       redirectUrl = process.env.CLUB_ABOUT_REDIRECT_URI;
       break;
+    case "/plans":
+      redirectUrl = process.env.PLANS_REDIRECT_URI;
+      break;
     default:
       redirectUrl = process.env.ROUTINES_REDIRECT_URI;
   }

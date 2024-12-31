@@ -39,7 +39,7 @@ type Props = {
   part: PartEnum;
   club: ClubDataType;
   specialConsiderations: string;
-  concerns: UserConcernType[];
+  concerns: UserConcernType[] | null;
   demographics: DemographicsType;
   toAnalyzeObjects: ToAnalyzeType[];
   categoryName: CategoryNameEnum;

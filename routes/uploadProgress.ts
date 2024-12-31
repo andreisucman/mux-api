@@ -218,7 +218,7 @@ route.post(
           currentlyHigherThan,
           potentiallyHigherThan,
           defaultToUpdateUser: toUpdate,
-          concerns,
+          concerns: concerns || [],
           nextScan,
           potential,
           demographics,
