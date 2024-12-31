@@ -24,6 +24,7 @@ route.post(
             projection: {
               "club.payouts.connectId": 1,
               "club.payouts.balance": 1,
+              "club.payouts.payoutsEnabled": 1,
             },
           }
         )
@@ -55,16 +56,6 @@ route.post(
           destination: connectId,
           amount: formatAmountForStripe(balance, "usd"),
         })
-      );
-
-      await doWithRetries(async () =>
-        db.collection("User").updateOne(
-          {
-            _id: new ObjectId(req.userId),
-            moderationStatus: ModerationStatusEnum.ACTIVE,
-          },
-          { $set: { "club.payouts.balance": 0 } }
-        )
       );
 
       res.status(200).json({

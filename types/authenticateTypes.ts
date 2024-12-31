@@ -19,4 +19,5 @@ export enum ReferrerEnum {
   AUTH_PAGE = "authPage",
   SCAN_INDEX = "scanIndex",
   PLANS = "plans",
+  REWARDS = "rewards",
 }

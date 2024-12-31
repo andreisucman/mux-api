@@ -4,12 +4,11 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
-import calculateRewardTaskCompletion from "helpers/calculateRewardTaskCompletion.js";
-import { CustomRequest, ModerationStatusEnum, UserType } from "types.js";
+import { CustomRequest, ModerationStatusEnum } from "types.js";
 import formatDate from "helpers/formatDate.js";
 import { daysFrom } from "helpers/utils.js";
-import { rewardKeyConditionsMap } from "data/rewardKeyConditionsMap.js";
 import { db } from "init.js";
+import checkRewardCompletion from "@/helpers/checkRewardRequirement.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
 import httpError from "@/helpers/httpError.js";
 import getUserInfo from "@/functions/getUserInfo.js";
@@ -20,7 +19,6 @@ route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { rewardId } = req.body;
-
     try {
       const cooldownObject = await doWithRetries(async () =>
         db.collection("RewardCooldown").findOne(
@@ -63,37 +61,13 @@ route.post(
 
       const userInfo = await getUserInfo({
         userId: req.userId,
-        projection: { streaks: 1 },
       });
 
       if (!userInfo) throw httpError(`User not found`);
 
-      const userKeyLocations = rewardKeyConditionsMap[rewardKey];
+      const completionPercentage = checkRewardCompletion(requisite, userInfo);
 
-      const userConditions = userKeyLocations.reduce(
-        (acc: { [key: string]: number }, cur) => {
-          const parts = cur.split(".");
-          const lastPart = parts[parts.length - 1];
-
-          const value = parts.reduce(
-            (a, key) => (a ? a[key as keyof UserType] : undefined),
-            userInfo
-          );
-
-          if (typeof value === "number") {
-            acc[lastPart] = value;
-          }
-          return acc;
-        },
-        {}
-      );
-
-      const percentage = calculateRewardTaskCompletion({
-        userConditions,
-        requisite,
-      });
-
-      if (percentage !== 100) {
+      if (Number(completionPercentage) < 100) {
         res.status(200).json({
           error: `This task is not completed.`,
         });
@@ -124,7 +98,7 @@ route.post(
       await doWithRetries(async () =>
         db.collection("Reward").updateOne(
           {
-            rewardId: new ObjectId(rewardId),
+            _id: new ObjectId(rewardId),
             left: { $gt: 0 },
           },
           { $inc: { left: -1 } }
@@ -134,6 +108,7 @@ route.post(
       updateAnalytics({
         "accounting.totalReward": rewardValue,
         "overview.accounting.totalReward": rewardValue,
+        [`overview.usage.rewards.${rewardKey}`]: 1,
       });
 
       res.status(200).json({
