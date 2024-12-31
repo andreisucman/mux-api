@@ -7,7 +7,7 @@ import httpError from "helpers/httpError.js";
 
 type Props = {
   accessToken: string | null;
-  emailType: "passwordReset" | "confirmationCode";
+  emailType: "passwordReset" | "confirmationCode" | "payoutsDisabled";
 };
 
 export default function getEmailContent({ accessToken, emailType }: Props) {
@@ -23,6 +23,11 @@ export default function getEmailContent({ accessToken, emailType }: Props) {
       confirmationCode: {
         title: "Muxout - Confirmation code",
         bodyPath: path.join(__dirname, "data/emails/confirmationCode.html"),
+        signedUrl: null as null | string,
+      },
+      payoutsDisabled: {
+        title: "Muxout - Payouts disabled",
+        bodyPath: path.join(__dirname, "data/emails/payoutsDisabled.html"),
         signedUrl: null as null | string,
       },
     };

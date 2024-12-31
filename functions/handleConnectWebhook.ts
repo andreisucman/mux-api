@@ -1,12 +1,14 @@
 import * as dotenv from "dotenv";
 dotenv.config();
-
+import fs from "fs/promises";
 import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import updateContentPublicity from "functions/updateContentPublicity.js";
 import { defaultClubPrivacy } from "data/defaultClubPrivacy.js";
 import httpError from "@/helpers/httpError.js";
 import { ModerationStatusEnum } from "@/types.js";
+import getEmailContent from "@/helpers/getEmailContent.js";
+import sendEmail from "./sendEmail.js";
 import updateAnalytics from "./updateAnalytics.js";
 
 /* Stripe requires the raw body to construct the event */
@@ -25,8 +27,10 @@ export default async function handleConnectWebhook(event: any) {
       {
         projection: {
           _id: 1,
-          "club.payouts.details_submitted": 1,
-          "club.payouts.payouts_enabled": 1,
+          email: 1,
+          "club.payouts.detailsSubmitted": 1,
+          "club.payouts.payoutsEnabled": 1,
+          "club.payouts.payoutsDisabledUserNotifiedOn": 1,
         },
       }
     )
@@ -37,7 +41,9 @@ export default async function handleConnectWebhook(event: any) {
       const {
         payoutsEnabled: currentPayoutsEnabled,
         detailsSubmitted: currentDetailsSubmitted,
-      } = userInfo.club;
+        payoutsDisabledUserNotifiedOn,
+        email,
+      } = userInfo.club.payouts;
 
       const { payouts_enabled, requirements, details_submitted } = object || {};
       const { disabled_reason } = requirements || {};
@@ -50,6 +56,21 @@ export default async function handleConnectWebhook(event: any) {
 
       if (!payouts_enabled) {
         updatePayload["club.privacy"] = defaultClubPrivacy;
+
+        if (!payoutsDisabledUserNotifiedOn) {
+          const { title, path } = getEmailContent({
+            accessToken: null,
+            emailType: "payoutsDisabled",
+          });
+
+          const emailBody = await fs.readFile(path, "utf8");
+
+          await sendEmail({
+            to: email,
+            subject: title,
+            html: emailBody,
+          });
+        }
       }
 
       await doWithRetries(async () =>
