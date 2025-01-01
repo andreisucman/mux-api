@@ -61,7 +61,6 @@ export type UserType = {
   demographics: DemographicsType;
   auth: string;
   createdAt: Date;
-  fingerprint: number;
   specialConsiderations: string;
   streaks: StreaksType;
   latestProgress: UserProgressRecordType;
@@ -69,6 +68,7 @@ export type UserType = {
   potentiallyHigherThan: HigherThanType;
   nextScan: NextActionType;
   nextRoutine: NextActionType;
+  ipFingerprint: string | null;
   streakDates: {
     default: {
       [key: string]: Date;

@@ -132,7 +132,9 @@ route.post(
           )
         );
 
-        updateAnalytics({ [`overview.club.country.${country}`]: 1 });
+        if (country) {
+          updateAnalytics({ [`overview.club.country.${country}`]: 1 });
+        }
 
         res.status(200).json({ message: accLink.url });
         return;

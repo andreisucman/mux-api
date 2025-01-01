@@ -96,13 +96,20 @@ export default async function getDemographics({
       functionName: "getDemographics",
     });
 
-    updateAnalytics({
+    const analyticsPayload = {
       [`overview.demographics.sex.${response.sex}`]: 1,
       [`overview.demographics.ethnicity.${response.ethnicity}`]: 1,
       [`overview.demographics.skinType.${response.skinType}`]: 1,
       [`overview.demographics.ageInterval.${response.ageInterval}`]: 1,
-      [`overview.demographics.bodyType.${response.bodyType}`]: 1,
-    });
+    };
+
+    if (response.bodyType) {
+      analyticsPayload[
+        `overview.demographics.bodyType.${response.bodyType}`
+      ] = 1;
+    }
+
+    updateAnalytics(analyticsPayload);
 
     return response;
   } catch (err) {

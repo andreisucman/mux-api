@@ -6,6 +6,7 @@ import doWithRetries from "helpers/doWithRetries.js";
 import { AskOpenaiProps, RunType } from "types/askOpenaiTypes.js";
 import { CategoryNameEnum } from "@/types.js";
 import askOpenai from "./askOpenai.js";
+import generateSeed from "@/helpers/generateSeed.js";
 import { ChatCompletionMessageParam } from "openai/resources/index.mjs";
 import httpError from "@/helpers/httpError.js";
 
@@ -35,7 +36,12 @@ async function askRepeatedly({
     if (!ObjectId.isValid(userId))
       throw httpError("Invalid userId format and no meta");
 
+    let finalSeed = seed;
     let result;
+
+    if (!finalSeed) {
+      finalSeed = generateSeed(userId);
+    }
 
     let conversation: ChatCompletionMessageParam[] = [
       { role: "system", content: systemContent },

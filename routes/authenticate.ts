@@ -19,6 +19,7 @@ import { defaultUser } from "@/data/defaultUser.js";
 import getUserData from "@/functions/getUserData.js";
 import getOAuthAuthenticationData from "@/functions/getOAuthAuthenticationData.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
+import generateIpAndNumberFingerprint from "@/functions/generateIpAndNumberFingerprint.js";
 
 const route = Router();
 
@@ -34,19 +35,40 @@ const allowedReferrers = [
   "clubDiary",
   "authPage",
   "scanIndex",
+  "plans",
+  "rewards",
 ];
 
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
-      let { code, timeZone, localUserId, referrer, state, email, password } =
-        req.body;
+      let {
+        code,
+        timeZone,
+        localUserId,
+        referrer,
+        state,
+        email,
+        password,
+        fingerprint,
+      } = req.body;
+
+      if (!fingerprint) {
+        res.status(200).json({
+          error:
+            "Sorry, but your device is not supported. Try again using a different device.",
+        });
+        return;
+      }
 
       if (!allowedReferrers.includes(referrer)) {
         res.status(400).json({ error: "Bad request" });
         return;
       }
+
+      const ip = req.ip || req.socket.remoteAddress;
+      const ipFingerprint = generateIpAndNumberFingerprint(ip, fingerprint);
 
       let userData = null;
       let accessToken = crypto.randomBytes(32).toString("hex");
@@ -79,6 +101,8 @@ route.post(
       } else {
         if (finalEmail) {
           checkUserPresenceFilter.email = finalEmail;
+        } else {
+          checkUserPresenceFilter.ipFingerprint = ipFingerprint;
         }
       }
 
@@ -169,6 +193,7 @@ route.post(
           timeZone,
           emailVerified: auth === "g",
           stripeUserId: stripeUser.id,
+          ipFingerprint,
         });
 
         if (auth === "e") {

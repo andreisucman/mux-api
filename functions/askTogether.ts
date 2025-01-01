@@ -7,6 +7,8 @@ import { together } from "init.js";
 import { CategoryNameEnum } from "@/types.js";
 import updateSpend from "./updateSpend.js";
 import httpError from "@/helpers/httpError.js";
+import { ObjectId } from "mongodb";
+import generateSeed from "@/helpers/generateSeed.js";
 
 type AskTogetherProps = {
   userId: string;
@@ -27,14 +29,22 @@ const priceMap: { [key: string]: number } = {
 };
 
 async function askTogether({
-  messages,
   model,
+  seed,
+  userId,
+  messages,
   functionName,
   categoryName,
-  userId,
 }: AskTogetherProps) {
   try {
     if (!model) throw httpError("Model is missing");
+    if (!ObjectId.isValid(userId)) throw httpError("Invalid userId");
+
+    let finalSeed = seed;
+
+    if (!finalSeed) {
+      finalSeed = generateSeed(userId);
+    }
 
     const options: { [key: string]: any } = {
       messages,

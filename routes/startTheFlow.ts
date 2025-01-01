@@ -6,8 +6,9 @@ import doWithRetries from "helpers/doWithRetries.js";
 import getUsersCountry from "@/helpers/getUsersCountry.js";
 import checkIfUserExists from "@/functions/checkIfUserExists.js";
 import createUser from "@/functions/createUser.js";
-import { db } from "init.js";
+import generateIpAndNumberFingerprint from "@/functions/generateIpAndNumberFingerprint.js";
 import { UserType } from "types.js";
+import { db } from "init.js";
 
 const route = Router();
 
@@ -29,8 +30,11 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
       return;
     }
 
+    const ip = req.ip || req.socket.remoteAddress;
+    const ipFingerprint = generateIpAndNumberFingerprint(ip, fingerprint);
+
     const fingerprintIsSupended = await doWithRetries(async () =>
-      db.collection("SuspendedFingerprint").findOne({ fingerprint })
+      db.collection("SuspendedFingerprint").findOne({ ipFingerprint })
     );
 
     if (fingerprintIsSupended) {
@@ -41,7 +45,7 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
       return;
     }
 
-    let userData = await checkIfUserExists({ filter: { fingerprint } });
+    let userData = await checkIfUserExists({ filter: { ipFingerprint } });
 
     if (userData) {
       res.status(200).json({
@@ -59,7 +63,7 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
           country,
           timeZone,
           tosAccepted,
-          fingerprint,
+          ipFingerprint,
         })
     );
 
