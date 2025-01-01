@@ -54,6 +54,11 @@ route.post(
         fingerprint,
       } = req.body;
 
+      if (!ObjectId.isValid(localUserId)) {
+        res.status(400).json({ error: "Bad request" });
+        return;
+      }
+
       if (!fingerprint) {
         res.status(200).json({
           error:
@@ -100,7 +105,10 @@ route.post(
         checkUserPresenceFilter._id = new ObjectId(localUserId);
       } else {
         if (finalEmail) {
-          checkUserPresenceFilter.email = finalEmail;
+          checkUserPresenceFilter.$or = [
+            { email: finalEmail },
+            { ipFingerprint },
+          ];
         } else {
           checkUserPresenceFilter.ipFingerprint = ipFingerprint;
         }

@@ -384,6 +384,7 @@ export type ProgressType = {
   initialImages: ProgressImageType[];
   scores: { [key: string]: any };
   scoresDifference: { [key: string]: any };
+  potential: FormattedRatingType;
   specialConsiderations: string;
   isPublic: boolean;
   avatar?: { [key: string]: any };

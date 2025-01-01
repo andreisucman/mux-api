@@ -158,36 +158,28 @@ export default async function analyzePart({
     }
 
     const createdAt = new Date();
-    let scoresAndExplanations: { [key: string]: any } = {};
 
-    const scoresAndExplanationsDontExist =
-      !scoresAndExplanations ||
-      Object.keys(scoresAndExplanations || {}).length === 0;
+    const scoresAndExplanations = await analyzePotential({
+      userId,
+      categoryName,
+      type: type as TypeEnum,
+      sex: demographics.sex,
+      toAnalyzeObjects: partToAnalyzeObjects,
+      ageInterval: demographics.ageInterval,
+      listOfFeatures: featuresToAnalyze,
+      analysisResults: appearanceAnalysisResults,
+    });
 
-    if (scoresAndExplanationsDontExist) {
-      /* create the potential of the person */
-      scoresAndExplanations = await analyzePotential({
-        userId,
-        categoryName,
-        type: type as TypeEnum,
-        sex: demographics.sex,
-        toAnalyzeObjects: partToAnalyzeObjects,
-        ageInterval: demographics.ageInterval,
-        listOfFeatures: featuresToAnalyze,
-        analysisResults: appearanceAnalysisResults,
-      });
+    await doWithRetries(async () =>
+      db
+        .collection("AnalysisStatus")
+        .updateOne(
+          { userId: new ObjectId(userId), operationKey: type },
+          { $inc: { progress: 6 } }
+        )
+    );
 
-      await doWithRetries(async () =>
-        db
-          .collection("AnalysisStatus")
-          .updateOne(
-            { userId: new ObjectId(userId), operationKey: type },
-            { $inc: { progress: 6 } }
-          )
-      );
-
-      partResult.potential = scoresAndExplanations;
-    }
+    partResult.potential = scoresAndExplanations;
 
     /* add the record of progress to the Progress collection*/
     const scores = formatRatings(appearanceAnalysisResults);
@@ -257,6 +249,7 @@ export default async function analyzePart({
       part,
       scores,
       demographics,
+      potential: scoresAndExplanations,
       images: updatedImages,
       initialImages: initialProgress?.images || updatedImages,
       initialDate: initialProgress?.createdAt || createdAt,

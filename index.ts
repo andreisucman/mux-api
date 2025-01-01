@@ -94,6 +94,7 @@ import createDiaryRecord from "routes/createDiaryRecord.js";
 import getFoodAnalysis from "routes/getFoodAnalysis.js";
 import saveDiaryRecord from "routes/saveDiaryRecord.js";
 import transcribe from "routes/transcribe.js";
+import deleteContent from "routes/deleteContent.js";
 import changeCountry from "routes/changeCountry.js";
 import findProductsForGeneralTasks from "routes/findProductsForGeneralTasks.js";
 
@@ -184,6 +185,7 @@ app.use("/getAllProofRecords", getAllProofRecords);
 
 // protected routes
 app.use((req, res, next) => checkAccess(req, res, next, true));
+app.use("/deleteContent", deleteContent);
 app.use("/updateConcernStatus", updateConcernStatus);
 app.use("/generateBioFromQuestions", generateBioFromQuestions);
 app.use("/getAboutQuestions", getAboutQuestions);

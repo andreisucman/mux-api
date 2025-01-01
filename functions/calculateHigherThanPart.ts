@@ -126,8 +126,8 @@ export default async function calculateHigherThanPart({
     );
 
     return {
-      partCurrentlyHigherThan: partAnalysis.lowerThanCurrent,
-      partPotentiallyHigherThan: partAnalysis.lowerThanPotential,
+      partCurrentlyHigherThan: partAnalysis.lowerThanCurrent as number,
+      partPotentiallyHigherThan: partAnalysis.lowerThanPotential as number,
     };
   } catch (err) {
     throw httpError(err);
