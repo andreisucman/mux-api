@@ -72,7 +72,7 @@ export default async function getRawSchedule({
         days,
         toDeleteCount,
         schedule: sortedSchedule,
-        concernsNamesDescending: concerns.map((c) => c.key),
+        concernsNamesDescending: concerns.map((c) => c.name),
       });
     }
 

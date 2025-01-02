@@ -7,8 +7,14 @@ import recalculateLatestProgress from "@/functions/recalculateLatestProgress.js"
 import doWithRetries from "@/helpers/doWithRetries.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import { defaultUser } from "@/data/defaultUser.js";
-import { CustomRequest, ModerationStatusEnum, ProgressType } from "types.js";
+import {
+  CustomRequest,
+  ModerationStatusEnum,
+  NextActionType,
+  ProgressType,
+} from "types.js";
 import { db } from "@/init.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -61,6 +67,7 @@ route.post(
             potentiallyHigherThan,
             potential,
             latestScores,
+            nextScan,
             latestScoresDifference,
           } = userInfo;
           const { ageInterval, sex } = demographics;
@@ -133,17 +140,48 @@ route.post(
             );
           }
 
-          await doWithRetries(async () =>
-            db
-              .collection("User")
-              .updateOne(
+          if (substituteProgressRecord) {
+            const relevantTypeScan = (nextScan as NextActionType).find(
+              (rec) => rec.type === substituteProgressRecord.type
+            );
+
+            if (!relevantTypeScan) throw httpError("Type scan not found");
+
+            const relevantPartScan = relevantTypeScan.parts.find(
+              (rec) => rec.part === substituteProgressRecord.part
+            );
+
+            if (!relevantPartScan) throw httpError("Part scan not found");
+
+            const newPartScans = relevantTypeScan.parts.map((rec) =>
+              rec.part === relevantPartScan.part
+                ? { ...relevantPartScan, date: new Date() }
+                : rec
+            );
+
+            const newTypeScans = (nextScan as NextActionType).map((rec) =>
+              rec.type === relevantTypeScan.type
+                ? { ...relevantTypeScan, parts: newPartScans, date: new Date() }
+                : rec
+            );
+
+            await doWithRetries(async () =>
+              db.collection("User").updateOne(
                 { _id: new ObjectId(req.userId) },
-                { $set: recalculatedData }
+                {
+                  $set: recalculatedData,
+                  nextScan: {
+                    ...nextScan,
+                    [substituteProgressRecord.type]: newTypeScans,
+                  },
+                }
               )
-          );
+            );
+          }
           break;
         case "style":
           const { latestStyleAnalysis } = userInfo;
+
           const substituteStyleRecord = await doWithRetries(async () =>
             db
               .collection(collectionMap[collectionKey])
@@ -153,6 +191,11 @@ route.post(
               })
               .sort({ _id: -1 })
               .next()
+          );
+
+          console.log(
+            "deleteContent substituteStyleRecord",
+            substituteStyleRecord
           );
 
           let newLatestStyleAnalysis;
@@ -165,6 +208,11 @@ route.post(
           } else {
             newLatestStyleAnalysis = defaultUser.latestStyleAnalysis;
           }
+
+          console.log(
+            "deleteContent newLatestStyleAnalysis",
+            newLatestStyleAnalysis
+          );
 
           await doWithRetries(async () =>
             db

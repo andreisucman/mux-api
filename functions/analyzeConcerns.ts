@@ -44,7 +44,7 @@ export default async function analyzeConcerns({
             parts: { $in: [part] },
             $or: [{ sex }, { sex: "all" }],
           },
-          { projection: { _id: 0, name: 1, key: 1 } }
+          { projection: { _id: 0, name: 1 } }
         )
         .toArray()
     )) as unknown as ConcernType[];
@@ -112,7 +112,6 @@ export default async function analyzeConcerns({
       (concern: { name: string; explanation: string }, index: number) => ({
         ...concern,
         part,
-        key: concernObjects.find((obj) => obj.name === concern.name).key,
         importance: index + 1,
         isDisabled: false,
         type,

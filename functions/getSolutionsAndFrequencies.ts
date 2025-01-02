@@ -391,7 +391,7 @@ export default async function getSolutionsAndFrequencies({
         concern: null,
         completed: 0,
         unknown: 0,
-        key: key,
+        key,
         total,
       };
       const indexOfConcern = concernSolutions.findIndex((arrayOfSolutions) =>

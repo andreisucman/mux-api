@@ -7,7 +7,7 @@ import { CustomRequest } from "@/types.js";
 import updateConcernsAnalytics from "../functions/updateConcernsAnalytics.js";
 
 type Props = {
-  key: string;
+  name: string;
   part: string;
   isDisabled: boolean;
 };
@@ -19,7 +19,7 @@ const allowedParts = ["face", "scalp", "mouth", "body", "health"];
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { key, part, isDisabled }: Props = req.body;
+    const { name, part, isDisabled }: Props = req.body;
 
     if (!allowedParts.includes(part)) {
       res.status(400).json({ error: "Bad request" });
@@ -37,7 +37,7 @@ route.post(
       );
 
       const updatedConcerns = currentConcerns.map((cobj: UserConcernType) =>
-        cobj.key === key ? { ...cobj, isDisabled } : cobj
+        cobj.name === name ? { ...cobj, isDisabled } : cobj
       );
 
       await doWithRetries(async () =>
@@ -49,7 +49,7 @@ route.post(
         )
       );
 
-      updateConcernsAnalytics([{ key, part, isDisabled }]);
+      updateConcernsAnalytics([{ name, part, isDisabled }]);
 
       res.status(200).end();
     } catch (err) {

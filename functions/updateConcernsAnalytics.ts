@@ -1,7 +1,7 @@
 import httpError from "@/helpers/httpError.js";
 import updateAnalytics from "./updateAnalytics.js";
 
-type ConcernInputType = { key: string; isDisabled: boolean; part: string };
+type ConcernInputType = { name: string; isDisabled: boolean; part: string };
 
 export default async function updateConcernsAnalytics(
   concerns: ConcernInputType[]
@@ -20,7 +20,7 @@ export default async function updateConcernsAnalytics(
 
     const keyConcerns = concerns.reduce(
       (a: { [key: string]: number }, c: ConcernInputType) => {
-        const key = `overview.usage.concerns.key.${c.key}`;
+        const key = `overview.usage.concerns.key.${c.name}`;
 
         a[key] = 1;
 
@@ -33,7 +33,7 @@ export default async function updateConcernsAnalytics(
       (a: { [key: string]: number }, c: ConcernInputType) => {
         const key = `overview.usage.concerns.[${
           c.isDisabled ? "disabled" : "active"
-        }].${c.key}`;
+        }].${c.name}`;
 
         a[key] = 1;
 
