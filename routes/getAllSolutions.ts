@@ -52,7 +52,7 @@ route.get("/", async (req: CustomRequest, res: Response) => {
       {
         $project: project,
       },
-      { $limit: 7 }
+      { $limit: 21 }
     );
 
     const solutions = await doWithRetries(async () =>

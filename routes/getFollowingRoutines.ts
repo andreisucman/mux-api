@@ -1,12 +1,13 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import { ObjectId } from "mongodb";
+import { ObjectId, Sort } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import checkTrackedRBAC from "functions/checkTrackedRBAC.js";
 import { CustomRequest, SubscriptionTypeNamesEnum } from "types.js";
 import checkSubscriptionStatus from "@/functions/checkSubscription.js";
+import aqp from "api-query-params";
 import { db } from "init.js";
 
 const route = Router();
@@ -15,7 +16,8 @@ route.get(
   "/:followingUserName?",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { followingUserName } = req.params;
-    const { skip, type } = req.query;
+    const { skip, filter, sort } = aqp(req.query);
+    const { type } = filter;
 
     if (!type) {
       res.status(400).json({ error: "Bad request" });
@@ -64,9 +66,9 @@ route.get(
         db
           .collection("Routine")
           .find(filter, { projection })
-          .sort({ createdAt: -1 })
+          .sort((sort as Sort) || { createdAt: -1 })
           .skip(Number(skip) || 0)
-          .limit(9)
+          .limit(21)
           .toArray()
       );
 

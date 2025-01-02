@@ -1,7 +1,7 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import { ObjectId } from "mongodb";
+import { ObjectId, Sort } from "mongodb";
 import aqp from "api-query-params";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
@@ -16,7 +16,7 @@ route.get(
   "/:followingUserName?",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { followingUserName } = req.params;
-    const { filter, skip } = aqp(req.query);
+    const { filter, skip, sort } = aqp(req.query);
     const { routineId, taskKey, concern, type, part, query } = filter || {};
 
     if (!followingUserName && !req.userId) {
@@ -75,15 +75,18 @@ route.get(
       if (type) match.type = type;
       if (part) match.part = part;
 
-      pipeline.push({
-        $match: match,
-      });
+      pipeline.push(
+        {
+          $match: match,
+        },
+        { $sort: (sort as Sort) || { createdAt: -1 } }
+      );
 
       if (skip) {
         pipeline.push({ $skip: skip });
       }
 
-      pipeline.push({ $sort: { createdAt: -1 } }, { $limit: 21 });
+      pipeline.push({ $limit: 21 });
 
       const proof = await doWithRetries(async () =>
         db.collection("Proof").aggregate(pipeline).toArray()

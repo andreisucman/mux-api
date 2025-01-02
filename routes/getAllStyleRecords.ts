@@ -1,13 +1,15 @@
 import { Router, NextFunction } from "express";
 import { db } from "init.js";
 import { CustomRequest } from "types.js";
+import aqp from "api-query-params";
 import { ModerationStatusEnum } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 
 const route = Router();
 
 route.get("/", async (req: CustomRequest, res, next: NextFunction) => {
-  const { type, styleName, skip, sex, ageInterval, ethnicity } = req.query;
+  const { filter, skip } = aqp(req.query);
+  const { type, styleName, sex, ageInterval, ethnicity } = filter;
 
   try {
     const filter: { [key: string]: any } = {

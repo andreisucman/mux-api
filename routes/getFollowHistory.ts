@@ -25,7 +25,7 @@ route.get(
           )
           .sort({ updatedAt: -1 })
           .skip(skip || 0)
-          .limit(7)
+          .limit(21)
           .toArray()
       );
 

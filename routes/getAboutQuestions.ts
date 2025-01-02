@@ -15,7 +15,7 @@ const route = Router();
 
 route.get("/:followingUserName?", async (req: CustomRequest, res: Response) => {
   const { followingUserName } = req.params;
-  const { filter, skip } = aqp(req.query);
+  const { filter, skip, sort } = aqp(req.query);
   const { onlyCheck, showType, query } = filter || {};
 
   try {
@@ -117,13 +117,13 @@ route.get("/:followingUserName?", async (req: CustomRequest, res: Response) => {
 
     if (followingUserName) match.userName = followingUserName;
 
-    pipeline.push({ $match: match });
+    pipeline.push({ $match: match }, { $sort: sort || { createdAt: -1 } });
 
     if (skip) {
       pipeline.push({ $skip: skip });
     }
 
-    pipeline.push({ $sort: { createdAt: -1 } }, { $limit: 21 });
+    pipeline.push({ $limit: 21 });
 
     const questions = await doWithRetries(async () =>
       db.collection("About").aggregate(pipeline).toArray()

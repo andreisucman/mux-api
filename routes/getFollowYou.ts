@@ -36,7 +36,7 @@ route.get(
               },
             }
           )
-          .limit(11)
+          .limit(21)
           .skip(Number(skip) || 0)
           .toArray()
       )) as unknown as FollowerType[];

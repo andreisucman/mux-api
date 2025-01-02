@@ -1,6 +1,7 @@
-import { ObjectId } from "mongodb";
+import { ObjectId, Sort } from "mongodb";
 import { Router, NextFunction } from "express";
 import { db } from "init.js";
+import aqp from "api-query-params";
 import checkTrackedRBAC from "functions/checkTrackedRBAC.js";
 import { CustomRequest } from "types.js";
 import { ModerationStatusEnum } from "types.js";
@@ -11,8 +12,10 @@ const route = Router();
 route.get(
   "/:followingUserName?",
   async (req: CustomRequest, res, next: NextFunction) => {
-    const { type, styleName, skip } = req.query;
     const { followingUserName } = req.params;
+    const { filter, skip, sort } = aqp(req.query);
+    const { type, styleName } = filter;
+
 
     if (!followingUserName && !req.userId) {
       res.status(400).json({ error: "Bad request" });
@@ -78,7 +81,7 @@ route.get(
             .find(filter, {
               projection,
             })
-            .sort({ createdAt: -1 })
+            .sort(sort as Sort || { createdAt: -1 })
             .skip(Number(skip) || 0)
             .limit(21)
             .toArray()
