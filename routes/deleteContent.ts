@@ -193,11 +193,6 @@ route.post(
               .next()
           );
 
-          console.log(
-            "deleteContent substituteStyleRecord",
-            substituteStyleRecord
-          );
-
           let newLatestStyleAnalysis;
 
           if (substituteStyleRecord) {
@@ -208,11 +203,6 @@ route.post(
           } else {
             newLatestStyleAnalysis = defaultUser.latestStyleAnalysis;
           }
-
-          console.log(
-            "deleteContent newLatestStyleAnalysis",
-            newLatestStyleAnalysis
-          );
 
           await doWithRetries(async () =>
             db

@@ -139,6 +139,7 @@ route.post(
       const {
         mainUrl: compareMainUrl,
         urls: compareUrls,
+        styleIcon: compareStyleIcon,
         styleName: compareStyleName,
         analysis: compareAnalysis,
         createdAt: compareDate,
@@ -168,6 +169,7 @@ route.post(
         compareMainUrl: compareMainUrl || mainUrl,
         compareDate: compareDate || new Date(),
         compareUrls: compareUrls || urls,
+        compareStyleIcon: compareStyleIcon || relevantStyleObject.icon,
         compareStyleName: compareStyleName || styleName,
         compareVotes: 0,
         compareAnalysis: compareAnalysis || scores,

@@ -16,7 +16,6 @@ route.get(
     const { filter, skip, sort } = aqp(req.query);
     const { type, styleName } = filter;
 
-
     if (!followingUserName && !req.userId) {
       res.status(400).json({ error: "Bad request" });
       return;
@@ -63,6 +62,7 @@ route.get(
         compareMainUrl: 1,
         compareStyleName: 1,
         urls: 1,
+        compareIcon: 1,
         compareUrls: 1,
         analysis: 1,
         initialAnalysis: 1,
@@ -81,7 +81,7 @@ route.get(
             .find(filter, {
               projection,
             })
-            .sort(sort as Sort || { createdAt: -1 })
+            .sort((sort as Sort) || { createdAt: -1 })
             .skip(Number(skip) || 0)
             .limit(21)
             .toArray()

@@ -34,6 +34,7 @@ route.get("/", async (req: CustomRequest, res, next: NextFunction) => {
       compareStyleName: 1,
       urls: 1,
       compareUrls: 1,
+      compareIcon: 1,
       analysis: 1,
       initialAnalysis: 1,
       createdAt: 1,

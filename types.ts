@@ -133,6 +133,7 @@ export type StyleAnalysisType = {
   compareMainUrl: BlurredUrlType;
   urls: BlurredUrlType[];
   compareUrls: BlurredUrlType[];
+  compareStyleIcon: string;
   votes: number;
   compareVotes: number;
   demographics: DemographicsType;
