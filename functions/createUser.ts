@@ -4,6 +4,7 @@ import doWithRetries from "helpers/doWithRetries.js";
 import { defaultUser } from "data/defaultUser.js";
 import { ModerationStatusEnum, UserType } from "types.js";
 import updateAnalytics from "./updateAnalytics.js";
+import { calculateTimeZoneOffset } from "@/helpers/utils.js";
 import httpError from "@/helpers/httpError.js";
 
 async function createUser(props: Partial<UserType>) {
@@ -14,9 +15,14 @@ async function createUser(props: Partial<UserType>) {
       userId = new ObjectId();
     }
 
+    const timeZoneOffsetInMinutes = calculateTimeZoneOffset(
+      otherProps.timeZone
+    );
+
     const updatePayload = {
       ...defaultUser,
       ...otherProps,
+      timeZoneOffsetInMinutes: Math.round(timeZoneOffsetInMinutes),
     };
 
     await doWithRetries(

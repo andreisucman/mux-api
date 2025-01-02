@@ -31,6 +31,7 @@ type Props = {
   name: string;
   avatar: { [key: string]: any } | null;
   type: TypeEnum;
+  nutrition: { [key: string]: number };
   categoryName: CategoryNameEnum;
   blurType: BlurTypeEnum;
   defaultToUpdateUser?: { $set: { [key: string]: unknown } };
@@ -59,6 +60,7 @@ export default async function analyzeAppearance({
   type,
   club,
   blurType,
+  nutrition,
   concerns = [],
   categoryName,
   nextScan,
@@ -132,7 +134,11 @@ export default async function analyzeAppearance({
         toAnalyzeObjects,
         categoryName,
       });
-      toUpdateUser.$set.dailyCalorieGoal = calories;
+
+      toUpdateUser.$set.nutrition = {
+        ...nutrition,
+        recommendedDailyCalorieGoal: calories,
+      };
     }
 
     toUpdateUser.$set.nextScan = updateNextScan({ nextScan, toAnalyze, type });

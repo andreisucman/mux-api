@@ -58,6 +58,7 @@ export type UserType = {
   email: string;
   password: string | null;
   timeZone: string;
+  timeZoneOffsetInMinutes: number;
   demographics: DemographicsType;
   auth: string;
   createdAt: Date;
@@ -110,6 +111,11 @@ export type UserType = {
   nextDiaryRecordAfter: Date | null;
   nextNameUpdateAt: Date | null;
   moderationStatus: ModerationStatusEnum;
+  nutrition: {
+    dailyCalorieGoal: number;
+    recommendedDailyCalorieGoal: number;
+    remainingDailyCalories: number;
+  };
   lastActiveOn: Date | null;
 };
 

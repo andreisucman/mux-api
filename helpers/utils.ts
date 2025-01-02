@@ -1,4 +1,5 @@
 import mime from "mime-types";
+import { DateTime } from "luxon";
 import bcrypt from "bcrypt";
 
 export function delayExecution(ms: number) {
@@ -135,4 +136,10 @@ export default function selectItemsAtEqualDistances(
   }
 
   return selectedItems;
+}
+
+export function calculateTimeZoneOffset(timeZone: string) {
+  const now = DateTime.now().setZone(timeZone);
+  const offsetInMinutes = now.offset / 60000;
+  return Math.round(offsetInMinutes);
 }

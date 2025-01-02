@@ -6,7 +6,7 @@ import { ObjectId } from "mongodb";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { db, stripe } from "init.js";
-import { daysFrom } from "helpers/utils.js";
+import { calculateTimeZoneOffset, daysFrom } from "helpers/utils.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import createUser from "@/functions/createUser.js";
 import checkIfUserExists from "functions/checkIfUserExists.js";
@@ -128,12 +128,12 @@ route.post(
           });
           return;
         }
-        // if the registration happens as a result of the analysis
         userData = userInfo;
 
         const { _id: userId, email, password: storedPassword } = userInfo;
 
         if (email) {
+          // login
           if (auth === "e") {
             const loginSuccess = await bcrypt.compare(password, storedPassword);
             if (!loginSuccess) {
@@ -141,7 +141,19 @@ route.post(
               return;
             }
           }
+          const timeZoneOffsetInMinutes = calculateTimeZoneOffset(timeZone);
+
+          await doWithRetries(() =>
+            db.collection("User").updateOne(
+              {
+                email,
+                auth,
+              },
+              { $set: { timeZone, timeZoneOffsetInMinutes } }
+            )
+          );
         } else {
+          // registration after the analysis
           const { stripeUserId } = userInfo;
 
           const updatePayload: Partial<UserType> = {

@@ -3,11 +3,7 @@ dotenv.config();
 
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
-import {
-  CategoryNameEnum,
-  CustomRequest,
-  ModerationStatusEnum,
-} from "types.js";
+import { CustomRequest, ModerationStatusEnum } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { daysFrom } from "helpers/utils.js";
 import formatDate from "helpers/formatDate.js";
@@ -60,7 +56,7 @@ const route = Router();
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { name, avatar, intro, bio, socials } = req.body;
+    const { name, avatar, intro, bio, socials, dailyCalorieGoal } = req.body;
 
     try {
       const userInfo = await getUserInfo({
@@ -69,6 +65,7 @@ route.post(
           nextNameUpdateAt: 1,
           nextAvatarUpdateAt: 1,
           "club.payouts.connectId": 1,
+          nutrition: 1,
         },
       });
 
@@ -166,6 +163,7 @@ route.post(
 
         updatePayload["club.bio.intro"] = intro;
       }
+
       if (socials) {
         const verdict = await handleCheckSafety({
           userId: req.userId,
@@ -204,6 +202,20 @@ route.post(
 
           updatePayload[`club.bio.${key}`] = bio[key];
         }
+      }
+
+      if (dailyCalorieGoal) {
+        const { nutrition } = userInfo;
+
+        const additionalCalories =
+          dailyCalorieGoal - nutrition.dailyCalorieGoal;
+        const newRemainingCalories =
+          nutrition.remainingDailyCalories + additionalCalories;
+        updatePayload["nutrition.dailyCalorieGoal"] = dailyCalorieGoal;
+        updatePayload["nutrition.remainingDailyCalories"] = Math.max(
+          newRemainingCalories,
+          0
+        );
       }
 
       await doWithRetries(async () =>
