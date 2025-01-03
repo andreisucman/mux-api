@@ -57,6 +57,7 @@ route.post(
               concerns: 1,
               potential: 1,
               city: 1,
+              nutrition: 1,
               country: 1,
               timeZone: 1,
               nextScan: 1,
@@ -79,6 +80,7 @@ route.post(
         avatar,
         toAnalyze,
         club,
+        nutrition,
         nextScan,
         concerns,
         demographics,
@@ -133,6 +135,7 @@ route.post(
         potentiallyHigherThan,
         latestScoresDifference,
         newSpecialConsiderations: specialConsiderations,
+        nutrition
       });
     } catch (error) {
       await addAnalysisStatusError({

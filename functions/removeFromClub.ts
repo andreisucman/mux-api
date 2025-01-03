@@ -52,9 +52,12 @@ export default async function removeFromClub({ userId }: Props) {
 
     if (!userInfo) throw httpError(`User: ${userId} not found.`);
 
-    const relevantSubscription = userInfo.subscriptions.peek;
+    const { subscriptions } = userInfo;
 
-    await cancelSubscription(relevantSubscription.subscriptionId);
+    await cancelSubscription({
+      subscriptionId: subscriptions.peek.subscriptionId,
+      subscriptionName: "peek",
+    });
 
     const removeFromFollowHistoryBatch = [
       { deleteMany: { filter: { followingUserId: new ObjectId(userId) } } },

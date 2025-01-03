@@ -27,6 +27,11 @@ export type UploadProgressUserInfo = {
     head: ProgressType[];
     body: ProgressType[];
   };
+  nutrition: {
+    dailyCalorieGoal: number;
+    recommendedDailyCalorieGoal: number;
+    remainingDailyCalories: number;
+  };
   toAnalyze: { head: ToAnalyzeType[]; body: ToAnalyzeType[] };
   concerns: UserConcernType[];
   demographics: DemographicsType;

@@ -1,7 +1,7 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 import express, { NextFunction, Request, Response } from "express";
-import handleStripeWebhook from "functions/handleStripeWebhook.js";
+import handleStripeWebhook from "functions/handleStripeWebhook/index.js";
 import { stripe } from "init.js";
 import httpError from "@/helpers/httpError.js";
 

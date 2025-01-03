@@ -1,12 +1,15 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import { db, stripe } from "init.js";
+import { db } from "init.js";
 import Stripe from "stripe";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
-import updateAnalytics from "./updateAnalytics.js";
+import updateAnalytics from "../updateAnalytics.js";
 import { ModerationStatusEnum } from "@/types.js";
+import { SubscriptionType } from "@/types.js";
+import { getRevenueAndProcessingFee } from "./getRevenueAndProcessingFee.js";
+import cancelSubscription from "../cancelSubscription.js";
 
 async function handleStripeWebhook(event: Stripe.Event) {
   const { type, data } = event;
@@ -123,24 +126,9 @@ async function handleStripeWebhook(event: Stripe.Event) {
 
   const { payment_intent } = object;
 
-  const paymentIntent = await stripe.paymentIntents.retrieve(
-    payment_intent.toString(),
-    {
-      expand: ["charges.data.balance_transaction"],
-    }
+  const { totalRevenue, totalProcessingFee } = await getRevenueAndProcessingFee(
+    String(payment_intent)
   );
-
-  const latestCharge = paymentIntent.latest_charge;
-
-  if (typeof latestCharge === "string") return;
-
-  const transaction = latestCharge.balance_transaction;
-
-  if (typeof transaction === "string") return;
-
-  const { net, fee } = transaction;
-  const totalRevenue = net / 100;
-  const totalProcessingFee = fee / 100;
 
   const incrementPayload: { [key: string]: number } = {
     "overview.accounting.totalRevenue": totalRevenue,
@@ -150,7 +138,7 @@ async function handleStripeWebhook(event: Stripe.Event) {
   };
 
   for (const plan of relatedPlans) {
-    incrementPayload[`overview.subscription.${plan.name}Bought`] = 1;
+    incrementPayload[`overview.subscription.bought.${plan.name}`] = 1;
 
     if (plan.name === "peek") {
       const relatedLineItem = object.lines.data.find(
@@ -159,6 +147,22 @@ async function handleStripeWebhook(event: Stripe.Event) {
 
       incrementPayload[`overview.accounting.totalPayable`] =
         relatedLineItem.amount / 100 / 2;
+
+      const otherActiveSubscriptions = Object.entries(subscriptions).filter(
+        ([name, object]: [string, SubscriptionType]) =>
+          name !== "peek" &&
+          object.validUntil &&
+          new Date() < new Date(object.validUntil)
+      );
+
+      if (otherActiveSubscriptions.length > 0) {
+        for (const [name, object] of otherActiveSubscriptions) {
+          await cancelSubscription({
+            subscriptionId: (object as SubscriptionType).subscriptionId,
+            subscriptionName: name,
+          });
+        }
+      }
     }
   }
 

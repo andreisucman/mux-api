@@ -48,7 +48,10 @@ route.post(
             message: { subscriptionId: subscription.id, subscriptions },
           });
         } else if (subscription.status === "incomplete") {
-          await cancelSubscription(subscription.id);
+          await cancelSubscription({
+            subscriptionName: null,
+            subscriptionId: subscription.id,
+          });
 
           const session = await stripe.checkout.sessions.create({
             customer: stripeUserId,
@@ -71,7 +74,7 @@ route.post(
 
         if (relatedPlan) {
           updateAnalytics({
-            [`overview.subscription.${relatedPlan.name}Added`]: 1,
+            [`overview.subscription.added.${relatedPlan.name}`]: 1,
           });
         }
 
