@@ -64,9 +64,12 @@ route.post(
           }, {});
 
         updateAnalytics({
-          "overview.usage.tasksCanceled": tasksToUpdate.length,
-          ...partsCreatedTasks,
-          ...partsCreatedManualTasks,
+          userId: req.userId,
+          incrementPayload: {
+            "overview.usage.tasksCanceled": tasksToUpdate.length,
+            ...partsCreatedTasks,
+            ...partsCreatedManualTasks,
+          },
         });
       }
 

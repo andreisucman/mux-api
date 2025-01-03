@@ -207,6 +207,7 @@ route.post(
               isSafe,
               moderationResults,
               isSuspicious,
+              userId: req.userId,
             });
 
             await addAnalysisStatusError({
@@ -237,6 +238,7 @@ route.post(
               isSafe,
               moderationResults,
               isSuspicious,
+              userId: req.userId,
             });
             await addAnalysisStatusError({
               message: "Audio contains prohibited content.",
@@ -423,11 +425,12 @@ route.post(
           days: taskInfo.restDays,
         });
 
-        updateTasksAnalytics(
-          [taskInfo] as Partial<TaskType>[],
-          "tasksCompleted",
-          "manualTasksCompleted"
-        );
+        updateTasksAnalytics({
+          userId: req.userId,
+          tasksToInsert: [taskInfo] as Partial<TaskType>[],
+          keyOne: "tasksCompleted",
+          keyTwo: "manualTasksCompleted",
+        });
       }
 
       const userUpdatePayload = {
@@ -492,6 +495,7 @@ route.post(
           isSafe,
           moderationResults,
           isSuspicious,
+          userId: req.userId,
         });
 
         if (isSuspicious) {

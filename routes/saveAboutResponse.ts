@@ -36,6 +36,7 @@ route.post(
           moderationResults,
           isSuspicious,
           isSafe,
+          userId: req.userId,
         });
 
         res.status(200).json({
@@ -85,6 +86,7 @@ route.post(
           moderationResults,
           isSuspicious,
           isSafe,
+          userId: req.userId,
         });
 
         if (isSuspicious) {

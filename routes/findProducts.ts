@@ -125,7 +125,10 @@ route.post(
         )
       );
 
-      updateAnalytics({ "overview.usage.productAnalyses": 1 });
+      updateAnalytics({
+        userId: req.userId,
+        incrementPayload: { "overview.usage.productAnalyses": 1 },
+      });
     } catch (error) {
       next(error);
     }

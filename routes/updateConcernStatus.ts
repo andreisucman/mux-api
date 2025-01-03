@@ -49,7 +49,10 @@ route.post(
         )
       );
 
-      updateConcernsAnalytics([{ name, part, isDisabled }]);
+      updateConcernsAnalytics({
+        concerns: [{ name, part, isDisabled }],
+        userId: req.userId,
+      });
 
       res.status(200).end();
     } catch (err) {

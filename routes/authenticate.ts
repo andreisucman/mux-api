@@ -187,7 +187,10 @@ route.post(
         }
 
         updateAnalytics({
-          [`overview.acquisition.signins.${referrer}`]: 1,
+          userId: req.userId,
+          incrementPayload: {
+            [`overview.acquisition.signins.${referrer}`]: 1,
+          },
         });
       } else {
         // if the registration happes from the sign in page
@@ -221,8 +224,11 @@ route.post(
         }
 
         updateAnalytics({
-          "overview.user.registeredUsers": 1,
-          [`overview.acquisition.signups.${referrer}`]: 1,
+          userId: req.userId,
+          incrementPayload: {
+            "overview.user.registeredUsers": 1,
+            [`overview.acquisition.signups.${referrer}`]: 1,
+          },
         });
       }
 

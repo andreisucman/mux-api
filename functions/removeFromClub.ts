@@ -57,6 +57,7 @@ export default async function removeFromClub({ userId }: Props) {
     await cancelSubscription({
       subscriptionId: subscriptions.peek.subscriptionId,
       subscriptionName: "peek",
+      userId,
     });
 
     const removeFromFollowHistoryBatch = [
@@ -68,7 +69,10 @@ export default async function removeFromClub({ userId }: Props) {
       db.collection("FollowHistory").bulkWrite(removeFromFollowHistoryBatch)
     );
 
-    updateAnalytics({ "overview.club.left": 1 });
+    updateAnalytics({
+      userId: String(userId),
+      incrementPayload: { "overview.club.left": 1 },
+    });
   } catch (err) {
     throw httpError(err);
   }

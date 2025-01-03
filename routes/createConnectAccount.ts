@@ -133,7 +133,10 @@ route.post(
         );
 
         if (country) {
-          updateAnalytics({ [`overview.club.country.${country}`]: 1 });
+          updateAnalytics({
+            userId: req.userId,
+            incrementPayload: { [`overview.club.country.${country}`]: 1 },
+          });
         }
 
         res.status(200).json({ message: accLink.url });

@@ -433,7 +433,12 @@ route.post(
         db.collection("Task").insertMany(draftTasks)
       );
 
-      updateTasksAnalytics(draftTasks, "tasksCreated", "manuallyTasksCreated");
+      updateTasksAnalytics({
+        userId: req.userId,
+        tasksToInsert: draftTasks,
+        keyOne: "tasksCreated",
+        keyTwo: "manuallyTasksCreated",
+      });
 
       await doWithRetries(async () =>
         db.collection("AnalysisStatus").updateOne(

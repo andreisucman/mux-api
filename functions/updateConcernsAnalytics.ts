@@ -3,9 +3,15 @@ import updateAnalytics from "./updateAnalytics.js";
 
 type ConcernInputType = { name: string; isDisabled: boolean; part: string };
 
-export default async function updateConcernsAnalytics(
-  concerns: ConcernInputType[]
-) {
+type Props = {
+  userId: string;
+  concerns: ConcernInputType[];
+};
+
+export default async function updateConcernsAnalytics({
+  concerns,
+  userId,
+}: Props) {
   try {
     const partsConcerns = concerns.reduce(
       (a: { [key: string]: number }, c: ConcernInputType) => {
@@ -43,9 +49,12 @@ export default async function updateConcernsAnalytics(
     );
 
     updateAnalytics({
-      ...partsConcerns,
-      ...keyConcerns,
-      ...statusConcern,
+      userId: String(userId),
+      incrementPayload: {
+        ...partsConcerns,
+        ...keyConcerns,
+        ...statusConcern,
+      },
     });
   } catch (err) {
     throw httpError(err);

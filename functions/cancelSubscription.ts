@@ -4,11 +4,13 @@ import updateAnalytics from "./updateAnalytics.js";
 import doWithRetries from "@/helpers/doWithRetries.js";
 
 type Props = {
+  userId: string;
   subscriptionId: string;
   subscriptionName: string | null;
 };
 
 export default async function cancelSubscription({
+  userId,
   subscriptionId,
   subscriptionName,
 }: Props) {
@@ -30,7 +32,10 @@ export default async function cancelSubscription({
           [`overview.subscription.canceled.${subscriptionName}`]: 1,
         };
 
-        await updateAnalytics(incrementPayload);
+        updateAnalytics({
+          userId,
+          incrementPayload,
+        });
       }
     }
   } catch (err) {

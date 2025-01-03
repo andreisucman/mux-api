@@ -49,6 +49,7 @@ route.post(
           });
         } else if (subscription.status === "incomplete") {
           await cancelSubscription({
+            userId: req.userId,
             subscriptionName: null,
             subscriptionId: subscription.id,
           });
@@ -74,7 +75,10 @@ route.post(
 
         if (relatedPlan) {
           updateAnalytics({
-            [`overview.subscription.added.${relatedPlan.name}`]: 1,
+            userId: req.userId,
+            incrementPayload: {
+              [`overview.subscription.added.${relatedPlan.name}`]: 1,
+            },
           });
         }
 

@@ -157,7 +157,12 @@ export default async function makeANewRoutine({
       db.collection("Task").insertMany(tasksToInsert)
     );
 
-    updateTasksAnalytics(tasksToInsert, "tasksCreated", "manuallyTasksCreated");
+    updateTasksAnalytics({
+      userId,
+      tasksToInsert,
+      keyOne: "tasksCreated",
+      keyTwo: "manuallyTasksCreated",
+    });
   } catch (err) {
     throw httpError(err);
   }

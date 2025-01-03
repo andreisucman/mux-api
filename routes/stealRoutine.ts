@@ -247,16 +247,25 @@ route.post(
         userId: req.userId,
       });
 
-      updateTasksAnalytics(replacementTaskWithDates, "tasksCreated");
-      updateTasksAnalytics(
-        replacementTaskWithDates,
-        "tasksStolen",
-        "manualTasksStolen"
-      );
+      updateTasksAnalytics({
+        userId: req.userId,
+        tasksToInsert: replacementTaskWithDates,
+        keyOne: "tasksCreated",
+      });
+
+      updateTasksAnalytics({
+        userId: req.userId,
+        tasksToInsert: replacementTaskWithDates,
+        keyOne: "tasksStolen",
+        keyTwo: "manualTasksStolen",
+      });
 
       updateAnalytics({
-        "overview.usage.routinesStolen": 1,
-        [`overview.tasks.part.routinesStolen.${type}`]: 1,
+        userId: req.userId,
+        incrementPayload: {
+          "overview.usage.routinesStolen": 1,
+          [`overview.tasks.part.routinesStolen.${type}`]: 1,
+        },
       });
 
       res.status(200).json({ message: { routines, tasks } });

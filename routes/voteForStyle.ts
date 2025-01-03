@@ -90,7 +90,10 @@ route.post(
             )
           );
 
-          updateAnalytics({ "overview.usage.styleVotes": 1 });
+          updateAnalytics({
+            userId: req.userId,
+            incrementPayload: { "overview.usage.styleVotes": 1 },
+          });
         }
       }
 

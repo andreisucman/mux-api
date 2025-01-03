@@ -56,6 +56,7 @@ route.post(
             isSafe,
             moderationResults,
             isSuspicious,
+            userId: req.userId,
           });
 
           res.status(200).json({
@@ -128,7 +129,10 @@ route.post(
           }
         }
 
-        updateAnalytics({ "overview.usage.foodScans": 1 });
+        updateAnalytics({
+          userId: req.userId,
+          incrementPayload: { "overview.usage.foodScans": 1 },
+        });
       }
 
       const analysis = await analyzeCalories({
@@ -160,6 +164,7 @@ route.post(
           isSafe,
           moderationResults,
           isSuspicious,
+          userId: req.userId,
         });
 
         if (isSuspicious) {

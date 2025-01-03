@@ -54,7 +54,10 @@ route.post(
       }
 
       if (!existingCountry) {
-        updateAnalytics({ [`overview.club.country.${newCountry}`]: 1 });
+        updateAnalytics({
+          userId: req.userId,
+          incrementPayload: { [`overview.club.country.${newCountry}`]: 1 },
+        });
       }
 
       res.status(200).json({ message: defaultClubPayoutData });

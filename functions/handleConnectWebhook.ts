@@ -86,11 +86,21 @@ export default async function handleConnectWebhook(event: any) {
       );
 
       if (!currentDetailsSubmitted && details_submitted) {
-        updateAnalytics({ "overview.club.detailsSubmitted": 1 });
+        updateAnalytics({
+          userId: String(userInfo._id),
+          incrementPayload: {
+            "overview.club.detailsSubmitted": 1,
+          },
+        });
       }
 
       if (!currentPayoutsEnabled && payouts_enabled) {
-        updateAnalytics({ "overview.club.payoutsEnabled": 1 });
+        updateAnalytics({
+          userId: String(userInfo._id),
+          incrementPayload: {
+            "overview.club.payoutsEnabled": 1,
+          },
+        });
       }
 
       if (!payouts_enabled) {
@@ -127,9 +137,12 @@ export default async function handleConnectWebhook(event: any) {
       const totalWithdrawn = amount / 100;
 
       updateAnalytics({
-        "accounting.totalWithdrawn": totalWithdrawn,
-        "overview.accounting.totalWithdrawn": totalWithdrawn,
-        "overview.club.withdrawed": 1,
+        userId: String(userInfo._id),
+        incrementPayload: {
+          "accounting.totalWithdrawn": totalWithdrawn,
+          "overview.accounting.totalWithdrawn": totalWithdrawn,
+          "overview.club.withdrawed": 1,
+        },
       });
     } catch (err) {
       throw httpError(err);

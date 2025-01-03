@@ -190,7 +190,12 @@ export default async function prolongPreviousRoutine({
       db.collection("Task").insertMany(finalTasks)
     );
 
-    updateTasksAnalytics(finalTasks, "tasksCreated", "manuallyTasksCreated");
+    updateTasksAnalytics({
+      userId: String(userId),
+      tasksToInsert: finalTasks,
+      keyOne: "tasksCreated",
+      keyTwo: "manuallyTasksCreated",
+    });
   } catch (err) {
     throw httpError(err);
   }

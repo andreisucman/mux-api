@@ -60,6 +60,7 @@ route.post(
           isSafe,
           moderationResults,
           isSuspicious,
+          userId: req.userId,
         });
 
         res.status(200).json({
@@ -237,7 +238,10 @@ route.post(
         )
       );
 
-      updateAnalytics({ "overview.usage.styleScans": 1 });
+      updateAnalytics({
+        userId: req.userId,
+        incrementPayload: { "overview.usage.styleScans": 1 },
+      });
 
       if (moderationResults.length > 0) {
         addModerationAnalyticsData({
@@ -245,6 +249,7 @@ route.post(
           isSafe,
           moderationResults,
           isSuspicious,
+          userId: req.userId,
         });
 
         if (isSuspicious) {

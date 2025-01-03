@@ -106,9 +106,12 @@ route.post(
       );
 
       updateAnalytics({
-        "accounting.totalReward": rewardValue,
-        "overview.accounting.totalReward": rewardValue,
-        [`overview.usage.rewards.${rewardKey}`]: 1,
+        userId: String(userInfo._id),
+        incrementPayload: {
+          "accounting.totalReward": rewardValue,
+          "overview.accounting.totalReward": rewardValue,
+          [`overview.usage.rewards.${rewardKey}`]: 1,
+        },
       });
 
       res.status(200).json({

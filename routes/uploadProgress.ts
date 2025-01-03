@@ -250,7 +250,10 @@ route.post(
         });
       }
 
-      updateAnalytics({ "overview.usage.progressScans": 1 });
+      updateAnalytics({
+        userId: req.userId,
+        incrementPayload: { "overview.usage.progressScans": 1 },
+      });
     } catch (err) {
       await addAnalysisStatusError({
         operationKey: type,

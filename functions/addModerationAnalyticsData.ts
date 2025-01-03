@@ -12,6 +12,7 @@ type Props = {
   moderationResults: ModerationResultType[];
   isSuspicious: boolean;
   isSafe: boolean;
+  userId: string;
 };
 
 export default async function addModerationAnalyticsData({
@@ -19,6 +20,7 @@ export default async function addModerationAnalyticsData({
   moderationResults,
   isSuspicious,
   isSafe,
+  userId,
 }: Props) {
   try {
     let analyticIncrementPayload: {
@@ -60,7 +62,10 @@ export default async function addModerationAnalyticsData({
       }
     }
 
-    updateAnalytics(analyticIncrementPayload);
+    updateAnalytics({
+      userId,
+      incrementPayload: analyticIncrementPayload,
+    });
   } catch (err) {
     throw httpError(err);
   }

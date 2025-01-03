@@ -42,11 +42,20 @@ route.post(
         return;
       }
 
+      let incrementPayload: { [key: string]: number } = {
+        "overview.club.rejoined": 1,
+      };
+
       if (canRejoinClubAfter) {
-        updateAnalytics({ "overview.club.rejoined": 1 });
+        incrementPayload = { "overview.club.rejoined": 1 };
       } else {
-        updateAnalytics({ "overview.club.joined": 1 });
+        incrementPayload = { "overview.club.joined": 1 };
       }
+
+      updateAnalytics({
+        userId: req.userId,
+        incrementPayload,
+      });
 
       let clubData = userInfo.club;
 

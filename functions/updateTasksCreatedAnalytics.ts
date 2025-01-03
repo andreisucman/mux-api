@@ -2,11 +2,19 @@ import httpError from "@/helpers/httpError.js";
 import updateAnalytics from "./updateAnalytics.js";
 import { TaskType } from "@/types.js";
 
-export default async function updateTasksAnalytics(
-  tasksToInsert: Partial<TaskType>[],
-  keyOne?: string,
-  keyTwo?: string
-) {
+type Props = {
+  tasksToInsert: Partial<TaskType>[];
+  keyOne?: string;
+  keyTwo?: string;
+  userId: string;
+};
+
+export default async function updateTasksAnalytics({
+  tasksToInsert,
+  keyOne,
+  keyTwo,
+  userId,
+}: Props) {
   try {
     const partsCreatedTasks = keyOne
       ? tasksToInsert
@@ -40,9 +48,12 @@ export default async function updateTasksAnalytics(
       : {};
 
     updateAnalytics({
-      [`overview.usage.${keyOne}`]: tasksToInsert.length,
-      ...partsCreatedTasks,
-      ...partsCreatedManualTasks,
+      userId: String(userId),
+      incrementPayload: {
+        [`overview.usage.${keyOne}`]: tasksToInsert.length,
+        ...partsCreatedTasks,
+        ...partsCreatedManualTasks,
+      },
     });
   } catch (err) {
     throw httpError(err);

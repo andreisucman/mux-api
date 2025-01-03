@@ -109,7 +109,10 @@ export default async function getDemographics({
       ] = 1;
     }
 
-    updateAnalytics(analyticsPayload);
+    updateAnalytics({
+      userId: String(userId),
+      incrementPayload: analyticsPayload,
+    });
 
     return response;
   } catch (err) {

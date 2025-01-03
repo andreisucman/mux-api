@@ -118,7 +118,7 @@ export default async function analyzeConcerns({
       })
     );
 
-    updateConcernsAnalytics(combined);
+    updateConcernsAnalytics({ userId, concerns: combined });
 
     return combined;
   } catch (err) {

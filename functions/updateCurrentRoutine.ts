@@ -128,11 +128,12 @@ export default async function updateCurrentRoutine({
       db.collection("Task").insertMany(newTasksToInsert)
     );
 
-    updateTasksAnalytics(
-      newTasksToInsert,
-      "tasksCreated",
-      "manuallyTasksCreated"
-    );
+    updateTasksAnalytics({
+      userId: String(userId),
+      tasksToInsert: newTasksToInsert,
+      keyOne: "tasksCreated",
+      keyTwo: "manuallyTasksCreated",
+    });
   } catch (err) {
     throw httpError(err);
   }

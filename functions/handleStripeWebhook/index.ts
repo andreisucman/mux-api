@@ -158,6 +158,7 @@ async function handleStripeWebhook(event: Stripe.Event) {
       if (otherActiveSubscriptions.length > 0) {
         for (const [name, object] of otherActiveSubscriptions) {
           await cancelSubscription({
+            userId: String(userInfo._id),
             subscriptionId: (object as SubscriptionType).subscriptionId,
             subscriptionName: name,
           });
@@ -166,7 +167,10 @@ async function handleStripeWebhook(event: Stripe.Event) {
     }
   }
 
-  updateAnalytics(incrementPayload);
+  updateAnalytics({
+    userId: String(userInfo._id),
+    incrementPayload,
+  });
 }
 
 export default handleStripeWebhook;

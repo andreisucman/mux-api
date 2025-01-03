@@ -51,7 +51,10 @@ route.post(
       }
 
       updateAnalytics({
-        [`overview.subscription.tried.${subscriptionName}`]: 1,
+        userId: req.userId,
+        incrementPayload: {
+          [`overview.subscription.tried.${subscriptionName}`]: 1,
+        },
       });
 
       const updatedSubscription = {
