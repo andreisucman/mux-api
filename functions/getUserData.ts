@@ -18,7 +18,14 @@ async function getUserData({ userId }: Props) {
           .collection("User")
           .findOne(
             { _id: new ObjectId(userId) },
-            { projection: { password: 0 } }
+            {
+              projection: {
+                password: 0,
+                netBenefit: 0,
+                warningCount: 0,
+                blockCount: 0,
+              },
+            }
           )
     );
 

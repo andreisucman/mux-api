@@ -48,6 +48,12 @@ export default async function updatePublicContent({
         .collection("About")
         .updateMany({ userId: new ObjectId(userId) }, { $set: updatePayload })
     );
+
+    await doWithRetries(async () =>
+      db
+        .collection("Routine")
+        .updateMany({ userId: new ObjectId(userId) }, { $set: updatePayload })
+    );
   } catch (err) {
     throw httpError(err);
   }

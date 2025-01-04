@@ -23,7 +23,6 @@ route.get(
     try {
       const filter: { [key: string]: any } = {
         userId: new ObjectId(req.userId),
-        isHidden: { $exists: false },
       };
 
       if (type) filter.type = type;

@@ -92,7 +92,7 @@ route.post(
 
       const taskInfo = (await doWithRetries(async () =>
         db.collection("Task").findOne(
-          { _id: new ObjectId(taskId), status: "active" },
+          { _id: new ObjectId(taskId), status: TaskStatusEnum.ACTIVE },
           {
             projection: {
               name: 1,

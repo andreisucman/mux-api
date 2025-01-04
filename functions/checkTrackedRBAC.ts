@@ -16,8 +16,8 @@ export default async function checkTrackedRBAC({
   userId,
   throwOnError = false,
   followingUserName,
-  targetProjection,
-  userProjection,
+  targetProjection = {},
+  userProjection = {},
 }: Props) {
   try {
     const result = {
@@ -33,20 +33,15 @@ export default async function checkTrackedRBAC({
       name: followingUserName,
       club: { $exists: true },
     };
-    const targetOptions = { projection: { _id: 1 } };
 
-    if (targetProjection)
-      targetOptions.projection = {
-        ...targetOptions.projection,
-        ...targetProjection,
-      };
+    const fieldsToExclude = { netBenefit: 0, warningCount: 0, blockCount: 0 };
 
     const targetUserInfo = await doWithRetries(async () =>
       db
         .collection("User")
         .findOne(
           { ...targetFilter, moderationStatus: ModerationStatusEnum.ACTIVE },
-          targetOptions
+          { projection: { _id: 1, ...targetProjection, ...fieldsToExclude } }
         )
     );
 
@@ -67,27 +62,20 @@ export default async function checkTrackedRBAC({
     result.targetUserInfo = targetUserInfo;
 
     const userFilter = { _id: new ObjectId(userId) };
-    const userOptions = {
-      projection: {
-        "club.followingUserName": 1,
-        "subscriptions.peek": 1,
-        name: 1,
-      },
-    };
-
-    if (userProjection)
-      userOptions.projection = {
-        ...userOptions.projection,
-        ...userProjection,
-      };
 
     result.userInfo = await doWithRetries(async () =>
-      db
-        .collection("User")
-        .findOne(
-          { ...userFilter, moderationStatus: ModerationStatusEnum.ACTIVE },
-          userOptions
-        )
+      db.collection("User").findOne(
+        { ...userFilter, moderationStatus: ModerationStatusEnum.ACTIVE },
+        {
+          projection: {
+            "club.followingUserName": 1,
+            "subscriptions.peek": 1,
+            name: 1,
+            ...userProjection,
+            ...fieldsToExclude,
+          },
+        }
+      )
     );
 
     const { club, name, subscriptions } =

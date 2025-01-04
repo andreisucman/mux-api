@@ -44,7 +44,7 @@ route.get(
       }
 
       if (followingUserName) {
-        filter.name = followingUserName;
+        filter.userName = followingUserName;
       } else {
         filter.userId = new ObjectId(req.userId);
       }

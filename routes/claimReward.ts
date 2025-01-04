@@ -114,6 +114,15 @@ route.post(
         },
       });
 
+      await doWithRetries(async () =>
+        db.collection("User").updateOne(
+          {
+            _id: new ObjectId(userInfo._id),
+          },
+          { $inc: { netBenefit: rewardValue * -1 } }
+        )
+      );
+
       res.status(200).json({
         message: `The reward of $${rewardValue} has been added to your Club balance.`,
       });

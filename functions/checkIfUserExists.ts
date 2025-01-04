@@ -8,12 +8,18 @@ type Props = {
   projection?: { [key: string]: number };
 };
 
-async function checkIfUserExists({ filter, projection }: Props) {
+async function checkIfUserExists({ filter, projection = {} }: Props) {
   try {
-    const projectionStage = projection ? { projection } : undefined;
+    const fieldsToExclude = { netBenefit: 0, warningCount: 0, blockCount: 0 };
+
     const result = (await doWithRetries(
       async () =>
-        await db.collection("User").findOne({ ...filter }, projectionStage)
+        await db
+          .collection("User")
+          .findOne(
+            { ...filter },
+            { projection: { ...fieldsToExclude, ...projection } }
+          )
     )) as unknown as Partial<UserType>;
 
     return result;

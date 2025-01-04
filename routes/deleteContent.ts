@@ -7,12 +7,7 @@ import recalculateLatestProgress from "@/functions/recalculateLatestProgress.js"
 import doWithRetries from "@/helpers/doWithRetries.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import { defaultUser } from "@/data/defaultUser.js";
-import {
-  CustomRequest,
-  ModerationStatusEnum,
-  NextActionType,
-  ProgressType,
-} from "types.js";
+import { CustomRequest, NextActionType, ProgressType } from "types.js";
 import { db } from "@/init.js";
 import httpError from "@/helpers/httpError.js";
 
@@ -79,7 +74,6 @@ route.post(
                 userId: new ObjectId(req.userId),
                 type: recordToDelete.type,
                 part: recordToDelete.part,
-                moderationStatus: ModerationStatusEnum.ACTIVE,
               })
               .sort({ _id: -1 })
               .next()

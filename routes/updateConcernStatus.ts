@@ -31,7 +31,7 @@ route.post(
         db
           .collection("User")
           .findOne(
-            { userId: new ObjectId(req.userId) },
+            { _id: new ObjectId(req.userId) },
             { projection: { concerns: 1 } }
           )
       );
@@ -42,7 +42,7 @@ route.post(
 
       await doWithRetries(async () =>
         db.collection("User").updateOne(
-          { userId: new ObjectId(req.userId) },
+          { _id: new ObjectId(req.userId) },
           {
             $set: { concerns: updatedConcerns },
           }

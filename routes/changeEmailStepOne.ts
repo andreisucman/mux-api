@@ -23,10 +23,13 @@ route.post(
 
     try {
       const isAlreadyTaken = await doWithRetries(async () =>
-        db.collection("User").findOne({
-          email: newEmail,
-          moderationStatus: ModerationStatusEnum.ACTIVE,
-        })
+        db.collection("User").findOne(
+          {
+            email: newEmail,
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
+          { projection: { _id: 1 } }
+        )
       );
 
       if (isAlreadyTaken) {
@@ -39,15 +42,13 @@ route.post(
       }
 
       const userInfo = await doWithRetries(() =>
-        db
-          .collection("User")
-          .findOne(
-            {
-              _id: new ObjectId(req.userId),
-              moderationStatus: ModerationStatusEnum.ACTIVE,
-            },
-            { projection: { email: 1 } }
-          )
+        db.collection("User").findOne(
+          {
+            _id: new ObjectId(req.userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
+          { projection: { email: 1 } }
+        )
       );
 
       const { email } = userInfo;

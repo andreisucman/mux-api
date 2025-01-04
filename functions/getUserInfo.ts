@@ -13,7 +13,7 @@ type Props = {
 export default async function getUserInfo({
   userId,
   userName,
-  projection,
+  projection = {},
 }: Props): Promise<Partial<UserType> | null> {
   try {
     if (!userId && !userName) throw httpError("No userId and name");
@@ -25,10 +25,17 @@ export default async function getUserInfo({
     if (userId) filter._id = new ObjectId(userId);
     if (userName) filter.name = userName;
 
-    const projectionStage = projection ? { projection } : undefined;
-
     const userInfo = await doWithRetries(() =>
-      db.collection("User").findOne(filter, projectionStage)
+      db
+        .collection("User")
+        .findOne(filter, {
+          projection: {
+            ...projection,
+            netBenefit: 0,
+            warningCount: 0,
+            blockCount: 0,
+          },
+        })
     );
 
     return userInfo;

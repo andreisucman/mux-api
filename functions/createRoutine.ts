@@ -26,7 +26,7 @@ type Props = {
   userId: string;
   type: TypeEnum;
   part: PartEnum;
-  categoryName: CategoryNameEnum,
+  categoryName: CategoryNameEnum;
   partConcerns: UserConcernType[];
   specialConsiderations: string;
 };
@@ -111,7 +111,12 @@ export default async function createRoutine({
       db
         .collection("Task")
         .findOne(
-          { userId: new ObjectId(userId), type, part, status: "active" },
+          {
+            userId: new ObjectId(userId),
+            type,
+            part,
+            status: TaskStatusEnum.ACTIVE,
+          },
           { projection: { routineId: 1 } }
         )
     );

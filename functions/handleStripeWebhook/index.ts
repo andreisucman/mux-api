@@ -141,13 +141,6 @@ async function handleStripeWebhook(event: Stripe.Event) {
     incrementPayload[`overview.subscription.bought.${plan.name}`] = 1;
 
     if (plan.name === "peek") {
-      const relatedLineItem = object.lines.data.find(
-        (lineItem) => lineItem.price.id === plan.priceId
-      );
-
-      incrementPayload[`overview.accounting.totalPayable`] =
-        relatedLineItem.amount / 100 / 2;
-
       const otherActiveSubscriptions = Object.entries(subscriptions).filter(
         ([name, object]: [string, SubscriptionType]) =>
           name !== "peek" &&
