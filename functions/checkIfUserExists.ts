@@ -10,16 +10,11 @@ type Props = {
 
 async function checkIfUserExists({ filter, projection = {} }: Props) {
   try {
-    const fieldsToExclude = { netBenefit: 0, warningCount: 0, blockCount: 0 };
-
     const result = (await doWithRetries(
       async () =>
         await db
           .collection("User")
-          .findOne(
-            { ...filter },
-            { projection: { ...fieldsToExclude, ...projection } }
-          )
+          .findOne({ ...filter }, { projection: projection })
     )) as unknown as Partial<UserType>;
 
     return result;

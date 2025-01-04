@@ -8,6 +8,7 @@ import httpError from "@/helpers/httpError.js";
 import updateAnalytics from "../updateAnalytics.js";
 import { ModerationStatusEnum } from "@/types.js";
 import { SubscriptionType } from "@/types.js";
+import createClubProfile from "../createClubProfile.js";
 import { getRevenueAndProcessingFee } from "./getRevenueAndProcessingFee.js";
 import cancelSubscription from "../cancelSubscription.js";
 
@@ -137,10 +138,13 @@ async function handleStripeWebhook(event: Stripe.Event) {
     "accounting.totalProcessingFee": totalProcessingFee,
   };
 
+  let peekBought = false;
+
   for (const plan of relatedPlans) {
     incrementPayload[`overview.subscription.bought.${plan.name}`] = 1;
 
     if (plan.name === "peek") {
+      peekBought = true;
       const otherActiveSubscriptions = Object.entries(subscriptions).filter(
         ([name, object]: [string, SubscriptionType]) =>
           name !== "peek" &&
@@ -157,6 +161,16 @@ async function handleStripeWebhook(event: Stripe.Event) {
           });
         }
       }
+    }
+  }
+
+  if (peekBought) {
+    const { club } = userInfo;
+
+    if (!club) {
+      await createClubProfile({
+        userId: String(userInfo._id),
+      });
     }
   }
 

@@ -68,9 +68,6 @@ export default async function updateSpend({
         { _id: new ObjectId(userId) },
         {
           $inc: { netBenefit: totalCost * -1 },
-        },
-        {
-          upsert: true,
         }
       )
     );

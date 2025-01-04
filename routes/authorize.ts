@@ -11,10 +11,13 @@ route.get("/", async (req, res, next: NextFunction) => {
     const parsedState = state
       ? JSON.parse(decodeURIComponent(state as string))
       : {};
-
+    console.log("state", state);
     const { redirectPath } = parsedState;
+    console.log("redirectPath", redirectPath);
 
     const redirectUrl = getOauthRedirectUri(redirectPath);
+
+    console.log("redirectUrl", redirectUrl);
 
     const OAuth2 = google.auth.OAuth2;
 

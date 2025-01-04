@@ -31,6 +31,7 @@ const allowedReferrers = [
   "clubAbout",
   "clubProgress",
   "clubStyle",
+  "clubAnswers",
   "clubProof",
   "clubDiary",
   "authPage",
@@ -54,7 +55,7 @@ route.post(
         fingerprint,
       } = req.body;
 
-      if (!ObjectId.isValid(localUserId)) {
+      if (localUserId && !ObjectId.isValid(localUserId)) {
         res.status(400).json({ error: "Bad request" });
         return;
       }
@@ -87,6 +88,8 @@ route.post(
         : {};
 
       const { redirectPath } = parsedState;
+
+      console.log("line 92", redirectPath);
 
       if (code) {
         const { email, accessToken: googleAccessToken } =

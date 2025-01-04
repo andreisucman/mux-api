@@ -9,6 +9,7 @@ import {
   ModerationStatusEnum,
 } from "types.js";
 import { db } from "init.js";
+import { Sex } from "react-nice-avatar";
 import getUserInfo from "./getUserInfo.js";
 import createRandomName from "./createRandomName.js";
 import httpError from "@/helpers/httpError.js";
@@ -16,7 +17,22 @@ import { AboutQuestionType } from "@/types/saveAboutResponseTypes.js";
 
 type Props = {
   userId: string;
-  avatar: { [key: string]: any };
+  informed?: boolean;
+};
+
+const avatarSkinColorMap = {
+  white: "#f5e6da",
+  asian: "#d1a67c",
+  black: "#5b3a29",
+  hispanic: "#a47448",
+  arab: "#c89f7c",
+  south_asian: "#8c6239",
+  native_american: "#b57c53",
+};
+
+const avatarSexMap: { [key: string]: string } = {
+  male: "man",
+  female: "woman",
 };
 
 export const defaultClubPayoutData: ClubPayoutDataType = {
@@ -27,7 +43,7 @@ export const defaultClubPayoutData: ClubPayoutDataType = {
   disabledReason: null,
 };
 
-export default async function createClubProfile({ userId, avatar }: Props) {
+export default async function createClubProfile({ userId, informed }: Props) {
   try {
     const userInfo = await getUserInfo({
       userId,
@@ -37,7 +53,19 @@ export default async function createClubProfile({ userId, avatar }: Props) {
     if (!userInfo) throw httpError(`User ${userId} not found`);
 
     const { demographics } = (userInfo as unknown as Partial<UserType>) || {};
-    const { sex } = demographics;
+    const { sex, ethnicity } = demographics;
+
+    const niceAvatar = await import("react-nice-avatar");
+    const { genConfig } = niceAvatar;
+
+    const avatarConfig = genConfig({
+      sex: avatarSexMap[sex || "male"] as Sex,
+      faceColor: avatarSkinColorMap[ethnicity],
+      mouthStyle: "peace",
+      glassesStyle: "none",
+      hairColorRandom: true,
+      isGradient: true,
+    });
 
     const defaultQuestions = [
       "What is your life philosophy? Are you outgoing or maybe love being alone? Why? ",
@@ -102,7 +130,7 @@ export default async function createClubProfile({ userId, avatar }: Props) {
           $set: {
             club: defaultClubData,
             name: randomName,
-            avatar,
+            avatar: avatarConfig,
           },
         }
       )

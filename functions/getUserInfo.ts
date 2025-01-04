@@ -26,16 +26,9 @@ export default async function getUserInfo({
     if (userName) filter.name = userName;
 
     const userInfo = await doWithRetries(() =>
-      db
-        .collection("User")
-        .findOne(filter, {
-          projection: {
-            ...projection,
-            netBenefit: 0,
-            warningCount: 0,
-            blockCount: 0,
-          },
-        })
+      db.collection("User").findOne(filter, {
+        projection,
+      })
     );
 
     return userInfo;

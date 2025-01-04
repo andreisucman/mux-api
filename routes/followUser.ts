@@ -57,6 +57,7 @@ route.post(
         name,
         _id: newFollowingUserId,
       } = newFollowingInfo;
+      
       const { privacy } = followingClub;
 
       const allPartPrivacies = privacy.flatMap((typePrivacy) =>

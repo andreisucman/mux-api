@@ -7,15 +7,14 @@ import { CustomRequest, ModerationStatusEnum } from "types.js";
 import createClubProfile from "functions/createClubProfile.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import formatDate from "@/helpers/formatDate.js";
-import { db } from "init.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
+import { db } from "init.js";
 
 const route = Router();
 
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { avatar } = req.body;
     try {
       const userInfo = await doWithRetries(async () =>
         db.collection("User").findOne(
@@ -62,7 +61,6 @@ route.post(
       if (!clubData) {
         clubData = await createClubProfile({
           userId: req.userId,
-          avatar,
         });
       }
 

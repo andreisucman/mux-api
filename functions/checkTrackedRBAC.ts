@@ -34,14 +34,12 @@ export default async function checkTrackedRBAC({
       club: { $exists: true },
     };
 
-    const fieldsToExclude = { netBenefit: 0, warningCount: 0, blockCount: 0 };
-
     const targetUserInfo = await doWithRetries(async () =>
       db
         .collection("User")
         .findOne(
           { ...targetFilter, moderationStatus: ModerationStatusEnum.ACTIVE },
-          { projection: { _id: 1, ...targetProjection, ...fieldsToExclude } }
+          { projection: { _id: 1, ...targetProjection } }
         )
     );
 
@@ -72,7 +70,6 @@ export default async function checkTrackedRBAC({
             "subscriptions.peek": 1,
             name: 1,
             ...userProjection,
-            ...fieldsToExclude,
           },
         }
       )

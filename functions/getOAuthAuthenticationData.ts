@@ -10,8 +10,6 @@ type Props = {
 async function getOAuthAuthenticationData(props: Props) {
   const { code, redirectPath } = props;
   try {
-
-
     const redirectUrl = getOauthRedirectUri(redirectPath);
 
     const authData = await getGoogleToken(code, redirectUrl);
