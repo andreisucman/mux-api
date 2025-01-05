@@ -5,7 +5,7 @@ export type AboutQuestionType = {
   userId: ObjectId;
   updatedAt: Date;
   question: string;
-  answer: string | null;
+  answer: string;
   skipped: boolean;
   asking: string;
 };

@@ -6,7 +6,7 @@ import { ObjectId } from "mongodb";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { db, stripe } from "init.js";
-import { calculateTimeZoneOffset, daysFrom } from "helpers/utils.js";
+import { getTimezoneOffset, daysFrom } from "helpers/utils.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import createUser from "@/functions/createUser.js";
 import checkIfUserExists from "functions/checkIfUserExists.js";
@@ -89,8 +89,6 @@ route.post(
 
       const { redirectPath } = parsedState;
 
-      console.log("line 92", redirectPath);
-
       if (code) {
         const { email, accessToken: googleAccessToken } =
           await getOAuthAuthenticationData({
@@ -144,7 +142,7 @@ route.post(
               return;
             }
           }
-          const timeZoneOffsetInMinutes = calculateTimeZoneOffset(timeZone);
+          const timeZoneOffsetInMinutes = getTimezoneOffset(timeZone);
 
           await doWithRetries(() =>
             db.collection("User").updateOne(

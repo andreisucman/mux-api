@@ -20,7 +20,7 @@ route.get("/:followingUserName?", async (req: CustomRequest, res: Response) => {
 
   try {
     const match: { [key: string]: any } = {
-      answer: { $ne: null },
+      answer: { $ne: "" },
       skipped: false,
       moderationStatus: ModerationStatusEnum.ACTIVE,
     };
@@ -43,13 +43,13 @@ route.get("/:followingUserName?", async (req: CustomRequest, res: Response) => {
           delete match.answer;
           match.skipped = true;
         }
-        if (showType === "new") match.answer = null;
+        if (showType === "new") match.answer = "";
       }
     }
 
     if (onlyCheck) {
       const hasNewQuestionsFilters: { [key: string]: any } = {
-        answer: null,
+        answer: "",
         skipped: false,
       };
 
@@ -64,7 +64,7 @@ route.get("/:followingUserName?", async (req: CustomRequest, res: Response) => {
       );
 
       const hasAnswersFilters: { [key: string]: any } = {
-        answer: { $ne: null },
+        answer: { $ne: "" },
         skipped: false,
       };
 

@@ -14,10 +14,10 @@ import getUserInfo from "./getUserInfo.js";
 import createRandomName from "./createRandomName.js";
 import httpError from "@/helpers/httpError.js";
 import { AboutQuestionType } from "@/types/saveAboutResponseTypes.js";
+import updateContentPublicity from "./updateContentPublicity.js";
 
 type Props = {
   userId: string;
-  informed?: boolean;
 };
 
 const avatarSkinColorMap = {
@@ -43,7 +43,7 @@ export const defaultClubPayoutData: ClubPayoutDataType = {
   disabledReason: null,
 };
 
-export default async function createClubProfile({ userId, informed }: Props) {
+export default async function createClubProfile({ userId }: Props) {
   try {
     const userInfo = await getUserInfo({
       userId,
@@ -94,7 +94,7 @@ export default async function createClubProfile({ userId, informed }: Props) {
       updatedAt: new Date(),
       asking: "coach",
       skipped: false,
-      answer: null as string | null,
+      answer: "",
       moderationStatus: ModerationStatusEnum.ACTIVE,
     }));
 

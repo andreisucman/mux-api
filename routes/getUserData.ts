@@ -10,10 +10,14 @@ route.get(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
-      
       const userData = await doWithRetries(
         async () => await getUserData({ userId: req.userId })
       );
+
+      if (userData === null) {
+        signOut(res, 404, "Account not found");
+        return;
+      }
 
       if (
         userData.moderationStatus === ModerationStatusEnum.BLOCKED ||

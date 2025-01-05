@@ -24,7 +24,6 @@ export default function getOauthRedirectUri(redirectPath: string) {
       redirectUrl = process.env.CLUB_ABOUT_REDIRECT_URI;
       break;
     case "/club/answers":
-      console.log("line 27",process.env.CLUB_ANSWERS_REDIRECT_URI)
       redirectUrl = process.env.CLUB_ANSWERS_REDIRECT_URI;
       break;
     case "/plans":

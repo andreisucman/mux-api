@@ -108,17 +108,15 @@ export default async function createRoutine({
     const oneWeekAgo = daysFrom({ days: daysToProlong * -1 });
 
     const existingActiveTask = await doWithRetries(async () =>
-      db
-        .collection("Task")
-        .findOne(
-          {
-            userId: new ObjectId(userId),
-            type,
-            part,
-            status: TaskStatusEnum.ACTIVE,
-          },
-          { projection: { routineId: 1 } }
-        )
+      db.collection("Task").findOne(
+        {
+          userId: new ObjectId(userId),
+          type,
+          part,
+          status: TaskStatusEnum.ACTIVE,
+        },
+        { projection: { routineId: 1 } }
+      )
     );
 
     const draftTasksToProlong = (await doWithRetries(async () =>

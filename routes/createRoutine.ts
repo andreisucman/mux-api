@@ -99,6 +99,16 @@ route.post(
 
       res.status(200).end();
 
+      await doWithRetries(async () =>
+        db
+          .collection("AnalysisStatus")
+          .updateOne(
+            { userId: new ObjectId(req.userId), operationKey: type },
+            { $set: { isRunning: true, progress: 1, isError: false } },
+            { upsert: true }
+          )
+      );
+
       let updatedNextRoutine;
 
       if (part) {

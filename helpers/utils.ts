@@ -138,8 +138,7 @@ export default function selectItemsAtEqualDistances(
   return selectedItems;
 }
 
-export function calculateTimeZoneOffset(timeZone: string) {
-  const now = DateTime.now().setZone(timeZone);
-  const offsetInMinutes = now.offset / 60000;
-  return Math.round(offsetInMinutes);
+export function getTimezoneOffset(timeZone: string) {
+  const dt = DateTime.now().setZone(timeZone);
+  return dt.offset;
 }
