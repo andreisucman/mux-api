@@ -8,7 +8,7 @@ import {
   TypeEnum,
   UserInfoType,
   PartEnum,
-  CategoryNameEnum
+  CategoryNameEnum,
 } from "types.js";
 import { RunType } from "types/askOpenaiTypes.js";
 import { CreateRoutineAllSolutionsType } from "types/createRoutineTypes.js";

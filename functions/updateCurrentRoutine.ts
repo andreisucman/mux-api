@@ -40,7 +40,7 @@ export default async function updateCurrentRoutine({
   categoryName,
   specialConsiderations,
 }: Props) {
-  const { _id: userId } = userInfo;
+  const { _id: userId, name: userName } = userInfo;
 
   try {
     if (!routineId) throw httpError("No routineId");
@@ -103,6 +103,7 @@ export default async function updateCurrentRoutine({
             status: "active",
             concerns: newConcerns,
             allTasks: newAllTasks,
+            userName,
           },
         }
       )

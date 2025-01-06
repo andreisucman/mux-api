@@ -19,9 +19,10 @@ export default async function analyzeCalories({
   categoryName,
 }: Props) {
   try {
-    const systemContent = `You are a food composition analysis expert. The user gives you an image of food. Your goal is to determine its amount, and how much energy, protein, carbohydrates and fats it has. Consider:  1. whether the ingredients are cooked or raw, 2. the size of the plate and and the proportion of the products in it. If you can't say for sure make your best guess. Your response must be less than 20 words.`;
+    const systemContent = `You are a food composition analysis expert. The user gives you an image of food. Your goal is to determine its name, amount, and how much energy, protein, carbohydrates and fats it has. Consider:  1. whether the ingredients are cooked or raw, 2. the size of the plate and and the proportion of the products in it. If you can't say for sure make your best guess. Your response must be less than 20 words.`;
 
     const AnalyzeCaloriesResponseFormat = z.object({
+      foodName: z.string().describe("name of the dish"),
       amount: z.number().describe("amount of food in the plate in grams"),
       energy: z.number().describe("number of kcal"),
       proteins: z.number().describe("number of proteins"),
@@ -71,7 +72,7 @@ export default async function analyzeCalories({
         shouldEat: z
           .boolean()
           .describe(
-            "true if the user can safely eat this food, false if this food is very likely contraindicated for the user"
+            "true if the user can safely eat this food, false if this food is very likely to be contraindicated for the user"
           ),
         explanation: z.string(),
       });

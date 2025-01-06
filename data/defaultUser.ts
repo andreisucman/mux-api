@@ -19,11 +19,6 @@ export const defaultSubscriptions = {
     subscriptionId: null as string | null,
     validUntil: null as Date | null,
   },
-  analyst: {
-    isTrialUsed: false,
-    subscriptionId: null as string | null,
-    validUntil: null as Date | null,
-  },
   advisor: {
     isTrialUsed: false,
     subscriptionId: null as string | null,

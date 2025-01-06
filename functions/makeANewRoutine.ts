@@ -134,9 +134,12 @@ export default async function makeANewRoutine({
     const dates = Object.keys(finalSchedule);
     const lastDate = dates[dates.length - 1];
 
+    const { name: userName } = userInfo;
+
     const newRoutineObject = await doWithRetries(async () =>
       db.collection("Routine").insertOne({
         userId: new ObjectId(userId),
+        userName,
         concerns,
         finalSchedule,
         status: "active",

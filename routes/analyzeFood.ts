@@ -102,11 +102,7 @@ route.post(
 
       if (!isValidSimilarity) {
         res.status(200).json({
-          message: {
-            _id: record._id,
-            url: record.url,
-            analysis: record.analysis,
-          },
+          message: record._id,
         });
         return;
       }
@@ -144,12 +140,12 @@ route.post(
 
       const newRecord: { [key: string]: any } = {
         _id: new ObjectId(),
-        createdAt: new Date(),
-        analysis,
         url,
-        embedding,
-        moderationStatus: ModerationStatusEnum.ACTIVE,
         hash,
+        analysis,
+        embedding,
+        createdAt: new Date(),
+        moderationStatus: ModerationStatusEnum.ACTIVE,
       };
 
       if (req.userId) newRecord.userId = new ObjectId(req.userId);
@@ -178,11 +174,7 @@ route.post(
       }
 
       res.status(200).json({
-        message: {
-          _id: newRecord._id,
-          url: newRecord.url,
-          analysis: newRecord.analysis,
-        },
+        message: newRecord._id,
       });
     } catch (err) {
       next(err);

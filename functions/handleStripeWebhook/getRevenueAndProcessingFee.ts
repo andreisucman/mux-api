@@ -6,19 +6,23 @@ export async function getRevenueAndProcessingFee(paymentIntentId: string) {
     const paymentIntent = await stripe.paymentIntents.retrieve(
       paymentIntentId.toString(),
       {
-        expand: ["charges.data.balance_transaction"],
+        expand: ["latest_charge.balance_transaction"],
       }
     );
 
-    const latestCharge = paymentIntent.latest_charge;
+    const charge = paymentIntent.latest_charge;
+    if (!charge || typeof charge !== "object") {
+      throw new Error("No charge found for this payment intent.");
+    }
 
-    if (typeof latestCharge === "string") return;
+    const transaction = charge.balance_transaction;
 
-    const transaction = latestCharge.balance_transaction;
-
-    if (typeof transaction === "string") return;
+    if (!transaction || typeof transaction !== "object") {
+      throw new Error("Invalid balance transaction data.");
+    }
 
     const { net, fee } = transaction;
+
     const totalRevenue = net / 100;
     const totalProcessingFee = fee / 100;
 

@@ -32,7 +32,7 @@ route.post(
     try {
       const isSubscriptionValid = await checkSubscriptionStatus({
         userId: req.userId,
-        subscriptionType: SubscriptionTypeNamesEnum.ANALYST,
+        subscriptionType: SubscriptionTypeNamesEnum.ADVISOR,
       });
 
       if (!isSubscriptionValid) {

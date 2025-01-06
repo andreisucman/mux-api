@@ -93,7 +93,6 @@ export type UserType = {
     improvement: SubscriptionType;
     peek: SubscriptionType;
     advisor: SubscriptionType;
-    analyst: SubscriptionType;
   };
   latestStyleAnalysis: {
     head: StyleAnalysisType | null;
@@ -172,7 +171,6 @@ export enum SubscriptionTypeNamesEnum {
   IMPROVEMENT = "improvement",
   PEEK = "peek",
   ADVISOR = "advisor",
-  ANALYST = "analyst",
 }
 
 export type SubscriptionType = {

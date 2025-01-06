@@ -4,7 +4,7 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import { Router, Response, NextFunction } from "express";
-import { CustomRequest, ModerationStatusEnum, SubscriptionTypeNamesEnum } from "types.js";
+import { CustomRequest, SubscriptionTypeNamesEnum } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import checkSubscriptionStatus from "functions/checkSubscription.js";
 import getUserInfo from "@/functions/getUserInfo.js";
@@ -36,16 +36,15 @@ route.post(
       });
 
       if (!isValid) {
-        res.status(200).json({ error: "subscription expired" });
+        res.status(200).json({ error: "Subscription expired" });
         return;
       }
 
       const newFollowingInfo = await getUserInfo({
-        userId: req.userId,
+        userName: followingUserName,
         projection: {
           "club.privacy": 1,
           avatar: 1,
-          name: 1,
         },
       });
 
@@ -54,10 +53,9 @@ route.post(
       const {
         club: followingClub,
         avatar,
-        name,
         _id: newFollowingUserId,
       } = newFollowingInfo;
-      
+
       const { privacy } = followingClub;
 
       const allPartPrivacies = privacy.flatMap((typePrivacy) =>
@@ -67,7 +65,7 @@ route.post(
       const allPrivate = allPartPrivacies.every((value) => !Boolean(value));
 
       if (allPrivate) {
-        res.status(400).json({ error: "Bad request" });
+        res.status(200).json({ error: "This user's hasn't shared anything." });
         return;
       }
 
@@ -77,7 +75,9 @@ route.post(
       const userUpdates = [
         {
           updateOne: {
-            filter: { _id: new ObjectId(req.userId), moderationStatus: ModerationStatusEnum.ACTIVE },
+            filter: {
+              _id: new ObjectId(req.userId),
+            },
             update: {
               $set: {
                 "club.followingUserName": followingUserName,
@@ -88,21 +88,28 @@ route.post(
         },
         {
           updateOne: {
-            filter: { name: oldFollowingUserName, moderationStatus: ModerationStatusEnum.ACTIVE },
-            update: {
-              $set: { $inc: { "club.totalFollowers": -1 } },
+            filter: {
+              name: followingUserName,
             },
-          },
-        },
-        {
-          updateOne: {
-            filter: { name: followingUserName, moderationStatus: ModerationStatusEnum.ACTIVE },
             update: {
-              $set: { $inc: { "club.totalFollowers": 1 } },
+              $inc: { "club.totalFollowers": 1 },
             },
           },
         },
       ];
+
+      if (oldFollowingUserName) {
+        userUpdates.push({
+          updateOne: {
+            filter: {
+              name: oldFollowingUserName,
+            },
+            update: {
+              $inc: { "club.totalFollowers": -1 },
+            },
+          },
+        });
+      }
 
       await doWithRetries(async () =>
         db.collection("User").bulkWrite(userUpdates)
@@ -114,7 +121,7 @@ route.post(
           {
             $set: {
               followingUserName,
-              userName: name,
+              userName: userInfo.name,
               avatar,
               updatedAt: new Date(),
             },

@@ -83,7 +83,6 @@ async function handleStripeWebhook(event: Stripe.Event) {
       const newDate = new Date(currentValidUntil.getTime());
       newDate.setMonth(newDate.getMonth() + 1);
 
-      // Find the corresponding line item for this subscription
       const relatedLineItem = object.lines.data.find(
         (lineItem: any) => lineItem.price.id === item.priceId
       );

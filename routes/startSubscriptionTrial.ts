@@ -15,7 +15,7 @@ import updateAnalytics from "@/functions/updateAnalytics.js";
 
 const route = Router();
 
-const allowedSubscriptionNames = ["improvement", "coach", "advisor", "analyst"];
+const allowedSubscriptionNames = ["improvement", "advisor"];
 
 route.post(
   "/",

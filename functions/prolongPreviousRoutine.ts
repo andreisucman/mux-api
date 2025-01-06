@@ -39,7 +39,7 @@ export default async function prolongPreviousRoutine({
   userInfo,
   tasksToProlong,
 }: Props) {
-  const { _id: userId } = userInfo;
+  const { _id: userId, name: userName } = userInfo;
 
   try {
     if (!tasksToProlong || tasksToProlong.length === 0)
@@ -169,6 +169,7 @@ export default async function prolongPreviousRoutine({
     const newRoutineObject = await doWithRetries(async () =>
       db.collection("Routine").insertOne({
         userId: new ObjectId(userId),
+        userName,
         concerns,
         finalSchedule,
         status: "active",

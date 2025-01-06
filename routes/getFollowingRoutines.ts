@@ -40,7 +40,7 @@ route.get(
 
       if (followingUserName) {
         const isSubscriptionValid = await checkSubscriptionStatus({
-          userName: followingUserName,
+          userId: req.userId,
           subscriptionType: SubscriptionTypeNamesEnum.PEEK,
         });
 
@@ -60,7 +60,7 @@ route.get(
         filter.userId = new ObjectId(req.userId);
       }
 
-      const projection = { _id: 1, createdAt: 1, allTasks: 1, status: 1 };
+      const projection = { _id: 1, createdAt: 1, type: 1, allTasks: 1, status: 1 };
 
       const routines = await doWithRetries(async () =>
         db

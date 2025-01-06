@@ -30,7 +30,7 @@ export default function getOauthRedirectUri(redirectPath: string) {
       redirectUrl = process.env.PLANS_REDIRECT_URI;
       break;
     default:
-      redirectUrl = process.env.ROUTINES_REDIRECT_URI;
+      redirectUrl = process.env.WAITROOM_REDIRECT_URI;
   }
 
   return redirectUrl;

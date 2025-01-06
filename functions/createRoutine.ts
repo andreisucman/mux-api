@@ -53,6 +53,7 @@ export default async function createRoutine({
             demographics: 1,
             concerns: 1,
             ageInterval: 1,
+            name: 1,
             city: 1,
             country: 1,
             timeZone: 1,

@@ -75,8 +75,11 @@ export default async function checkTrackedRBAC({
       )
     );
 
-    const { club, name, subscriptions } =
-      (result.userInfo as unknown as Partial<UserType>) || {};
+    const {
+      name: requesterName,
+      club,
+      subscriptions,
+    } = (result.userInfo as unknown as Partial<UserType>) || {};
 
     const { peek } = subscriptions || {};
     const { validUntil } = peek || {};
@@ -88,12 +91,12 @@ export default async function checkTrackedRBAC({
       result.subscriptionActive = false;
     }
 
-    const { followingUserName: clubFollowingUserName } = club || {};
+    const { followingUserName: requesterFollowsUserName } = club;
 
-    if (clubFollowingUserName !== name) {
+    if (followingUserName !== requesterFollowsUserName) {
       if (throwOnError) {
         throw httpError(
-          `User ${name} is trying to access user ${clubFollowingUserName} who is not their following.`
+          `User ${requesterName} is trying to access user ${followingUserName} who is not their following.`
         );
       }
       result.isFollowing = false;

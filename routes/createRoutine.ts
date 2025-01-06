@@ -52,6 +52,7 @@ route.post(
       const {
         nextRoutine,
         nextScan,
+        name: userName,
         concerns: existingConcerns = [],
       } = userInfo;
       const relevantTypeRoutine = nextRoutine.find((obj) => obj.type === type);

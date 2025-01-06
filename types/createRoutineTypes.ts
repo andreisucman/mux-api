@@ -13,6 +13,7 @@ export type CreateRoutineUserInfoType = {
   demographics: DemographicsType;
   concerns: UserConcernType[];
   city: string;
+  name: string;
   country: string;
   timeZone: string;
   nextRoutine: NextActionType;
