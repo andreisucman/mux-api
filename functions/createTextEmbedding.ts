@@ -8,7 +8,7 @@ import { CategoryNameEnum } from "@/types.js";
 import updateSpend from "./updateSpend.js";
 
 type Props = {
-  userId: string;
+  userId?: string;
   text: string;
   dimensions: number;
   categoryName: CategoryNameEnum;

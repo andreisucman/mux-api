@@ -9,6 +9,7 @@ type Props = {
   userId: string;
   url: string;
   userAbout?: string;
+  calorieGoal?: number;
   categoryName: CategoryNameEnum;
 };
 
@@ -16,6 +17,7 @@ export default async function analyzeCalories({
   url,
   userId,
   userAbout,
+  calorieGoal,
   categoryName,
 }: Props) {
   try {
@@ -103,7 +105,12 @@ export default async function analyzeCalories({
       });
     }
 
-    return { ...analysisResponse, ...shouldEatResponse };
+    const share = Math.min(
+      Math.round((calorieGoal / analysisResponse.energy) * 100),
+      100
+    );
+
+    return { ...analysisResponse, ...shouldEatResponse, share };
   } catch (err) {
     throw httpError(err);
   }

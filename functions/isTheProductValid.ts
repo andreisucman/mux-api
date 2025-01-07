@@ -1,11 +1,14 @@
 import askRepeatedly from "functions/askRepeatedly.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import httpError from "@/helpers/httpError.js";
+import z from "zod";
+import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import { CategoryNameEnum } from "@/types.js";
+import { SuggestionType } from "@/types/findTheBestVariant.js";
 
 type Props = {
   userId: string;
-  variantData: { name: string; description: string; suggestion: string };
+  data: SuggestionType;
   taskDescription: string;
   categoryName: CategoryNameEnum;
 };
@@ -13,13 +16,20 @@ type Props = {
 export default async function isTheProductValid({
   userId,
   categoryName,
-  variantData,
+  data,
   taskDescription,
 }: Props) {
-  const { name, description, suggestion } = variantData;
+  const { name, suggestion } = data;
 
   try {
-    const systemContent = `The user gives you a description of a product from amazon.com. Your goal is to identify if this product is relevant for this task: ##${taskDescription}##. Your response is a json object with this format: {verdict: true if the product conforms the task description, false if not}`;
+    const ResponseFormat = z.object({
+      isValid: z
+        .boolean()
+        .describe(
+          "true if the product confirms the task description, false if not"
+        ),
+    });
+    const systemContent = `The user gives you the name of a product or service. Your goal is to identify if this product or service is relevant to this task: ##${taskDescription}##`;
 
     const runs: RunType[] = [
       {
@@ -27,9 +37,13 @@ export default async function isTheProductValid({
         content: [
           {
             type: "text",
-            text: `Product name: ${name}. Product description: ${description}. Product type: ${suggestion}.`,
+            text: `Product or service name: ${name}. Product or service type: ${suggestion}.`,
           },
         ],
+        responseFormat: zodResponseFormat(
+          ResponseFormat,
+          "IsTheProductValidResponseType"
+        ),
       },
     ];
 
@@ -42,7 +56,7 @@ export default async function isTheProductValid({
     });
 
     return {
-      ...variantData,
+      ...data,
       verdict: response.verdict,
     };
   } catch (err) {

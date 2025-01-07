@@ -3,19 +3,24 @@ import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import askRepeatedly from "functions/askRepeatedly.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import {
+  DraftSuggestionType,
   ProductType,
   SimplifiedProductType,
 } from "@/types/findTheBestVariant.js";
-import { UserInfoType, SuggestionType, UserConcernType, CategoryNameEnum } from "types.js";
+import {
+  UserInfoType,
+  SuggestionType,
+  UserConcernType,
+  CategoryNameEnum,
+} from "types.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import httpError from "@/helpers/httpError.js";
 
 type Props = {
-  key: string;
   analysisType: string;
   categoryName: CategoryNameEnum;
   userInfo: UserInfoType;
-  validProducts: ProductType[];
+  validProducts: DraftSuggestionType[];
   commonListOfFeatures: string[];
   taskDescription: string;
   concerns: UserConcernType[];
@@ -23,7 +28,6 @@ type Props = {
 };
 
 export default async function findTheBestVariant({
-  key,
   concerns,
   criteria,
   userInfo,
@@ -33,13 +37,15 @@ export default async function findTheBestVariant({
   taskDescription,
   commonListOfFeatures,
 }: Props) {
-  const simplifiedVariants = validProducts.map((variant: ProductType) => ({
-    name: variant.name,
-    description: variant.description,
-    asin: variant.asin,
-    rating: variant.rating,
-    unitPrice: variant.unitPrice,
-  }));
+  const simplifiedVariants = validProducts.map(
+    (variant: DraftSuggestionType) => ({
+      name: variant.name,
+      description: variant.description,
+      asin: variant.asin,
+      rating: variant.rating,
+      priceAndUnit: variant.priceAndUnit,
+    })
+  );
 
   const { _id: userId, demographics, specialConsiderations } = userInfo;
   const { sex, ageInterval, skinType, ethnicity } = demographics;
@@ -60,8 +66,8 @@ export default async function findTheBestVariant({
       (rec: ProductType, index: number) =>
         `Product ${index + 1}. Name: ${rec.name}. Description: ${
           rec.description
-        }. Asin: ${rec.asin}. Reviews rating: ${rec.rating}. Unit price: ${
-          rec.unitPrice
+        }. Asin: ${rec.asin}. Reviews rating: ${rec.rating}. Price and unit: ${
+          rec.priceAndUnit
         }`
     )
     .join("\n");
@@ -201,7 +207,7 @@ export default async function findTheBestVariant({
 
         if (!match) return;
 
-        return { ...match, ...product, key };
+        return { ...match, ...product };
       })
       .filter(Boolean);
 

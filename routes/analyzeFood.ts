@@ -29,7 +29,7 @@ const route = Router();
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { url } = req.body;
+    const { url, calorieGoal } = req.body;
 
     try {
       if (!url) {
@@ -135,6 +135,7 @@ route.post(
         url,
         userId: req.userId,
         userAbout,
+        calorieGoal,
         categoryName: CategoryNameEnum.FOODSCAN,
       });
 

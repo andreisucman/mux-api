@@ -4,16 +4,15 @@ import extractVariantFeatures from "functions/extractVariantFeatures.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import findTheBestVariant from "functions/findTheBestVariant.js";
 import isTheProductValid from "functions/isTheProductValid.js";
-import { ProductType, SuggestionVariant } from "@/types/findTheBestVariant.js";
+import {
+  SuggestionType,
+  ValidatedSuggestionType,
+} from "@/types/findTheBestVariant.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import httpError from "@/helpers/httpError.js";
 import { UserInfoType } from "types.js";
 import { CategoryNameEnum } from "types.js";
 import { db } from "init.js";
-
-interface ValidProductType extends ProductType {
-  verdict: boolean;
-}
 
 type Props = {
   userInfo: UserInfoType;
@@ -30,41 +29,30 @@ export default async function findProducts({
   criteria,
   categoryName,
 }: Props) {
-  const { productTypes, description: taskDescription, key } = taskData;
+  const { productTypes, description: taskDescription } = taskData;
 
   const { _id: userId, concerns } = userInfo;
 
   try {
-    /* find the related variants */
-    const variants = (await doWithRetries(async () =>
+    const suggestions = (await doWithRetries(async () =>
       db
-        .collection("SuggestionVariant")
+        .collection("Suggestion")
         .find({
           suggestion: { $in: productTypes },
         })
         .toArray()
-    )) as unknown as SuggestionVariant[];
+    )) as unknown as SuggestionType[];
 
-    let allVariants = variants.flatMap((v) =>
-      v.links
-        .map((l) => ({ ...l, suggestion: v.suggestion, variant: v.variant }))
-        .flat()
-    );
-
-    allVariants = allVariants.filter(
-      (v, index, self) => index === self.findIndex((i) => i.asin === v.asin)
-    ) as ProductType[];
-
-    const productCheckPromises = allVariants.map((v) =>
+    const productCheckPromises = suggestions.map((draft) =>
       doWithRetries(async () =>
         isTheProductValid({
           userId: String(userId),
           taskDescription,
-          variantData: v as ProductType,
+          data: draft,
           categoryName,
         })
       )
-    ) as Promise<ValidProductType>[];
+    );
 
     if (analysisType !== "findProductsForGeneralTasks") {
       await doWithRetries(async () =>
@@ -77,18 +65,17 @@ export default async function findProducts({
       );
     }
 
-    const productCheckObjectsArray: ValidProductType[] = await Promise.all(
-      productCheckPromises
-    );
+    const productCheckObjectsArray: ValidatedSuggestionType[] =
+      await Promise.all(productCheckPromises);
 
-    const validProducts: ValidProductType[] = productCheckObjectsArray
+    const validProducts = productCheckObjectsArray
       .filter((obj) => obj.verdict === true)
       .filter(Boolean);
 
-    const updatedValidProducts: ProductType[] = validProducts.map(
-      (item: ValidProductType) => {
+    const updatedValidProducts = validProducts.map(
+      (item: ValidatedSuggestionType) => {
         const { verdict, ...rest } = item;
-        return { ...rest, type: "product" };
+        return rest;
       }
     );
 
@@ -99,7 +86,7 @@ export default async function findProducts({
     const chosenProducts = [];
 
     for (const suggestionType of distinctSuggestionTypes) {
-      const filteredProducts: ProductType[] = updatedValidProducts.filter(
+      const filteredProducts = updatedValidProducts.filter(
         (object) => object.suggestion === suggestionType
       );
       const extractFeaturesPromises = filteredProducts.map((v) =>
@@ -152,7 +139,6 @@ export default async function findProducts({
         userInfo,
         criteria,
         concerns,
-        key,
       });
 
       chosenProducts.push(...resultArray);

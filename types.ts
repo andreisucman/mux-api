@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { Request } from "express";
 import { ModerationResultType } from "./functions/moderateContent.js";
+import { SuggestionType } from "./types/findTheBestVariant.js";
 
 export interface CustomRequest extends Request {
   userId?: string;
@@ -413,23 +414,6 @@ export type RecipeType = {
   instruction: string;
   image: string;
   calories: number;
-};
-
-export type SuggestionType = {
-  itemId: string;
-  asin: string;
-  name: string;
-  url: string;
-  type: "product" | "place";
-  image: string;
-  description: string;
-  rating: number;
-  suggestion: string;
-  variant: string;
-  rank: number;
-  reasoning: string;
-  analysisResult: { [key: string]: boolean } | null;
-  key: string;
 };
 
 export type RequiredSubmissionType = {

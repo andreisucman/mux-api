@@ -6,7 +6,7 @@ import { CategoryNameEnum } from "@/types.js";
 import { ObjectId } from "mongodb";
 
 type Props = {
-  userId: string;
+  userId?: string;
   functionName: string;
   categoryName: CategoryNameEnum;
   modelName: string;
@@ -39,17 +39,28 @@ export default async function updateSpend({
   };
 
   try {
-    await doWithRetries(async () =>
-      adminDb.collection("UserAnalytics").updateOne(
-        { userId: new ObjectId(userId), createdAt },
-        {
-          $inc: incrementPayload,
-        },
-        {
-          upsert: true,
-        }
-      )
-    );
+    if (userId) {
+      await doWithRetries(async () =>
+        adminDb.collection("UserAnalytics").updateOne(
+          { userId: new ObjectId(userId), createdAt },
+          {
+            $inc: incrementPayload,
+          },
+          {
+            upsert: true,
+          }
+        )
+      );
+
+      await doWithRetries(async () =>
+        db.collection("User").updateOne(
+          { _id: new ObjectId(userId) },
+          {
+            $inc: { netBenefit: totalCost * -1 },
+          }
+        )
+      );
+    }
 
     await doWithRetries(async () =>
       adminDb.collection("TotalAnalytics").updateOne(
@@ -59,15 +70,6 @@ export default async function updateSpend({
         },
         {
           upsert: true,
-        }
-      )
-    );
-
-    await doWithRetries(async () =>
-      db.collection("User").updateOne(
-        { _id: new ObjectId(userId) },
-        {
-          $inc: { netBenefit: totalCost * -1 },
         }
       )
     );

@@ -15,7 +15,7 @@ import httpError from "@/helpers/httpError.js";
 import { db } from "init.js";
 import checkSubscriptionStatus from "@/functions/checkSubscription.js";
 import getUserInfo from "@/functions/getUserInfo.js";
-import updateAnalytics from "@/functions/updateAnalytics.js";
+import vectorizeSuggestions from "@/functions/vectorizeSuggestions.js";
 
 const route = Router();
 
@@ -86,7 +86,7 @@ route.post(
       const { timeZone, concerns, demographics, specialConsiderations } =
         userInfo;
 
-      const suggestedProducts = await findProducts({
+      const suggestions = await findProducts({
         taskData: taskData as unknown as SolutionType,
         userInfo: {
           _id: new ObjectId(req.userId),
@@ -100,6 +100,11 @@ route.post(
         criteria,
       });
 
+      await vectorizeSuggestions({
+        suggestions,
+        categoryName: CategoryNameEnum.PRODUCTS,
+      });
+
       await doWithRetries(async () =>
         db.collection("Task").updateMany(
           {
@@ -109,7 +114,7 @@ route.post(
           },
           {
             $set: {
-              suggestions: suggestedProducts,
+              suggestions,
               productsPersonalized: true,
             },
           }
@@ -124,11 +129,6 @@ route.post(
           }
         )
       );
-
-      updateAnalytics({
-        userId: req.userId,
-        incrementPayload: { "overview.usage.productAnalyses": 1 },
-      });
     } catch (error) {
       next(error);
     }
