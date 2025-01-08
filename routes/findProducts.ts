@@ -10,6 +10,7 @@ import {
   CustomRequest,
   SolutionType,
   SubscriptionTypeNamesEnum,
+  UserInfoType,
 } from "types.js";
 import httpError from "@/helpers/httpError.js";
 import { db } from "init.js";
@@ -73,28 +74,20 @@ route.post(
 
       res.status(200).end();
 
-      const userInfo = await getUserInfo({
+      const userInfo = (await getUserInfo({
         userId: req.userId,
         projection: {
+          name: 1,
           timeZone: 1,
           concerns: 1,
           demographics: 1,
           specialConsiderations: 1,
         },
-      });
-
-      const { timeZone, concerns, demographics, specialConsiderations } =
-        userInfo;
+      })) as unknown as UserInfoType;
 
       const suggestions = await findProducts({
         taskData: taskData as unknown as SolutionType,
-        userInfo: {
-          _id: new ObjectId(req.userId),
-          specialConsiderations,
-          demographics,
-          timeZone,
-          concerns,
-        },
+        userInfo,
         categoryName: CategoryNameEnum.PRODUCTS,
         analysisType: taskKey,
         criteria,
@@ -115,7 +108,6 @@ route.post(
           {
             $set: {
               suggestions,
-              productsPersonalized: true,
             },
           }
         )

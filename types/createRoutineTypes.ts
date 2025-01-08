@@ -7,6 +7,7 @@ import {
   DemographicsType,
   NextActionType,
 } from "@/types.js";
+import { SuggestionType } from "./findTheBestVariant.js";
 
 export type CreateRoutineUserInfoType = {
   _id: ObjectId;
@@ -53,7 +54,6 @@ export type CreateRoutineAllSolutionsType = {
   productTypes: string[];
   isRecipe: boolean;
   recipe: RecipeType;
-  defaultSuggestions: DefaultSuggestionType[];
   restDays: number;
 };
 

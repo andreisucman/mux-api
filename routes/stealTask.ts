@@ -68,9 +68,7 @@ route.post(
         ...taskToAdd,
         _id: new ObjectId(),
         routineId: new ObjectId(currentRoutine._id),
-        suggestions: taskToAdd.defaultSuggestions,
         proofEnabled: true,
-        productsPersonalized: false,
         requiredSubmissions: taskToAdd.requiredSubmissions.map(
           (submission: RequiredSubmissionType) => ({
             _id: nanoid(),

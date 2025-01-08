@@ -89,7 +89,6 @@ export default async function createRoutine({
               restDays: 1,
               isRecipe: 1,
               productTypes: 1,
-              defaultSuggestions: 1,
               _id: 0,
             },
           }

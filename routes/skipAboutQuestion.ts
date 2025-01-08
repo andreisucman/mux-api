@@ -22,7 +22,7 @@ route.post(
     try {
       await doWithRetries(async () =>
         db
-          .collection("About")
+          .collection("FaqAnswer")
           .updateOne(
             { _id: new ObjectId(questionId), userId: new ObjectId(req.userId) },
             { $set: { skipped: isSkipped } }

@@ -40,7 +40,7 @@ route.post(
 
       const relatedAnswers = await doWithRetries(async () =>
         db
-          .collection("About")
+          .collection("FaqAnswer")
           .aggregate([
             {
               $facet: {

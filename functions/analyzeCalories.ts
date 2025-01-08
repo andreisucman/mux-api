@@ -110,7 +110,7 @@ export default async function analyzeCalories({
       100
     );
 
-    return { ...analysisResponse, ...shouldEatResponse, share };
+    return { ...analysisResponse, ...shouldEatResponse, share, calorieGoal };
   } catch (err) {
     throw httpError(err);
   }

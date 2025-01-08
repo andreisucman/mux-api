@@ -303,7 +303,7 @@ route.post(
       });
 
       /* find products */
-      const defaultSuggestions = await findProducts({
+      const suggestions = await findProducts({
         userInfo,
         criteria:
           "The quality of the product is the most important, then goes price.",
@@ -340,7 +340,7 @@ route.post(
                 calories: response.calories,
               },
               productTypes: response.productTypes,
-              defaultSuggestions,
+              suggestions,
             },
           }
         )

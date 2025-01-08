@@ -63,7 +63,7 @@ route.post("/", async (req, res, next) => {
       toUpdate.push({
         updateOne: {
           filter: { key: solution.key },
-          update: { $set: { defaultSuggestions: suggestions } },
+          update: { $set: { suggestions } },
         },
       });
     }

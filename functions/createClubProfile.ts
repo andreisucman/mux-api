@@ -137,7 +137,7 @@ export default async function createClubProfile({ userId }: Props) {
     );
 
     await doWithRetries(async () =>
-      db.collection("About").insertMany(aboutQuestions)
+      db.collection("FaqAnswer").insertMany(aboutQuestions)
     );
 
     return defaultClubData;

@@ -31,8 +31,6 @@ route.post(
               color: 1,
               startsAt: 1,
               suggestions: 1,
-              defaultSuggestions: 1,
-              productsPersonalized: 1,
             },
           }
         )

@@ -47,7 +47,7 @@ route.post(
 
       const questionObject = await doWithRetries(async () =>
         db
-          .collection("About")
+          .collection("FaqAnswer")
           .findOne(
             { _id: new ObjectId(questionId), userId: new ObjectId(req.userId) },
             { projection: { question: 1 } }
@@ -76,7 +76,7 @@ route.post(
 
       await doWithRetries(async () =>
         db
-          .collection("About")
+          .collection("FaqAnswer")
           .updateOne({ _id: new ObjectId(questionId) }, { $set: updatePayload })
       );
 
@@ -91,7 +91,7 @@ route.post(
 
         if (isSuspicious) {
           addSuspiciousRecord({
-            collection: "About",
+            collection: "FaqAnswer",
             moderationResults,
             contentId: String(questionId),
             userId: req.userId,

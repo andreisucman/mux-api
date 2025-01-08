@@ -3,7 +3,6 @@ dotenv.config();
 import { Router, Request, Response, NextFunction } from "express";
 import getUserData from "functions/getUserData.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import getUsersCountry from "@/helpers/getUsersCountry.js";
 import checkIfUserExists from "@/functions/checkIfUserExists.js";
 import createUser from "@/functions/createUser.js";
 import generateIpAndNumberFingerprint from "@/functions/generateIpAndNumberFingerprint.js";
@@ -54,13 +53,9 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
       return;
     }
 
-    const { country, city } = await getUsersCountry(req);
-
     const createUserResponse = await doWithRetries(
       async () =>
         await createUser({
-          city,
-          country,
           timeZone,
           tosAccepted,
           ipFingerprint,

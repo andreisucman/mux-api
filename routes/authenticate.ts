@@ -10,7 +10,6 @@ import { getTimezoneOffset, daysFrom } from "helpers/utils.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import createUser from "@/functions/createUser.js";
 import checkIfUserExists from "functions/checkIfUserExists.js";
-import getUsersCountry from "@/helpers/getUsersCountry.js";
 import { CustomRequest, ModerationStatusEnum, UserType } from "types.js";
 import sendConfirmationCode from "@/functions/sendConfirmationCode.js";
 import { getHashedPassword } from "helpers/utils.js";
@@ -80,8 +79,6 @@ route.post(
       let accessToken = crypto.randomBytes(32).toString("hex");
       let finalEmail = email;
       const auth = code ? "g" : "e";
-
-      const { country, city } = await getUsersCountry(req);
 
       const parsedState = state
         ? JSON.parse(decodeURIComponent(state as string))
@@ -211,9 +208,7 @@ route.post(
           _id: localUserId,
           password: hashedPassword,
           email: finalEmail,
-          city,
           auth,
-          country,
           timeZone,
           emailVerified: auth === "g",
           stripeUserId: stripeUser.id,

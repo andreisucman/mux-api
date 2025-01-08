@@ -60,7 +60,7 @@ route.get("/:followingUserName?", async (req: CustomRequest, res: Response) => {
       }
 
       const hasNewQuestions = await doWithRetries(async () =>
-        db.collection("About").findOne(hasNewQuestionsFilters)
+        db.collection("FaqAnswer").findOne(hasNewQuestionsFilters)
       );
 
       const hasAnswersFilters: { [key: string]: any } = {
@@ -75,7 +75,7 @@ route.get("/:followingUserName?", async (req: CustomRequest, res: Response) => {
       }
 
       const hasAnswers = await doWithRetries(async () =>
-        db.collection("About").findOne(hasAnswersFilters)
+        db.collection("FaqAnswer").findOne(hasAnswersFilters)
       );
 
       res.status(200).json({
@@ -92,7 +92,7 @@ route.get("/:followingUserName?", async (req: CustomRequest, res: Response) => {
     if (query) {
       pipeline.push({
         $search: {
-          index: "about_search_autocomplete",
+          index: "faq_search_autocomplete",
           compound: {
             should: [
               {
@@ -126,7 +126,7 @@ route.get("/:followingUserName?", async (req: CustomRequest, res: Response) => {
     pipeline.push({ $limit: 21 });
 
     const questions = await doWithRetries(async () =>
-      db.collection("About").aggregate(pipeline).toArray()
+      db.collection("FaqAnswer").aggregate(pipeline).toArray()
     );
 
     res.status(200).json({ message: { questions } });

@@ -9,6 +9,7 @@ export interface CustomRequest extends Request {
 
 export type UserInfoType = {
   _id: ObjectId;
+  name: string;
   timeZone: string;
   concerns: UserConcernType[];
   specialConsiderations: string;
@@ -144,7 +145,7 @@ export type StyleAnalysisType = {
   compareVotes: number;
   demographics: DemographicsType;
   type: TypeEnum;
-  goal: StyleGoalsType | null;
+  goalStyle: StyleGoalsType | null;
   hash: string;
   styleIcon: string;
   styleName: string;
@@ -430,7 +431,6 @@ export type TaskType = {
   routineId: ObjectId;
   name: string;
   key: string;
-  productsPersonalized: boolean;
   description: string;
   instruction: string;
   requisite: string;
@@ -446,7 +446,6 @@ export type TaskType = {
   recipe: RecipeType | null;
   example: { type: string; url: string } | null;
   suggestions: SuggestionType[] | null;
-  defaultSuggestions: SuggestionType[] | null;
   productTypes: string[] | null;
   startsAt: Date | null;
   expiresAt: Date | null;

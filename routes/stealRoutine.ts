@@ -77,9 +77,7 @@ route.post(
         ...task,
         userId: new ObjectId(req.userId),
         routineId: newRoutineId,
-        suggestions: task.defaultSuggestions,
         proofEnabled: true,
-        productsPersonalized: false,
         status: "active",
         requiredSubmissions: task.requiredSubmissions.map(
           (submission: RequiredSubmissionType) => ({

@@ -38,8 +38,6 @@ route.get(
                 icon: { $first: "$icon" },
                 startsAt: { $first: "$startsAt" },
                 suggestions: { $first: "$suggestions" },
-                defaultSuggestions: { $first: "$defaultSuggestions" },
-                productsPersonalized: { $first: "$productsPersonalized" },
               },
             },
             {
@@ -51,8 +49,6 @@ route.get(
                 icon: 1,
                 startsAt: 1,
                 suggestions: 1,
-                defaultSuggestions: 1,
-                productsPersonalized: 1,
               },
             },
             { $sort: { startsAt: 1, key: 1 } },

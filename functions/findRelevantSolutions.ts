@@ -19,9 +19,7 @@ export default async function findRelevantSolutions(embedding: number[]) {
         $project: {
           productTypes: 1,
           icon: 1,
-          defaultSuggestions: 1,
           suggestions: 1,
-          productsPersonalized: 1,
         },
       },
     ];

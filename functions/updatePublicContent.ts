@@ -45,7 +45,7 @@ export default async function updatePublicContent({
 
     await doWithRetries(async () =>
       db
-        .collection("About")
+        .collection("FaqAnswer")
         .updateMany({ userId: new ObjectId(userId) }, { $set: updatePayload })
     );
 

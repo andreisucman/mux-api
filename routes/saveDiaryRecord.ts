@@ -96,19 +96,17 @@ route.post(
         projection: { name: 1, avatar: 1, "club.privacy": 1 },
       });
 
-      const midnight = setUtcMidnight({ date: new Date(), timeZone });
-
       const newDiaryRecord: DiaryRecordType = {
         _id: new ObjectId(),
         type,
+        audio,
+        activity,
         userName: null,
         avatar: null,
         isPublic: false,
-        audio,
-        activity,
         userId: new ObjectId(req.userId),
         transcription: body.message,
-        createdAt: midnight,
+        createdAt: new Date(),
         moderationStatus: ModerationStatusEnum.ACTIVE,
       };
 

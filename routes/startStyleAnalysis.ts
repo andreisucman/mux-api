@@ -158,7 +158,7 @@ route.post(
         demographics: userInfo.demographics,
         latestHeadScoreDifference: 0,
         latestBodyScoreDifference: 0,
-        goal: null,
+        goalStyle: null,
         type,
         hash,
         mainUrl,

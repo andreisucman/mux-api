@@ -18,7 +18,7 @@ const collectionMap: { [key: string]: string } = {
   style: "StyleAnalysis",
   proof: "Proof",
   diary: "Diary",
-  about: "About",
+  about: "FaqAnswer",
 };
 
 route.post(

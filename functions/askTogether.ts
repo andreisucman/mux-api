@@ -15,7 +15,6 @@ type AskTogetherProps = {
   seed?: number;
   model: string;
   messages: { role: RoleEnum; content: string }[];
-  isJson?: boolean;
   functionName: string;
   categoryName: CategoryNameEnum;
 };

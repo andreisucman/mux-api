@@ -226,7 +226,6 @@ route.post(
         userId: new ObjectId(req.userId),
         routineId: new ObjectId(latestRelevantRoutine._id),
         example: { type: "image", url: image },
-        productsPersonalized: false,
         proofEnabled: true,
         status: "active",
         key: toSnakeCase(otherResponse.name),
@@ -287,14 +286,7 @@ route.post(
               filteredProductTypes.includes(suggestionObject?.suggestion)
             );
 
-          const relevantDefaultSuggestions = relevantSuggestionObjects
-            .flatMap((obj) => obj.defaultSuggestions)
-            .filter((suggestionObject) =>
-              filteredProductTypes.includes(suggestionObject?.suggestion)
-            );
-
           generalTaskInfo.suggestions = relevantSuggestions;
-          generalTaskInfo.defaultSuggestions = relevantDefaultSuggestions;
         }
       }
 

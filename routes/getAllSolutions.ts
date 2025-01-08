@@ -44,7 +44,6 @@ route.get("/", async (req: CustomRequest, res: Response) => {
       example: 1,
       name: 1,
       suggestions: 1,
-      defaultSuggestions: 1,
     };
 
     pipeline.push(

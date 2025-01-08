@@ -3,7 +3,13 @@ import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import criteria from "data/featureCriteria.js";
 import askRepeatedly from "./askRepeatedly.js";
 import filterImagesByFeature from "@/helpers/filterImagesByFeature.js";
-import { SexEnum, TypeEnum, PartEnum, ToAnalyzeType, CategoryNameEnum } from "types.js";
+import {
+  SexEnum,
+  TypeEnum,
+  PartEnum,
+  ToAnalyzeType,
+  CategoryNameEnum,
+} from "types.js";
 import { FeatureAnalysisResultType } from "@/types/analyzeFeatureType.js";
 import httpError from "@/helpers/httpError.js";
 
@@ -59,17 +65,15 @@ export default async function analyzeFeature({
     ];
 
     const { score, explanation, suggestion } = await askRepeatedly({
-      systemContent,
-      userId,
       runs,
+      userId,
+      systemContent,
       categoryName,
       functionName: "analyzeFeature",
     });
 
-    const roundedRate = Math.round(score);
-
     const response: FeatureAnalysisResultType = {
-      score: roundedRate,
+      score: Math.round(score),
       explanation,
       suggestion,
       feature,

@@ -13,9 +13,9 @@ import getUserInfo from "@/functions/getUserInfo.js";
 const route = Router();
 
 route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
-  const { goal, analysisId, userId, type } = req.body;
+  const { goalStyle, analysisId, userId, type } = req.body;
 
-  if (!goal || !analysisId || !type) {
+  if (!goalStyle || !analysisId || !type) {
     res.status(400).json({ error: "Bad request" });
     return;
   }
@@ -61,7 +61,7 @@ route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
       userId: userId,
       currentStyle: styleName,
       image: mainUrl.url,
-      styleGoals: goal,
+      styleGoals: goalStyle,
       categoryName: CategoryNameEnum.STYLESCAN,
       type,
     });
@@ -71,7 +71,7 @@ route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
         .collection("StyleAnalysis")
         .updateOne(
           { _id: new ObjectId(analysisId) },
-          { $set: { matchSuggestion: response, goal } }
+          { $set: { matchSuggestion: response, goalStyle } }
         )
     );
 

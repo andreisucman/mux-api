@@ -15,7 +15,7 @@ type Props = {
     | "Progress"
     | "StyleAnalysis"
     | "Proof"
-    | "About"
+    | "FaqAnswer"
     | "Diary"
     | "User"
     | "FoodAnalysis";

@@ -6,10 +6,10 @@ import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import { CustomRequest } from "types.js";
 import setUtcMidnight from "@/helpers/setUtcMidnight.js";
-import { DiaryActivityType } from "@/types/createDiaryRecordTypes.js";
-import { db } from "init.js";
+import { DiaryActivityType } from "@/types/saveDiaryRecordTypes.js";
 import { ModerationStatusEnum } from "types.js";
 import { daysFrom } from "@/helpers/utils.js";
+import { db } from "init.js";
 
 const route = Router();
 
@@ -72,11 +72,13 @@ route.post(
 
       for (const proof of todaysProof) {
         results.push({
+          contentId: proof._id,
           name: proof.taskName,
           url: proof.mainUrl.url,
           thumbnail: proof.mainThumbnail.url,
           icon: proof.icon,
-          type: proof.contentType,
+          categoryName: "proof",
+          contentType: proof.contentType,
         });
       }
 
@@ -98,10 +100,12 @@ route.post(
 
       for (const style of todaysStyles) {
         results.push({
+          contentId: style._id,
           name: style.styleName,
           url: style.mainUrl.url,
           icon: style.styleIcon,
-          type: "image",
+          categoryName: "style",
+          contentType: "image",
         });
       }
 
@@ -122,8 +126,10 @@ route.post(
 
       for (const food of todaysFood) {
         results.push({
+          contentId: food._id,
           url: food.url,
-          type: "image",
+          contentType: "image",
+          categoryName: "food",
         });
       }
 

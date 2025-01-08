@@ -10,7 +10,6 @@ import { tasksRequirePersonalizedInstruction } from "data/tasksRequirePersonaliz
 import {
   UserConcernType,
   UserInfoType,
-  SuggestionType,
   TypeEnum,
   TaskType,
   PartEnum,
@@ -153,8 +152,7 @@ export default async function createTasks({
           userId: new ObjectId(userId),
           status: "active" as TaskStatusEnum,
           ...matchingDraft,
-          suggestions: [] as SuggestionType[],
-          productsPersonalized: false,
+          suggestions: [],
           proofEnabled: true,
           type,
           part,
