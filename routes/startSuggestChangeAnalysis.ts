@@ -9,8 +9,7 @@ import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import httpError from "@/helpers/httpError.js";
 import { ModerationStatusEnum } from "types.js";
 import getUserInfo from "@/functions/getUserInfo.js";
-import createFaceEmbedding from "@/functions/createFaceEmbedding.js";
-import checkForTwins from "@/functions/checkForTwins.js";
+import checkAndRecordTwin from "@/functions/checkAndRecordTwin.js";
 
 const route = Router();
 
@@ -47,26 +46,16 @@ route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
 
     const { styleName, mainUrl } = styleAnalysisRecord;
 
-    const faceEmbedding = await createFaceEmbedding(mainUrl.url);
-    const twinIds = await checkForTwins({
-      userId: finalUserId,
+    const mustLogin = await checkAndRecordTwin({
       category: "style",
-      embedding: faceEmbedding,
       image: mainUrl.url,
+      payloadUserId: userId,
+      requestUserId: req.userId,
     });
 
-    if (twinIds.length > 0) {
-      if (req.userId) {
-        // add a twin record if logged in and twin exists
-        doWithRetries(async () =>
-          db.collection("User").updateOne({ _id: new ObjectId(finalUserId) }, {
-            $addToSet: { twinIds: finalUserId },
-          } as any)
-        );
-      } else {
-        res.status(200).json({ error: "must login" }); // prompt to login if not logged in and twin exists
-        return;
-      }
+    if (mustLogin) {
+      res.status(200).json({ error: "must login" });
+      return;
     }
 
     await doWithRetries(async () =>

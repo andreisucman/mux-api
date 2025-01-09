@@ -104,14 +104,7 @@ route.post(
       if (localUserId) {
         checkUserPresenceFilter._id = new ObjectId(localUserId);
       } else {
-        if (finalEmail) {
-          checkUserPresenceFilter.$or = [
-            { email: finalEmail },
-            { ipFingerprint },
-          ];
-        } else {
-          checkUserPresenceFilter.ipFingerprint = ipFingerprint;
-        }
+        checkUserPresenceFilter.email = finalEmail;
       }
 
       const userInfo = await checkIfUserExists({
@@ -182,7 +175,10 @@ route.post(
           userData = await getUserData({ userId: String(userId) });
 
           if (auth === "e") {
-            await sendConfirmationCode({ userId: String(userData._id), email });
+            await sendConfirmationCode({
+              userId: String(userData._id),
+              email: finalEmail,
+            });
           }
         }
 
@@ -212,13 +208,13 @@ route.post(
           email: finalEmail,
           auth,
           timeZone,
+          ipFingerprint,
           emailVerified: auth === "g",
           stripeUserId: stripeUser.id,
-          ipFingerprint,
         });
 
         if (auth === "e") {
-          await sendConfirmationCode({ userId: String(userData._id), email });
+          await sendConfirmationCode({ userId: String(userData._id), email: finalEmail });
         }
 
         updateAnalytics({

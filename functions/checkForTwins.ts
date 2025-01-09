@@ -37,7 +37,11 @@ export default async function checkForTwins({
       });
     } else {
       closestDocuments = await doWithRetries(async () =>
-        db.collection("TwinRegistry").find({ ipFingerprint }).toArray()
+        db
+          .collection("TwinRegistry")
+          .find({ ipFingerprint })
+          .project({ userId: 1 })
+          .toArray()
       );
     }
 
