@@ -8,7 +8,6 @@ type Props = {
   userId: string;
   image: string;
   categoryName: CategoryNameEnum;
-  condition: string;
 };
 
 export default async function checkPeopleSimilarity({
@@ -20,7 +19,7 @@ export default async function checkPeopleSimilarity({
     const messages = [
       {
         role: "system",
-        content: `On which of the following images the person is same? Respond with the indexes indicated with red. If there are no same people, respond with an empty array.`,
+        content: `On which of the following images the person is same with the person from the image 0? Respond with the indexes indicated with red. If there are no same people, respond with an empty array.`,
       },
       {
         role: "user",
@@ -37,7 +36,7 @@ export default async function checkPeopleSimilarity({
 
     const responseSchema = z.object({
       samePersonImageIndexes: z
-        .array(z.string())
+        .array(z.number())
         .describe("The indexes of the images where the person is same"),
     });
 

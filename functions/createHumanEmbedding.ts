@@ -4,7 +4,7 @@ dotenv.config();
 import httpError from "@/helpers/httpError.js";
 import doWithRetries from "@/helpers/doWithRetries.js";
 
-export default async function createFaceEmbedding(image: string) {
+export default async function createHumanEmbedding(image: string) {
   try {
     const response = await doWithRetries(async () =>
       fetch(`${process.env.PROCESSING_SERVER_URL}/createHumanEmbedding`, {

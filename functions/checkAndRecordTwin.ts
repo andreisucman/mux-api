@@ -1,10 +1,12 @@
 import checkForTwins from "./checkForTwins.js";
-import createFaceEmbedding from "./createFaceEmbedding.js";
+import createHumanEmbedding from "./createHumanEmbedding.js";
 import doWithRetries from "@/helpers/doWithRetries.js";
 import { ObjectId } from "mongodb";
 import { db } from "@/init.js";
 import httpError from "@/helpers/httpError.js";
 import generateIpAndNumberFingerprint from "./generateIpAndNumberFingerprint.js";
+import checkIfSuspended from "./checkIfSuspended.js";
+import { CategoryNameEnum } from "@/types.js";
 
 type Props = {
   requestUserId?: string;
@@ -13,28 +15,38 @@ type Props = {
   fingerprint?: number;
   ip?: string;
   category: "style" | "progress" | "food";
+  categoryName: CategoryNameEnum;
 };
 
 export default async function checkAndRecordTwin({
   requestUserId,
   payloadUserId,
+  categoryName,
   fingerprint,
   category,
   image,
   ip,
 }: Props) {
   let mustLogin = false;
+  let isSuspended = false;
 
   try {
     let embedding;
     let ipFingerprint;
 
     if (image) {
-      embedding = await createFaceEmbedding(image);
+      embedding = await createHumanEmbedding(image);
     }
     if (fingerprint && ip) {
       ipFingerprint = generateIpAndNumberFingerprint(ip, fingerprint);
     }
+
+    isSuspended = await checkIfSuspended({
+      embedding,
+      ipFingerprint,
+      category,
+      categoryName,
+    });
 
     const twinIds = await checkForTwins({
       userId: requestUserId || payloadUserId,
@@ -42,6 +54,7 @@ export default async function checkAndRecordTwin({
       embedding,
       ipFingerprint,
       image,
+      categoryName,
     });
 
     if (twinIds.length > 0) {
@@ -52,6 +65,7 @@ export default async function checkAndRecordTwin({
             .collection("User")
             .updateOne({ _id: new ObjectId(requestUserId) }, {
               $addToSet: { twinIds: requestUserId },
+              $inc: { twinCount: 1 },
             } as any)
         );
       } else {
@@ -61,6 +75,6 @@ export default async function checkAndRecordTwin({
   } catch (err) {
     throw httpError(err);
   } finally {
-    return mustLogin;
+    return { mustLogin, isSuspended };
   }
 }

@@ -1,6 +1,4 @@
-
 import "dotenv/config";
-import { ObjectId } from "mongodb";
 
 import httpError from "@/helpers/httpError.js";
 import findEmbeddings from "./findEmbeddings.js";
@@ -19,25 +17,22 @@ type Props = {
   categoryName: CategoryNameEnum;
 };
 
-export default async function checkForTwins({
-  userId,
-  image,
+export default async function checkIfSuspended({
   embedding,
   ipFingerprint,
-  category,
   categoryName,
+  userId,
 }: Props) {
   try {
-    let twinDocuments: any[] = [];
+    let suspendedDocuments: any[] = [];
 
     if (embedding) {
       const closestDocuments = await findEmbeddings({
-        collection: "TwinRegistry",
+        collection: "SuspendedUser",
         embedding,
-        index: "twin_registry_search_vector",
+        index: "suspended_user_search_vector",
         limit: 4,
         relatednessScore: 50,
-        filters: { category },
         projection: { image: 1 },
       });
 
@@ -45,46 +40,26 @@ export default async function checkForTwins({
         images: closestDocuments.map((doc) => doc.image),
       });
 
-      const twinIndexes = await checkPeopleSimilarity({
+      const suspendedIndexes = await checkPeopleSimilarity({
         categoryName,
         image: collageImage,
         userId,
       });
 
-      twinDocuments = closestDocuments.filter(
-        (doc, i, arr) => i > 0 && twinIndexes.includes(i)
+      suspendedDocuments = closestDocuments.filter(
+        (doc, i, arr) => i > 0 && suspendedIndexes.includes(i)
       );
     } else {
-      twinDocuments = await doWithRetries(async () =>
+      suspendedDocuments = await doWithRetries(async () =>
         db
-          .collection("TwinRegistry")
+          .collection("SuspendedUser")
           .find({ ipFingerprint })
           .project({ userId: 1 })
           .toArray()
       );
     }
 
-    const twinIds = twinDocuments.map((doc) => String(doc.userId));
-
-    if (userId) {
-      if (!twinIds.includes(String(userId))) {
-        const insertPayload: { [key: string]: any } = {
-          userId: new ObjectId(userId),
-          category,
-          createdAt: new Date(),
-        };
-
-        if (image) insertPayload.image = image;
-        if (embedding) insertPayload.embedding = embedding;
-        if (ipFingerprint) insertPayload.ipFingerprint = ipFingerprint;
-
-        doWithRetries(async () =>
-          db.collection("TwinRegistry").insertOne(insertPayload)
-        );
-      }
-    }
-
-    return twinIds;
+    return suspendedDocuments.length > 0;
   } catch (err) {
     throw httpError(err);
   }

@@ -64,12 +64,21 @@ route.post(
     }
 
     try {
-      const mustLogin = await checkAndRecordTwin({
+      const { mustLogin, isSuspended } = await checkAndRecordTwin({
         image,
         category: "progress",
         payloadUserId: userId,
         requestUserId: req.userId,
+        categoryName: CategoryNameEnum.PROGRESSSCAN,
       });
+
+      if (isSuspended) {
+        res.status(200).json({
+          error:
+            "You can't use the platform for violating our TOS in the past. If you think this is a mistake contact us at info@muxout.com",
+        });
+        return;
+      }
 
       if (mustLogin) {
         res.status(200).json({ error: "must login" });

@@ -46,12 +46,21 @@ route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
 
     const { styleName, mainUrl } = styleAnalysisRecord;
 
-    const mustLogin = await checkAndRecordTwin({
+    const { mustLogin, isSuspended } = await checkAndRecordTwin({
       category: "style",
       image: mainUrl.url,
       payloadUserId: userId,
       requestUserId: req.userId,
+      categoryName: CategoryNameEnum.STYLESCAN,
     });
+
+    if (isSuspended) {
+      res.status(200).json({
+        error:
+          "You can't use the platform for violating our TOS in the past. If you think this is a mistake contact us at info@muxout.com",
+      });
+      return;
+    }
 
     if (mustLogin) {
       res.status(200).json({ error: "must login" });
