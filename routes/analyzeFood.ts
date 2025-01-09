@@ -23,18 +23,45 @@ import getUserInfo from "@/functions/getUserInfo.js";
 import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.js";
 import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
+import generateIpAndNumberFingerprint from "@/functions/generateIpAndNumberFingerprint.js";
+import checkForTwins from "@/functions/checkForTwins.js";
 
 const route = Router();
 
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { url, calorieGoal } = req.body;
+    const { url, fingerprint, calorieGoal } = req.body;
+
+    if (!url) {
+      res.status(400).json({ error: "Bad request" });
+      return;
+    }
 
     try {
-      if (!url) {
-        res.status(400).json({ error: "Bad request" });
-        return;
+      const ipFingerprint = generateIpAndNumberFingerprint(
+        req.ip || req.socket.remoteAddress,
+        fingerprint
+      );
+
+      const twinIds = await checkForTwins({
+        userId: req.userId,
+        category: "food",
+        ipFingerprint,
+      });
+
+      if (twinIds.length > 0) {
+        if (req.userId) {
+          // add a twin record if logged in and twin exists
+          doWithRetries(async () =>
+            db.collection("User").updateOne({ _id: new ObjectId(req.userId) }, {
+              $addToSet: { twinIds: req.userId },
+            } as any)
+          );
+        } else {
+          res.status(200).json({ error: "must login" }); // prompt to login if not logged in and twin exists
+          return;
+        }
       }
 
       let isSafe = false;

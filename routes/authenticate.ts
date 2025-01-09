@@ -24,6 +24,8 @@ const route = Router();
 
 const allowedReferrers = [
   "scanFood",
+  "scanProgress",
+  "scanStyle",
   "analysisStyleResult",
   "analysisProgress",
   "clubRoutines",

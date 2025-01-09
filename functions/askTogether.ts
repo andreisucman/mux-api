@@ -2,7 +2,6 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import doWithRetries from "helpers/doWithRetries.js";
-import { RoleEnum } from "@/types/askOpenaiTypes.js";
 import { together } from "init.js";
 import { CategoryNameEnum } from "@/types.js";
 import updateSpend from "./updateSpend.js";
@@ -14,9 +13,10 @@ type AskTogetherProps = {
   userId: string;
   seed?: number;
   model: string;
-  messages: { role: RoleEnum; content: string }[];
+  messages: any[];
   functionName: string;
   categoryName: CategoryNameEnum;
+  responseFormat?: any;
 };
 
 const { LLAMA_2_11B_VISION_PRICE } = process.env;
@@ -34,6 +34,7 @@ async function askTogether({
   messages,
   functionName,
   categoryName,
+  responseFormat,
 }: AskTogetherProps) {
   try {
     if (!model) throw httpError("Model is missing");
@@ -50,6 +51,10 @@ async function askTogether({
       model,
       temperature: 0,
     };
+
+    if (responseFormat) {
+      options.response_format = { type: "json_object", schema: responseFormat };
+    }
 
     const completion = await doWithRetries(async () =>
       together.chat.completions.create(options as any)
@@ -70,7 +75,9 @@ async function askTogether({
       userId,
     });
 
-    return completion.choices[0].message.content;
+    const content = completion.choices[0].message.content;
+
+    return responseFormat ? JSON.parse(content) : content;
   } catch (err) {
     throw httpError(err);
   }

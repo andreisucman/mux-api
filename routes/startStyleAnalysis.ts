@@ -20,6 +20,8 @@ import moderateContent from "@/functions/moderateContent.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
+import createFaceEmbedding from "@/functions/createFaceEmbedding.js";
+import checkForTwins from "@/functions/checkForTwins.js";
 import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.js";
 
 const route = Router();
@@ -37,6 +39,30 @@ route.post(
     }
 
     try {
+      const faceEmbedding = await createFaceEmbedding(image);
+      const twinIds = await checkForTwins({
+        userId: finalUserId,
+        category: "style",
+        embedding: faceEmbedding,
+        image,
+      });
+
+      if (twinIds.length > 0) {
+        if (req.userId) {
+          // add a twin record if logged in and twin exists
+          doWithRetries(async () =>
+            db
+              .collection("User")
+              .updateOne({ _id: new ObjectId(finalUserId) }, {
+                $addToSet: { twinIds: finalUserId },
+              } as any)
+          );
+        } else {
+          res.status(200).json({ error: "must login" }); // prompt to login if not logged in and twin exists
+          return;
+        }
+      }
+
       await doWithRetries(async () =>
         db.collection("AnalysisStatus").updateOne(
           {

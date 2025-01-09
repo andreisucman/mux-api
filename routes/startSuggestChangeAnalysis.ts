@@ -9,6 +9,8 @@ import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import httpError from "@/helpers/httpError.js";
 import { ModerationStatusEnum } from "types.js";
 import getUserInfo from "@/functions/getUserInfo.js";
+import createFaceEmbedding from "@/functions/createFaceEmbedding.js";
+import checkForTwins from "@/functions/checkForTwins.js";
 
 const route = Router();
 
@@ -43,6 +45,30 @@ route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
     if (!styleAnalysisRecord)
       next(httpError(`Style analysis record ${analysisId} is not found`));
 
+    const { styleName, mainUrl } = styleAnalysisRecord;
+
+    const faceEmbedding = await createFaceEmbedding(mainUrl.url);
+    const twinIds = await checkForTwins({
+      userId: finalUserId,
+      category: "style",
+      embedding: faceEmbedding,
+      image: mainUrl.url,
+    });
+
+    if (twinIds.length > 0) {
+      if (req.userId) {
+        // add a twin record if logged in and twin exists
+        doWithRetries(async () =>
+          db.collection("User").updateOne({ _id: new ObjectId(finalUserId) }, {
+            $addToSet: { twinIds: finalUserId },
+          } as any)
+        );
+      } else {
+        res.status(200).json({ error: "must login" }); // prompt to login if not logged in and twin exists
+        return;
+      }
+    }
+
     await doWithRetries(async () =>
       db
         .collection("AnalysisStatus")
@@ -54,8 +80,6 @@ route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
     );
 
     res.status(200).end();
-
-    const { styleName, mainUrl } = styleAnalysisRecord;
 
     const response = await suggestChange({
       userId: userId,

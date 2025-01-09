@@ -23,7 +23,9 @@ import formatDate from "@/helpers/formatDate.js";
 import isImagePositionValid from "@/functions/isImagePositionValid.js";
 import httpError from "@/helpers/httpError.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
+import createFaceEmbedding from "@/functions/createFaceEmbedding.js";
 import { db } from "init.js";
+import checkForTwins from "@/functions/checkForTwins.js";
 
 const route = Router();
 
@@ -63,6 +65,30 @@ route.post(
     }
 
     try {
+      const faceEmbedding = await createFaceEmbedding(image);
+      const twinIds = await checkForTwins({
+        userId: finalUserId,
+        category: "progress",
+        embedding: faceEmbedding,
+        image,
+      });
+
+      if (twinIds.length > 0) {
+        if (req.userId) {
+          // add a twin record if logged in and twin exists
+          doWithRetries(async () =>
+            db
+              .collection("User")
+              .updateOne({ _id: new ObjectId(finalUserId) }, {
+                $addToSet: { twinIds: finalUserId },
+              } as any)
+          );
+        } else {
+          res.status(200).json({ error: "must login" }); // prompt to login if not logged in and twin exists
+          return;
+        }
+      }
+
       const { verdict: isPosiitonValid, message: changePositionMessage } =
         await isImagePositionValid({
           image,
