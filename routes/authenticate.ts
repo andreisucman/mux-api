@@ -10,12 +10,18 @@ import { getTimezoneOffset, daysFrom } from "helpers/utils.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import createUser from "@/functions/createUser.js";
 import checkIfUserExists from "functions/checkIfUserExists.js";
-import { CustomRequest, ModerationStatusEnum, UserType } from "types.js";
+import {
+  CategoryNameEnum,
+  CustomRequest,
+  ModerationStatusEnum,
+  UserType,
+} from "types.js";
 import sendConfirmationCode from "@/functions/sendConfirmationCode.js";
 import { getHashedPassword } from "helpers/utils.js";
 import createCsrf from "@/functions/createCsrf.js";
 import { defaultUser } from "@/data/defaultUser.js";
 import getUserData from "@/functions/getUserData.js";
+import checkIfSuspended from "@/functions/checkIfSuspended.js";
 import getOAuthAuthenticationData from "@/functions/getOAuthAuthenticationData.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
 import generateIpAndNumberFingerprint from "@/functions/generateIpAndNumberFingerprint.js";
@@ -64,7 +70,7 @@ route.post(
       if (!fingerprint) {
         res.status(200).json({
           error:
-            "Sorry, but your device is not supported. Try again using a different device.",
+            "Your device is not supported. Try again using a different device.",
         });
         return;
       }
@@ -76,6 +82,20 @@ route.post(
 
       const ip = req.ip || req.socket.remoteAddress;
       const ipFingerprint = generateIpAndNumberFingerprint(ip, fingerprint);
+
+      const isSuspended = await checkIfSuspended({
+        ipFingerprint,
+        userId: localUserId,
+        categoryName: CategoryNameEnum.OTHER,
+      });
+
+      if (isSuspended) {
+        res.status(200).json({
+          error:
+            "You can't use the platform for violating our TOS in the past. If you think this is a mistake contact us at info@muxout.com.",
+        });
+        return;
+      }
 
       let userData = null;
       let accessToken = crypto.randomBytes(32).toString("hex");
@@ -214,7 +234,10 @@ route.post(
         });
 
         if (auth === "e") {
-          await sendConfirmationCode({ userId: String(userData._id), email: finalEmail });
+          await sendConfirmationCode({
+            userId: String(userData._id),
+            email: finalEmail,
+          });
         }
 
         updateAnalytics({

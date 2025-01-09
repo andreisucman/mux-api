@@ -1,4 +1,3 @@
-
 import "dotenv/config";
 import { ObjectId } from "mongodb";
 
@@ -35,14 +34,14 @@ export default async function checkForTwins({
         collection: "TwinRegistry",
         embedding,
         index: "twin_registry_search_vector",
-        limit: 4,
+        limit: 3,
         relatednessScore: 50,
         filters: { category },
         projection: { image: 1 },
       });
 
       const collageImage = await createImageCollage({
-        images: closestDocuments.map((doc) => doc.image),
+        images: [image, ...closestDocuments.map((doc) => doc.image)],
       });
 
       const twinIndexes = await checkPeopleSimilarity({

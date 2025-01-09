@@ -44,7 +44,8 @@ export default async function checkAndRecordTwin({
     isSuspended = await checkIfSuspended({
       embedding,
       ipFingerprint,
-      category,
+      image,
+      userId: requestUserId || payloadUserId,
       categoryName,
     });
 

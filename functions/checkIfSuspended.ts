@@ -13,7 +13,6 @@ type Props = {
   image?: string;
   ipFingerprint?: string;
   embedding?: number[];
-  category: "style" | "progress" | "food";
   categoryName: CategoryNameEnum;
 };
 
@@ -22,6 +21,7 @@ export default async function checkIfSuspended({
   ipFingerprint,
   categoryName,
   userId,
+  image,
 }: Props) {
   try {
     let suspendedDocuments: any[] = [];
@@ -31,13 +31,13 @@ export default async function checkIfSuspended({
         collection: "SuspendedUser",
         embedding,
         index: "suspended_user_search_vector",
-        limit: 4,
+        limit: 3,
         relatednessScore: 50,
         projection: { image: 1 },
       });
 
       const collageImage = await createImageCollage({
-        images: closestDocuments.map((doc) => doc.image),
+        images: [image, ...closestDocuments.map((doc) => doc.image)],
       });
 
       const suspendedIndexes = await checkPeopleSimilarity({
