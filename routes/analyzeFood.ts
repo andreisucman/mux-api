@@ -24,6 +24,7 @@ import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.j
 import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
 import checkAndRecordTwin from "@/functions/checkAndRecordTwin.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -43,7 +44,6 @@ route.post(
         requestUserId: req.userId,
         ip: req.ip || req.socket.remoteAddress,
         fingerprint,
-        category: "food",
         categoryName: CategoryNameEnum.FOODSCAN,
       });
 
@@ -201,7 +201,7 @@ route.post(
         message: newRecord._id,
       });
     } catch (err) {
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

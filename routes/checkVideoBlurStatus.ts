@@ -3,6 +3,7 @@ import { ObjectId } from "mongodb";
 import { BlurredUrlType, CustomRequest } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { db } from "init.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -102,7 +103,7 @@ route.post(
         },
       });
     } catch (err) {
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

@@ -36,11 +36,9 @@ route.post(
     try {
       const text = `Description: ${updatedDescription}.<-->Instruction: ${updatedInstruction}.`;
 
-      const { isSafe } = await moderateContent(
-        {
-          content: [{ type: "text", text }],
-        }
-      );
+      const { isSafe } = await moderateContent({
+        content: [{ type: "text", text }],
+      });
 
       if (!isSafe) {
         res.status(200).json({
@@ -168,7 +166,7 @@ route.post(
 
       res.status(200).end();
     } catch (err) {
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

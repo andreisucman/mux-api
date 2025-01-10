@@ -1,7 +1,7 @@
 export class HttpError extends Error {
   status: number;
 
-  constructor(status: number, message: string) {
+  constructor(message: string, status: number) {
     super(message);
     this.status = status;
     Error.captureStackTrace(this, HttpError);
@@ -14,10 +14,10 @@ export default function httpError(
 ): HttpError {
   if (input instanceof Error) {
     const error = input as Error;
-    const httpError = new HttpError(status, error.message);
+    const httpError = new HttpError(error.message, status);
     httpError.stack = error.stack;
     return httpError;
   }
 
-  return new HttpError(status, input);
+  return new HttpError(input, status);
 }

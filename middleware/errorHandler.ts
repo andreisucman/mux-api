@@ -16,8 +16,10 @@ const errorHandler = (
 
   if (res.headersSent) return;
 
+  const message = err.status === 200 ? err.message : "Server error";
+
   res.status(err.status || 500).json({
-    error: err.message || "Server error",
+    error: message,
     status: err.status || 500,
   });
 };

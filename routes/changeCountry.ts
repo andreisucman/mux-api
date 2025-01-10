@@ -61,8 +61,8 @@ route.post(
       }
 
       res.status(200).json({ message: defaultClubPayoutData });
-    } catch (error) {
-      next(error);
+    } catch (err) {
+      next(httpError(err.message, err.status));
     }
   }
 );

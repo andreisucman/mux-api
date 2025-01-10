@@ -28,7 +28,7 @@ route.post(
 
       res.status(200).send();
     } catch (err) {
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

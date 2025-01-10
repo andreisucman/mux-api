@@ -187,7 +187,7 @@ route.post(
         tasksToInsert: draftTasks,
         keyOne: "tasksCreated",
       });
-      
+
       updateTasksAnalytics({
         userId: req.userId,
         tasksToInsert: draftTasks,
@@ -208,7 +208,7 @@ route.post(
         },
       });
     } catch (err) {
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

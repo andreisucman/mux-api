@@ -6,6 +6,7 @@ import { Router, Response, NextFunction } from "express";
 import { db } from "init.js";
 import { CustomRequest, ModerationStatusEnum } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -24,14 +25,17 @@ route.post(
         db
           .collection("User")
           .updateOne(
-            { _id: new ObjectId(req.userId), moderationStatus: ModerationStatusEnum.ACTIVE },
+            {
+              _id: new ObjectId(req.userId),
+              moderationStatus: ModerationStatusEnum.ACTIVE,
+            },
             { $set: { specialConsiderations: text.slice(0, 300) } }
           )
       );
 
       res.status(200).end();
     } catch (err) {
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

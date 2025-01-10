@@ -135,17 +135,17 @@ route.post(
         potentiallyHigherThan,
         latestScoresDifference,
         newSpecialConsiderations: specialConsiderations,
-        nutrition
+        nutrition,
       });
-    } catch (error) {
+    } catch (err) {
       await addAnalysisStatusError({
         operationKey: type,
         userId: String(finalUserId),
         message:
           "An unexpected error occured. Please try again and inform us if the error persists.",
-        originalMessage: error.message,
+        originalMessage: err.message,
       });
-      next(error);
+      next(httpError(err.message, err.status));
     }
   }
 );

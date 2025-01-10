@@ -6,6 +6,7 @@ import checkTrackedRBAC from "functions/checkTrackedRBAC.js";
 import { CustomRequest } from "types.js";
 import { ModerationStatusEnum } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -89,7 +90,7 @@ route.get(
 
       res.status(200).json({ message: styles });
     } catch (err) {
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

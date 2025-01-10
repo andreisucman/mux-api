@@ -92,7 +92,7 @@ route.post(
         },
       });
     } catch (err) {
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

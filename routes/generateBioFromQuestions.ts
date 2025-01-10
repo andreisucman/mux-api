@@ -9,6 +9,7 @@ import doWithRetries from "helpers/doWithRetries.js";
 import generateBioContent from "@/functions/generateBioContent.js";
 import { daysFrom } from "@/helpers/utils.js";
 import getUserInfo from "@/functions/getUserInfo.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -118,7 +119,7 @@ route.post(
         },
       });
     } catch (err) {
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

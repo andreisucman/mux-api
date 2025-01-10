@@ -8,6 +8,7 @@ import doWithRetries from "helpers/doWithRetries.js";
 import checkTrackedRBAC from "functions/checkTrackedRBAC.js";
 import { ModerationStatusEnum, CustomRequest } from "types.js";
 import { db } from "init.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -87,7 +88,7 @@ route.get(
 
       res.status(200).json({ message: filters });
     } catch (err) {
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

@@ -52,7 +52,10 @@ route.post(
         db
           .collection("User")
           .updateOne(
-            { _id: new ObjectId(userId), moderationStatus: ModerationStatusEnum.ACTIVE },
+            {
+              _id: new ObjectId(userId),
+              moderationStatus: ModerationStatusEnum.ACTIVE,
+            },
             { $set: { email: newEmail, emailVerified: true } }
           )
       );
@@ -61,7 +64,7 @@ route.post(
 
       res.status(200).json({ message: `Email changed to ${newEmail}.` });
     } catch (err) {
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

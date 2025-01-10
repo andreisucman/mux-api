@@ -1,5 +1,6 @@
 import { Router, NextFunction } from "express";
 import { promClientRegister } from "@/init.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -8,7 +9,7 @@ route.get("/", async (_, res, next: NextFunction) => {
     res.set("Content-Type", promClientRegister.contentType);
     res.end(await promClientRegister.metrics());
   } catch (err) {
-    next(err);
+    next(httpError(err.message, err.status));
   }
 });
 

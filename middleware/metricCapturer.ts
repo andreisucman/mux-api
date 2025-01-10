@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import * as promClient from "prom-client";
 import { promClientRegister } from "@/init.js";
+import httpError from "@/helpers/httpError.js";
 
 const httpRequestDurationMilliseconds = new promClient.Histogram({
   name: "http_request_duration_ms",
@@ -44,6 +45,6 @@ export default async function metricCapturer(
 
     next();
   } catch (err) {
-    next(err);
+    next(httpError(err.message, err.status));
   }
 }

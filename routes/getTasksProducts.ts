@@ -6,6 +6,7 @@ import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import { CustomRequest, TaskStatusEnum } from "types.js";
 import { db } from "init.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -58,7 +59,7 @@ route.get(
 
       res.status(200).json({ message: distinctTasks });
     } catch (err) {
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

@@ -7,6 +7,7 @@ import doWithRetries from "helpers/doWithRetries.js";
 import { CustomRequest } from "types.js";
 import { db } from "init.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -99,7 +100,7 @@ route.post(
 
       res.status(200).end();
     } catch (err) {
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

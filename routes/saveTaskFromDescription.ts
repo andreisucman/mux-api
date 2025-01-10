@@ -32,6 +32,7 @@ import filterRelevantProductTypes from "@/functions/filterRelevantTypes.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import moderateContent from "@/functions/moderateContent.js";
 import updateTasksAnalytics from "@/functions/updateTasksCreatedAnalytics.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -448,7 +449,7 @@ route.post(
         originalMessage: err.message,
         operationKey: type,
       });
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

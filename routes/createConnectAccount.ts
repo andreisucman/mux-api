@@ -9,6 +9,7 @@ import { CustomRequest, ModerationStatusEnum } from "types.js";
 import { ConnectParamsType } from "types/createConnectAccountTypes.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -160,7 +161,7 @@ route.post(
         }
       }
     } catch (err) {
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

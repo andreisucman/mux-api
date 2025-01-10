@@ -3,6 +3,7 @@ dotenv.config();
 import { Router, Response, NextFunction } from "express";
 import { CustomRequest } from "types.js";
 import sendConfirmationCode from "@/functions/sendConfirmationCode.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -13,7 +14,7 @@ route.post(
       await sendConfirmationCode({ userId: req.userId });
       res.status(200).end();
     } catch (err) {
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

@@ -8,6 +8,7 @@ import sendConfirmationCode from "@/functions/sendConfirmationCode.js";
 import invalidateTheCode from "@/functions/invalidateTheCode.js";
 import { db } from "init.js";
 import { ModerationStatusEnum } from "@/types.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -25,15 +26,13 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
     if (!status) {
       if (type === "expired") {
         const userInfo = await doWithRetries(() =>
-          db
-            .collection("User")
-            .findOne(
-              {
-                _id: new ObjectId(userId),
-                moderationStatus: ModerationStatusEnum.ACTIVE,
-              },
-              { projection: { email: 1 } }
-            )
+          db.collection("User").findOne(
+            {
+              _id: new ObjectId(userId),
+              moderationStatus: ModerationStatusEnum.ACTIVE,
+            },
+            { projection: { email: 1 } }
+          )
         );
 
         const { email } = userInfo;
@@ -64,7 +63,7 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
 
     res.status(200).json({ message: status });
   } catch (err) {
-    next(err);
+    next(httpError(err.message, err.status));
   }
 });
 

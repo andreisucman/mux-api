@@ -25,6 +25,7 @@ import checkIfSuspended from "@/functions/checkIfSuspended.js";
 import getOAuthAuthenticationData from "@/functions/getOAuthAuthenticationData.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
 import generateIpAndNumberFingerprint from "@/functions/generateIpAndNumberFingerprint.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -295,7 +296,7 @@ route.post(
 
       res.json({ message: userData });
     } catch (err) {
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

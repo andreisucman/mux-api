@@ -3,6 +3,7 @@ import { db } from "init.js";
 import { CustomRequest } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { ObjectId } from "mongodb";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -34,7 +35,7 @@ route.get("/:styleId", async (req: CustomRequest, res, next: NextFunction) => {
 
     res.status(200).json({ message: voteType });
   } catch (err) {
-    next(err);
+    next(httpError(err.message, err.status));
   }
 });
 

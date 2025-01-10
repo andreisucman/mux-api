@@ -5,6 +5,7 @@ import { CategoryNameEnum, UserInfoType } from "types.js";
 import addCronLog from "functions/addCronLog.js";
 import { db } from "init.js";
 import { AnyBulkWriteOperation } from "mongodb";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -89,7 +90,7 @@ route.post("/", async (req, res, next) => {
       isError: true,
       message: err.message,
     });
-    next(err);
+    next(httpError(err.message, err.status));
   }
 });
 

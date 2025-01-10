@@ -8,6 +8,7 @@ import { CustomRequest, TaskStatusEnum } from "types.js";
 import getLatestRoutineAndTasks from "functions/getLatestRoutineAndTasks.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -87,7 +88,7 @@ route.post(
 
       res.status(200).json({ message: response });
     } catch (err) {
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

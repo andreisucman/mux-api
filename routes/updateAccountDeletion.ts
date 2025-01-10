@@ -7,6 +7,7 @@ import doWithRetries from "helpers/doWithRetries.js";
 import { CustomRequest, ModerationStatusEnum } from "types.js";
 import { daysFrom } from "helpers/utils.js";
 import { db } from "init.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -26,20 +27,18 @@ route.post(
       }
 
       await doWithRetries(async () =>
-        db
-          .collection("User")
-          .updateOne(
-            {
-              _id: new ObjectId(req.userId),
-              moderationStatus: ModerationStatusEnum.ACTIVE,
-            },
-            { $set: payload }
-          )
+        db.collection("User").updateOne(
+          {
+            _id: new ObjectId(req.userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
+          { $set: payload }
+        )
       );
 
       res.status(200).json({ message: payload.deleteOn });
     } catch (err) {
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

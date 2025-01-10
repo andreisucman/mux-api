@@ -6,6 +6,7 @@ import { ObjectId } from "mongodb";
 import { CustomRequest, ModerationStatusEnum } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { db } from "init.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -21,17 +22,15 @@ route.get(
       }
 
       const foodAnalysisRecord = await doWithRetries(async () =>
-        db
-          .collection("FoodAnalysis")
-          .findOne({
-            _id: new ObjectId(analysisId),
-            moderationStatus: ModerationStatusEnum.ACTIVE,
-          })
+        db.collection("FoodAnalysis").findOne({
+          _id: new ObjectId(analysisId),
+          moderationStatus: ModerationStatusEnum.ACTIVE,
+        })
       );
 
       res.status(200).json({ message: foodAnalysisRecord });
     } catch (err) {
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

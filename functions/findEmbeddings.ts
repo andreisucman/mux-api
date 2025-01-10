@@ -46,6 +46,8 @@ export default async function findEmbeddings({
       db.collection(collection).aggregate(pipeline).toArray()
     );
 
+    console.log("closest documents", closestDocuments);
+
     const filtered = closestDocuments.filter(
       (doc) => doc.score > relatednessScore
     );

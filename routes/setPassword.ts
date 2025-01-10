@@ -8,6 +8,7 @@ import invalidateTheCode from "@/functions/invalidateTheCode.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { db } from "init.js";
 import { ModerationStatusEnum } from "@/types.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -41,22 +42,20 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
     };
 
     await doWithRetries(async () =>
-      db
-        .collection("User")
-        .updateOne(
-          {
-            _id: new ObjectId(userId),
-            moderationStatus: ModerationStatusEnum.ACTIVE,
-          },
-          updateObject
-        )
+      db.collection("User").updateOne(
+        {
+          _id: new ObjectId(userId),
+          moderationStatus: ModerationStatusEnum.ACTIVE,
+        },
+        updateObject
+      )
     );
 
     invalidateTheCode(accessToken);
 
     res.status(200).json({ message: "Password changed" });
   } catch (err) {
-    next(err);
+    next(httpError(err.message, err.status));
   }
 });
 

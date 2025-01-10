@@ -8,6 +8,7 @@ import sendConfirmationCode from "@/functions/sendConfirmationCode.js";
 import doWithRetries from "@/helpers/doWithRetries.js";
 import invalidateTheCode from "@/functions/invalidateTheCode.js";
 import { db } from "@/init.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -83,7 +84,7 @@ route.post(
       await sendConfirmationCode({ userId: req.userId, email: newEmail });
       res.status(200).end();
     } catch (err) {
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

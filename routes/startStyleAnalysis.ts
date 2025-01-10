@@ -22,6 +22,7 @@ import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
 import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.js";
 import checkAndRecordTwin from "@/functions/checkAndRecordTwin.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -40,7 +41,6 @@ route.post(
     try {
       const { mustLogin, isSuspended } = await checkAndRecordTwin({
         image,
-        category: "style",
         payloadUserId: localUserId,
         requestUserId: req.userId,
         categoryName: CategoryNameEnum.STYLESCAN,
@@ -283,14 +283,14 @@ route.post(
           });
         }
       }
-    } catch (error) {
+    } catch (err) {
       await addAnalysisStatusError({
         userId: String(finalUserId),
         operationKey: `style-${type}`,
         message: "An unexpected error occured. Please try again.",
-        originalMessage: error.message,
+        originalMessage: err.message,
       });
-      next(error);
+      next(httpError(err.message, err.status));
     }
   }
 );

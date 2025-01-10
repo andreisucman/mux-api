@@ -121,8 +121,8 @@ route.post(
           }
         )
       );
-    } catch (error) {
-      next(error);
+    } catch (err) {
+      next(httpError(err.message, err.status));
     }
   }
 );

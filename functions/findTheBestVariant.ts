@@ -3,16 +3,10 @@ import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import askRepeatedly from "functions/askRepeatedly.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import {
-  DraftSuggestionType,
-  ProductType,
   SimplifiedProductType,
+  ValidatedSuggestionType,
 } from "@/types/findTheBestVariant.js";
-import {
-  UserInfoType,
-  SuggestionType,
-  UserConcernType,
-  CategoryNameEnum,
-} from "types.js";
+import { UserInfoType, UserConcernType, CategoryNameEnum } from "types.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import httpError from "@/helpers/httpError.js";
 
@@ -20,7 +14,7 @@ type Props = {
   analysisType: string;
   categoryName: CategoryNameEnum;
   userInfo: UserInfoType;
-  validProducts: DraftSuggestionType[];
+  validProducts: ValidatedSuggestionType[];
   commonListOfFeatures: string[];
   taskDescription: string;
   concerns: UserConcernType[];
@@ -38,7 +32,7 @@ export default async function findTheBestVariant({
   commonListOfFeatures,
 }: Props) {
   const simplifiedVariants = validProducts.map(
-    (variant: DraftSuggestionType) => ({
+    (variant: ValidatedSuggestionType) => ({
       name: variant.name,
       description: variant.description,
       asin: variant.asin,
@@ -63,7 +57,7 @@ export default async function findTheBestVariant({
 
   const list = simplifiedVariants
     .map(
-      (rec: ProductType, index: number) =>
+      (rec: ValidatedSuggestionType, index: number) =>
         `Product ${index + 1}. Name: ${rec.name}. Description: ${
           rec.description
         }. Asin: ${rec.asin}. Reviews rating: ${rec.rating}. Price and unit: ${
@@ -201,7 +195,7 @@ export default async function findTheBestVariant({
 
     const { rankedProducts } = response || [];
 
-    const enrichedProducts: SuggestionType[] = rankedProducts
+    const enrichedProducts: ValidatedSuggestionType[] = rankedProducts
       .map((product: SimplifiedProductType) => {
         const match = validProducts.find((vp) => vp.asin === product.asin);
 

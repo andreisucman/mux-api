@@ -10,6 +10,7 @@ import { DiaryActivityType } from "@/types/saveDiaryRecordTypes.js";
 import { ModerationStatusEnum } from "types.js";
 import { daysFrom } from "@/helpers/utils.js";
 import { db } from "init.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -142,7 +143,7 @@ route.post(
 
       res.status(200).json({ message: results });
     } catch (err) {
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

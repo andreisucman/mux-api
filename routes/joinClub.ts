@@ -9,6 +9,7 @@ import doWithRetries from "helpers/doWithRetries.js";
 import formatDate from "@/helpers/formatDate.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
 import { db } from "init.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -66,7 +67,7 @@ route.post(
 
       res.status(200).json({ message: { club: clubData } });
     } catch (err) {
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

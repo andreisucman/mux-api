@@ -10,6 +10,7 @@ import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.j
 import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 import createTextEmbedding from "@/functions/createTextEmbedding.js";
 import { db } from "init.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -101,7 +102,7 @@ route.post(
 
       res.status(200).json({ message: updatePayload });
     } catch (err) {
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

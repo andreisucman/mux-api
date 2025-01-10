@@ -6,6 +6,7 @@ import doWithRetries from "helpers/doWithRetries.js";
 import createUser from "@/functions/createUser.js";
 import generateIpAndNumberFingerprint from "@/functions/generateIpAndNumberFingerprint.js";
 import { UserType } from "types.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -49,7 +50,7 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
       message: { ...createUserResponse, ...userData },
     });
   } catch (err) {
-    next(err);
+    next(httpError(err.message, err.status));
   }
 });
 

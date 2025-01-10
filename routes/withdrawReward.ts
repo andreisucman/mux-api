@@ -7,6 +7,7 @@ import doWithRetries from "helpers/doWithRetries.js";
 import formatAmountForStripe from "helpers/formatAmountForStripe.js";
 import { CustomRequest, ModerationStatusEnum } from "types.js";
 import { db, stripe } from "init.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -62,7 +63,7 @@ route.post(
         message: `You have initiated a withdrawal of $${balance}. For details check your wallet.`,
       });
     } catch (err) {
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

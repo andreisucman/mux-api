@@ -7,6 +7,7 @@ import { CustomRequest } from "types.js";
 import getUserData from "functions/getUserData.js";
 import getLatestRoutinesAndTasks from "functions/getLatestRoutineAndTasks.js";
 import getLatestStyles from "functions/getLatestStyles.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -77,7 +78,7 @@ route.post(
         },
       });
     } catch (err) {
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

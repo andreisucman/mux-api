@@ -9,6 +9,7 @@ import { CustomRequest, SubscriptionTypeNamesEnum } from "types.js";
 import checkSubscriptionStatus from "@/functions/checkSubscription.js";
 import aqp from "api-query-params";
 import { db } from "init.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -60,7 +61,13 @@ route.get(
         filter.userId = new ObjectId(req.userId);
       }
 
-      const projection = { _id: 1, createdAt: 1, type: 1, allTasks: 1, status: 1 };
+      const projection = {
+        _id: 1,
+        createdAt: 1,
+        type: 1,
+        allTasks: 1,
+        status: 1,
+      };
 
       const routines = await doWithRetries(async () =>
         db
@@ -76,7 +83,7 @@ route.get(
         message: routines,
       });
     } catch (err) {
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

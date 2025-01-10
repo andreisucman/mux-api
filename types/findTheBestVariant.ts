@@ -49,5 +49,5 @@ export type SuggestionType = {
 };
 
 export interface ValidatedSuggestionType extends SuggestionType {
-  verdict: boolean;
+  verdict?: boolean;
 }

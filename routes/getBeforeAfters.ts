@@ -3,6 +3,7 @@ import aqp from "api-query-params";
 import { db } from "init.js";
 import { CustomRequest } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -39,7 +40,7 @@ route.get("/", async (req: CustomRequest, res, next: NextFunction) => {
 
     res.status(200).json({ message: beforeAfters });
   } catch (err) {
-    next(err);
+    next(httpError(err.message, err.status));
   }
 });
 

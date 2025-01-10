@@ -47,7 +47,6 @@ route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
     const { styleName, mainUrl } = styleAnalysisRecord;
 
     const { mustLogin, isSuspended } = await checkAndRecordTwin({
-      category: "style",
       image: mainUrl.url,
       payloadUserId: userId,
       requestUserId: req.userId,
@@ -137,7 +136,7 @@ route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
         "An unexpected error occured. Please try again and inform us if the error persists.",
       originalMessage: err.message,
     });
-    next(err);
+    next(httpError(err.message, err.status));
   }
 });
 

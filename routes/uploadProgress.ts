@@ -68,19 +68,15 @@ route.post(
       const { mustLogin, isSuspended } =
         (await checkAndRecordTwin({
           image,
-          category: "progress",
           payloadUserId: userId,
           requestUserId: req.userId,
+          registryFilter: {
+            category: "progress",
+            type,
+            position,
+          },
           categoryName: CategoryNameEnum.PROGRESSSCAN,
         })) || {};
-
-      console.log(
-        "uploadProgress checkAndRecordTwin  { mustLogin, isSuspended }",
-        {
-          mustLogin,
-          isSuspended,
-        }
-      );
 
       if (isSuspended) {
         res.status(200).json({
@@ -95,19 +91,19 @@ route.post(
         return;
       }
 
-      const isClearlyVisible = await checkImageVisibility({
-        categoryName: CategoryNameEnum.PROGRESSSCAN,
-        image,
-        userId,
-      });
+      // const isClearlyVisible = await checkImageVisibility({
+      //   categoryName: CategoryNameEnum.PROGRESSSCAN,
+      //   image,
+      //   userId,
+      // });
 
-      if (isClearlyVisible) {
-        res.status(200).json({
-          error:
-            "The image is not clear. Try taking photos in daylight with no shadows obscuring your features.",
-        });
-        return;
-      }
+      // if (isClearlyVisible) {
+      //   res.status(200).json({
+      //     error:
+      //       "The image is not clear. Try taking photos in daylight with no shadows obscuring your features.",
+      //   });
+      //   return;
+      // }
 
       const { verdict: isPosiitonValid, message: changePositionMessage } =
         await checkImagePosition({
@@ -308,7 +304,7 @@ route.post(
         originalMessage: err.message,
       });
 
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

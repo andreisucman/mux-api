@@ -8,6 +8,7 @@ import { db } from "init.js";
 import signOut from "functions/signOut.js";
 import { CustomRequest } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
+import httpError from "@/helpers/httpError.js";
 
 const csrfProtection = new csrf();
 
@@ -90,7 +91,7 @@ async function checkAccess(
 
     next();
   } catch (err) {
-    next(err);
+    next(httpError(err.message, err.status));
   }
 }
 

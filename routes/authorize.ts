@@ -1,6 +1,7 @@
 import { Router, NextFunction } from "express";
 import { google } from "googleapis";
 import getOauthRedirectUri from "@/helpers/getOauthRedirectUri.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -34,7 +35,7 @@ route.get("/", async (req, res, next: NextFunction) => {
 
     res.status(200).json({ message: loginLink });
   } catch (err) {
-    next(err);
+    next(httpError(err.message, err.status));
   }
 });
 

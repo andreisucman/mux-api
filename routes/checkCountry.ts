@@ -4,6 +4,7 @@ import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import { RunType } from "types/askOpenaiTypes.js";
 import askRepeatedly from "functions/askRepeatedly.js";
 import { Router, Response, NextFunction } from "express";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -57,8 +58,8 @@ route.post(
       }
 
       res.status(200).json({ message: countryCode });
-    } catch (error) {
-      next(error);
+    } catch (err) {
+      next(httpError(err.message, err.status));
     }
   }
 );

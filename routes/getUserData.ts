@@ -3,6 +3,7 @@ import { CustomRequest, ModerationStatusEnum } from "types.js";
 import getUserData from "functions/getUserData.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import signOut from "@/functions/signOut.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -29,7 +30,7 @@ route.get(
 
       res.status(200).json({ message: userData });
     } catch (err) {
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

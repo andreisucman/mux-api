@@ -5,6 +5,7 @@ import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import { CustomRequest } from "@/types.js";
 import updateConcernsAnalytics from "../functions/updateConcernsAnalytics.js";
+import httpError from "@/helpers/httpError.js";
 
 type Props = {
   name: string;
@@ -56,7 +57,7 @@ route.post(
 
       res.status(200).end();
     } catch (err) {
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

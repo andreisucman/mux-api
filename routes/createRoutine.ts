@@ -181,8 +181,8 @@ route.post(
             { $set: { isRunning: false, progress: 99 } }
           )
       );
-    } catch (error) {
-      next(error);
+    } catch (err) {
+      next(httpError(err.message, err.status));
     }
   }
 );

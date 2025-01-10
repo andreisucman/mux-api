@@ -5,6 +5,7 @@ import { Router, Response, NextFunction } from "express";
 import { CustomRequest } from "types.js";
 import { stripe } from "init.js";
 import getUserInfo from "@/functions/getUserInfo.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -26,7 +27,7 @@ route.post(
 
       res.status(200).json({ message: portalSession.url });
     } catch (err) {
-      next(err);
+      next(httpError(err.message, err.status));
     }
   }
 );

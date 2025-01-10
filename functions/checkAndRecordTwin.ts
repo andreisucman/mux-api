@@ -13,8 +13,8 @@ type Props = {
   payloadUserId: string;
   image?: string;
   fingerprint?: number;
+  registryFilter?: { [key: string]: any };
   ip?: string;
-  category: "style" | "progress" | "food";
   categoryName: CategoryNameEnum;
 };
 
@@ -23,7 +23,7 @@ export default async function checkAndRecordTwin({
   payloadUserId,
   categoryName,
   fingerprint,
-  category,
+  registryFilter = {},
   image,
   ip,
 }: Props) {
@@ -51,10 +51,10 @@ export default async function checkAndRecordTwin({
 
     const twinIds = await checkForTwins({
       userId: requestUserId || payloadUserId,
-      category,
       embedding,
       ipFingerprint,
       image,
+      registryFilter,
       categoryName,
     });
 
@@ -76,6 +76,6 @@ export default async function checkAndRecordTwin({
 
     return { mustLogin, isSuspended };
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }
