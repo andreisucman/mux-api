@@ -55,7 +55,7 @@ route.get("/", async (req: CustomRequest, res: Response) => {
 
     res.status(200).json({ message: proof });
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 });
 

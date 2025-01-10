@@ -71,6 +71,6 @@ export default async function getLatestStyles({ userId }: Props) {
 
     return { head: headStyle, body: bodyStyle };
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

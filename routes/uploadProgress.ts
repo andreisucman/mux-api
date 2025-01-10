@@ -73,6 +73,7 @@ route.post(
           registryFilter: {
             category: "progress",
             type,
+            part,
             position,
           },
           categoryName: CategoryNameEnum.PROGRESSSCAN,

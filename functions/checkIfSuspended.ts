@@ -33,7 +33,7 @@ export default async function checkIfSuspended({
         embedding,
         index: "suspended_user_search_vector",
         limit: 3,
-        relatednessScore: 50,
+        relatednessScore: 0.5,
         projection: { image: 1 },
       });
 
@@ -48,8 +48,12 @@ export default async function checkIfSuspended({
           userId,
         });
 
-        suspendedDocuments = closestDocuments.filter(
-          (doc, i, arr) => i > 0 && suspendedIndexes.includes(String(i))
+        const filteredTwinIndexes = suspendedIndexes.filter(
+          (index) => index !== "0"
+        );
+
+        suspendedDocuments = closestDocuments.filter((doc, index) =>
+          filteredTwinIndexes.includes(String(index + 1))
         );
       }
     } else {
@@ -64,6 +68,6 @@ export default async function checkIfSuspended({
 
     return suspendedDocuments.length > 0;
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

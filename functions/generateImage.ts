@@ -74,6 +74,6 @@ export default async function generateImage({
 
     return spacesUrls[0];
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

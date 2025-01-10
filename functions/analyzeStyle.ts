@@ -203,6 +203,6 @@ export default async function analyzeStyle({
       suggestion,
     };
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

@@ -98,6 +98,6 @@ export default function getStreaksToIncrement({
 
     return { newStreakDates, streaksToIncrement };
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

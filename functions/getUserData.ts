@@ -15,14 +15,12 @@ async function getUserData({ userId }: Props) {
   try {
     const userInfo = await doWithRetries(
       async () =>
-        await db
-          .collection("User")
-          .findOne(
-            { _id: new ObjectId(userId) },
-            {
-              projection: defaultUserProjection,
-            }
-          )
+        await db.collection("User").findOne(
+          { _id: new ObjectId(userId) },
+          {
+            projection: defaultUserProjection,
+          }
+        )
     );
 
     if (!userInfo) return null;
@@ -37,7 +35,7 @@ async function getUserData({ userId }: Props) {
 
     return payload;
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }
 

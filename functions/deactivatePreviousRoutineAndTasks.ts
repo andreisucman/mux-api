@@ -26,6 +26,6 @@ export default async function deactivatePreviousRoutineAndTasks(
       )
     );
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

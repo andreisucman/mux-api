@@ -58,7 +58,7 @@ async function checkSubscriptionStatus({
 
     return false;
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }
 

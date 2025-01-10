@@ -56,6 +56,6 @@ export default async function generateBioContent({
       functionName: "updateAboutBio",
     });
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

@@ -27,56 +27,43 @@ export default async function checkForTwins({
   ipFingerprint,
   categoryName,
 }: Props) {
-  console.log("checkForTwins", {
-    userId,
-    image,
-    embedding,
-    ipFingerprint,
-    categoryName,
-  });
   try {
     let twinDocuments: any[] = [];
 
     if (embedding) {
-      console.log("checkForTwins line 41");
       const embeddingFilter: { [key: string]: any } = {
         ...registryFilter,
       };
       if (userId) embeddingFilter.userId = { $ne: new ObjectId(userId) };
-
-      console.log("checkForTwins line 46", embeddingFilter);
 
       const closestDocuments = await findEmbeddings({
         collection: "TwinRegistry",
         embedding,
         index: "twin_registry_search_vector",
         limit: 3,
-        relatednessScore: 50,
+        relatednessScore: 0.5,
         filters: embeddingFilter,
         projection: { image: 1 },
       });
-
-      console.log("checkForTwins line 58", closestDocuments);
 
       if (closestDocuments.length > 0) {
         const collageImage = await createImageCollage({
           images: [image, ...closestDocuments.map((doc) => doc.image)],
         });
 
-        console.log("checkForTwins line 65", collageImage);
         const twinIndexes = await checkPeopleSimilarity({
           categoryName,
           image: collageImage,
           userId,
         });
 
-        console.log("checkForTwins line 72 twinIndexes", twinIndexes);
-
-        twinDocuments = closestDocuments.filter(
-          (doc, i, arr) => i > 0 && twinIndexes.includes(String(i))
+        const filteredTwinIndexes = twinIndexes.filter(
+          (index) => index !== "0"
         );
 
-        console.log("checkForTwins line 78 twinDocuments", twinDocuments);
+        twinDocuments = closestDocuments.filter((doc, index) =>
+          filteredTwinIndexes.includes(String(index + 1))
+        );
       }
     } else {
       twinDocuments = await doWithRetries(async () =>
@@ -88,9 +75,7 @@ export default async function checkForTwins({
       );
     }
 
-    const twinIds = twinDocuments.map((doc) => String(doc.userId));
-
-    console.log("checkForTwins line 92 twinIds", twinIds);
+    const twinIds = twinDocuments.map((doc) => String(doc._id));
 
     if (twinIds.length === 0) {
       const updatePayload: { [key: string]: any } = {};
@@ -98,8 +83,6 @@ export default async function checkForTwins({
       if (image) updatePayload.image = image;
       if (embedding) updatePayload.embedding = embedding;
       if (ipFingerprint) updatePayload.ipFingerprint = ipFingerprint;
-
-      console.log("checkForTwins line 101 updatePayload", updatePayload);
 
       doWithRetries(async () =>
         db
@@ -114,6 +97,6 @@ export default async function checkForTwins({
 
     return twinIds;
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

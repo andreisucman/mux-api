@@ -31,7 +31,7 @@ async function getGoogleToken(code: string, redirectUrl: string) {
 
     return authData;
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }
 

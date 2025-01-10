@@ -44,6 +44,6 @@ export default async function updateAnalytics({
       )
     );
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

@@ -104,6 +104,6 @@ export default async function checkTrackedRBAC({
 
     return result;
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

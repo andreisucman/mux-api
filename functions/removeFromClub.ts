@@ -74,6 +74,6 @@ export default async function removeFromClub({ userId }: Props) {
       incrementPayload: { "overview.club.left": 1 },
     });
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

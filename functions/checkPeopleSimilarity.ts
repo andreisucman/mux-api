@@ -18,7 +18,7 @@ export default async function checkPeopleSimilarity({
     const messages = [
       {
         role: "system",
-        content: `On which of the following images the person is same with the person from the image 0? Your response is a string of indexes separated by commas. You can find the indexes in the top corner of the images written in red.`,
+        content: `Each image has a number in the top left corner. On which images the person is same? Respond with a a string of numbers separated by commas.`,
       },
       {
         role: "user",
@@ -30,6 +30,10 @@ export default async function checkPeopleSimilarity({
             },
           },
         ],
+      },
+      {
+        role: "system",
+        content: `YOUR RESPONSE IS A COMMA-SEAPRATED STRING OF NUMBERS.`,
       },
     ];
 
@@ -45,6 +49,6 @@ export default async function checkPeopleSimilarity({
 
     return commaSeparatedNumbers.split(",");
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

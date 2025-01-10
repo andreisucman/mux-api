@@ -39,6 +39,6 @@ export default async function cancelSubscription({
       }
     }
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

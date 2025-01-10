@@ -83,6 +83,6 @@ export default async function analyzeFeature({
 
     return response;
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

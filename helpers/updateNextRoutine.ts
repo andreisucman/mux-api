@@ -39,6 +39,6 @@ export default function updateNextRoutine({ nextRoutine, type, parts }: Props) {
       obj.type === type ? newTypeNextRoutine : obj
     );
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

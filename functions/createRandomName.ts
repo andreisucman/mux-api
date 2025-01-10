@@ -26,6 +26,6 @@ export default async function createRandomName() {
 
     return name;
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

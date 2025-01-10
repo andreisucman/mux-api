@@ -136,6 +136,6 @@ export default async function updateCurrentRoutine({
       keyTwo: "manuallyTasksCreated",
     });
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

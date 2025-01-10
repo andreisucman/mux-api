@@ -171,6 +171,6 @@ export default async function getLatestRoutinesAndTasks({ userId }: Props) {
 
     return { routines, tasks };
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

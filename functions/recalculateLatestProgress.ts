@@ -143,6 +143,6 @@ export default async function recalculateLatestProgress({
       potentiallyHigherThan: finalPotentiallyHigherThan,
     };
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

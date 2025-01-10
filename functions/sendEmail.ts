@@ -30,7 +30,7 @@ const sendEmail = async ({
     const sendEmailCommand = new SendEmailCommand(payload);
     await sesClient.send(sendEmailCommand);
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 };
 

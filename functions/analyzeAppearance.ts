@@ -383,6 +383,6 @@ export default async function analyzeAppearance({
 
     console.timeEnd("analyzeAppearance - finalization");
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

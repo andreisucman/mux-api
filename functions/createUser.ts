@@ -15,9 +15,7 @@ async function createUser(props: Partial<UserType>) {
       userId = new ObjectId();
     }
 
-    const timeZoneOffsetInMinutes = getTimezoneOffset(
-      otherProps.timeZone
-    );
+    const timeZoneOffsetInMinutes = getTimezoneOffset(otherProps.timeZone);
 
     const updatePayload = {
       ...defaultUser,
@@ -44,7 +42,7 @@ async function createUser(props: Partial<UserType>) {
 
     return { ...updatePayload, _id: userId };
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }
 

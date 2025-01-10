@@ -321,7 +321,7 @@ export default async function analyzePart({
         isSafe,
         moderationResults,
         isSuspicious,
-        userId
+        userId,
       });
 
       if (isSuspicious) {
@@ -336,6 +336,6 @@ export default async function analyzePart({
 
     return partResult;
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

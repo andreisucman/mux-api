@@ -19,7 +19,7 @@ export default async function findEmbeddings({
   projection,
   embedding,
   collection,
-  relatednessScore = 70,
+  relatednessScore = 0.7,
 }: FindEmbeddingsProps) {
   try {
     const pipeline: { [key: string]: any }[] = [
@@ -46,8 +46,6 @@ export default async function findEmbeddings({
       db.collection(collection).aggregate(pipeline).toArray()
     );
 
-    console.log("closest documents", closestDocuments);
-
     const filtered = closestDocuments.filter(
       (doc) => doc.score > relatednessScore
     );
@@ -57,6 +55,6 @@ export default async function findEmbeddings({
       return rest;
     });
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

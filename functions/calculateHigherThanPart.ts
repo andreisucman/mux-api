@@ -130,6 +130,6 @@ export default async function calculateHigherThanPart({
       partPotentiallyHigherThan: partAnalysis.lowerThanPotential as number,
     };
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

@@ -60,6 +60,6 @@ export default async function getCalorieGoal({
     });
     return response;
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

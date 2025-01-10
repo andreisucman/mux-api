@@ -43,6 +43,7 @@ route.post(
         image,
         payloadUserId: localUserId,
         requestUserId: req.userId,
+        registryFilter: { type, category: "style" },
         categoryName: CategoryNameEnum.STYLESCAN,
       });
 

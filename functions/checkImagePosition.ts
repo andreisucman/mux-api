@@ -37,7 +37,7 @@ export default async function checkImagePosition({
     const messages = [
       {
         role: "system",
-        content: `${requirement}. Respond with a "yes" if yes, and "no" if no. Say nothing more but yes or no.`,
+        content: `${requirement?.requirement}. SAY ONLY YES OR NO.`,
       },
       {
         role: "user",
@@ -49,6 +49,10 @@ export default async function checkImagePosition({
             },
           },
         ],
+      },
+      {
+        role: "system",
+        content: `ANSWER WITH A "YES" OR "NO" AND NOTHING ELSE.`,
       },
     ];
 
@@ -65,6 +69,6 @@ export default async function checkImagePosition({
       message: requirement.message,
     };
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

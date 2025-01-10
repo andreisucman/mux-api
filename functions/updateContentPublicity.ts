@@ -120,6 +120,6 @@ export default async function updateContentPublicity({
       )
     );
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

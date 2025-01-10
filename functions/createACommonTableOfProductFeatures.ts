@@ -92,6 +92,6 @@ export default async function createACommonTableOfProductFeatures({
 
     return commonFeaturesList;
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

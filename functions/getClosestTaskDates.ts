@@ -42,6 +42,6 @@ export default async function getClosestTaskDates({ userId }: Props) {
 
     return closestTasks;
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

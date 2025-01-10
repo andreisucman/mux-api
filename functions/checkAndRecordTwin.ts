@@ -1,12 +1,12 @@
+import { ObjectId } from "mongodb";
 import checkForTwins from "./checkForTwins.js";
 import createHumanEmbedding from "./createHumanEmbedding.js";
 import doWithRetries from "@/helpers/doWithRetries.js";
-import { ObjectId } from "mongodb";
-import { db } from "@/init.js";
 import httpError from "@/helpers/httpError.js";
 import generateIpAndNumberFingerprint from "./generateIpAndNumberFingerprint.js";
 import checkIfSuspended from "./checkIfSuspended.js";
 import { CategoryNameEnum } from "@/types.js";
+import { db } from "@/init.js";
 
 type Props = {
   requestUserId?: string;
@@ -18,6 +18,9 @@ type Props = {
   categoryName: CategoryNameEnum;
 };
 
+const skipCheckingTheseParts = ["mouth", "scalp"];
+const skipCheckingThesePositions = ["back"];
+
 export default async function checkAndRecordTwin({
   requestUserId,
   payloadUserId,
@@ -27,8 +30,15 @@ export default async function checkAndRecordTwin({
   image,
   ip,
 }: Props) {
-  let mustLogin = false;
-  let isSuspended = false;
+  let response = { mustLogin: false, isSuspended: false };
+
+  const { part, ...restFilter } = registryFilter;
+
+  const skip =
+    (part && skipCheckingTheseParts.includes(part)) ||
+    skipCheckingThesePositions.includes(restFilter.position);
+
+  if (skip) return response;
 
   try {
     let embedding;
@@ -37,11 +47,12 @@ export default async function checkAndRecordTwin({
     if (image) {
       embedding = await createHumanEmbedding(image);
     }
+    
     if (fingerprint && ip) {
       ipFingerprint = generateIpAndNumberFingerprint(ip, fingerprint);
     }
 
-    isSuspended = await checkIfSuspended({
+    response.isSuspended = await checkIfSuspended({
       embedding,
       ipFingerprint,
       image,
@@ -51,10 +62,10 @@ export default async function checkAndRecordTwin({
 
     const twinIds = await checkForTwins({
       userId: requestUserId || payloadUserId,
+      image,
       embedding,
       ipFingerprint,
-      image,
-      registryFilter,
+      registryFilter: restFilter,
       categoryName,
     });
 
@@ -70,11 +81,11 @@ export default async function checkAndRecordTwin({
             } as any)
         );
       } else {
-        mustLogin = true; // prompt to login if not logged in and twin exists
+        response.mustLogin = true; // prompt to login if not logged in and twin exists
       }
     }
 
-    return { mustLogin, isSuspended };
+    return response;
   } catch (err) {
     throw httpError(err.message, err.status);
   }

@@ -44,6 +44,7 @@ route.post(
         requestUserId: req.userId,
         ip: req.ip || req.socket.remoteAddress,
         fingerprint,
+        registryFilter: { category: "food" },
         categoryName: CategoryNameEnum.FOODSCAN,
       });
 

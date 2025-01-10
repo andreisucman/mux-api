@@ -55,6 +55,6 @@ export default async function filterRelevantProductTypes({
 
     return response.relevantProductTypes;
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

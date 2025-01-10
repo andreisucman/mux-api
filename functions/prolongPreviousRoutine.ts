@@ -197,6 +197,6 @@ export default async function prolongPreviousRoutine({
       keyTwo: "manuallyTasksCreated",
     });
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

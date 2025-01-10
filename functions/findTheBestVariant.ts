@@ -207,6 +207,6 @@ export default async function findTheBestVariant({
 
     return enrichedProducts;
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

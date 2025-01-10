@@ -34,6 +34,6 @@ export default async function getUserInfo({
 
     return userInfo;
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }

@@ -47,6 +47,6 @@ export default async function getReadyBlurredUrls({
 
     return { mainUrl, mainThumbnail, urls, thumbnails };
   } catch (err) {
-    throw httpError(err);
+    throw httpError(err.message, err.status);
   }
 }
