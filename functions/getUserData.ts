@@ -2,6 +2,7 @@ import { db } from "init.js";
 import { ObjectId } from "mongodb";
 import getLatestRoutinesAndTasks from "functions/getLatestRoutineAndTasks.js";
 import doWithRetries from "helpers/doWithRetries.js";
+import { defaultUserProjection } from "./checkIfUserExists.js";
 import httpError from "@/helpers/httpError.js";
 
 type Props = {
@@ -19,12 +20,7 @@ async function getUserData({ userId }: Props) {
           .findOne(
             { _id: new ObjectId(userId) },
             {
-              projection: {
-                password: 0,
-                netBenefit: 0,
-                warningCount: 0,
-                blockCount: 0,
-              },
+              projection: defaultUserProjection,
             }
           )
     );

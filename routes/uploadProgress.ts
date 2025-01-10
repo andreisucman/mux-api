@@ -21,9 +21,10 @@ import checkCanScan from "@/helpers/checkCanScan.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import analyzeAppearance from "functions/analyzeAppearance.js";
 import formatDate from "@/helpers/formatDate.js";
-import isImagePositionValid from "@/functions/isImagePositionValid.js";
 import httpError from "@/helpers/httpError.js";
+import checkImagePosition from "@/functions/checkImagePosition.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
+import checkImageVisibility from "@/functions/checkImageVisibility.js";
 import checkAndRecordTwin from "@/functions/checkAndRecordTwin.js";
 
 const route = Router();
@@ -64,13 +65,22 @@ route.post(
     }
 
     try {
-      const { mustLogin, isSuspended } = await checkAndRecordTwin({
-        image,
-        category: "progress",
-        payloadUserId: userId,
-        requestUserId: req.userId,
-        categoryName: CategoryNameEnum.PROGRESSSCAN,
-      });
+      const { mustLogin, isSuspended } =
+        (await checkAndRecordTwin({
+          image,
+          category: "progress",
+          payloadUserId: userId,
+          requestUserId: req.userId,
+          categoryName: CategoryNameEnum.PROGRESSSCAN,
+        })) || {};
+
+      console.log(
+        "uploadProgress checkAndRecordTwin  { mustLogin, isSuspended }",
+        {
+          mustLogin,
+          isSuspended,
+        }
+      );
 
       if (isSuspended) {
         res.status(200).json({
@@ -85,8 +95,22 @@ route.post(
         return;
       }
 
+      const isClearlyVisible = await checkImageVisibility({
+        categoryName: CategoryNameEnum.PROGRESSSCAN,
+        image,
+        userId,
+      });
+
+      if (isClearlyVisible) {
+        res.status(200).json({
+          error:
+            "The image is not clear. Try taking photos in daylight with no shadows obscuring your features.",
+        });
+        return;
+      }
+
       const { verdict: isPosiitonValid, message: changePositionMessage } =
-        await isImagePositionValid({
+        await checkImagePosition({
           image,
           part,
           position,
@@ -283,6 +307,7 @@ route.post(
         message: "An unexprected error occured. Please try again.",
         originalMessage: err.message,
       });
+
       next(err);
     }
   }

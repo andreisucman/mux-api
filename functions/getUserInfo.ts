@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import doWithRetries from "@/helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 import { db } from "@/init.js";
+import { defaultUserProjection } from "./checkIfUserExists.js";
 import { ModerationStatusEnum, UserType } from "@/types.js";
 
 type Props = {
@@ -13,7 +14,7 @@ type Props = {
 export default async function getUserInfo({
   userId,
   userName,
-  projection = {},
+  projection = defaultUserProjection,
 }: Props): Promise<Partial<UserType> | null> {
   try {
     if (!userId && !userName) throw httpError("No userId and name");

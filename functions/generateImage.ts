@@ -34,7 +34,7 @@ export default async function generateImage({
       messages,
       userId,
       categoryName,
-      model: "meta-llama/Llama-3_2-11B-Vision-Instruct-Turbo",
+      model: "meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo",
       functionName: "generateImage",
     });
 

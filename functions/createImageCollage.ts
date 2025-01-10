@@ -9,7 +9,7 @@ type Props = {
 export default async function createImageCollage({ images }: Props) {
   try {
     const collageResponse = await doWithRetries(async () =>
-      fetch(`${process.env.PROCESSING_SERVER}/createCollage`, {
+      fetch(`${process.env.PROCESSING_SERVER_URL}/createCollage`, {
         method: "POST",
         body: JSON.stringify({
           images,
@@ -22,7 +22,7 @@ export default async function createImageCollage({ images }: Props) {
     );
 
     if (!collageResponse.ok) {
-      throw httpError(`Network failed`);
+      throw httpError("Server error");
     }
 
     const { message: collageImage } = (await collageResponse.json()) || {};

@@ -243,7 +243,7 @@ route.post(
         updateAnalytics({
           userId: req.userId,
           incrementPayload: {
-            "overview.user.registeredUsers": 1,
+            "overview.user.count.registeredUsers": 1,
             [`overview.acquisition.signups.${referrer}`]: 1,
           },
         });

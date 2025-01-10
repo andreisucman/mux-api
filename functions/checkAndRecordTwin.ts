@@ -73,9 +73,9 @@ export default async function checkAndRecordTwin({
         mustLogin = true; // prompt to login if not logged in and twin exists
       }
     }
+
+    return { mustLogin, isSuspended };
   } catch (err) {
     throw httpError(err);
-  } finally {
-    return { mustLogin, isSuspended };
   }
 }

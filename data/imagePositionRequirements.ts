@@ -1,4 +1,4 @@
-export const isImagePositionValidRequirements = [
+export const imagePositionRequirements = [
   {
     part: "face",
     position: "front",
@@ -20,7 +20,8 @@ export const isImagePositionValidRequirements = [
   {
     part: "mouth",
     position: "front",
-    requirement: "Is this a close up photo of an open mouth only, not of the whole face?",
+    requirement:
+      "Is this a close up photo of an open mouth only, not of the whole face?",
     message: "This must be a close up photo of your open mouth.",
   },
   {

@@ -142,3 +142,14 @@ export function getTimezoneOffset(timeZone: string) {
   const dt = DateTime.now().setZone(timeZone);
   return dt.offset;
 }
+
+export function cleanString(str: string) {
+  return str
+    .replace(/[^a-zA-Z]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+export function keepNumbersAndCommas(str: string) {
+  return str.replace(/[^0-9,]/g, "");
+}

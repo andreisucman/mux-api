@@ -6,6 +6,8 @@ import doWithRetries from "@/helpers/doWithRetries.js";
 
 export default async function createHumanEmbedding(image: string) {
   try {
+    console.log("createHumanEmbedding image", image);
+
     const response = await doWithRetries(async () =>
       fetch(`${process.env.PROCESSING_SERVER_URL}/createHumanEmbedding`, {
         method: "POST",
@@ -18,9 +20,10 @@ export default async function createHumanEmbedding(image: string) {
     );
 
     if (!response.ok) {
-      const json = await response.json();
+      const data = await response.json();
+      console.log("createHumanEmbedding response not ok data", data);
 
-      throw httpError(json.error);
+      throw httpError(data.error);
     }
 
     const data = await response.json();

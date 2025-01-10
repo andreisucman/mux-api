@@ -1,12 +1,13 @@
-import "dotenv/config";
+import * as dotenv from "dotenv";
+dotenv.config();
 
 import httpError from "@/helpers/httpError.js";
 import findEmbeddings from "./findEmbeddings.js";
 import doWithRetries from "@/helpers/doWithRetries.js";
-import { db } from "@/init.js";
 import checkPeopleSimilarity from "./checkPeopleSimilarity.js";
-import { CategoryNameEnum } from "@/types.js";
 import createImageCollage from "./createImageCollage.js";
+import { CategoryNameEnum } from "@/types.js";
+import { db } from "@/init.js";
 
 type Props = {
   userId?: string;
@@ -36,19 +37,21 @@ export default async function checkIfSuspended({
         projection: { image: 1 },
       });
 
-      const collageImage = await createImageCollage({
-        images: [image, ...closestDocuments.map((doc) => doc.image)],
-      });
+      if (closestDocuments.length > 0) {
+        const collageImage = await createImageCollage({
+          images: [image, ...closestDocuments.map((doc) => doc.image)],
+        });
 
-      const suspendedIndexes = await checkPeopleSimilarity({
-        categoryName,
-        image: collageImage,
-        userId,
-      });
+        const suspendedIndexes = await checkPeopleSimilarity({
+          categoryName,
+          image: collageImage,
+          userId,
+        });
 
-      suspendedDocuments = closestDocuments.filter(
-        (doc, i, arr) => i > 0 && suspendedIndexes.includes(i)
-      );
+        suspendedDocuments = closestDocuments.filter(
+          (doc, i, arr) => i > 0 && suspendedIndexes.includes(String(i))
+        );
+      }
     } else {
       suspendedDocuments = await doWithRetries(async () =>
         db

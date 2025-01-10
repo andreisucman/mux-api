@@ -1,7 +1,7 @@
 import { CategoryNameEnum } from "@/types.js";
 import askTogether from "./askTogether.js";
 import httpError from "@/helpers/httpError.js";
-import { keepNumbersAndCommas } from "@/helpers/utils.js";
+import { cleanString } from "@/helpers/utils.js";
 
 type Props = {
   userId: string;
@@ -9,7 +9,7 @@ type Props = {
   categoryName: CategoryNameEnum;
 };
 
-export default async function checkPeopleSimilarity({
+export default async function checkImageVisibility({
   userId,
   image,
   categoryName,
@@ -18,7 +18,7 @@ export default async function checkPeopleSimilarity({
     const messages = [
       {
         role: "system",
-        content: `On which of the following images the person is same with the person from the image 0? Your response is a string of indexes separated by commas. You can find the indexes in the top corner of the images written in red.`,
+        content: `Is the object on the image clearly visible with no shadows obscuring it's features? Respond with a "yes" if yes, and "no" if no. Say nothing more but yes or no.`,
       },
       {
         role: "user",
@@ -33,17 +33,15 @@ export default async function checkPeopleSimilarity({
       },
     ];
 
-    const response = await askTogether({
+    const verdict = await askTogether({
       messages,
       userId,
       categoryName,
       model: "meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo",
-      functionName: "checkPeopleSimilarity",
+      functionName: "checkImageVisibility",
     });
 
-    const commaSeparatedNumbers = keepNumbersAndCommas(response);
-
-    return commaSeparatedNumbers.split(",");
+    return cleanString(verdict) === "yes";
   } catch (err) {
     throw httpError(err);
   }

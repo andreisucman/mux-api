@@ -1,7 +1,6 @@
 import doWithRetries from "helpers/doWithRetries.js";
 import { db } from "init.js";
 import httpError from "@/helpers/httpError.js";
-import { ModerationStatusEnum } from "@/types.js";
 
 type FindEmbeddingsProps = {
   embedding: number[];
@@ -16,7 +15,7 @@ type FindEmbeddingsProps = {
 export default async function findEmbeddings({
   index,
   limit = 2,
-  filters,
+  filters = {},
   projection,
   embedding,
   collection,
@@ -32,10 +31,7 @@ export default async function findEmbeddings({
           queryVector: embedding,
           numCandidates: Math.min(limit * 20, 150),
           distanceMetric: "cosine",
-          filter: {
-            moderationStatus: ModerationStatusEnum.ACTIVE,
-            ...filters,
-          },
+          filter: filters,
         },
       },
     ];

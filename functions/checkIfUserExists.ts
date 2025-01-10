@@ -8,7 +8,18 @@ type Props = {
   projection?: { [key: string]: number };
 };
 
-async function checkIfUserExists({ filter, projection = {} }: Props) {
+export const defaultUserProjection = {
+  netBenefit: 0,
+  ipFingerprint: 0,
+  password: 0,
+  warningCount: 0,
+  blockCount: 0,
+};
+
+async function checkIfUserExists({
+  filter,
+  projection = defaultUserProjection,
+}: Props) {
   try {
     const result = (await doWithRetries(
       async () =>
