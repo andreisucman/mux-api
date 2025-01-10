@@ -46,12 +46,20 @@ route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
 
     const { styleName, mainUrl } = styleAnalysisRecord;
 
-    const { mustLogin, isSuspended } = await checkAndRecordTwin({
+    const { mustLogin, isSuspended, errorMessage } = await checkAndRecordTwin({
       image: mainUrl.url,
       payloadUserId: userId,
       requestUserId: req.userId,
+      registryFilter: { type, category: "style" },
       categoryName: CategoryNameEnum.STYLESCAN,
     });
+
+    if (errorMessage) {
+      res.status(200).json({
+        error: errorMessage,
+      });
+      return;
+    }
 
     if (isSuspended) {
       res.status(200).json({

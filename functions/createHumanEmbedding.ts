@@ -17,27 +17,36 @@ export default async function createHumanEmbedding(image: string) {
       })
     );
 
+    let result = {
+      message: null as number[],
+      errorMessage: "",
+    };
+
     if (!response.ok) {
       const data = await response.json();
 
       if (data.error === "person not found") {
-        throw httpError("Can't see anyone on the photo.", 200);
+        result.errorMessage = "Can't see anyone on the photo.";
+        return result;
       }
 
       if (data.error === "more than one person") {
-        throw httpError("There can only be one person on the photo.", 200);
+        result.errorMessage = "There can only be one person on the photo.";
+        return result;
       }
 
       if (data.error === "minor") {
-        throw httpError("The person on the image seems to be a minor.", 200);
+        result.errorMessage = "The person on the photo appears to be a minor.";
+        return result;
       }
 
       throw httpError(data.error);
     }
 
     const data = await response.json();
+    result.message = data.message;
 
-    return data.message;
+    return result;
   } catch (err) {
     throw httpError(err.message, err.status);
   }

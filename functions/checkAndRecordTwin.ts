@@ -30,7 +30,7 @@ export default async function checkAndRecordTwin({
   image,
   ip,
 }: Props) {
-  let response = { mustLogin: false, isSuspended: false };
+  let response = { mustLogin: false, isSuspended: false, errorMessage: "" };
 
   const { part, ...restFilter } = registryFilter;
 
@@ -45,9 +45,16 @@ export default async function checkAndRecordTwin({
     let ipFingerprint;
 
     if (image) {
-      embedding = await createHumanEmbedding(image);
+      const { errorMessage, message } = await createHumanEmbedding(image);
+
+      if (errorMessage) {
+        response.errorMessage = errorMessage as string;
+        return response;
+      }
+
+      embedding = message;
     }
-    
+
     if (fingerprint && ip) {
       ipFingerprint = generateIpAndNumberFingerprint(ip, fingerprint);
     }
@@ -70,15 +77,31 @@ export default async function checkAndRecordTwin({
     });
 
     if (twinIds.length > 0) {
-      if (requestUserId) {
+      if (requestUserId && embedding) {
         // add a twin record if logged in and twin exists
         doWithRetries(async () =>
           db
             .collection("User")
-            .updateOne({ _id: new ObjectId(requestUserId) }, {
-              $addToSet: { twinIds: requestUserId },
-              $inc: { twinCount: 1 },
-            } as any)
+            .updateOne({ _id: new ObjectId(requestUserId) }, [
+              {
+                $set: {
+                  twinIds: {
+                    $ifNull: [
+                      { $concatArrays: ["$twinIds", [requestUserId]] },
+                      [requestUserId],
+                    ],
+                  },
+                  twinCount: {
+                    $size: {
+                      $ifNull: [
+                        { $concatArrays: ["$twinIds", [requestUserId]] },
+                        [requestUserId],
+                      ],
+                    },
+                  },
+                },
+              },
+            ] as any)
         );
       } else {
         response.mustLogin = true; // prompt to login if not logged in and twin exists

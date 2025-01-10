@@ -39,13 +39,22 @@ route.post(
     }
 
     try {
-      const { mustLogin, isSuspended } = await checkAndRecordTwin({
-        image,
-        payloadUserId: localUserId,
-        requestUserId: req.userId,
-        registryFilter: { type, category: "style" },
-        categoryName: CategoryNameEnum.STYLESCAN,
-      });
+      const { mustLogin, isSuspended, errorMessage } = await checkAndRecordTwin(
+        {
+          image,
+          payloadUserId: localUserId,
+          requestUserId: req.userId,
+          registryFilter: { type, category: "style" },
+          categoryName: CategoryNameEnum.STYLESCAN,
+        }
+      );
+
+      if (errorMessage) {
+        res.status(200).json({
+          error: errorMessage,
+        });
+        return;
+      }
 
       if (isSuspended) {
         res.status(200).json({

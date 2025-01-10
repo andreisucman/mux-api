@@ -6,6 +6,7 @@ import {
   DemographicsType,
   NextActionType,
   ModerationStatusEnum,
+  SexEnum,
 } from "types.js";
 
 export const defaultSubscriptions = {
@@ -101,7 +102,7 @@ export const defaultRequiredProgress = {
 };
 
 const defaultDemographics: DemographicsType = {
-  sex: null,
+  sex: SexEnum.FEMALE,
   ageInterval: null,
   bodyType: null,
   ethnicity: null,

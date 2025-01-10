@@ -65,7 +65,7 @@ route.post(
     }
 
     try {
-      const { mustLogin, isSuspended } =
+      const { mustLogin, isSuspended, errorMessage } =
         (await checkAndRecordTwin({
           image,
           payloadUserId: userId,
@@ -78,6 +78,13 @@ route.post(
           },
           categoryName: CategoryNameEnum.PROGRESSSCAN,
         })) || {};
+
+      if (errorMessage) {
+        res.status(200).json({
+          error: errorMessage,
+        });
+        return;
+      }
 
       if (isSuspended) {
         res.status(200).json({
