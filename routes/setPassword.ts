@@ -55,7 +55,7 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
 
     res.status(200).json({ message: "Password changed" });
   } catch (err) {
-    next(httpError(err.message, err.status));
+    next(err);
   }
 });
 

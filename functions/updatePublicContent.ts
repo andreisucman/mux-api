@@ -55,6 +55,6 @@ export default async function updatePublicContent({
         .updateMany({ userId: new ObjectId(userId) }, { $set: updatePayload })
     );
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

@@ -74,6 +74,6 @@ export default async function updateSpend({
       )
     );
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

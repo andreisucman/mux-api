@@ -54,6 +54,6 @@ export default async function checkIfTaskIsRelated({
 
     return { satisfies: response.satisfies, condition };
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

@@ -50,7 +50,7 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
       message: { ...createUserResponse, ...userData },
     });
   } catch (err) {
-    next(httpError(err.message, err.status));
+    next(err);
   }
 });
 

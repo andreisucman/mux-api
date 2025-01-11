@@ -91,7 +91,7 @@ import createRoutine from "routes/createRoutine.js";
 import checkCountry from "routes/checkCountry.js";
 import getDiaryRecords from "routes/getDiaryRecords.js";
 import createDiaryRecord from "routes/createDiaryRecord.js";
-import getFoodAnalysis from "routes/getFoodAnalysis.js";
+import getLatestFoodAnalysis from "routes/getLatestFoodAnalysis.js"
 import saveDiaryRecord from "routes/saveDiaryRecord.js";
 import transcribe from "routes/transcribe.js";
 import deleteContent from "routes/deleteContent.js";
@@ -151,7 +151,7 @@ app.use("/setPassword", setPassword);
 app.use("/authorize", authorize);
 app.use("/authenticate", authenticate);
 app.use("/getAllSolutions", getAllSolutions);
-app.use("/getFoodAnalysis", getFoodAnalysis);
+app.use("/getLatestFoodAnalysis", getLatestFoodAnalysis);
 
 app.use((req, res, next) => checkAccess(req, res, next, false));
 app.use("/getFollowingRoutines", getFollowingRoutines);

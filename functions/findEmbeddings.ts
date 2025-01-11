@@ -55,6 +55,6 @@ export default async function findEmbeddings({
       return rest;
     });
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

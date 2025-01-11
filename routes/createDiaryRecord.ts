@@ -143,7 +143,7 @@ route.post(
 
       res.status(200).json({ message: results });
     } catch (err) {
-      next(httpError(err.message, err.status));
+      next(err);
     }
   }
 );

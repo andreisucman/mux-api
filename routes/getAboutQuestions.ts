@@ -131,7 +131,7 @@ route.get("/:followingUserName?", async (req: CustomRequest, res: Response) => {
 
     res.status(200).json({ message: { questions } });
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 });
 

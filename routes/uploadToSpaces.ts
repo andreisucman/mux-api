@@ -21,7 +21,7 @@ route.post(
       const uploadedUrls = await uploadFilesToS3(req.files);
       res.status(200).json({ message: uploadedUrls });
     } catch (err) {
-      next(httpError(err.message, err.status));
+      next(err);
     }
   }
 );

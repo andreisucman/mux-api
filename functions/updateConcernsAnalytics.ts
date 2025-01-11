@@ -57,6 +57,6 @@ export default async function updateConcernsAnalytics({
       },
     });
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

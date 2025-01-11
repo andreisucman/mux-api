@@ -41,6 +41,15 @@ export default async function createRoutine({
 }: Props) {
   if (partConcerns.length === 0) return;
 
+  console.log("createRoutine function inputs", {
+    type,
+    part,
+    userId,
+    categoryName,
+    partConcerns,
+    specialConsiderations,
+  })
+
   try {
     const userInfo = (await doWithRetries(async () =>
       db.collection("User").findOne(

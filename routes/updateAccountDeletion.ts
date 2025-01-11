@@ -38,7 +38,7 @@ route.post(
 
       res.status(200).json({ message: payload.deleteOn });
     } catch (err) {
-      next(httpError(err.message, err.status));
+      next(err);
     }
   }
 );

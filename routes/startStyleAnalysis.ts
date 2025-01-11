@@ -300,7 +300,7 @@ route.post(
         message: "An unexpected error occured. Please try again.",
         originalMessage: err.message,
       });
-      next(httpError(err.message, err.status));
+      next(err);
     }
   }
 );

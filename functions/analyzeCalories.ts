@@ -112,6 +112,6 @@ export default async function analyzeCalories({
 
     return { ...analysisResponse, ...shouldEatResponse, share, calorieGoal };
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

@@ -127,7 +127,7 @@ route.post(
         message: `The reward of $${rewardValue} has been added to your Club balance.`,
       });
     } catch (err) {
-      next(httpError(err.message, err.status));
+      next(err);
     }
   }
 );

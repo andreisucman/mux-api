@@ -208,7 +208,7 @@ route.post(
         },
       });
     } catch (err) {
-      next(httpError(err.message, err.status));
+      next(err);
     }
   }
 );

@@ -112,7 +112,7 @@ route.get(
 
       res.status(200).json({ message: autocompleteData });
     } catch (err) {
-      next(httpError(err.message, err.status));
+      next(err);
     }
   }
 );

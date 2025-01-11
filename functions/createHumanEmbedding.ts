@@ -48,6 +48,6 @@ export default async function createHumanEmbedding(image: string) {
 
     return result;
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

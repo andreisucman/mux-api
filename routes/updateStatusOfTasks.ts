@@ -88,7 +88,7 @@ route.post(
 
       res.status(200).json({ message: response });
     } catch (err) {
-      next(httpError(err.message, err.status));
+      next(err);
     }
   }
 );

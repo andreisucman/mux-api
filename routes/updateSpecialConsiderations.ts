@@ -22,20 +22,18 @@ route.post(
 
     try {
       await doWithRetries(async () =>
-        db
-          .collection("User")
-          .updateOne(
-            {
-              _id: new ObjectId(req.userId),
-              moderationStatus: ModerationStatusEnum.ACTIVE,
-            },
-            { $set: { specialConsiderations: text.slice(0, 300) } }
-          )
+        db.collection("User").updateOne(
+          {
+            _id: new ObjectId(req.userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
+          { $set: { specialConsiderations: text.slice(0, 300) } }
+        )
       );
 
       res.status(200).end();
     } catch (err) {
-      next(httpError(err.message, err.status));
+      next(err);
     }
   }
 );

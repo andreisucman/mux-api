@@ -55,6 +55,6 @@ export default async function updateProgressImages({
 
     return newImages;
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

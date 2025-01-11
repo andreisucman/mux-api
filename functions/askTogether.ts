@@ -79,7 +79,7 @@ async function askTogether({
 
     return responseFormat ? JSON.parse(content) : content;
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }
 

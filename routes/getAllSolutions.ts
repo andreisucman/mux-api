@@ -60,7 +60,7 @@ route.get("/", async (req: CustomRequest, res: Response) => {
 
     res.status(200).json({ message: solutions });
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 });
 

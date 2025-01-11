@@ -49,6 +49,6 @@ export default async function checkPeopleSimilarity({
 
     return commaSeparatedNumbers.split(",");
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

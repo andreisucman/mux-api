@@ -69,6 +69,6 @@ export default async function checkImagePosition({
       message: requirement.message,
     };
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

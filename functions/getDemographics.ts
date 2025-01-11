@@ -116,6 +116,6 @@ export default async function getDemographics({
 
     return response;
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

@@ -122,6 +122,6 @@ export default async function analyzeConcerns({
 
     return combined;
   } catch (err) {
-    httpError(err.message, err.status);
+    httpError(err);
   }
 }

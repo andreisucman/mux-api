@@ -83,7 +83,7 @@ route.get(
         message: routines,
       });
     } catch (err) {
-      next(httpError(err.message, err.status));
+      next(err);
     }
   }
 );

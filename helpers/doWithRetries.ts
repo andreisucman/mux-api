@@ -18,7 +18,7 @@ async function doWithRetries<T>(
 
       return await doWithRetries(fn, attempt + 1, maxAttempts);
     } else {
-      throw httpError(err.message, err.status);
+      throw httpError(err);
     }
   }
 }

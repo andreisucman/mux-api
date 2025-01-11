@@ -110,6 +110,6 @@ export default async function checkAndRecordTwin({
 
     return response;
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

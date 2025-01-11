@@ -47,6 +47,6 @@ export default async function addSuspiciousRecord({
       })
     );
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

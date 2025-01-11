@@ -336,6 +336,6 @@ export default async function analyzePart({
 
     return partResult;
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

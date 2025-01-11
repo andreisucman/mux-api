@@ -142,6 +142,6 @@ export default async function createClubProfile({ userId }: Props) {
 
     return defaultClubData;
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

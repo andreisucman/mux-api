@@ -296,7 +296,7 @@ route.post(
 
       res.json({ message: userData });
     } catch (err) {
-      next(httpError(err.message, err.status));
+      next(err);
     }
   }
 );

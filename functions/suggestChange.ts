@@ -147,6 +147,6 @@ export default async function suggestChange({
 
     return rephrased;
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

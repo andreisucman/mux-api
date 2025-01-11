@@ -54,6 +54,6 @@ export default async function isActivityHarmful({
 
     return response;
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

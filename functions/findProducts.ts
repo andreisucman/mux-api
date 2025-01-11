@@ -155,6 +155,6 @@ export default async function findProducts({
       });
     }
 
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

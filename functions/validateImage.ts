@@ -58,6 +58,6 @@ export default async function validateImage({
 
     return { verdict: response.verdict };
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

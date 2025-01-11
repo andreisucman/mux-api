@@ -35,7 +35,7 @@ route.get("/:styleId", async (req: CustomRequest, res, next: NextFunction) => {
 
     res.status(200).json({ message: voteType });
   } catch (err) {
-    next(httpError(err.message, err.status));
+    next(err);
   }
 });
 

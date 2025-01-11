@@ -24,6 +24,6 @@ export async function createHashKey(url: string) {
     const base64Uri = base64String.split(",").pop();
     return crypto.createHash("sha256").update(base64Uri).digest("hex");
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

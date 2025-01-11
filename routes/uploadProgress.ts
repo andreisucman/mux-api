@@ -312,7 +312,7 @@ route.post(
         originalMessage: err.message,
       });
 
-      next(httpError(err.message, err.status));
+      next(err);
     }
   }
 );

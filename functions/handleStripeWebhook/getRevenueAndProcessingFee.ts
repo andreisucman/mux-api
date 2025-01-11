@@ -28,6 +28,6 @@ export async function getRevenueAndProcessingFee(paymentIntentId: string) {
 
     return { totalRevenue, totalProcessingFee };
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

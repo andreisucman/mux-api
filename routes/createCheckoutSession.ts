@@ -96,7 +96,7 @@ route.post(
         res.status(200).json({ message: { redirectUrl: session.url } });
       }
     } catch (err) {
-      next(httpError(err.message, err.status));
+      next(err);
     }
   }
 );

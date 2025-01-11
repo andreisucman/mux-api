@@ -145,7 +145,7 @@ route.post(
           "An unexpected error occured. Please try again and inform us if the error persists.",
         originalMessage: err.message,
       });
-      next(httpError(err.message, err.status));
+      next(err);
     }
   }
 );

@@ -32,7 +32,7 @@ route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
 
     res.status(200).json({ message: body.message });
   } catch (err) {
-    next(httpError(err.message, err.status));
+    next(err);
   }
 });
 

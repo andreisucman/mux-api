@@ -67,6 +67,6 @@ export default async function addModerationAnalyticsData({
       incrementPayload: analyticIncrementPayload,
     });
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

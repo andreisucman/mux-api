@@ -59,7 +59,7 @@ route.get(
 
       res.status(200).json({ message: distinctTasks });
     } catch (err) {
-      next(httpError(err.message, err.status));
+      next(err);
     }
   }
 );

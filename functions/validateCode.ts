@@ -41,6 +41,6 @@ export default async function validateCode(code: string) {
       userId,
     };
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

@@ -68,6 +68,6 @@ export default async function checkIfSuspended({
 
     return suspendedDocuments.length > 0;
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

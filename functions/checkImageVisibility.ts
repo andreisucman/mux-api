@@ -43,6 +43,6 @@ export default async function checkImageVisibility({
 
     return cleanString(verdict) === "yes";
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

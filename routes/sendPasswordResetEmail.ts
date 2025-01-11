@@ -78,7 +78,7 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
       message: `We have sent a password reset email to ${email}.`,
     });
   } catch (err) {
-    next(httpError(err.message, err.status));
+    next(err);
   }
 });
 

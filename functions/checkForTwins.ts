@@ -97,6 +97,6 @@ export default async function checkForTwins({
 
     return twinIds;
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

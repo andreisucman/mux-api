@@ -83,6 +83,6 @@ export default async function extractVariantFeatures({
       ...variantData,
     };
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

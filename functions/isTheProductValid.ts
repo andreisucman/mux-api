@@ -60,6 +60,6 @@ export default async function isTheProductValid({
       verdict: response.verdict,
     };
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

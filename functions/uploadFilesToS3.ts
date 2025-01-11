@@ -18,7 +18,7 @@ async function getFileBufferFromUrl(url: string) {
     const buffer = await response.arrayBuffer();
     return { buffer: Buffer.from(buffer), contentType };
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }
 
@@ -67,6 +67,6 @@ export default async function uploadFilesToS3(filesOrUrls: string[] | any) {
 
     return uploadedUrls;
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

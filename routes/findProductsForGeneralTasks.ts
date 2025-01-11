@@ -90,7 +90,7 @@ route.post("/", async (req, res, next) => {
       isError: true,
       message: err.message,
     });
-    next(httpError(err.message, err.status));
+    next(err);
   }
 });
 

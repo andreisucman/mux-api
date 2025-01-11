@@ -26,6 +26,6 @@ export default async function extractImagesAndTextFromVideo({
 
     return await response.json();
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

@@ -22,7 +22,7 @@ async function getOAuthAuthenticationData(props: Props) {
 
     return { email, accessToken };
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }
 

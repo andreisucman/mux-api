@@ -66,6 +66,6 @@ export default async function moderateContent({ content }: Props) {
 
     return { isSafe, isSuspicious, moderationResults };
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

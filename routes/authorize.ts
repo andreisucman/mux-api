@@ -35,7 +35,7 @@ route.get("/", async (req, res, next: NextFunction) => {
 
     res.status(200).json({ message: loginLink });
   } catch (err) {
-    next(httpError(err.message, err.status));
+    next(err);
   }
 });
 

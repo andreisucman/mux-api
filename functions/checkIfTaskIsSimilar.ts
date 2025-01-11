@@ -53,6 +53,6 @@ export default async function checkIfTaskIsSimilar({
 
     return response.satisfies;
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

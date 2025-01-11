@@ -45,6 +45,6 @@ export default async function metricCapturer(
 
     next();
   } catch (err) {
-    next(httpError(err.message, err.status));
+    next(err);
   }
 }

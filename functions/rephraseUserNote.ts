@@ -92,6 +92,6 @@ export default async function rephraseUserNote({
 
     return rephrasedText;
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

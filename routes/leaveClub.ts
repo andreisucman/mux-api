@@ -16,7 +16,7 @@ route.post(
       await removeFromClub({ userId: req.userId });
       res.status(200).end();
     } catch (err) {
-      next(httpError(err.message, err.status));
+      next(err);
     }
   }
 );

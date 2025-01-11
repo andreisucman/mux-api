@@ -47,7 +47,7 @@ const handleCheckSafety = async ({
 
     return true;
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 };
 
@@ -241,7 +241,7 @@ route.post(
 
       res.status(200).end();
     } catch (err) {
-      next(httpError(err.message, err.status));
+      next(err);
     }
   }
 );

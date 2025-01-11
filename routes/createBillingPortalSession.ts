@@ -27,7 +27,7 @@ route.post(
 
       res.status(200).json({ message: portalSession.url });
     } catch (err) {
-      next(httpError(err.message, err.status));
+      next(err);
     }
   }
 );

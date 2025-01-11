@@ -72,6 +72,6 @@ export default async function analyzePotential({
 
     return rating;
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

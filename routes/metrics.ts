@@ -9,7 +9,7 @@ route.get("/", async (_, res, next: NextFunction) => {
     res.set("Content-Type", promClientRegister.contentType);
     res.end(await promClientRegister.metrics());
   } catch (err) {
-    next(httpError(err.message, err.status));
+    next(err);
   }
 });
 

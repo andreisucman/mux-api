@@ -36,6 +36,6 @@ export default async function createImageEmbedding(
 
     return result as number[];
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

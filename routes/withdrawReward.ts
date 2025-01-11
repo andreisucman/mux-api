@@ -63,7 +63,7 @@ route.post(
         message: `You have initiated a withdrawal of $${balance}. For details check your wallet.`,
       });
     } catch (err) {
-      next(httpError(err.message, err.status));
+      next(err);
     }
   }
 );

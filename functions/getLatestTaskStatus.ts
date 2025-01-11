@@ -38,6 +38,6 @@ export default async function getLatestTaskStatus({
 
     return [...new Set(tasks.map((obj) => obj.key))];
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

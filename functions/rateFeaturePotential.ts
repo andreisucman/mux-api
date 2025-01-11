@@ -134,6 +134,6 @@ export default async function rateFeaturePotential({
 
     return updated;
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

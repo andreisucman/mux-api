@@ -54,6 +54,6 @@ export default async function checkProofImage({
 
     return { verdict, message: explanation };
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

@@ -19,7 +19,7 @@ route.get(
 
       res.status(200).json({ message: rewards });
     } catch (err) {
-      next(httpError(err.message, err.status));
+      next(err);
     }
   }
 );

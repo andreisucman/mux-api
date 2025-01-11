@@ -49,22 +49,20 @@ route.post(
         );
 
       await doWithRetries(async () =>
-        db
-          .collection("User")
-          .updateOne(
-            {
-              _id: new ObjectId(userId),
-              moderationStatus: ModerationStatusEnum.ACTIVE,
-            },
-            { $set: { email: newEmail, emailVerified: true } }
-          )
+        db.collection("User").updateOne(
+          {
+            _id: new ObjectId(userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
+          { $set: { email: newEmail, emailVerified: true } }
+        )
       );
 
       invalidateTheCode(code);
 
       res.status(200).json({ message: `Email changed to ${newEmail}.` });
     } catch (err) {
-      next(httpError(err.message, err.status));
+      next(err);
     }
   }
 );

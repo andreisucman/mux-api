@@ -449,7 +449,7 @@ route.post(
         originalMessage: err.message,
         operationKey: type,
       });
-      next(httpError(err.message, err.status));
+      next(err);
     }
   }
 );

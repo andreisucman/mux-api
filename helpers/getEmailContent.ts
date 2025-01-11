@@ -38,6 +38,6 @@ export default function getEmailContent({ accessToken, emailType }: Props) {
       signedUrl: emailContentMap[emailType].signedUrl || "",
     };
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

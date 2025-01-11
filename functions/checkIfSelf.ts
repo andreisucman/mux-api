@@ -95,7 +95,7 @@ export default async function checkIfSelf({
       });
     }
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   } finally {
     return isSelf;
   }

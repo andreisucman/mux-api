@@ -64,6 +64,6 @@ export default async function checkImageSimilarity({
 
     return { status: true };
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

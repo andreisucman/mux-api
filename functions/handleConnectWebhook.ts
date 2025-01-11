@@ -110,7 +110,7 @@ export default async function handleConnectWebhook(event: any) {
         });
       }
     } catch (err) {
-      throw httpError(err.message, err.status);
+      throw httpError(err);
     }
   }
 
@@ -145,7 +145,7 @@ export default async function handleConnectWebhook(event: any) {
         },
       });
     } catch (err) {
-      throw httpError(err.message, err.status);
+      throw httpError(err);
     }
   }
 }

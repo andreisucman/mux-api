@@ -88,7 +88,7 @@ async function askOpenai({
       ? JSON.parse(completion.choices[0].message.content)
       : completion.choices[0].message.content;
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }
 

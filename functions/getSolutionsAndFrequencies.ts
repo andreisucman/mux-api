@@ -372,6 +372,9 @@ export default async function getSolutionsAndFrequencies({
 
     const concernSolutions = entriesOfConcerns.map((entry) => entry[1]);
 
+    console.log("getSolutionsAndFrequencies allSolutions", allSolutions);
+    console.log("getSolutionsAndFrequencies keysOfSolutions", keysOfSolutions);
+
     for (const key of keysOfSolutions) {
       const relevantSolution = allSolutions.find((s) => s.key === key);
       const { name, icon, color, description, instruction } = relevantSolution;

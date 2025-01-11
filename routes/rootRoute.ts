@@ -7,7 +7,7 @@ route.get("/", (_, res, next: NextFunction) => {
   try {
     res.status(200).end();
   } catch (err) {
-    next(httpError(err.message, err.status));
+    next(err);
   }
 });
 

@@ -18,7 +18,7 @@ export default async function isNameUnique(name: string) {
 
     isUnique = !record;
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   } finally {
     return isUnique;
   }

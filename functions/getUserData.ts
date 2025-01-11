@@ -35,7 +35,7 @@ async function getUserData({ userId }: Props) {
 
     return payload;
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }
 

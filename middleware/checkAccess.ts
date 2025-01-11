@@ -91,7 +91,7 @@ async function checkAccess(
 
     next();
   } catch (err) {
-    next(httpError(err.message, err.status));
+    next(err);
   }
 }
 

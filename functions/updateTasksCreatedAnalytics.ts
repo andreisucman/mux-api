@@ -56,6 +56,6 @@ export default async function updateTasksAnalytics({
       },
     });
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

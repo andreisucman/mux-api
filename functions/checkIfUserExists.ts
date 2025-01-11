@@ -30,7 +30,7 @@ async function checkIfUserExists({
 
     return result;
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }
 

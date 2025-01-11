@@ -17,6 +17,6 @@ export async function saveLocally(image: string) {
     );
     return pathAddress;
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

@@ -86,7 +86,7 @@ async function askRepeatedly({
 
     return result;
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }
 

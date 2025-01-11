@@ -31,6 +31,6 @@ export default async function getStyleCompareRecord({ userId }: Props) {
 
     return highestVotedStyleRecord;
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

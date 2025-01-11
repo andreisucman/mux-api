@@ -127,6 +127,6 @@ export default async function calculateHigherThanType({
       typePotentiallyHigherThan: typeAnalysis.lowerThanPotential,
     };
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

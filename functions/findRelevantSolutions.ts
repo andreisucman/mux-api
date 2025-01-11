@@ -30,6 +30,6 @@ export default async function findRelevantSolutions(embedding: number[]) {
 
     return closestDocuments;
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }

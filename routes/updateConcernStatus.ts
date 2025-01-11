@@ -57,7 +57,7 @@ route.post(
 
       res.status(200).end();
     } catch (err) {
-      next(httpError(err.message, err.status));
+      next(err);
     }
   }
 );

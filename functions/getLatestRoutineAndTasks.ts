@@ -20,7 +20,7 @@ export default async function getLatestRoutinesAndTasks({ userId }: Props) {
             { $sort: { createdAt: -1 } },
             {
               $group: {
-                _id: "$type",
+                _id: "$part",
                 tempId: { $first: "$_id" },
                 type: { $first: "$type" },
                 finalSchedule: { $first: "$finalSchedule" },
@@ -45,7 +45,9 @@ export default async function getLatestRoutinesAndTasks({ userId }: Props) {
       return { routines: [] as RoutineType[], tasks: [] as TaskType[] };
     }
 
-    const closestDates = await getClosestTaskDates({ userId });
+    const closestDates = await getClosestTaskDates({
+      routineIds: routines.map((r) => r._id),
+    });
 
     const faceRecord = closestDates.find((r) => r.part === "face");
     const mouthRecord = closestDates.find((r) => r.part === "mouth");
@@ -171,6 +173,6 @@ export default async function getLatestRoutinesAndTasks({ userId }: Props) {
 
     return { routines, tasks };
   } catch (err) {
-    throw httpError(err.message, err.status);
+    throw httpError(err);
   }
 }
