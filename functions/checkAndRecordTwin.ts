@@ -6,6 +6,7 @@ import httpError from "@/helpers/httpError.js";
 import checkIfSuspended from "./checkIfSuspended.js";
 import { CategoryNameEnum } from "@/types.js";
 import { db } from "@/init.js";
+import transferTrials from "./transferTrials.js";
 
 type Props = {
   requestUserId?: string;
@@ -75,23 +76,20 @@ export default async function checkAndRecordTwin({
               {
                 $set: {
                   twinIds: {
-                    $ifNull: [
-                      { $concatArrays: ["$twinIds", [requestUserId]] },
-                      [requestUserId],
-                    ],
+                    $addToSet: { $ifNull: ["$twinIds", []] },
                   },
                   twinCount: {
-                    $size: {
-                      $ifNull: [
-                        { $concatArrays: ["$twinIds", [requestUserId]] },
-                        [requestUserId],
-                      ],
-                    },
+                    $size: { $ifNull: ["$twinIds", []] },
                   },
                 },
               },
             ] as any)
         );
+
+        await transferTrials({
+          twinIds,
+          newUserId: requestUserId,
+        });
       } else {
         response.mustLogin = true; // prompt to login if not logged in and twin exists
       }

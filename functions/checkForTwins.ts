@@ -4,10 +4,10 @@ import { ObjectId } from "mongodb";
 import httpError from "@/helpers/httpError.js";
 import findEmbeddings from "./findEmbeddings.js";
 import doWithRetries from "@/helpers/doWithRetries.js";
-import { db } from "@/init.js";
 import checkPeopleSimilarity from "./checkPeopleSimilarity.js";
 import { CategoryNameEnum } from "@/types.js";
 import createImageCollage from "./createImageCollage.js";
+import { db } from "@/init.js";
 
 type Props = {
   userId?: string;
@@ -48,7 +48,7 @@ export default async function checkForTwins({
           new ObjectId(userId),
           ...closestDocuments.map((doc) => new ObjectId(doc.userId)),
         ];
-        // console.log("inIds", inIds);
+
         const progressOfTwins = await doWithRetries(async () =>
           db
             .collection("Progress")
@@ -62,7 +62,6 @@ export default async function checkForTwins({
             .toArray()
         );
 
-        // console.log("progressOfTwins", progressOfTwins);
         const frontalImageObjects = progressOfTwins
           .map((rec) => {
             const frontalImage = rec.images.find(
@@ -89,7 +88,7 @@ export default async function checkForTwins({
             );
             if (!sideImage) return null;
 
-            // console.log("side image", sideImage)
+            console.log("side image", sideImage);
 
             const originalUrlObj = sideImage.urls.find(
               (io: { name: string; url: string }) => io.name === "original"
@@ -103,8 +102,6 @@ export default async function checkForTwins({
           })
           .filter(Boolean);
 
-        // console.log("sideImageObjects", sideImageObjects);
-
         const closestDocumentsWithUser = [
           { userId: new ObjectId(userId), image },
           ...closestDocuments,
@@ -112,7 +109,7 @@ export default async function checkForTwins({
 
         const collageImageGroups: string[][] = closestDocumentsWithUser.map(
           (doc) => {
-            const images = [doc.image];
+            const images: string[] = [doc.image];
             const relatedFrontalImageObject = frontalImageObjects.find(
               (rec) => String(rec.userId) === String(doc.userId)
             );
@@ -124,17 +121,13 @@ export default async function checkForTwins({
             );
             if (relatedSideImageObject)
               images.push(relatedSideImageObject.sideImage);
-            return images;
+            return [...new Set(images)];
           }
         );
-
-        // console.log("collageImageGroups", collageImageGroups);
 
         const collageImage = await createImageCollage({
           images: collageImageGroups,
         });
-
-        // console.log("collageImage", collageImage);
 
         const twinIndexes = await checkPeopleSimilarity({
           categoryName,

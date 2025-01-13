@@ -27,6 +27,24 @@ export const defaultSubscriptions = {
   },
 };
 
+export const defaultTriedSubscriptions = {
+  improvement: {
+    isTrialUsed: true,
+    subscriptionId: null as string | null,
+    validUntil: null as Date | null,
+  },
+  peek: {
+    isTrialUsed: true,
+    subscriptionId: null as string | null,
+    validUntil: null as Date | null,
+  },
+  advisor: {
+    isTrialUsed: true,
+    subscriptionId: null as string | null,
+    validUntil: null as Date | null,
+  },
+};
+
 export const defaultRequiredProgress = {
   head: [
     {
