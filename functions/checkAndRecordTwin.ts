@@ -3,7 +3,6 @@ import checkForTwins from "./checkForTwins.js";
 import createHumanEmbedding from "./createHumanEmbedding.js";
 import doWithRetries from "@/helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
-import generateIpAndNumberFingerprint from "./generateIpAndNumberFingerprint.js";
 import checkIfSuspended from "./checkIfSuspended.js";
 import { CategoryNameEnum } from "@/types.js";
 import { db } from "@/init.js";
@@ -25,10 +24,8 @@ export default async function checkAndRecordTwin({
   requestUserId,
   payloadUserId,
   categoryName,
-  fingerprint,
   registryFilter = {},
   image,
-  ip,
 }: Props) {
   let response = { mustLogin: false, isSuspended: false, errorMessage: "" };
 
@@ -42,7 +39,6 @@ export default async function checkAndRecordTwin({
 
   try {
     let embedding;
-    let ipFingerprint;
 
     if (image) {
       const { errorMessage, message } = await createHumanEmbedding(image);
@@ -55,13 +51,8 @@ export default async function checkAndRecordTwin({
       embedding = message;
     }
 
-    if (fingerprint && ip) {
-      ipFingerprint = generateIpAndNumberFingerprint(ip, fingerprint);
-    }
-
     response.isSuspended = await checkIfSuspended({
       embedding,
-      ipFingerprint,
       image,
       userId: requestUserId || payloadUserId,
       categoryName,
@@ -71,7 +62,6 @@ export default async function checkAndRecordTwin({
       userId: requestUserId || payloadUserId,
       image,
       embedding,
-      ipFingerprint,
       registryFilter: restFilter,
       categoryName,
     });

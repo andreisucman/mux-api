@@ -92,7 +92,7 @@ route.post(
 
       const generatedContent = await generateBioContent({
         userId: req.userId,
-        categoryName: CategoryNameEnum.ABOUT,
+        categoryName: CategoryNameEnum.FAQ,
         segment,
         text,
       });

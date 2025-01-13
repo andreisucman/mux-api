@@ -100,8 +100,8 @@ route.post(
         (c: UserConcernType) => c.name
       );
 
-      const restOfConcerns = existingConcerns.filter((c: UserConcernType) =>
-        selectedConcernKeys.includes(c.name)
+      const restOfConcerns = existingConcerns.filter(
+        (c: UserConcernType) => !selectedConcernKeys.includes(c.name)
       );
 
       const allUniqueConcerns = [...restOfConcerns, ...selectedConcerns].filter(

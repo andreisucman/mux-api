@@ -10,7 +10,6 @@ import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.j
 import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 import createTextEmbedding from "@/functions/createTextEmbedding.js";
 import { db } from "init.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -33,7 +32,7 @@ route.post(
 
       if (!isSafe) {
         addModerationAnalyticsData({
-          categoryName: CategoryNameEnum.ABOUT,
+          categoryName: CategoryNameEnum.FAQ,
           moderationResults,
           isSuspicious,
           isSafe,
@@ -64,8 +63,8 @@ route.post(
       const embedding = await createTextEmbedding({
         text,
         userId: req.userId,
-        categoryName: CategoryNameEnum.ABOUT,
-        dimensions: 1536,
+        categoryName: CategoryNameEnum.FAQ,
+        dimensions: 1024,
       });
 
       const updatePayload = {
@@ -83,7 +82,7 @@ route.post(
 
       if (moderationResults.length > 0) {
         addModerationAnalyticsData({
-          categoryName: CategoryNameEnum.ABOUT,
+          categoryName: CategoryNameEnum.FAQ,
           moderationResults,
           isSuspicious,
           isSafe,

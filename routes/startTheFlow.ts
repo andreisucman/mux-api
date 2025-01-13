@@ -4,9 +4,7 @@ import { Router, Request, Response, NextFunction } from "express";
 import getUserData from "functions/getUserData.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import createUser from "@/functions/createUser.js";
-import generateIpAndNumberFingerprint from "@/functions/generateIpAndNumberFingerprint.js";
 import { UserType } from "types.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -28,17 +26,11 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
       return;
     }
 
-    const ipFingerprint = generateIpAndNumberFingerprint(
-      req.ip || req.socket.remoteAddress,
-      fingerprint
-    );
-
     const createUserResponse = await doWithRetries(
       async () =>
         await createUser({
           timeZone,
           tosAccepted,
-          ipFingerprint,
         })
     );
 

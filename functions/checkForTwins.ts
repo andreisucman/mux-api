@@ -13,7 +13,6 @@ import createImageCollage from "./createImageCollage.js";
 type Props = {
   userId?: string;
   image?: string;
-  ipFingerprint?: string;
   embedding?: number[];
   registryFilter?: { [key: string]: any };
   categoryName: CategoryNameEnum;
@@ -24,7 +23,6 @@ export default async function checkForTwins({
   image,
   registryFilter = {},
   embedding,
-  ipFingerprint,
   categoryName,
 }: Props) {
   try {
@@ -65,14 +63,6 @@ export default async function checkForTwins({
           filteredTwinIndexes.includes(String(index + 1))
         );
       }
-    } else {
-      twinDocuments = await doWithRetries(async () =>
-        db
-          .collection("TwinRegistry")
-          .find({ ipFingerprint })
-          .project({ userId: 1 })
-          .toArray()
-      );
     }
 
     const twinIds = twinDocuments.map((doc) => String(doc._id));
@@ -82,7 +72,6 @@ export default async function checkForTwins({
 
       if (image) updatePayload.image = image;
       if (embedding) updatePayload.embedding = embedding;
-      if (ipFingerprint) updatePayload.ipFingerprint = ipFingerprint;
 
       doWithRetries(async () =>
         db

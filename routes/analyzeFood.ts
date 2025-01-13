@@ -31,7 +31,7 @@ const route = Router();
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { url, fingerprint, calorieGoal } = req.body;
+    const { url, calorieGoal } = req.body;
 
     if (!url) {
       res.status(400).json({ error: "Bad request" });
@@ -42,8 +42,6 @@ route.post(
       const { mustLogin, isSuspended } = await checkAndRecordTwin({
         payloadUserId: req.userId,
         requestUserId: req.userId,
-        ip: req.ip || req.socket.remoteAddress,
-        fingerprint,
         registryFilter: { category: "food" },
         categoryName: CategoryNameEnum.FOODSCAN,
       });

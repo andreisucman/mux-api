@@ -24,8 +24,6 @@ import getUserData from "@/functions/getUserData.js";
 import checkIfSuspended from "@/functions/checkIfSuspended.js";
 import getOAuthAuthenticationData from "@/functions/getOAuthAuthenticationData.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
-import generateIpAndNumberFingerprint from "@/functions/generateIpAndNumberFingerprint.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -81,11 +79,7 @@ route.post(
         return;
       }
 
-      const ip = req.ip || req.socket.remoteAddress;
-      const ipFingerprint = generateIpAndNumberFingerprint(ip, fingerprint);
-
       const isSuspended = await checkIfSuspended({
-        ipFingerprint,
         userId: localUserId,
         categoryName: CategoryNameEnum.OTHER,
       });
@@ -229,7 +223,6 @@ route.post(
           email: finalEmail,
           auth,
           timeZone,
-          ipFingerprint,
           emailVerified: auth === "g",
           stripeUserId: stripeUser.id,
         });

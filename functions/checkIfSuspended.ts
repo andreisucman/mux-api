@@ -3,23 +3,19 @@ dotenv.config();
 
 import httpError from "@/helpers/httpError.js";
 import findEmbeddings from "./findEmbeddings.js";
-import doWithRetries from "@/helpers/doWithRetries.js";
 import checkPeopleSimilarity from "./checkPeopleSimilarity.js";
 import createImageCollage from "./createImageCollage.js";
 import { CategoryNameEnum } from "@/types.js";
-import { db } from "@/init.js";
 
 type Props = {
   userId?: string;
   image?: string;
-  ipFingerprint?: string;
   embedding?: number[];
   categoryName: CategoryNameEnum;
 };
 
 export default async function checkIfSuspended({
   embedding,
-  ipFingerprint,
   categoryName,
   userId,
   image,
@@ -56,14 +52,6 @@ export default async function checkIfSuspended({
           filteredTwinIndexes.includes(String(index + 1))
         );
       }
-    } else {
-      suspendedDocuments = await doWithRetries(async () =>
-        db
-          .collection("SuspendedUser")
-          .find({ ipFingerprint })
-          .project({ userId: 1 })
-          .toArray()
-      );
     }
 
     return suspendedDocuments.length > 0;

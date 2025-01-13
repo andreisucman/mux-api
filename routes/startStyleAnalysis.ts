@@ -22,7 +22,6 @@ import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
 import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.js";
 import checkAndRecordTwin from "@/functions/checkAndRecordTwin.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 

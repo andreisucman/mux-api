@@ -179,6 +179,8 @@ route.post(
         potentiallyHigherThan,
       } = userInfo;
 
+      console.log("concerns",concerns)
+
       const { canScan, canScanDate } =
         checkCanScan({ nextScan, toAnalyze, type }) || {};
 

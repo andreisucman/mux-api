@@ -10,7 +10,6 @@ type Props = {
 
 export const defaultUserProjection = {
   netBenefit: 0,
-  ipFingerprint: 0,
   password: 0,
   warningCount: 0,
   blockCount: 0,

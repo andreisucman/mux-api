@@ -185,7 +185,6 @@ export const defaultUser: UserType = {
     head: { overall: 0, face: null, mouth: null, scalp: null },
     body: { overall: 0, body: null },
   },
-  ipFingerprint: null,
   createdAt: new Date(),
   streaks: defaultStreaks,
   specialConsiderations: "",

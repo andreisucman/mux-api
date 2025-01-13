@@ -71,7 +71,6 @@ export type UserType = {
   potentiallyHigherThan: HigherThanType;
   nextScan: NextActionType;
   nextRoutine: NextActionType;
-  ipFingerprint: string | null;
   streakDates: {
     default: {
       [key: string]: Date;
@@ -371,7 +370,7 @@ export enum CategoryNameEnum {
   STYLESCAN = "styleScan",
   PRODUCTS = "products",
   ADVISOR = "advisor",
-  ABOUT = "about",
+  FAQ = "faq",
   PROOF = "proof",
   DIARY = "diary",
   OTHER = "other",
