@@ -11,21 +11,12 @@ const route = Router();
 type Props = {
   tosAccepted: boolean;
   timeZone: string;
-  fingerprint: number;
 };
 
 route.post("/", async (req: Request, res: Response, next: NextFunction) => {
-  const { tosAccepted, timeZone, fingerprint }: Props = req.body;
+  const { tosAccepted, timeZone }: Props = req.body;
 
   try {
-    if (!fingerprint) {
-      res.status(200).json({
-        error:
-          "Sorry, but your device is not supported. Try again using a different device.",
-      });
-      return;
-    }
-
     const createUserResponse = await doWithRetries(
       async () =>
         await createUser({

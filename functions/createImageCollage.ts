@@ -3,7 +3,7 @@ import doWithRetries from "@/helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 
 type Props = {
-  images: string[];
+  images: string[][];
 };
 
 export default async function createImageCollage({ images }: Props) {

@@ -89,7 +89,7 @@ route.post(
       if (isSuspended) {
         res.status(200).json({
           error:
-            "You can't use the platform for violating our TOS in the past. If you think this is a mistake contact us at info@muxout.com.",
+            "You can't use the platform for violating our TOS. If you think this is a mistake contact us at info@muxout.com.",
         });
         return;
       }
@@ -99,19 +99,19 @@ route.post(
         return;
       }
 
-      // const isClearlyVisible = await checkImageVisibility({
-      //   categoryName: CategoryNameEnum.PROGRESSSCAN,
-      //   image,
-      //   userId,
-      // });
+      const isClearlyVisible = await checkImageVisibility({
+        categoryName: CategoryNameEnum.PROGRESSSCAN,
+        image,
+        userId,
+      });
 
-      // if (isClearlyVisible) {
-      //   res.status(200).json({
-      //     error:
-      //       "The image is not clear. Try taking photos in daylight with no shadows obscuring your features.",
-      //   });
-      //   return;
-      // }
+      if (isClearlyVisible) {
+        res.status(200).json({
+          error:
+            "The image is not clear. Try taking photos in daylight with no shadows obscuring your features.",
+        });
+        return;
+      }
 
       const { verdict: isPosiitonValid, message: changePositionMessage } =
         await checkImagePosition({
@@ -178,8 +178,6 @@ route.post(
         currentlyHigherThan,
         potentiallyHigherThan,
       } = userInfo;
-
-      console.log("concerns",concerns)
 
       const { canScan, canScanDate } =
         checkCanScan({ nextScan, toAnalyze, type }) || {};

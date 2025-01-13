@@ -11,7 +11,6 @@ type Props = {
   requestUserId?: string;
   payloadUserId: string;
   image?: string;
-  fingerprint?: number;
   registryFilter?: { [key: string]: any };
   ip?: string;
   categoryName: CategoryNameEnum;

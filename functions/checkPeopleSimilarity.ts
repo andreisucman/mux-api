@@ -18,7 +18,7 @@ export default async function checkPeopleSimilarity({
     const messages = [
       {
         role: "system",
-        content: `Each image has a number in the top left corner. On which images the person is same? Respond with a a string of numbers separated by commas.`,
+        content: `Each row of images represents a person. Which rows show the same person? Respond with the row numbers from the top left corner of each row.`,
       },
       {
         role: "user",
@@ -33,7 +33,7 @@ export default async function checkPeopleSimilarity({
       },
       {
         role: "system",
-        content: `YOUR RESPONSE IS A COMMA-SEAPRATED STRING OF NUMBERS.`,
+        content: `YOUR RESPONSE IS A COMMA-SEAPRATED STRING OF ROW NUMBERS.`,
       },
     ];
 

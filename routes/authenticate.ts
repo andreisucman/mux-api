@@ -50,27 +50,11 @@ route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
-      let {
-        code,
-        timeZone,
-        localUserId,
-        referrer,
-        state,
-        email,
-        password,
-        fingerprint,
-      } = req.body;
+      let { code, timeZone, localUserId, referrer, state, email, password } =
+        req.body;
 
       if (localUserId && !ObjectId.isValid(localUserId)) {
         res.status(400).json({ error: "Bad request" });
-        return;
-      }
-
-      if (!fingerprint) {
-        res.status(200).json({
-          error:
-            "Your device is not supported. Try again using a different device.",
-        });
         return;
       }
 
