@@ -28,6 +28,7 @@ export default async function checkAndRecordTwin({
   image,
 }: Props) {
   let response = { mustLogin: false, isSuspended: false, errorMessage: "" };
+  const finalUserId = requestUserId || payloadUserId;
 
   const { part, ...restFilter } = registryFilter;
 
@@ -54,12 +55,12 @@ export default async function checkAndRecordTwin({
     response.isSuspended = await checkIfSuspended({
       embedding,
       image,
-      userId: requestUserId || payloadUserId,
+      userId: finalUserId,
       categoryName,
     });
 
     const twinIds = await checkForTwins({
-      userId: requestUserId || payloadUserId,
+      userId: finalUserId,
       image,
       embedding,
       registryFilter: restFilter,
@@ -67,26 +68,22 @@ export default async function checkAndRecordTwin({
     });
 
     if (twinIds.length > 0) {
+      // dont change the requestUserId to finalUserId here
       if (requestUserId && embedding) {
         // add a twin record if logged in and twin exists
-        doWithRetries(async () =>
-          db
-            .collection("User")
-            .updateOne({ _id: new ObjectId(requestUserId) }, [
-              {
-                $set: {
-                  twinIds: {
-                    $addToSet: { $ifNull: ["$twinIds", []] },
-                  },
-                  twinCount: {
-                    $size: { $ifNull: ["$twinIds", []] },
-                  },
-                },
-              },
-            ] as any)
-        );
+        const updates = [String(finalUserId), ...twinIds].map((id) => ({
+          updateOne: {
+            filter: { _id: new ObjectId(id) },
+            update: {
+              $addToSet: { twinIds: id },
+              $set: { twinCount: twinIds.length },
+            },
+          },
+        }));
 
-        await transferTrials({
+        doWithRetries(async () => db.collection("User").bulkWrite(updates));
+
+        transferTrials({
           twinIds,
           newUserId: requestUserId,
         });

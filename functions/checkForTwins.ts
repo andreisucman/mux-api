@@ -88,8 +88,6 @@ export default async function checkForTwins({
             );
             if (!sideImage) return null;
 
-            console.log("side image", sideImage);
-
             const originalUrlObj = sideImage.urls.find(
               (io: { name: string; url: string }) => io.name === "original"
             );

@@ -169,21 +169,16 @@ export default async function analyzeAppearance({
     const partsAnalyzed = analysesResults.map((rec) => rec.part);
 
     const newTypeConcerns = analysesResults.flatMap((rec) => rec.concerns);
-    console.log("newTypeConcerns", newTypeConcerns);
 
     const restOfConcerns = concerns.filter(
       (rec) => rec.type === type && !partsAnalyzed.includes(rec.part)
     );
-
-    console.log("restOfConcerns", restOfConcerns);
 
     const allUniqueConcerns = [...restOfConcerns, ...newTypeConcerns].filter(
       (obj, i, arr) => arr.findIndex((o) => o.name === obj.name) === i
     );
 
     toUpdateUser.$set.concerns = allUniqueConcerns;
-
-    console.log("allUniqueConcerns", allUniqueConcerns);
 
     const newTypeLatestScores = analysesResults.reduce(
       (a: { [key: string]: any }, c) => {

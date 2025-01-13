@@ -26,8 +26,6 @@ route.post(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { concerns, type, part, specialConsiderations } = req.body;
 
-    console.log("createRountine route inputs", req.body);
-
     if (!concerns || !type) {
       res.status(400).json({ error: "Bad request" });
       return;
@@ -57,13 +55,7 @@ route.post(
         concerns: existingConcerns = [],
       } = userInfo;
 
-      console.log("createRountine userInfo", userInfo);
-
-      console.log("createRountine nextRoutine", nextRoutine);
-
       const relevantTypeRoutine = nextRoutine.find((obj) => obj.type === type);
-
-      console.log("createRountine relevantTypeRoutine", relevantTypeRoutine);
 
       const cooldown = new Date() < new Date(relevantTypeRoutine.date);
 
@@ -93,8 +85,6 @@ route.post(
         res.status(400).json({ error: "Bad request" });
         return;
       }
-
-      console.log("createRountine selectedConcerns", selectedConcerns);
 
       const selectedConcernKeys = selectedConcerns.map(
         (c: UserConcernType) => c.name

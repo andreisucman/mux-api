@@ -65,8 +65,6 @@ export default async function analyzePart({
       (obj) => obj.part === part
     );
 
-    console.log("partConcerns",partConcerns)
-
     let isSuspicious = false;
     let isSafe = false;
     let moderationResults: ModerationResultType[] = [];
