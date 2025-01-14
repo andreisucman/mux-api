@@ -152,7 +152,6 @@ export default async function createTasks({
           userId: new ObjectId(userId),
           status: "active" as TaskStatusEnum,
           ...matchingDraft,
-          suggestions: [],
           proofEnabled: true,
           type,
           part,

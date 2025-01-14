@@ -21,23 +21,6 @@ export type CreateRoutineUserInfoType = {
   specialConsiderations: string;
 };
 
-type DefaultSuggestionType = {
-  itemId: string;
-  asin: string;
-  name: string;
-  image: string;
-  url: string;
-  rating: number;
-  description: string;
-  suggestion: string;
-  variant: string;
-  type: "product" | "place";
-  rank: number;
-  reasoning: string;
-  analysisResult: { [key: string]: boolean };
-  key: string;
-};
-
 type TaskExampleType = { type: string; url: string };
 
 export type CreateRoutineAllSolutionsType = {
@@ -46,6 +29,7 @@ export type CreateRoutineAllSolutionsType = {
   description: string;
   requisite: string;
   icon: string;
+  suggestions: SuggestionType[];
   example: TaskExampleType;
   color: string;
   name: string;

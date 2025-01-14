@@ -403,12 +403,26 @@ export default async function getSolutionsAndFrequencies({
 
     for (const key of keysOfSolutions) {
       const relevantSolution = allSolutions.find((s) => s.key === key);
-      console.log("relevantSolution for ", key);
-      const { name, icon, color, description, instruction } = relevantSolution;
 
-      const total = Math.max(
+      if (!relevantSolution) continue;
+
+      const {
+        name,
+        icon,
+        color,
+        description,
+        instruction,
+        requiredSubmissions,
+      } = relevantSolution;
+
+      const totalApplications = Math.max(
         Math.round(Number(findFrequencyResponse[key]) / 4.285714301020408), // needed to turn monthly frequency into weekly
         1
+      );
+
+      const totalUses = Math.max(
+        1,
+        Math.round(totalApplications / requiredSubmissions.length)
       );
 
       const record: AllTaskType = {
@@ -422,7 +436,7 @@ export default async function getSolutionsAndFrequencies({
         completed: 0,
         unknown: 0,
         key,
-        total,
+        total: totalUses,
       };
       const indexOfConcern = concernSolutions.findIndex((arrayOfSolutions) =>
         arrayOfSolutions.includes(key)

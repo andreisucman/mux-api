@@ -26,8 +26,6 @@ route.post(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { concerns, type, part, specialConsiderations } = req.body;
 
-    console.log("createRoutine req", req.body);
-
     if (!concerns || !type) {
       res.status(400).json({ error: "Bad request" });
       return;
@@ -88,8 +86,6 @@ route.post(
         (obj, i, arr) => arr.findIndex((o) => o.name === obj.name) === i
       );
 
-      console.log("allUniqueConcerns", allUniqueConcerns);
-
       res.status(200).end();
 
       await doWithRetries(async () =>
@@ -104,10 +100,7 @@ route.post(
 
       let updatedNextRoutine;
 
-      console.log("part", part);
-
       if (part) {
-        console.log("line 118");
         await createRoutine({
           type,
           part,
@@ -122,8 +115,6 @@ route.post(
           parts: [part],
           type,
         });
-
-        console.log("line 138 updatedNextRoutine", updatedNextRoutine);
       } else {
         /* get the analyzed parts of the user */
         const relevantScan = nextScan.find((obj) => obj.type === type);
@@ -131,8 +122,6 @@ route.post(
           Boolean(obj.date)
         );
         const scannedPartsKeys = relevantParts.map((obj) => obj.part);
-
-        console.log("line 147 scannedPartsKeys", scannedPartsKeys);
 
         const promises = scannedPartsKeys.map((partKey) =>
           doWithRetries(
@@ -155,8 +144,6 @@ route.post(
           parts: scannedPartsKeys,
           type,
         });
-
-        console.log("line 171 updatedNextRoutine", updatedNextRoutine);
       }
 
       await doWithRetries(async () =>

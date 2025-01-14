@@ -92,6 +92,7 @@ export default async function createRoutine({
               recipe: 1,
               restDays: 1,
               isRecipe: 1,
+              suggestions: 1,
               productTypes: 1,
               _id: 0,
             },
@@ -99,6 +100,8 @@ export default async function createRoutine({
         )
         .toArray()
     )) as unknown as CreateRoutineAllSolutionsType[];
+
+    console.log("allSolutions 104", allSolutions);
 
     /* get previously completed */
     const latestMonthCanceledKeys: string[] = await getLatestTaskStatus({

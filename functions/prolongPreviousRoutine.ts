@@ -76,7 +76,6 @@ export default async function prolongPreviousRoutine({
         ...rest,
         _id: new ObjectId(),
         status: "active" as TaskStatusEnum,
-        suggestions: [],
         startsAt,
         expiresAt,
         type,
