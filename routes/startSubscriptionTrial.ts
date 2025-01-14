@@ -51,6 +51,20 @@ route.post(
         return;
       }
 
+      const faceProgressRecord = await doWithRetries(async () =>
+        db
+          .collection("Progress")
+          .findOne({ userId: new ObjectId(req.userId), part: "face" })
+      );
+
+      if (!faceProgressRecord) {
+        res.status(200).json({
+          error:
+            "You need to scan your face first. Go to the scan page and complete your face analysis. Then return here to active your trial.",
+        });
+        return;
+      }
+
       updateAnalytics({
         userId: req.userId,
         incrementPayload: {

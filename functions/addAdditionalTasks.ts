@@ -3,7 +3,6 @@ import doWithRetries from "helpers/doWithRetries.js";
 import createTasks from "functions/createTasks.js";
 import mergeSchedules from "functions/mergeSchedules.js";
 import getRawSchedule from "functions/getRawSchedule.js";
-import getAdditionalSolutionsAndFrequencies from "functions/getAdditionalSolutionsAndFrequencies.js";
 import {
   UserConcernType,
   TaskType,
@@ -11,6 +10,7 @@ import {
   PartEnum,
   CategoryNameEnum,
 } from "@/types.js";
+import getSolutionsAndFrequencies from "./getSolutionsAndFrequencies.js";
 import addAnalysisStatusError from "functions/addAnalysisStatusError.js";
 import {
   CreateRoutineUserInfoType,
@@ -43,7 +43,7 @@ export default async function addAdditionalTasks({
 
   try {
     const solutionsAndFrequencies = await doWithRetries(async () =>
-      getAdditionalSolutionsAndFrequencies({
+      getSolutionsAndFrequencies({
         userId: String(userId),
         type,
         part,

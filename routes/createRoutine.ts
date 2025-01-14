@@ -16,8 +16,8 @@ import {
 import updateNextRoutine from "helpers/updateNextRoutine.js";
 import formatDate from "helpers/formatDate.js";
 import httpError from "@/helpers/httpError.js";
-import { db } from "init.js";
 import getUserInfo from "@/functions/getUserInfo.js";
+import { db } from "init.js";
 
 const route = Router();
 
@@ -25,6 +25,8 @@ route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { concerns, type, part, specialConsiderations } = req.body;
+
+    console.log("createRoutine req", req.body);
 
     if (!concerns || !type) {
       res.status(400).json({ error: "Bad request" });
@@ -70,33 +72,23 @@ route.post(
         return;
       }
 
-      let selectedConcerns = concerns.filter(
-        (c: UserConcernType) => c.type === type && !c?.isDisabled
-      );
-
-      if (part) {
-        selectedConcerns = selectedConcerns.filter(
-          (c: UserConcernType) => c.part === part
-        );
-      }
-
-      if (selectedConcerns.length === 0) {
+      if (concerns.length === 0) {
         // if the user disables all concerns
         res.status(400).json({ error: "Bad request" });
         return;
       }
 
-      const selectedConcernKeys = selectedConcerns.map(
-        (c: UserConcernType) => c.name
-      );
+      const selectedConcernKeys = concerns.map((c: UserConcernType) => c.name);
 
       const restOfConcerns = existingConcerns.filter(
         (c: UserConcernType) => !selectedConcernKeys.includes(c.name)
       );
 
-      const allUniqueConcerns = [...restOfConcerns, ...selectedConcerns].filter(
+      const allUniqueConcerns = [...restOfConcerns, ...concerns].filter(
         (obj, i, arr) => arr.findIndex((o) => o.name === obj.name) === i
       );
+
+      console.log("allUniqueConcerns", allUniqueConcerns);
 
       res.status(200).end();
 
@@ -112,12 +104,15 @@ route.post(
 
       let updatedNextRoutine;
 
+      console.log("part", part);
+
       if (part) {
+        console.log("line 118");
         await createRoutine({
           type,
           part,
           userId: req.userId,
-          partConcerns: selectedConcerns,
+          concerns,
           specialConsiderations,
           categoryName: CategoryNameEnum.TASKS,
         });
@@ -127,6 +122,8 @@ route.post(
           parts: [part],
           type,
         });
+
+        console.log("line 138 updatedNextRoutine", updatedNextRoutine);
       } else {
         /* get the analyzed parts of the user */
         const relevantScan = nextScan.find((obj) => obj.type === type);
@@ -135,6 +132,8 @@ route.post(
         );
         const scannedPartsKeys = relevantParts.map((obj) => obj.part);
 
+        console.log("line 147 scannedPartsKeys", scannedPartsKeys);
+
         const promises = scannedPartsKeys.map((partKey) =>
           doWithRetries(
             async () =>
@@ -142,7 +141,7 @@ route.post(
                 type,
                 userId: req.userId,
                 part: partKey,
-                partConcerns: selectedConcerns,
+                concerns,
                 specialConsiderations,
                 categoryName: CategoryNameEnum.TASKS,
               })
@@ -156,6 +155,8 @@ route.post(
           parts: scannedPartsKeys,
           type,
         });
+
+        console.log("line 171 updatedNextRoutine", updatedNextRoutine);
       }
 
       await doWithRetries(async () =>

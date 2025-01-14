@@ -10,6 +10,7 @@ import {
   TypeEnum,
   PartEnum,
   CategoryNameEnum,
+  ProgressImageType,
 } from "types.js";
 import {
   CreateRoutineUserInfoType,
@@ -18,13 +19,14 @@ import {
 import { db } from "init.js";
 import httpError from "helpers/httpError.js";
 import updateTasksAnalytics from "./updateTasksCreatedAnalytics.js";
+import getUsersImage from "./getUserImage.js";
 
 type Props = {
   userId: string;
   type: TypeEnum;
   part: PartEnum;
   userInfo: CreateRoutineUserInfoType;
-  concerns: UserConcernType[];
+  partConcerns: UserConcernType[];
   specialConsiderations: string;
   categoryName: CategoryNameEnum;
   allSolutions: CreateRoutineAllSolutionsType[];
@@ -35,7 +37,7 @@ export default async function makeANewRoutine({
   type,
   part,
   userInfo,
-  concerns,
+  partConcerns,
   categoryName,
   specialConsiderations,
   allSolutions,
@@ -44,12 +46,13 @@ export default async function makeANewRoutine({
     const solutionsAndFrequencies = await doWithRetries(async () =>
       getSolutionsAndFrequencies({
         specialConsiderations,
+        concerns: partConcerns,
+        demographics: userInfo.demographics,
         allSolutions,
-        concerns,
-        userInfo,
+        categoryName,
+        userId,
         type,
         part,
-        categoryName,
       })
     );
 
@@ -65,7 +68,7 @@ export default async function makeANewRoutine({
     const { rawSchedule } = await doWithRetries(async () =>
       getRawSchedule({
         solutionsAndFrequencies,
-        concerns,
+        concerns: partConcerns,
         days: 6,
       })
     );
@@ -75,7 +78,7 @@ export default async function makeANewRoutine({
         .collection("AnalysisStatus")
         .updateOne(
           { userId: new ObjectId(userId), operationKey: type },
-          { $inc: { progress: 10 } }
+          { $inc: { progress: 5 } }
         )
     );
 
@@ -83,7 +86,7 @@ export default async function makeANewRoutine({
       polishRawSchedule({
         type,
         userId,
-        concerns,
+        concerns: partConcerns,
         categoryName,
         rawSchedule,
         specialConsiderations,
@@ -123,7 +126,7 @@ export default async function makeANewRoutine({
       createTasks({
         part,
         type,
-        concerns,
+        concerns: partConcerns,
         allSolutions,
         finalSchedule,
         userInfo,
@@ -140,7 +143,7 @@ export default async function makeANewRoutine({
       db.collection("Routine").insertOne({
         userId: new ObjectId(userId),
         userName,
-        concerns,
+        concerns: partConcerns,
         finalSchedule,
         status: "active",
         createdAt: new Date(),

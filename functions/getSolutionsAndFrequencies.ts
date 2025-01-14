@@ -6,13 +6,14 @@ import {
   UserConcernType,
   AllTaskType,
   TypeEnum,
-  UserInfoType,
   PartEnum,
   CategoryNameEnum,
+  DemographicsType,
 } from "types.js";
 import { RunType } from "types/askOpenaiTypes.js";
 import { CreateRoutineAllSolutionsType } from "types/createRoutineTypes.js";
 import httpError from "helpers/httpError.js";
+import getUsersImage from "./getUserImage.js";
 
 type Props = {
   specialConsiderations: string;
@@ -21,7 +22,8 @@ type Props = {
   type: TypeEnum;
   part: PartEnum;
   categoryName: CategoryNameEnum;
-  userInfo: UserInfoType;
+  userId: string;
+  demographics: DemographicsType;
 };
 
 export default async function getSolutionsAndFrequencies({
@@ -30,16 +32,25 @@ export default async function getSolutionsAndFrequencies({
   concerns,
   categoryName,
   type,
+  demographics,
+  userId,
   part,
-  userInfo,
 }: Props) {
-  const { demographics, _id: userId } = userInfo;
   const { sex } = demographics;
+
+  const concernsNames = concerns.map((c) => c.name);
+
+  let userImage = null;
+
+  if (sex === "male" && type === "head") {
+    userImage = await getUsersImage(String(userId));
+  }
 
   const dontSuggestCleanShave =
     sex === "male" &&
     type === "head" &&
-    concerns.map((c) => c.name).includes("ungroomed_facial_hair");
+    userImage &&
+    concernsNames.includes("ungroomed_facial_hair");
 
   try {
     const callback = () =>
@@ -49,27 +60,38 @@ export default async function getSolutionsAndFrequencies({
         userId: String(userId),
       });
 
+    const moustacheCheck = {
+      isMini: true,
+      content: [
+        {
+          type: "text",
+          text: `Does the person have a beard or moustache? If yes, don't suggest a clean shave.`,
+        },
+        {
+          type: "image_url",
+          image_url: {
+            url: userImage,
+            detail: "low",
+          },
+        },
+      ],
+      callback,
+    };
+
     const allSolutionsList = allSolutions.map((obj) => obj.key);
 
     const findSolutionsInstruction = `You are a ${
       type === "head" ? "dermatologist and dentist" : "fitness coach"
-    }. The user gives you a list of their concerns ${
-      specialConsiderations ? ", tells their special requirements" : ""
-    }. Your goal is to select the single most effective solution for each of their concerns from this list of solutions: ${allSolutionsList.join(
+    }. The user gives you a list of their concerns. Your goal is to select the single most effective solution for each of their concerns from this list of solutions: ${allSolutionsList.join(
       ", "
-    )}. ${
-      specialConsiderations
-        ? "Consider the following special requirement of the user when choosing the solutions" +
-          specialConsiderations
-        : ""
-    }. ALL NAMES FORMAT MUST BE EXACTLY AS IN THE LIST. Be concise and to the point.`;
+    )}. ALL NAMES FORMAT MUST BE EXACTLY AS IN THE LIST. Be concise and to the point.`;
 
     const allConcerns = concerns.map(
       (concern, index) =>
         `${index + 1}: ${concern.name}. Details: ${concern.explanation} ##`
     );
 
-    const findSolutionsContentArray = [
+    const findSolutionsContentArray: RunType[] = [
       {
         isMini: false,
         content: [
@@ -77,6 +99,10 @@ export default async function getSolutionsAndFrequencies({
             type: "text",
             text: `My concerns are: ${allConcerns.join(", ")}`,
           },
+          {
+            type: "text",
+            text: `Consider this my condition when choosing the solutions: ${specialConsiderations}`,
+          },
         ],
         callback,
       },
@@ -85,24 +111,15 @@ export default async function getSolutionsAndFrequencies({
         content: [
           {
             type: "text",
-            text: `Are there any more appropriate (effective) solutions for each concern in the list or not?`,
+            text: `Are there any more effective solutions for each concern in the list or not?`,
           },
         ],
         callback,
       },
     ];
 
-    if (dontSuggestCleanShave) {
-      findSolutionsContentArray.push({
-        isMini: true,
-        content: [
-          {
-            type: "text",
-            text: `Does the person have a beard or moustache? If yes, don't suggest a clean shave.`,
-          },
-        ],
-        callback,
-      });
+    if (dontSuggestCleanShave && userImage) {
+      findSolutionsContentArray.push(moustacheCheck as any);
     }
 
     findSolutionsContentArray.push(
@@ -125,6 +142,26 @@ export default async function getSolutionsAndFrequencies({
           },
         ],
         callback,
+      },
+      {
+        isMini: true,
+        content: [
+          {
+            type: "text",
+            text: `Are there any concerns that have no solutions from the list? If yes, remove them from the object.`,
+          },
+        ],
+        callback,
+      },
+      {
+        isMini: true,
+        content: [
+          {
+            type: "text",
+            text: `Return your latest updated JSON object in this format: {name of the concern: name of the solution}.`,
+          },
+        ],
+        callback,
       }
     );
 
@@ -137,16 +174,11 @@ export default async function getSolutionsAndFrequencies({
     });
 
     /* get additional solutions */
-    const findAdditionalSolutionsInstruction = `What solutions from this list: ${allSolutionsList.join(
+    const findAdditionalSolutionsInstruction = `In this all solutions list: \n\n<-- ALL SOLUTIONS LIST -->\n\n ${allSolutionsList.join(
       ", "
-    )} would increase the effectiveness or comfort of these solutions: ${JSON.stringify(
+    )}\n\n<-- ALL SOLUTIONS LIST -->\n\n are there any solutions that would increase the effectiveness or comfort of these selected solutions: \n\n<-- SELECTED SOLUTIONS LIST -->\n\n ${JSON.stringify(
       findSolutionsResponse
-    )}? ${
-      specialConsiderations
-        ? "Consider the following special requirement of the user when choosing the solutions" +
-          specialConsiderations
-        : ""
-    }. ALL NAMES FORMAT EXACTLY AS IN THE LIST. Think step-by-step. Be concise and to the point.`;
+    )}?. ALL NAMES FORMAT EXACTLY AS IN THE LIST. Think step-by-step. Be concise and to the point.`;
 
     const findAdditionalSolutionsContentArray = [
       {
@@ -154,7 +186,7 @@ export default async function getSolutionsAndFrequencies({
         content: [
           {
             type: "text",
-            text: `Does the list have any supportive solutions that are typically used with the main solutions? If yes add up to 3 supportive solutions.`,
+            text: `Does the list have any supportive solutions that are typically used with the main solutions? If yes add them to the main list.`,
           },
         ],
         callback,
@@ -164,7 +196,7 @@ export default async function getSolutionsAndFrequencies({
         content: [
           {
             type: "text",
-            text: `Are there solutions that contradict each other or are contraindicated? If yes, remove the least relevant contradicting solutions.`,
+            text: `Does you updated main list have any solutions that contradict each other or are contraindicated? If yes, remove the least relevant contradicated solutions.`,
           },
         ],
         callback,
@@ -174,7 +206,7 @@ export default async function getSolutionsAndFrequencies({
         content: [
           {
             type: "text",
-            text: `Are there solutions that are very similar to each other such that using them together could be detrimental or just too much? If yes, remove the redundant ones.`,
+            text: `Does your latest list have any solutions that are very similar to each other such that using them together could be detrimental for effectiveness or health? If yes, remove the redundant solutions.`,
           },
         ],
         callback,
@@ -184,26 +216,17 @@ export default async function getSolutionsAndFrequencies({
         content: [
           {
             type: "text",
-            text: `Look at your latest list of solutions. Remove those that are not related to these concerns: ${JSON.stringify(
+            text: `Does your latest list have any solutions that are not related to these concerns: ${JSON.stringify(
               allConcerns
-            )}`,
+            )}? If yes, remove them.`,
           },
         ],
         callback,
       },
     ];
 
-    if (dontSuggestCleanShave) {
-      findAdditionalSolutionsContentArray.push({
-        isMini: true,
-        content: [
-          {
-            type: "text",
-            text: `From the concerns description, does the person have a beard or moustache? If yes, don't suggest a clean shave.`,
-          },
-        ],
-        callback,
-      });
+    if (dontSuggestCleanShave && userImage) {
+      findAdditionalSolutionsContentArray.push(moustacheCheck as any);
     }
 
     if (specialConsiderations) {
@@ -212,23 +235,35 @@ export default async function getSolutionsAndFrequencies({
         content: [
           {
             type: "text",
-            text: `Are there any solutions that contradict this special consideration: ${specialConsiderations}. If yes, remove or replace them with the appropriate ones.`,
+            text: `Does your latest list have any solutions that contradict this user's condition: ${specialConsiderations}? If yes, remove them.`,
           },
         ],
         callback,
       });
     }
 
-    findAdditionalSolutionsContentArray.push({
-      isMini: true,
-      content: [
-        {
-          type: "text",
-          text: `Are all the names in your latest suggestions written exaclty as in the lists? If not, rewrite them exactly as in the lists.`,
-        },
-      ],
-      callback,
-    });
+    findAdditionalSolutionsContentArray.push(
+      {
+        isMini: true,
+        content: [
+          {
+            type: "text",
+            text: `Does your latest list have any solutions that don't exist in the original list? If yes remove those.`,
+          },
+        ],
+        callback,
+      },
+      {
+        isMini: true,
+        content: [
+          {
+            type: "text",
+            text: `Are all the names in your latest suggestions written exaclty as in the lists? If not, rewrite them exactly as in the lists.`,
+          },
+        ],
+        callback,
+      }
+    );
 
     findAdditionalSolutionsContentArray.push({
       isMini: true,
@@ -261,14 +296,7 @@ export default async function getSolutionsAndFrequencies({
     /* come up with frequencies for the solutions */
     const findFrequenciesInstruction = `You are a ${
       type === "head" ? "dermatologist and dentist" : "fitness coach"
-    }. The user gives you a list of solutions they are going to use ${
-      specialConsiderations ? ", tells their special requirements" : ""
-    }. Your goal is to tell how many times in a month each solution should be done. ${
-      specialConsiderations
-        ? "Consider the following special requirement of the user when deciding on the frequency." +
-          specialConsiderations
-        : ""
-    }. Think step-by-step. Be concise and to the point. YOUR RESPONSE IS A TOTAL NUMBER OF APPLICATIONS IN A MONTH NOT DAY OR WEEK.`;
+    }. The user gives you a list of solutions they are going to use. Your goal is to tell how many times in a month each solution should be done. Think step-by-step. Be concise and to the point. YOUR RESPONSE IS A TOTAL NUMBER OF APPLICATIONS IN A MONTH, NOT DAY OR WEEK.`;
 
     const stringOfSolutions = Object.values(updatedConcernsSolutionsMap)
       .flat()
@@ -280,7 +308,7 @@ export default async function getSolutionsAndFrequencies({
         content: [
           {
             type: "text",
-            text: `I'm going to apply these solutions: ${stringOfSolutions}. What would be the best application frequency for each solution?`,
+            text: `I'm going to use these solutions: ${stringOfSolutions}. What would be the best usage frequency for each solution?`,
           },
         ],
         callback,
@@ -288,28 +316,16 @@ export default async function getSolutionsAndFrequencies({
     ];
 
     if (type === "head") {
-      findFrequenciesContentArray.push(
-        {
-          isMini: false,
-          content: [
-            {
-              type: "text",
-              text: `Do you think the frequencies should be modified for better effectiveness? If yes, modify them, if not leave as is.`,
-            },
-          ],
-          callback,
-        },
-        {
-          isMini: false,
-          content: [
-            {
-              type: "text",
-              text: `Look at each solution again, are you sure that your frequency is not too much? If it's too much modify it, if not, leave as is.`,
-            },
-          ],
-          callback,
-        }
-      );
+      findFrequenciesContentArray.push({
+        isMini: false,
+        content: [
+          {
+            type: "text",
+            text: `Do you think the frequencies should be modified for better effectiveness? If yes, modify them, if not leave as is.`,
+          },
+        ],
+        callback,
+      });
     }
 
     if (type === "body") {
@@ -318,7 +334,20 @@ export default async function getSolutionsAndFrequencies({
         content: [
           {
             type: "text",
-            text: `My general approach is to train each muscle groop 2 times a week. Do you think the frequencies should be modified for achieving that? If yes, modify them. if not leave as is.`,
+            text: `My general approach is to train each muscle group 2 times a week. Do you think the frequencies should be modified for achieving that? If yes, modify them. if not leave as is.`,
+          },
+        ],
+        callback,
+      });
+    }
+
+    if (specialConsiderations) {
+      findFrequenciesContentArray.push({
+        isMini: true,
+        content: [
+          {
+            type: "text",
+            text: `The user has the following condition: ${specialConsiderations}. Does it affect the frequencies? If yes modify the frequencies if not leave as is.`,
           },
         ],
         callback,
@@ -374,6 +403,7 @@ export default async function getSolutionsAndFrequencies({
 
     for (const key of keysOfSolutions) {
       const relevantSolution = allSolutions.find((s) => s.key === key);
+      console.log("relevantSolution for ", key);
       const { name, icon, color, description, instruction } = relevantSolution;
 
       const total = Math.max(

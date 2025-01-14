@@ -27,7 +27,7 @@ type Props = {
   type: TypeEnum;
   part: PartEnum;
   categoryName: CategoryNameEnum;
-  partConcerns: UserConcernType[];
+  concerns: UserConcernType[];
   specialConsiderations: string;
 };
 
@@ -36,12 +36,12 @@ export default async function createRoutine({
   part,
   userId,
   categoryName,
-  partConcerns,
+  concerns,
   specialConsiderations,
 }: Props) {
-  if (partConcerns.length === 0) return;
-
   try {
+    if (concerns.length === 0) throw new Error("No concerns");
+
     const userInfo = (await doWithRetries(async () =>
       db.collection("User").findOne(
         {
@@ -65,6 +65,10 @@ export default async function createRoutine({
     )) as unknown as CreateRoutineUserInfoType;
 
     if (!userInfo) throw new Error("This user doesn't exist");
+
+    const partConcerns = concerns.filter(
+      (c) => c.type === type && c.part === part
+    );
 
     const concernNames = partConcerns.map((obj) => obj.name);
 
@@ -149,7 +153,7 @@ export default async function createRoutine({
           type,
           part,
           routineId: existingActiveTask.routineId,
-          concerns: partConcerns,
+          partConcerns,
           userInfo,
           allSolutions,
           categoryName,
@@ -159,7 +163,7 @@ export default async function createRoutine({
         await prolongPreviousRoutine({
           type,
           part,
-          concerns: partConcerns,
+          partConcerns,
           userInfo,
           allSolutions,
           tasksToProlong: draftTasksToProlong,
@@ -172,7 +176,7 @@ export default async function createRoutine({
         part,
         userId,
         userInfo,
-        concerns: partConcerns,
+        partConcerns,
         allSolutions,
         specialConsiderations,
         categoryName,

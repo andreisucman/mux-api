@@ -24,7 +24,7 @@ type Props = {
   type: TypeEnum;
   part: PartEnum;
   categoryName: CategoryNameEnum;
-  concerns: UserConcernType[];
+  partConcerns: UserConcernType[];
   tasksToProlong: TaskType[];
   allSolutions: CreateRoutineAllSolutionsType[];
   userInfo: CreateRoutineUserInfoType;
@@ -33,7 +33,7 @@ type Props = {
 export default async function prolongPreviousRoutine({
   type,
   part,
-  concerns,
+  partConcerns,
   categoryName,
   allSolutions,
   userInfo,
@@ -56,7 +56,7 @@ export default async function prolongPreviousRoutine({
     const resetTasks: TaskType[] = [];
 
     /* reset fields */
-    const concernsList = concerns.map((obj) => obj.name);
+    const concernsList = partConcerns.map((obj) => obj.name);
 
     for (const draft of tasksToProlong) {
       const { _id, ...rest } = draft;
@@ -147,7 +147,7 @@ export default async function prolongPreviousRoutine({
       const { additionalAllTasks, additionalTasksToInsert, mergedSchedule } =
         await addAdditionalTasks({
           allSolutions,
-          concerns,
+          concerns: partConcerns,
           userInfo,
           type,
           part,
@@ -169,7 +169,7 @@ export default async function prolongPreviousRoutine({
       db.collection("Routine").insertOne({
         userId: new ObjectId(userId),
         userName,
-        concerns,
+        concerns: partConcerns,
         finalSchedule,
         status: "active",
         createdAt: new Date(),

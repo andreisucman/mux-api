@@ -16,14 +16,14 @@ import {
   CreateRoutineUserInfoType,
 } from "types/createRoutineTypes.js";
 import httpError from "helpers/httpError.js";
-import { db } from "init.js";
 import updateTasksAnalytics from "./updateTasksCreatedAnalytics.js";
+import { db } from "init.js";
 
 type Props = {
   type: TypeEnum;
   part: PartEnum;
   routineId: string;
-  concerns: UserConcernType[];
+  partConcerns: UserConcernType[];
   allSolutions: CreateRoutineAllSolutionsType[];
   userInfo: CreateRoutineUserInfoType;
   specialConsiderations: string;
@@ -33,7 +33,7 @@ type Props = {
 export default async function updateCurrentRoutine({
   type,
   part,
-  concerns,
+  partConcerns,
   routineId,
   allSolutions,
   userInfo,
@@ -61,8 +61,9 @@ export default async function updateCurrentRoutine({
         specialConsiderations,
         allSolutions,
         categoryName,
-        concerns,
-        userInfo,
+        concerns: partConcerns,
+        demographics: userInfo.demographics,
+        userId: String(userId),
         type,
         part,
       })
@@ -71,7 +72,7 @@ export default async function updateCurrentRoutine({
     const { rawSchedule } = await doWithRetries(async () =>
       getRawSchedule({
         solutionsAndFrequencies,
-        concerns,
+        concerns: partConcerns,
         days: daysDifference,
       })
     );
@@ -90,7 +91,7 @@ export default async function updateCurrentRoutine({
       ...currentRoutine.allTasks,
       ...solutionsAndFrequencies,
     ];
-    const newConcerns = [...currentRoutine.concerns, ...concerns];
+    const newConcerns = [...currentRoutine.concerns, ...partConcerns];
 
     await doWithRetries(async () =>
       db.collection("Routine").updateOne(
@@ -111,7 +112,7 @@ export default async function updateCurrentRoutine({
 
     let newTasksToInsert = await createTasks({
       allSolutions,
-      concerns,
+      concerns: partConcerns,
       finalSchedule: mergedSchedule,
       categoryName,
       part,
