@@ -38,6 +38,7 @@ route.get("/", async (req: CustomRequest, res: Response) => {
     let project = {
       icon: 1,
       color: 1,
+      key: 1,
       title: 1,
       instruction: 1,
       description: 1,

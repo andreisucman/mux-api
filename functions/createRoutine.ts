@@ -101,8 +101,6 @@ export default async function createRoutine({
         .toArray()
     )) as unknown as CreateRoutineAllSolutionsType[];
 
-    console.log("allSolutions 104", allSolutions);
-
     /* get previously completed */
     const latestMonthCanceledKeys: string[] = await getLatestTaskStatus({
       userId,

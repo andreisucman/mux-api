@@ -19,10 +19,10 @@ export default async function validateImage({
   condition,
 }: Props) {
   try {
-    const systemContent = `Does the image meet this condition: ${condition}? <-->Format your reponse as a JSON with this structure: {verdict: true if yes, false if not} `;
+    const systemContent = `Does the image meet this condition: ${condition}?`;
 
     const ValidateImageResponse = z.object({
-      verdict: z.boolean(),
+      verdict: z.boolean().describe("true if yes, false if not"),
     });
 
     const runs = [
@@ -56,7 +56,7 @@ export default async function validateImage({
       functionName: "validateImage",
     });
 
-    return { verdict: response.verdict };
+    return response.verdict;
   } catch (err) {
     throw httpError(err);
   }

@@ -27,6 +27,7 @@ export default async function checkAndRecordTwin({
   registryFilter = {},
   image,
 }: Props) {
+
   let response = { mustLogin: false, isSuspended: false, errorMessage: "" };
   const finalUserId = requestUserId || payloadUserId;
 
@@ -60,7 +61,8 @@ export default async function checkAndRecordTwin({
     });
 
     const twinIds = await checkForTwins({
-      userId: finalUserId,
+      requestUserId,
+      finalUserId,
       image,
       embedding,
       registryFilter: restFilter,
@@ -71,7 +73,7 @@ export default async function checkAndRecordTwin({
       // dont change the requestUserId to finalUserId here
       if (requestUserId && embedding) {
         // add a twin record if logged in and twin exists
-        const updates = [String(finalUserId), ...twinIds].map((id) => ({
+        const updates = [String(requestUserId), ...twinIds].map((id) => ({
           updateOne: {
             filter: { _id: new ObjectId(id) },
             update: {

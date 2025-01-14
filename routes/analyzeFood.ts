@@ -23,7 +23,6 @@ import getUserInfo from "@/functions/getUserInfo.js";
 import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.js";
 import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
-import checkAndRecordTwin from "@/functions/checkAndRecordTwin.js";
 import httpError from "@/helpers/httpError.js";
 
 const route = Router();
@@ -39,26 +38,6 @@ route.post(
     }
 
     try {
-      const { mustLogin, isSuspended } = await checkAndRecordTwin({
-        payloadUserId: req.userId,
-        requestUserId: req.userId,
-        registryFilter: { category: "food" },
-        categoryName: CategoryNameEnum.FOODSCAN,
-      });
-
-      if (isSuspended) {
-        res.status(200).json({
-          error:
-            "You can't use the platform for violating our TOS in the past. If you think this is a mistake contact us at info@muxout.com.",
-        });
-        return;
-      }
-
-      if (mustLogin) {
-        res.status(200).json({ error: "must login" });
-        return;
-      }
-
       let isSafe = false;
       let isSuspicious = false;
       let moderationResults: ModerationResultType[] = [];
@@ -88,7 +67,7 @@ route.post(
         }
       }
 
-      const { verdict: isValid } = await validateImage({
+      const isValid = await validateImage({
         condition: "This is a photo of a ready to eat food",
         image: url,
         userId: req.userId,

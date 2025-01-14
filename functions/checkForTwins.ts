@@ -10,7 +10,8 @@ import createImageCollage from "./createImageCollage.js";
 import { db } from "@/init.js";
 
 type Props = {
-  userId?: string;
+  requestUserId?: string;
+  finalUserId: string;
   image?: string;
   embedding?: number[];
   registryFilter?: { [key: string]: any };
@@ -18,7 +19,8 @@ type Props = {
 };
 
 export default async function checkForTwins({
-  userId,
+  requestUserId,
+  finalUserId,
   image,
   registryFilter = {},
   embedding,
@@ -31,21 +33,23 @@ export default async function checkForTwins({
       const embeddingFilter: { [key: string]: any } = {
         ...registryFilter,
       };
-      if (userId) embeddingFilter.userId = { $ne: new ObjectId(userId) };
+      if (requestUserId)
+        // this is done to avoid matching with the current user if the user is logged in
+        embeddingFilter.userId = { $ne: new ObjectId(requestUserId) };
 
       const closestDocuments = await findEmbeddings({
         collection: "TwinRegistry",
         embedding,
         index: "twin_registry_search_vector",
         limit: 2,
-        relatednessScore: 0.5,
+        relatednessScore: 0,
         filters: embeddingFilter,
         projection: { image: 1, userId: 1 },
       });
 
       if (closestDocuments.length > 0) {
         const inIds = [
-          new ObjectId(userId),
+          new ObjectId(finalUserId),
           ...closestDocuments.map((doc) => new ObjectId(doc.userId)),
         ];
 
@@ -101,7 +105,7 @@ export default async function checkForTwins({
           .filter(Boolean);
 
         const closestDocumentsWithUser = [
-          { userId: new ObjectId(userId), image },
+          { userId: new ObjectId(finalUserId), image },
           ...closestDocuments,
         ];
 
@@ -130,7 +134,7 @@ export default async function checkForTwins({
         const twinIndexes = await checkPeopleSimilarity({
           categoryName,
           image: collageImage,
-          userId,
+          userId: finalUserId,
         });
 
         const filteredTwinIndexes = twinIndexes.filter(
@@ -155,7 +159,7 @@ export default async function checkForTwins({
         db
           .collection("TwinRegistry")
           .updateOne(
-            { ...registryFilter, userId: new ObjectId(userId) },
+            { ...registryFilter, userId: new ObjectId(finalUserId) },
             { $set: updatePayload },
             { upsert: true }
           )
