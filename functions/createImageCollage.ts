@@ -3,16 +3,25 @@ import doWithRetries from "@/helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 
 type Props = {
-  images: string[][];
+  images: string[][] | string[];
+  collageSize?: number;
+  isGrid: boolean;
 };
 
-export default async function createImageCollage({ images }: Props) {
+export default async function createImageCollage({
+  images,
+  collageSize,
+  isGrid,
+}: Props) {
   try {
+    const endpoint = isGrid ? "createGridCollage" : "createGroupCollage";
+
     const collageResponse = await doWithRetries(async () =>
-      fetch(`${process.env.PROCESSING_SERVER_URL}/createCollage`, {
+      fetch(`${process.env.PROCESSING_SERVER_URL}/${endpoint}`, {
         method: "POST",
         body: JSON.stringify({
           images,
+          collageSize,
         }),
         headers: {
           "content-type": "application/json",

@@ -36,6 +36,7 @@ export default async function checkIfSuspended({
       if (closestDocuments.length > 0) {
         const collageImage = await createImageCollage({
           images: [image, ...closestDocuments.map((doc) => doc.image)],
+          isGrid: false,
         });
 
         const suspendedIndexes = await checkPeopleSimilarity({

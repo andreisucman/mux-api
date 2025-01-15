@@ -64,7 +64,7 @@ route.post(
         text,
         userId: req.userId,
         categoryName: CategoryNameEnum.FAQ,
-        dimensions: 1024,
+        dimensions: 1536,
       });
 
       const updatePayload = {

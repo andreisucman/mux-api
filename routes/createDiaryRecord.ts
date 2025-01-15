@@ -10,16 +10,15 @@ import { DiaryActivityType } from "@/types/saveDiaryRecordTypes.js";
 import { ModerationStatusEnum } from "types.js";
 import { daysFrom } from "@/helpers/utils.js";
 import { db } from "init.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { type, timeZone } = req.body;
+    const { timeZone } = req.body;
 
-    if (!timeZone || !type || !["head", "body", "health"].includes(type)) {
+    if (!timeZone) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
@@ -53,7 +52,7 @@ route.post(
         userId: new ObjectId(req.userId),
         createdAt: { $gte: usersTodayMidnight, $lt: usersTomorrowMidnight },
         moderationStatus: ModerationStatusEnum.ACTIVE,
-        type,
+        isPublic: true,
       };
 
       const todaysProof = await doWithRetries(async () =>
@@ -87,7 +86,7 @@ route.post(
         userId: new ObjectId(req.userId),
         createdAt: { $gte: usersTodayMidnight, $lt: usersTomorrowMidnight },
         moderationStatus: ModerationStatusEnum.ACTIVE,
-        type,
+        isPublic: true,
       };
 
       const todaysStyles = await doWithRetries(async () =>
@@ -113,7 +112,6 @@ route.post(
       const foodFilters: { [key: string]: any } = {
         userId: new ObjectId(req.userId),
         createdAt: { $gte: usersTodayMidnight, $lt: usersTomorrowMidnight },
-        type,
       };
 
       const todaysFood = await doWithRetries(async () =>

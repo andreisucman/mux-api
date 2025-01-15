@@ -14,11 +14,15 @@ import {
 } from "types.js";
 import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 import { daysFrom } from "@/helpers/utils.js";
-import { db } from "init.js";
 import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.js";
-import { PrivacyType } from "types.js";
-import { DiaryRecordType } from "@/types/saveDiaryRecordTypes.js";
+import {
+  DiaryActivityType,
+  DiaryRecordType,
+} from "@/types/saveDiaryRecordTypes.js";
 import getUserInfo from "@/functions/getUserInfo.js";
+import createMultimodalEmbedding from "@/functions/createMultiModalEmbedding.js";
+import createImageCollage from "@/functions/createImageCollage.js";
+import { db } from "init.js";
 
 const route = Router();
 
@@ -96,32 +100,37 @@ route.post(
         projection: { name: 1, avatar: 1, "club.privacy": 1 },
       });
 
+      const imagesOfActivities = activity.map((a: DiaryActivityType) => a.url);
+      const imagesForCollage = imagesOfActivities.slice(0, 25);
+      const collageImage = await createImageCollage({
+        images: imagesForCollage,
+        collageSize: Math.min(Math.sqrt(imagesForCollage * 256 * 250), 2048),
+        isGrid: true,
+      });
+
+      const embedding = await createMultimodalEmbedding({
+        categoryName: CategoryNameEnum.DIARY,
+        text: body.message,
+        userId: req.userId,
+        imageUrl: collageImage,
+      });
+
       const newDiaryRecord: DiaryRecordType = {
         _id: new ObjectId(),
-        type,
         audio,
         activity,
+        embedding,
         userName: null,
         avatar: null,
-        isPublic: false,
         userId: new ObjectId(req.userId),
         transcription: body.message,
         createdAt: new Date(),
         moderationStatus: ModerationStatusEnum.ACTIVE,
       };
 
-      const { name, avatar, club } = userInfo;
+      const { name, avatar } = userInfo;
       if (name) newDiaryRecord.userName = name;
       if (avatar) newDiaryRecord.avatar = avatar;
-
-      const { privacy } = club || {};
-      const relevantTypePrivacy = privacy?.find(
-        (typePrivacyObj: PrivacyType) => typePrivacyObj.name === type
-      );
-
-      if (relevantTypePrivacy) {
-        newDiaryRecord.isPublic = relevantTypePrivacy.value;
-      }
 
       await doWithRetries(async () =>
         db.collection("Diary").insertOne(newDiaryRecord)
