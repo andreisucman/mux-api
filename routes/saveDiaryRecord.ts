@@ -29,9 +29,9 @@ const route = Router();
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { audio, type, activity, timeZone } = req.body;
+    const { audio, activity, timeZone } = req.body;
 
-    if (!type || !audio || !activity || !timeZone) {
+    if (!audio || !activity || !timeZone) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
@@ -102,9 +102,16 @@ route.post(
 
       const imagesOfActivities = activity.map((a: DiaryActivityType) => a.url);
       const imagesForCollage = imagesOfActivities.slice(0, 25);
+
+      const collageSize = Math.round(
+        Math.max(
+          Math.min(Math.sqrt(imagesForCollage.length * 256 * 250), 2048),
+          768
+        )
+      );
       const collageImage = await createImageCollage({
         images: imagesForCollage,
-        collageSize: Math.min(Math.sqrt(imagesForCollage * 256 * 250), 2048),
+        collageSize,
         isGrid: true,
       });
 
@@ -122,6 +129,7 @@ route.post(
         embedding,
         userName: null,
         avatar: null,
+        collageImage,
         userId: new ObjectId(req.userId),
         transcription: body.message,
         createdAt: new Date(),

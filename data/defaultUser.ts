@@ -219,7 +219,7 @@ export const defaultUser: UserType = {
   requiredProgress: defaultRequiredProgress,
   subscriptions: defaultSubscriptions,
   toAnalyze: { head: [], body: [] },
-  coachEnergy: 100000,
+  coachEnergy: 150000,
   nutrition: {
     dailyCalorieGoal: 0,
     recommendedDailyCalorieGoal: 0,

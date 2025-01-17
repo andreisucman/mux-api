@@ -52,7 +52,6 @@ route.post(
         userId: new ObjectId(req.userId),
         createdAt: { $gte: usersTodayMidnight, $lt: usersTomorrowMidnight },
         moderationStatus: ModerationStatusEnum.ACTIVE,
-        isPublic: true,
       };
 
       const todaysProof = await doWithRetries(async () =>
@@ -65,6 +64,7 @@ route.post(
               mainUrl: 1,
               mainThumbnail: 1,
               icon: 1,
+              type: 1,
             },
           })
           .toArray()
@@ -79,6 +79,7 @@ route.post(
           icon: proof.icon,
           categoryName: "proof",
           contentType: proof.contentType,
+          type: proof.type,
         });
       }
 
@@ -86,14 +87,13 @@ route.post(
         userId: new ObjectId(req.userId),
         createdAt: { $gte: usersTodayMidnight, $lt: usersTomorrowMidnight },
         moderationStatus: ModerationStatusEnum.ACTIVE,
-        isPublic: true,
       };
 
       const todaysStyles = await doWithRetries(async () =>
         db
           .collection("StyleAnalysis")
           .find(styleFilters, {
-            projection: { styleName: 1, mainUrl: 1, styleIcon: 1 },
+            projection: { styleName: 1, mainUrl: 1, type: 1, styleIcon: 1 },
           })
           .toArray()
       );
@@ -106,6 +106,7 @@ route.post(
           icon: style.styleIcon,
           categoryName: "style",
           contentType: "image",
+          type: style.type,
         });
       }
 

@@ -6,10 +6,10 @@ import { ObjectId, Sort } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import checkTrackedRBAC from "@/functions/checkTrackedRBAC.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import { ModerationStatusEnum } from "types.js";
+import { ModerationStatusEnum, PrivacyType } from "types.js";
+import { DiaryRecordType } from "@/types/saveDiaryRecordTypes.js";
 import { CustomRequest } from "types.js";
 import { db } from "init.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -17,41 +17,69 @@ route.get(
   "/:userName?",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { userName } = req.params;
-    const { filter, sort, skip } = aqp(req.query);
-    const { type } = filter;
+    const { sort, skip } = aqp(req.query);
 
     try {
-      if (userName) {
-        const { inClub, isFollowing } = await checkTrackedRBAC({
-          followingUserName: userName,
-          userId: req.userId,
-          throwOnError: false,
-        });
+      let privacy: PrivacyType[] = [];
 
-        if (!inClub || !isFollowing) {
+      if (userName) {
+        const { inClub, isSelf, isFollowing, targetUserInfo } =
+          await checkTrackedRBAC({
+            followingUserName: userName,
+            userId: req.userId,
+            throwOnError: false,
+            targetProjection: { club: 1 },
+          });
+
+        if ((!inClub || !isFollowing) && !isSelf) {
           res.status(200).json({ message: [] });
           return;
         }
+
+        privacy = targetUserInfo.club.privacy;
       }
+
       const filters: { [key: string]: any } = {
-        userId: new ObjectId(req.userId),
         moderationStatus: ModerationStatusEnum.ACTIVE,
       };
 
-      if (userName) filters.isPublic = true;
-      if (type) filters.type = type;
+      const projection = { collageImage: 0 };
 
-      const diary = await doWithRetries(async () =>
+      if (userName) {
+        filters.userName = userName;
+      } else {
+        filters.userId = new ObjectId(req.userId);
+      }
+
+      let results = (await doWithRetries(async () =>
         db
           .collection("Diary")
           .find(filters)
           .sort((sort as Sort) || { createdAt: -1 })
           .skip(skip || 0)
+          .project(projection)
           .limit(21)
           .toArray()
-      );
+      )) as unknown as DiaryRecordType[];
 
-      res.status(200).json({ message: diary });
+      if (userName) {
+        const typePrivaciesToExclude = privacy
+          .filter((ob) => !ob.value)
+          .map((r) => r.name);
+
+        if (typePrivaciesToExclude.length > 0) {
+          results = results.map((r) => {
+            return {
+              ...r,
+              activity: r.activity.filter(
+                (a) => !typePrivaciesToExclude.includes(a.type)
+              ),
+            };
+          });
+        }
+      }
+
+      res.status(200).json({ message: results });
     } catch (err) {
       next(err);
     }
