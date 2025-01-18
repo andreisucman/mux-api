@@ -5,14 +5,15 @@ import askRepeatedly from "functions/askRepeatedly.js";
 import { RunType } from "types/askOpenaiTypes.js";
 import { TypeEnum, CategoryNameEnum } from "types.js";
 import httpError from "helpers/httpError.js";
+import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 
 type Props = {
   userId: string;
   type: TypeEnum;
   categoryName: CategoryNameEnum;
-  rawNewSchedule: { [key: string]: { key: string; concern: string }[] };
+  rawNewSchedule: { [key: string]: ScheduleTaskType[] };
   currentSchedule: {
-    [key: string]: { key: string; concern: string }[];
+    [key: string]: ScheduleTaskType[];
   };
 };
 
@@ -80,13 +81,15 @@ export default async function mergeSchedules({
       },
     ];
 
-    return await askRepeatedly({
-      userId,
-      categoryName,
-      systemContent,
-      runs: userContent,
-      functionName: "mergeSchedules",
-    });
+    const mergedSchedule: { [key: string]: ScheduleTaskType[] } =
+      await askRepeatedly({
+        userId,
+        categoryName,
+        systemContent,
+        runs: userContent,
+        functionName: "mergeSchedules",
+      });
+    return mergedSchedule;
   } catch (error) {
     throw httpError(error);
   }

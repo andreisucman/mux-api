@@ -32,7 +32,7 @@ import filterRelevantProductTypes from "@/functions/filterRelevantTypes.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import moderateContent from "@/functions/moderateContent.js";
 import updateTasksAnalytics from "@/functions/updateTasksCreatedAnalytics.js";
-import httpError from "@/helpers/httpError.js";
+import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 
 const route = Router();
 
@@ -224,6 +224,7 @@ route.post(
 
       const generalTaskInfo: TaskType = {
         ...otherResponse,
+        _id: new ObjectId(),
         userId: new ObjectId(req.userId),
         routineId: new ObjectId(latestRelevantRoutine._id),
         example: { type: "image", url: image },
@@ -327,25 +328,24 @@ route.post(
 
         draftTasks.push({
           ...generalTaskInfo,
+          embedding,
           startsAt: starts,
           expiresAt: expires,
           requiredSubmissions: submissions[i],
         });
       }
 
-      let {
-        finalSchedule = {},
-        concerns = [],
-        allTasks = [],
-        createdAt,
-      } = latestRelevantRoutine;
+      let { concerns = [], allTasks = [], createdAt } = latestRelevantRoutine;
+      let finalSchedule: { [key: string]: ScheduleTaskType[] } =
+        latestRelevantRoutine.finalSchedule;
 
       /* update final schedule */
       for (let i = 0; i < draftTasks.length; i++) {
         const task = draftTasks[i];
         const dateString = new Date(task.startsAt).toDateString();
 
-        const simpleTaskContent = {
+        const simpleTaskContent: ScheduleTaskType = {
+          _id: generalTaskInfo._id,
           key: task.key,
           concern: task.concern,
         };

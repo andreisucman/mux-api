@@ -1,6 +1,8 @@
+import { ScheduleTaskType } from "./turnTasksIntoSchedule.js";
+
 type TrimScheduleProps = {
   days: number;
-  schedule: { [key: string]: { key: string; concern: string }[] };
+  schedule: { [key: string]: ScheduleTaskType[] };
   concernsNamesDescending: string[];
   toDeleteCount: number;
 };

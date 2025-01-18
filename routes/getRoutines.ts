@@ -9,7 +9,6 @@ import { CustomRequest, SubscriptionTypeNamesEnum } from "types.js";
 import checkSubscriptionStatus from "@/functions/checkSubscription.js";
 import aqp from "api-query-params";
 import { db } from "init.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -67,6 +66,7 @@ route.get(
         type: 1,
         allTasks: 1,
         status: 1,
+        lastDate: 1,
       };
 
       const routines = await doWithRetries(async () =>

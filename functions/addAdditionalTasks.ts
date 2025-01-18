@@ -18,6 +18,7 @@ import {
 } from "types/createRoutineTypes.js";
 import { db } from "init.js";
 import httpError from "@/helpers/httpError.js";
+import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 
 type Props = {
   type: TypeEnum;
@@ -25,7 +26,7 @@ type Props = {
   categoryName: CategoryNameEnum;
   concerns: UserConcernType[];
   currentTasks: TaskType[];
-  currentSchedule: { [key: string]: { key: string; concern: string }[] };
+  currentSchedule: { [key: string]: ScheduleTaskType[] };
   userInfo: CreateRoutineUserInfoType;
   allSolutions: CreateRoutineAllSolutionsType[];
 };
@@ -97,7 +98,6 @@ export default async function addAdditionalTasks({
         allSolutions,
         categoryName,
         userInfo,
-        concerns,
         type,
         part,
       })

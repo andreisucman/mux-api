@@ -17,8 +17,8 @@ import {
 import { db } from "init.js";
 import httpError from "@/helpers/httpError.js";
 import getUserInfo from "@/functions/getUserInfo.js";
-import updateAnalytics from "@/functions/updateAnalytics.js";
 import updateTasksAnalytics from "@/functions/updateTasksCreatedAnalytics.js";
+import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 
 const route = Router();
 
@@ -105,7 +105,10 @@ route.post(
         });
       }
 
-      let { finalSchedule, concerns, allTasks } = currentRoutine;
+      let { concerns, allTasks } = currentRoutine;
+
+      let finalSchedule: { [key: string]: ScheduleTaskType[] } =
+        currentRoutine.finalSchedule;
 
       /* update final schedule */
       for (let i = 0; i < draftTasks.length; i++) {
@@ -113,6 +116,7 @@ route.post(
         const dateString = new Date(task.startsAt).toDateString();
 
         const simpleTaskContent = {
+          _id: task._id,
           key: task.key,
           concern: task.concern,
         };

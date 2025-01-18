@@ -8,7 +8,6 @@ import { CustomRequest, TaskStatusEnum } from "types.js";
 import getLatestRoutineAndTasks from "functions/getLatestRoutineAndTasks.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -23,20 +22,20 @@ route.post(
     const { taskIds, newStatus }: Props = req.body;
 
     try {
-      if (newStatus === TaskStatusEnum.CANCELED) {
-        const tasksToUpdate = await doWithRetries(async () =>
-          db
-            .collection("Task")
-            .find(
-              {
-                _id: { $in: taskIds.map((id: string) => new ObjectId(id)) },
-                userId: new ObjectId(req.userId),
-              },
-              { projection: { part: 1, isCreated: 1 } }
-            )
-            .toArray()
-        );
+      const tasksToUpdate = await doWithRetries(async () =>
+        db
+          .collection("Task")
+          .find(
+            {
+              _id: { $in: taskIds.map((id: string) => new ObjectId(id)) },
+              userId: new ObjectId(req.userId),
+            },
+            { projection: { part: 1, isCreated: 1, routineId: 1 } }
+          )
+          .toArray()
+      );
 
+      if (newStatus === TaskStatusEnum.CANCELED) {
         const partsCreatedTasks = tasksToUpdate
           .map((t) => t.part)
           .reduce((a: { [key: string]: number }, c: string) => {
@@ -82,6 +81,35 @@ route.post(
           },
           { $set: { status: newStatus } }
         )
+      );
+
+      const relevantRoutineAndTaskIds = tasksToUpdate.map((tObj) => ({
+        taskId: tObj._id,
+        routineId: tObj.routineId,
+      }));
+
+      const updateStatusOps = relevantRoutineAndTaskIds.map((obj) => {
+        return {
+          updateOne: {
+            filter: {
+              "allTasks.ids._id": obj.taskId,
+            },
+            update: {
+              $set: {
+                "allTasks.$.ids.$[elem].status": newStatus,
+              },
+            },
+            arrayFilters: [
+              {
+                "elem._id": obj.taskId,
+              },
+            ],
+          },
+        };
+      });
+
+      await doWithRetries(async () =>
+        db.collection("Routine").bulkWrite(updateStatusOps)
       );
 
       const response = await getLatestRoutineAndTasks({ userId: req.userId });

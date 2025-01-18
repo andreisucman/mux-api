@@ -14,6 +14,7 @@ import checkIfTaskIsSimilar from "@/functions/checkIfTaskIsSimilar.js";
 import moderateContent from "@/functions/moderateContent.js";
 import httpError from "@/helpers/httpError.js";
 import { db } from "init.js";
+import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 
 const route = Router();
 
@@ -137,7 +138,8 @@ route.post(
           )
       );
 
-      let { finalSchedule } = relevantRoutine;
+      let finalSchedule: { [key: string]: ScheduleTaskType[] } =
+        relevantRoutine.finalSchedule;
 
       const oldDateKey = formatDate({ date: startsAt });
       const newDateKey = formatDate({ date: startDate });

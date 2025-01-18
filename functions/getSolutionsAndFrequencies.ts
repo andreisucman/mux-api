@@ -9,11 +9,13 @@ import {
   PartEnum,
   CategoryNameEnum,
   DemographicsType,
+  TaskStatusEnum,
 } from "types.js";
 import { RunType } from "types/askOpenaiTypes.js";
 import { CreateRoutineAllSolutionsType } from "types/createRoutineTypes.js";
 import httpError from "helpers/httpError.js";
 import getUsersImage from "./getUserImage.js";
+import { ObjectId } from "mongodb";
 
 type Props = {
   specialConsiderations: string;
@@ -425,8 +427,14 @@ export default async function getSolutionsAndFrequencies({
         Math.round(totalApplications / requiredSubmissions.length)
       );
 
+      const ids = new Array(totalUses)
+        .fill(new ObjectId())
+        .map((_id) => ({ _id, status: TaskStatusEnum.ACTIVE }));
+        
       const record: AllTaskType = {
+        ids,
         name,
+        key,
         icon,
         color,
         part,
@@ -435,9 +443,9 @@ export default async function getSolutionsAndFrequencies({
         concern: null,
         completed: 0,
         unknown: 0,
-        key,
         total: totalUses,
       };
+
       const indexOfConcern = concernSolutions.findIndex((arrayOfSolutions) =>
         arrayOfSolutions.includes(key)
       );

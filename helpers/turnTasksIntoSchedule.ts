@@ -1,17 +1,20 @@
-type SolutionsAndFrequenciesType = {
-  key: string;
-  name: string;
-  color: string;
-  icon: string;
-  total: number;
-  concern: string;
-};
+import { AllTaskType } from "@/types.js";
+import { ObjectId } from "mongodb";
+import generateTaskIntervals from "./generateTaskIntervals.js";
+import sortTasksInScheduleByDate from "./sortTasksInScheduleByDate.js";
 
 type TurnTasksIntoScheduleProps = {
-  solutionsAndFrequencies: SolutionsAndFrequenciesType[];
+  solutionsAndFrequencies: AllTaskType[];
   dateOne: Date;
   dateTwo: Date;
   earliestStartMap: { [key: string]: any };
+};
+
+export type ScheduleTaskType = {
+  _id: ObjectId;
+  date?: string;
+  key: string;
+  concern: string;
 };
 
 export default function turnTasksIntoSchedule({
@@ -20,10 +23,10 @@ export default function turnTasksIntoSchedule({
   dateOne,
   dateTwo,
 }: TurnTasksIntoScheduleProps) {
-  const allTasks: { date: string; key: string; concern: string }[] = [];
+  const scheduleTasks: ScheduleTaskType[] = [];
 
   solutionsAndFrequencies.forEach((solution) => {
-    const intervals = generateIntervals({
+    const intervals = generateTaskIntervals({
       key: solution.key,
       total: solution.total,
       earliestStartMap,
@@ -32,9 +35,10 @@ export default function turnTasksIntoSchedule({
     });
 
     if (intervals) {
-      for (const interval of intervals) {
-        allTasks.push({
-          date: interval,
+      for (let i = 0; i < intervals.length; i++) {
+        scheduleTasks.push({
+          _id: solution.ids[i]._id,
+          date: intervals[i],
           key: solution.key,
           concern: solution.concern,
         });
@@ -42,94 +46,20 @@ export default function turnTasksIntoSchedule({
     }
   });
 
-  const schedule = allTasks.reduce((acc: { [key: string]: any }, current) => {
-    const { date, ...otherCurrent } = current;
-    if (acc[date]) {
-      acc[date].push(otherCurrent);
-    } else {
-      acc[date] = [otherCurrent];
-    }
-    return acc;
-  }, {});
+  const schedule = scheduleTasks.reduce(
+    (acc: { [key: string]: ScheduleTaskType[] }, current) => {
+      const { date, ...otherCurrent } = current;
+      if (acc[date]) {
+        acc[date].push(otherCurrent);
+      } else {
+        acc[date] = [otherCurrent];
+      }
+      return acc;
+    },
+    {}
+  );
 
   const sortedSchedule = sortTasksInScheduleByDate(schedule);
 
   return sortedSchedule;
-}
-
-function sortTasksInScheduleByDate(schedule: { [key: string]: any }) {
-  try {
-    const keys = Object.keys(schedule);
-    const sortedSchedule = keys
-      .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
-      .reduce((acc: { [key: string]: any }, key) => {
-        if (schedule[key]) acc[key] = schedule[key];
-        return acc;
-      }, {});
-    return sortedSchedule;
-  } catch (err) {
-    throw new Error(`sortTasksInScheduleByDate - ${err.message}`);
-  }
-}
-
-type GenerateIntervalsProps = {
-  key: string;
-  dateOne: Date;
-  dateTwo: Date;
-  total: number;
-  earliestStartMap: { [key: string]: string };
-};
-
-function generateIntervals({
-  key,
-  dateOne,
-  dateTwo,
-  total,
-  earliestStartMap,
-}: GenerateIntervalsProps) {
-  try {
-    if (!dateOne || !dateTwo || !total || !key) {
-      throw new Error(`Missing input params`);
-    }
-
-    let startDate = new Date(dateOne);
-    if (isNaN(startDate as any)) {
-      throw new Error(`Invalid dateOne value: ${dateOne}`);
-    }
-    const endDate = new Date(dateTwo);
-    if (isNaN(endDate as any)) {
-      throw new Error(`Invalid dateTwo value: ${dateTwo}`);
-    }
-
-    const earliestStart = new Date(earliestStartMap[key]);
-    if (earliestStartMap[key] && isNaN(earliestStart as any)) {
-      throw new Error(`Invalid date in earliestStartMap for key: ${key}`);
-    }
-
-    if (earliestStart > startDate) {
-      startDate = earliestStart;
-    }
-
-    if (startDate > endDate) {
-      return null;
-    }
-
-    const dates = [];
-
-    const diffTime = endDate.getTime() - startDate.getTime();
-    const interval = diffTime / Number(total);
-
-    for (let i = 0; i < Number(total); i++) {
-      const newDate = new Date(startDate.getTime() + interval * i);
-      if (isNaN(newDate as any)) {
-        throw new Error(`Generated invalid date at interval ${i}`);
-      }
-      dates.push(newDate);
-    }
-
-    return dates.map((date) => date.toDateString());
-  } catch (error) {
-    console.error("generateIntervals", error.message);
-    throw error;
-  }
 }

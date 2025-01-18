@@ -8,7 +8,6 @@ import { daysFrom } from "helpers/utils.js";
 import personalizeInstruction from "functions/personalizeInstruction.js";
 import { tasksRequirePersonalizedInstruction } from "data/tasksRequirePersonalizedInstructions.js";
 import {
-  UserConcernType,
   UserInfoType,
   TypeEnum,
   TaskType,
@@ -22,6 +21,7 @@ import {
 } from "types/createRoutineTypes.js";
 import httpError from "helpers/httpError.js";
 import { db } from "init.js";
+import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 
 interface DraftTaskType extends CreateRoutineAllSolutionsType {
   concern: string;
@@ -30,9 +30,8 @@ interface DraftTaskType extends CreateRoutineAllSolutionsType {
 type Props = {
   type: TypeEnum;
   part: PartEnum;
-  concerns: UserConcernType[];
   userInfo: UserInfoType;
-  finalSchedule: { [key: string]: { key: string; concern: string }[] };
+  finalSchedule: { [key: string]: ScheduleTaskType[] };
   allSolutions: CreateRoutineAllSolutionsType[];
   createOnlyTheseKeys?: string[];
   categoryName: CategoryNameEnum;
@@ -41,7 +40,6 @@ type Props = {
 export default async function createTasks({
   type,
   part,
-  concerns,
   userInfo,
   finalSchedule,
   allSolutions,
@@ -51,9 +49,6 @@ export default async function createTasks({
   const { _id: userId } = userInfo;
 
   try {
-    if (!finalSchedule || !concerns || !type || !allSolutions)
-      throw httpError("createTasks - inputs missing");
-
     const values = Object.values(finalSchedule);
     const rawTasks = values.flat();
 
@@ -127,14 +122,16 @@ export default async function createTasks({
 
     for (let j = 0; j < groupsOfTasks.length; j++) {
       for (let i = 0; i < groupsOfTasks[j].length; i++) {
+        const scheduleTask = groupsOfTasks[j][i];
+
         const matchingDraft = draftTasks.find(
-          (task) => task.key === groupsOfTasks[j][i].key
+          (task) => task.key === scheduleTask.key
         );
 
         if (!matchingDraft) continue;
 
         const relevantInfo = personalizedInfo.find(
-          (record) => record.key === groupsOfTasks[j][i].key
+          (record) => record.key === scheduleTask.key
         );
 
         const startsAt = setUtcMidnight({
@@ -148,7 +145,7 @@ export default async function createTasks({
         });
 
         let insertObject: Partial<TaskType> = {
-          _id: new ObjectId(),
+          _id: new ObjectId(scheduleTask._id),
           userId: new ObjectId(userId),
           status: "active" as TaskStatusEnum,
           ...matchingDraft,

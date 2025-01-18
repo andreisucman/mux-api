@@ -19,6 +19,7 @@ import httpError from "@/helpers/httpError.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
 import updateTasksAnalytics from "@/functions/updateTasksCreatedAnalytics.js";
+import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 
 const route = Router();
 
@@ -139,7 +140,7 @@ route.post(
       let { concerns, allTasks } = replacementRoutine;
 
       let finalSchedule = {} as {
-        [key: string]: { key: string; concern: string }[];
+        [key: string]: ScheduleTaskType[];
       };
 
       /* update final schedule */
@@ -147,7 +148,8 @@ route.post(
         const task = replacementTaskWithDates[i];
         const dateString = new Date(task.startsAt).toDateString();
 
-        const simpleTaskContent = {
+        const simpleTaskContent: ScheduleTaskType = {
+          _id: task._id,
           key: task.key,
           concern: task.concern,
         };

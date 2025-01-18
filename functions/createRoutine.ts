@@ -94,6 +94,7 @@ export default async function createRoutine({
               isRecipe: 1,
               suggestions: 1,
               productTypes: 1,
+              embedding: 1,
               _id: 0,
             },
           }

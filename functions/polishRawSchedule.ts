@@ -6,9 +6,10 @@ import incrementProgress from "helpers/incrementProgress.js";
 import { UserConcernType, TypeEnum, CategoryNameEnum } from "types.js";
 import { RunType } from "types/askOpenaiTypes.js";
 import httpError from "helpers/httpError.js";
+import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 
 type Props = {
-  rawSchedule: { [key: string]: { name: string; concern: string[] } };
+  rawSchedule: { [key: string]: ScheduleTaskType[] };
   concerns: UserConcernType[];
   userId: string;
   type: TypeEnum;
@@ -114,13 +115,16 @@ export default async function polishRawSchedule({
       callback,
     });
 
-    return await askRepeatedly({
-      userId,
-      categoryName,
-      systemContent,
-      runs: userContent,
-      functionName: "polishRawSchedule",
-    });
+    const polishedSchedule: { [key: string]: ScheduleTaskType[] } =
+      await askRepeatedly({
+        userId,
+        categoryName,
+        systemContent,
+        runs: userContent,
+        functionName: "polishRawSchedule",
+      });
+
+    return polishedSchedule;
   } catch (error) {
     throw httpError(error);
   }

@@ -453,6 +453,7 @@ export type TaskType = {
   restDays: number;
   requiredSubmissions: RequiredSubmissionType[] | null;
   revisionDate: Date | null;
+  embedding: number[];
 };
 
 export type RoutineType = {
@@ -475,6 +476,7 @@ export type ConcernType = {
 };
 
 export type AllTaskType = {
+  ids: { _id: ObjectId; status: TaskStatusEnum }[];
   name: string;
   color: string;
   description: string;

@@ -25,6 +25,7 @@ export default async function getLatestRoutinesAndTasks({ userId }: Props) {
                 type: { $first: "$type" },
                 finalSchedule: { $first: "$finalSchedule" },
                 createdAt: { $first: "$createdAt" },
+                lastDate: { $first: "$lastDate" },
                 allTasks: { $first: "$allTasks" },
               },
             },
@@ -35,6 +36,7 @@ export default async function getLatestRoutinesAndTasks({ userId }: Props) {
                 finalSchedule: 1,
                 createdAt: 1,
                 allTasks: 1,
+                lastDate: 1,
               },
             },
           ])

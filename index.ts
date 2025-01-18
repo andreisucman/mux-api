@@ -47,7 +47,7 @@ import uploadProgress from "routes/uploadProgress.js";
 import uploadToSpaces from "routes/uploadToSpaces.js";
 import getTaskProducts from "routes/getTaskProducts.js";
 import getTasksProducts from "routes/getTasksProducts.js";
-import getFollowingRoutines from "@/routes/getFollowingRoutines.js";
+import getRoutines from "@/routes/getRoutines.js";
 import getUserData from "routes/getUserData.js";
 import joinClub from "routes/joinClub.js";
 import updateConcernStatus from "routes/updateConcernStatus.js";
@@ -91,7 +91,7 @@ import createRoutine from "routes/createRoutine.js";
 import checkCountry from "routes/checkCountry.js";
 import getDiaryRecords from "routes/getDiaryRecords.js";
 import createDiaryRecord from "routes/createDiaryRecord.js";
-import getLatestFoodAnalysis from "routes/getLatestFoodAnalysis.js"
+import getLatestFoodAnalysis from "routes/getLatestFoodAnalysis.js";
 import saveDiaryRecord from "routes/saveDiaryRecord.js";
 import transcribe from "routes/transcribe.js";
 import deleteContent from "routes/deleteContent.js";
@@ -154,7 +154,7 @@ app.use("/getAllSolutions", getAllSolutions);
 app.use("/getLatestFoodAnalysis", getLatestFoodAnalysis);
 
 app.use((req, res, next) => checkAccess(req, res, next, false));
-app.use("/getFollowingRoutines", getFollowingRoutines);
+app.use("/getRoutines", getRoutines);
 app.use("/verifyEmail", verifyEmail);
 app.use("/changeEmailStepOne", changeEmailStepOne);
 app.use("/changeEmailStepTwo", changeEmailStepTwo);

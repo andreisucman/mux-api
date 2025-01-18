@@ -63,6 +63,7 @@ export default async function getRawSchedule({
 
     let toDeleteCount =
       tasksList.length - Number(process.env.MAX_TASKS_PER_SCHEDULE);
+
     toDeleteCount = toDeleteCount > 0 ? toDeleteCount : 0;
 
     if (toDeleteCount > 0) {

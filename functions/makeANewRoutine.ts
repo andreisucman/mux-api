@@ -10,7 +10,6 @@ import {
   TypeEnum,
   PartEnum,
   CategoryNameEnum,
-  ProgressImageType,
 } from "types.js";
 import {
   CreateRoutineUserInfoType,
@@ -19,7 +18,6 @@ import {
 import { db } from "init.js";
 import httpError from "helpers/httpError.js";
 import updateTasksAnalytics from "./updateTasksCreatedAnalytics.js";
-import getUsersImage from "./getUserImage.js";
 
 type Props = {
   userId: string;
@@ -126,7 +124,6 @@ export default async function makeANewRoutine({
       createTasks({
         part,
         type,
-        concerns: partConcerns,
         allSolutions,
         finalSchedule,
         userInfo,
