@@ -6,17 +6,19 @@ import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import setUtcMidnight from "helpers/setUtcMidnight.js";
 import { CustomRequest } from "types.js";
+import aqp from "api-query-params";
 import { db } from "init.js";
-import httpError from "@/helpers/httpError.js";
+import { daysFrom } from "@/helpers/utils.js";
 
 const route = Router();
 
 route.get(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { status, type, timeZone } = req.query;
+    const { filter } = aqp(req.query);
+    const { status, type, timeZone, dateFrom, dateTo } = filter;
 
-    if (!status || !type || !timeZone) {
+    if (!timeZone) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
@@ -24,36 +26,51 @@ route.get(
     try {
       const filter: { [key: string]: any } = {
         userId: new ObjectId(req.userId),
+        startsAt: {
+          $gte: setUtcMidnight({
+            date: new Date(),
+            timeZone: String(timeZone),
+          }),
+        },
+        expiresAt: {
+          $lte: setUtcMidnight({
+            date: daysFrom({ days: 7 }),
+            timeZone: String(timeZone),
+          }),
+        },
       };
 
       if (type) filter.type = type;
       if (status) filter.status = status;
 
-      if (status !== "expired" && timeZone) {
-        filter.startsAt = {
-          $gte: setUtcMidnight({
-            date: new Date(),
-            timeZone: String(timeZone),
-          }),
-        };
+      if (timeZone) {
+        if (dateFrom)
+          filter.startsAt = {
+            $gte: dateFrom,
+          };
+
+        if (dateTo)
+          filter.expiresAt = {
+            $lte: dateTo,
+          };
       }
 
       const tasks = await doWithRetries(async () =>
         db
           .collection("Task")
-          .find(filter, {
-            projection: {
-              _id: 1,
-              name: 1,
-              key: 1,
-              color: 1,
-              status: 1,
-              icon: 1,
-              expiresAt: 1,
-              startsAt: 1,
-            },
+          .find(filter)
+          .project({
+            _id: 1,
+            name: 1,
+            key: 1,
+            color: 1,
+            status: 1,
+            icon: 1,
+            expiresAt: 1,
+            startsAt: 1,
           })
           .sort({ startsAt: 1 })
+          .limit(Number(process.env.MAX_TASKS_PER_SCHEDULE))
           .toArray()
       );
 
