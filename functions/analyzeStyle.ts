@@ -36,7 +36,7 @@ export default async function analyzeStyle({
 
     const runs = [
       {
-        isMini: false,
+        isMini: true,
         content: [
           {
             type: "image_url" as "image_url",
@@ -61,7 +61,7 @@ export default async function analyzeStyle({
           }),
       },
       {
-        isMini: false,
+        isMini: true,
         content: [
           {
             type: "text",
@@ -96,7 +96,7 @@ export default async function analyzeStyle({
 
     const suggestionRuns = [
       {
-        isMini: false,
+        isMini: true,
         content: [
           {
             type: "image_url" as "image_url",
@@ -115,7 +115,7 @@ export default async function analyzeStyle({
       },
 
       {
-        isMini: false,
+        isMini: true,
         content: [
           {
             type: "text" as "text",
@@ -142,7 +142,7 @@ export default async function analyzeStyle({
       functionName: "analyzeStyle",
     });
 
-    const formattingSystemContent = `You are given an analysis of the user's appearance, the style reference list used in the analysis and the suggestions for the user on what to change in their appearance. Your goal is to rephrase and format this information in the 2nd tense (you/your) and an engaging language. Format it as a JSON object with the following structure {styleName: the closest style to the user, i.e. the name of the style that the user scored the highest (e.g. rugged, or minimalist, etc), scores: object representing the user's scores for each style of the list, explanation: your rephrased explanation for each score, suggestion: your rephrased suggestion on what the user should change}. Use only the information provided. Don't make things up. Think step-by-step.`; // never modify due to fine tuning
+    const formattingSystemContent = `You are given an analysis of the user's appearance, the style reference list used in the analysis and the suggestions for the user on what to change in their appearance. Your goal is to rephrase and format this information in the 2nd tense (you/your) and an engaging language. Format it as a JSON object with the following structure {styleName: the closest style to the user, i.e. the name of the style that the user scored the highest (e.g. rugged, or minimalist, etc), scores: object representing the user's scores for each style of the list in descending order, explanation: your rephrased explanation for each score in the same descending order with the scores, suggestion: your rephrased suggestion on what the user should change}. Use only the information provided. Don't make things up. Think step-by-step.`; // never modify due to fine tuning
 
     const styleList = outlookStyles.map((style) => style.name).join(", ");
 
@@ -177,7 +177,7 @@ export default async function analyzeStyle({
             increment: 5,
             userId,
           }),
-        model: "ft:gpt-4o-mini-2024-07-18:personal:analyzestyle:AF22Yzhl",
+        model: "ft:gpt-4o-mini-2024-07-18:personal:analyze-style:ArHGsmw2",
         responseFormat: zodResponseFormat(
           FormattedStyleAnalysisResponseType,
           "FormattedStyleAnalysisResponseType"

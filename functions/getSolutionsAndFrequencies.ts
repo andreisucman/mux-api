@@ -16,6 +16,7 @@ import { CreateRoutineAllSolutionsType } from "types/createRoutineTypes.js";
 import httpError from "helpers/httpError.js";
 import getUsersImage from "./getUserImage.js";
 import { ObjectId } from "mongodb";
+import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 
 type Props = {
   specialConsiderations: string;
@@ -379,13 +380,14 @@ export default async function getSolutionsAndFrequencies({
       }
     );
 
-    let findFrequencyResponse = await askRepeatedly({
-      userId: String(userId),
-      categoryName,
-      systemContent: findFrequenciesInstruction,
-      runs: findFrequenciesContentArray as RunType[],
-      functionName: "getSolutionsAndFrequencies",
-    });
+    let findFrequencyResponse: { [key: string]: ScheduleTaskType[] } =
+      await askRepeatedly({
+        userId: String(userId),
+        categoryName,
+        systemContent: findFrequenciesInstruction,
+        runs: findFrequenciesContentArray as RunType[],
+        functionName: "getSolutionsAndFrequencies",
+      });
 
     findFrequencyResponse = convertKeysAndValuesTotoSnakeCase(
       findFrequencyResponse
@@ -430,7 +432,7 @@ export default async function getSolutionsAndFrequencies({
       const ids = new Array(totalUses)
         .fill(new ObjectId())
         .map((_id) => ({ _id, status: TaskStatusEnum.ACTIVE }));
-        
+
       const record: AllTaskType = {
         ids,
         name,

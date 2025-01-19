@@ -6,6 +6,8 @@ import {
   TypeEnum,
   PartEnum,
   CategoryNameEnum,
+  RoutineStatusEnum,
+  AllTaskType,
 } from "types.js";
 import getSolutionsAndFrequencies from "functions/getSolutionsAndFrequencies.js";
 import getRawSchedule from "functions/getRawSchedule.js";
@@ -18,6 +20,7 @@ import {
 import httpError from "helpers/httpError.js";
 import updateTasksAnalytics from "./updateTasksCreatedAnalytics.js";
 import { db } from "init.js";
+import addDateToAllTaskIds from "@/helpers/addDateToAllTasks.js";
 
 type Props = {
   type: TypeEnum;
@@ -46,7 +49,17 @@ export default async function updateCurrentRoutine({
     if (!routineId) throw httpError("No routineId");
 
     const currentRoutine = await doWithRetries(async () =>
-      db.collection("Routine").findOne({ _id: new ObjectId(routineId) })
+      db.collection("Routine").findOne(
+        { _id: new ObjectId(routineId) },
+        {
+          projection: {
+            finalSchedule: 1,
+            allTasks: 1,
+            concerns: 1,
+            lastDate: 1,
+          },
+        }
+      )
     );
 
     if (!currentRoutine) throw httpError("No currentRoutine");
@@ -87,11 +100,39 @@ export default async function updateCurrentRoutine({
       })
     );
 
-    const newAllTasks = [
+    let tasksToInsert = await createTasks({
+      part,
+      type,
+      userInfo,
+      allSolutions,
+      finalSchedule: mergedSchedule,
+      categoryName,
+      createOnlyTheseKeys: solutionsAndFrequencies.map((sol) => sol.key),
+    });
+
+    tasksToInsert = tasksToInsert.map((task) => ({
+      ...task,
+      routineId: new ObjectId(currentRoutine._id),
+    }));
+
+    await doWithRetries(async () =>
+      db.collection("Task").insertMany(tasksToInsert)
+    );
+
+    const allTasksWithDates = addDateToAllTaskIds({
+      allTasksWithoutDates: solutionsAndFrequencies,
+      tasksToInsert,
+    });
+
+    const newAllTasks: AllTaskType[] = [
       ...currentRoutine.allTasks,
-      ...solutionsAndFrequencies,
+      ...allTasksWithDates,
     ];
-    const newConcerns = [...currentRoutine.concerns, ...partConcerns];
+
+    const allUniqueConcerns = [
+      ...currentRoutine.concerns,
+      ...partConcerns,
+    ].filter((obj, i, arr) => arr.findIndex((o) => o.name === obj.name) === i);
 
     await doWithRetries(async () =>
       db.collection("Routine").updateOne(
@@ -101,8 +142,8 @@ export default async function updateCurrentRoutine({
         {
           $set: {
             finalSchedule: mergedSchedule,
-            status: "active",
-            concerns: newConcerns,
+            status: RoutineStatusEnum.ACTIVE,
+            concerns: allUniqueConcerns,
             allTasks: newAllTasks,
             userName,
           },
@@ -110,29 +151,9 @@ export default async function updateCurrentRoutine({
       )
     );
 
-    let newTasksToInsert = await createTasks({
-      allSolutions,
-      concerns: partConcerns,
-      finalSchedule: mergedSchedule,
-      categoryName,
-      part,
-      type,
-      userInfo,
-      createOnlyTheseKeys: solutionsAndFrequencies.map((sol) => sol.key),
-    });
-
-    newTasksToInsert = newTasksToInsert.map((task) => ({
-      ...task,
-      routineId: new ObjectId(currentRoutine._id),
-    }));
-
-    await doWithRetries(async () =>
-      db.collection("Task").insertMany(newTasksToInsert)
-    );
-
     updateTasksAnalytics({
       userId: String(userId),
-      tasksToInsert: newTasksToInsert,
+      tasksToInsert,
       keyOne: "tasksCreated",
       keyTwo: "manuallyTasksCreated",
     });

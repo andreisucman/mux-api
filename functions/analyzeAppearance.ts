@@ -34,7 +34,7 @@ type Props = {
   nutrition: { [key: string]: number };
   categoryName: CategoryNameEnum;
   blurType: BlurTypeEnum;
-  defaultToUpdateUser?: { $set: { [key: string]: unknown } };
+  defaulttoUpdateUser?: { $set: { [key: string]: unknown } };
   club: ClubDataType;
   concerns: UserConcernType[] | null;
   toAnalyze: {
@@ -67,7 +67,7 @@ export default async function analyzeAppearance({
   latestProgress,
   potential,
   currentlyHigherThan,
-  defaultToUpdateUser,
+  defaulttoUpdateUser,
   potentiallyHigherThan,
   latestScores,
   latestScoresDifference,
@@ -81,8 +81,8 @@ export default async function analyzeAppearance({
     const parts = [...new Set(toAnalyzeObjects.map((obj) => obj.part))];
 
     const toUpdateUser = { $set: {} as { [key: string]: any } };
-    if (defaultToUpdateUser) {
-      toUpdateUser.$set = { ...(defaultToUpdateUser.$set || {}) };
+    if (defaulttoUpdateUser) {
+      toUpdateUser.$set = { ...(defaulttoUpdateUser.$set || {}) };
     }
 
     toUpdateUser.$set = {

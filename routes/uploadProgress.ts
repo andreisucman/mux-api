@@ -105,13 +105,13 @@ route.post(
         userId,
       });
 
-      if (isClearlyVisible) {
-        res.status(200).json({
-          error:
-            "The image is not clear. Try taking photos in daylight with no shadows obscuring your features.",
-        });
-        return;
-      }
+      // if (isClearlyVisible) {
+      //   res.status(200).json({
+      //     error:
+      //       "The image is not clear. Try taking photos in daylight with no shadows obscuring your features.",
+      //   });
+      //   return;
+      // }
 
       const { verdict: isPosiitonValid, message: changePositionMessage } =
         await checkImagePosition({
@@ -270,7 +270,7 @@ route.post(
           blurType,
           currentlyHigherThan,
           potentiallyHigherThan,
-          defaultToUpdateUser: toUpdate,
+          defaulttoUpdateUser: toUpdate,
           concerns: concerns || [],
           nextScan,
           potential,

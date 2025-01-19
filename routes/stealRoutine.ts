@@ -8,6 +8,8 @@ import doWithRetries from "helpers/doWithRetries.js";
 import {
   CustomRequest,
   RequiredSubmissionType,
+  RoutineStatusEnum,
+  TaskStatusEnum,
   TaskType,
   UserConcernType,
 } from "types.js";
@@ -54,20 +56,20 @@ route.post(
         db
           .collection("Routine")
           .find(
-            { userId: new ObjectId(req.userId), type, status: "active" },
+            { userId: new ObjectId(req.userId), type, status: RoutineStatusEnum.ACTIVE },
             { projection: { _id: 1 } }
           )
           .sort({ _id: -1 })
           .next()
       );
 
-      let replacementTasks = await doWithRetries(async () =>
+      let replacementTasks = (await doWithRetries(async () =>
         db
           .collection("Task")
           .find({ routineId: new ObjectId(routineId) })
           .sort({ expiresAt: -1 })
           .toArray()
-      );
+      )) as unknown as TaskType[];
 
       if (replacementTasks.length === 0) throw httpError(`No tasks to add`);
 
@@ -76,10 +78,11 @@ route.post(
       /* reset personalized fields */
       replacementTasks = replacementTasks.map((task) => ({
         ...task,
+        _id: new ObjectId(),
         userId: new ObjectId(req.userId),
         routineId: newRoutineId,
         proofEnabled: true,
-        status: "active",
+        status: TaskStatusEnum.ACTIVE,
         requiredSubmissions: task.requiredSubmissions.map(
           (submission: RequiredSubmissionType) => ({
             ...submission,
@@ -130,7 +133,6 @@ route.post(
 
           replacementTaskWithDates.push({
             ...relevantTaskInfo,
-            _id: new ObjectId(),
             startsAt: starts,
             expiresAt: expires,
           } as unknown as TaskType);
@@ -139,9 +141,9 @@ route.post(
 
       let { concerns, allTasks } = replacementRoutine;
 
-      let finalSchedule = {} as {
+      let finalSchedule: {
         [key: string]: ScheduleTaskType[];
-      };
+      } = {};
 
       /* update final schedule */
       for (let i = 0; i < replacementTaskWithDates.length; i++) {
@@ -179,7 +181,12 @@ route.post(
       }
 
       /* update allTasks */
-      allTasks = taskKeys.map((taskKey: string) => {
+      const uniqueTaskKeys = [...new Set(taskKeys)];
+      allTasks = uniqueTaskKeys.map((taskKey: string) => {
+        const ids = replacementTaskWithDates
+          .filter((t) => t.key === taskKey)
+          .map((t) => ({ _id: t._id, status: TaskStatusEnum.ACTIVE }));
+
         const relevantInfoTask = replacementTaskWithDates.find(
           (task) => task.key === taskKey
         );
@@ -189,6 +196,7 @@ route.post(
         const total = taskFrequencyMap[key];
 
         return {
+          ids,
           name,
           key,
           icon,
@@ -210,7 +218,7 @@ route.post(
           .collection("Routine")
           .updateOne(
             { _id: new ObjectId(currentRoutine._id) },
-            { $set: { status: "replaced" } }
+            { $set: { status: RoutineStatusEnum.REPLACED } }
           )
       );
 
@@ -223,7 +231,7 @@ route.post(
         allTasks,
         concerns,
         lastDate: new Date(lastRoutineDate),
-        status: "active",
+        status: RoutineStatusEnum.ACTIVE,
       };
 
       await doWithRetries(async () =>

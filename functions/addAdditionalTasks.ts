@@ -19,6 +19,7 @@ import {
 import { db } from "init.js";
 import httpError from "@/helpers/httpError.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
+import addDateToAllTaskIds from "@/helpers/addDateToAllTasks.js";
 
 type Props = {
   type: TypeEnum;
@@ -103,9 +104,14 @@ export default async function addAdditionalTasks({
       })
     );
 
+    const allTasksWithDates = addDateToAllTaskIds({
+      allTasksWithoutDates: solutionsAndFrequencies,
+      tasksToInsert,
+    });
+
     return {
       mergedSchedule,
-      additionalAllTasks: solutionsAndFrequencies,
+      additionalAllTasks: allTasksWithDates,
       additionalTasksToInsert: tasksToInsert,
     };
   } catch (error) {

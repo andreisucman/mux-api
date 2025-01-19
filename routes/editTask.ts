@@ -139,7 +139,7 @@ route.post(
       );
 
       let finalSchedule: { [key: string]: ScheduleTaskType[] } =
-        relevantRoutine.finalSchedule;
+        relevantRoutine.finalSchedule || {};
 
       const oldDateKey = formatDate({ date: startsAt });
       const newDateKey = formatDate({ date: startDate });

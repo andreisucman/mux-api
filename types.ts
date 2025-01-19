@@ -490,6 +490,10 @@ export type AllTaskType = {
   concern: string;
 };
 
+export interface AllTaskTypeWithDate extends AllTaskType {
+  ids: { _id: ObjectId; startsAt: Date; status: TaskStatusEnum }[];
+}
+
 export type BeforeAfterType = {
   initialDate: Date;
   updatedAt: Date;

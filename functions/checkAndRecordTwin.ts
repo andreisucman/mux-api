@@ -27,7 +27,6 @@ export default async function checkAndRecordTwin({
   registryFilter = {},
   image,
 }: Props) {
-
   let response = { mustLogin: false, isSuspended: false, errorMessage: "" };
   const finalUserId = requestUserId || payloadUserId;
 

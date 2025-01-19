@@ -119,7 +119,7 @@ export const defaultRequiredProgress = {
   ],
 };
 
-const defaultDemographics: DemographicsType = {
+export const defaultDemographics: DemographicsType = {
   sex: SexEnum.FEMALE,
   ageInterval: null,
   bodyType: null,

@@ -16,6 +16,8 @@ export default async function transferTrials({
   newUserId,
 }: TransferTrialsProps) {
   try {
+    console.log("twinIds", twinIds);
+    console.log("newUserId", newUserId);
     const existingUserInfo = await doWithRetries(() =>
       db
         .collection("User")

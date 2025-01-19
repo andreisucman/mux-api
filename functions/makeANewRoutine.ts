@@ -10,6 +10,7 @@ import {
   TypeEnum,
   PartEnum,
   CategoryNameEnum,
+  RoutineStatusEnum,
 } from "types.js";
 import {
   CreateRoutineUserInfoType,
@@ -18,6 +19,7 @@ import {
 import { db } from "init.js";
 import httpError from "helpers/httpError.js";
 import updateTasksAnalytics from "./updateTasksCreatedAnalytics.js";
+import addDateToAllTaskIds from "@/helpers/addDateToAllTasks.js";
 
 type Props = {
   userId: string;
@@ -136,15 +138,20 @@ export default async function makeANewRoutine({
 
     const { name: userName } = userInfo;
 
+    const allTasksWithDates = addDateToAllTaskIds({
+      allTasksWithoutDates: solutionsAndFrequencies,
+      tasksToInsert,
+    });
+
     const newRoutineObject = await doWithRetries(async () =>
       db.collection("Routine").insertOne({
         userId: new ObjectId(userId),
         userName,
         concerns: partConcerns,
         finalSchedule,
-        status: "active",
+        status: RoutineStatusEnum.ACTIVE,
         createdAt: new Date(),
-        allTasks: solutionsAndFrequencies,
+        allTasks: allTasksWithDates,
         lastDate: new Date(lastDate),
         type,
         part,

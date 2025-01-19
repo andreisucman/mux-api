@@ -4,17 +4,19 @@ import { Router, Request, Response, NextFunction } from "express";
 import getUserData from "functions/getUserData.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import createUser from "@/functions/createUser.js";
-import { UserType } from "types.js";
+import { DemographicsType, UserType } from "types.js";
+import { defaultDemographics } from "@/data/defaultUser.js";
 
 const route = Router();
 
 type Props = {
   tosAccepted: boolean;
   timeZone: string;
+  demographics: DemographicsType;
 };
 
 route.post("/", async (req: Request, res: Response, next: NextFunction) => {
-  const { tosAccepted, timeZone }: Props = req.body;
+  const { tosAccepted, timeZone, demographics }: Props = req.body;
 
   try {
     const createUserResponse = await doWithRetries(
@@ -22,6 +24,7 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
         await createUser({
           timeZone,
           tosAccepted,
+          demographics: { ...defaultDemographics, ...demographics },
         })
     );
 

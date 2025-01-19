@@ -11,6 +11,8 @@ import sortTasksInScheduleByDate from "helpers/sortTasksInScheduleByDate.js";
 import {
   CustomRequest,
   RequiredSubmissionType,
+  RoutineStatusEnum,
+  TaskStatusEnum,
   TaskType,
   UserConcernType,
 } from "types.js";
@@ -59,7 +61,11 @@ route.post(
       const currentRoutine = await doWithRetries(async () =>
         db
           .collection("Routine")
-          .find({ userId: new ObjectId(req.userId), type, status: "active" })
+          .find({
+            userId: new ObjectId(req.userId),
+            type,
+            status: RoutineStatusEnum.ACTIVE,
+          })
           .next()
       );
 
@@ -108,7 +114,7 @@ route.post(
       let { concerns, allTasks } = currentRoutine;
 
       let finalSchedule: { [key: string]: ScheduleTaskType[] } =
-        currentRoutine.finalSchedule;
+        currentRoutine.finalSchedule || {};
 
       /* update final schedule */
       for (let i = 0; i < draftTasks.length; i++) {
@@ -146,20 +152,34 @@ route.post(
       }
 
       /* update allTasks */
-      const newAllTasks = draftTasks.map((t) => {
-        const { name, key, icon, color, description, instruction, concern } = t;
+      const uniqueKeys = [...new Set(draftTasks.map((dt) => dt.key))];
+
+      const newAllTasks = uniqueKeys.map((key) => {
+        const relevantTaskInfo = draftTasks.find((t) => t.key === key);
+
+        const ids = draftTasks
+          .filter((t) => t.key === key)
+          .map((t) => ({
+            _id: t._id,
+            startsAt: t.startsAt,
+            status: TaskStatusEnum.ACTIVE,
+          }));
+
+        const { name, icon, color, concern, description, instruction } =
+          relevantTaskInfo || {};
 
         return {
+          ids,
           name,
           key,
           icon,
           color,
           concern,
+          description,
+          instruction,
           total,
           completed: 0,
           unknown: 0,
-          description,
-          instruction,
         };
       });
 

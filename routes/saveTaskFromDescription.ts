@@ -12,6 +12,7 @@ import {
   CustomRequest,
   RoutineStatusEnum,
   RoutineType,
+  TaskStatusEnum,
   TaskType,
 } from "types.js";
 import { db } from "init.js";
@@ -135,9 +136,11 @@ route.post(
       );
 
       const latestRelevantRoutine = (await doWithRetries(async () =>
-        db
-          .collection("Routine")
-          .findOne({ userId: new ObjectId(req.userId), type, status: "active" })
+        db.collection("Routine").findOne({
+          userId: new ObjectId(req.userId),
+          type,
+          status: RoutineStatusEnum.ACTIVE,
+        })
       )) || { _id: new ObjectId() };
 
       const systemContent = `The user gives you the description and instruction of an activity and a list of concerns. Your goal is to create a task based on this info.`;
@@ -182,15 +185,17 @@ route.post(
           .describe("The part of the body the task is most related to"),
       });
 
+      const listOfConcernNames = JSON.stringify(
+        listOfRelevantConcerns.map((obj) => obj.name)
+      );
+
       const runs = [
         {
           isMini: false,
           content: [
             {
               type: "text",
-              text: `Activity description: ${description}.<-->Activity instruction: ${instruction}.<-->List of concerns: ${JSON.stringify(
-                listOfRelevantConcerns.map((obj) => obj.name)
-              )}`,
+              text: `Activity description: ${description}.<-->Activity instruction: ${instruction}.<-->List of concerns: ${listOfConcernNames}`,
             },
           ],
           model:
@@ -224,12 +229,11 @@ route.post(
 
       const generalTaskInfo: TaskType = {
         ...otherResponse,
-        _id: new ObjectId(),
         userId: new ObjectId(req.userId),
         routineId: new ObjectId(latestRelevantRoutine._id),
         example: { type: "image", url: image },
         proofEnabled: true,
-        status: "active",
+        status: TaskStatusEnum.ACTIVE,
         key: toSnakeCase(otherResponse.name),
         description,
         instruction,
@@ -328,6 +332,7 @@ route.post(
 
         draftTasks.push({
           ...generalTaskInfo,
+          _id: new ObjectId(),
           embedding,
           startsAt: starts,
           expiresAt: expires,
@@ -337,7 +342,7 @@ route.post(
 
       let { concerns = [], allTasks = [], createdAt } = latestRelevantRoutine;
       let finalSchedule: { [key: string]: ScheduleTaskType[] } =
-        latestRelevantRoutine.finalSchedule;
+        latestRelevantRoutine.finalSchedule || {};
 
       /* update final schedule */
       for (let i = 0; i < draftTasks.length; i++) {
@@ -345,7 +350,7 @@ route.post(
         const dateString = new Date(task.startsAt).toDateString();
 
         const simpleTaskContent: ScheduleTaskType = {
-          _id: generalTaskInfo._id,
+          _id: task._id,
           key: task.key,
           concern: task.concern,
         };
@@ -369,7 +374,15 @@ route.post(
       }
 
       /* update all tasks */
+
+      const ids = draftTasks.map((t) => ({
+        _id: t._id,
+        startsAt: t.startsAt,
+        status: TaskStatusEnum.ACTIVE,
+      }));
+
       allTasks.push({
+        ids,
         name: generalTaskInfo.name,
         icon: generalTaskInfo.icon,
         color: generalTaskInfo.color,
@@ -398,7 +411,7 @@ route.post(
         concerns,
         allTasks,
         finalSchedule,
-        status: "active" as RoutineStatusEnum,
+        status: RoutineStatusEnum.ACTIVE,
         lastDate: new Date(lastRoutineDate),
       };
 

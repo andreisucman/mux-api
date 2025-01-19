@@ -147,7 +147,7 @@ export default async function createTasks({
         let insertObject: Partial<TaskType> = {
           _id: new ObjectId(scheduleTask._id),
           userId: new ObjectId(userId),
-          status: "active" as TaskStatusEnum,
+          status: TaskStatusEnum.ACTIVE,
           ...matchingDraft,
           proofEnabled: true,
           type,

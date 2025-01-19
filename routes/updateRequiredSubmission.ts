@@ -56,7 +56,7 @@ route.post(
         requiredSubmissions: updatedSubmissions,
       };
 
-      if (!isSubmitted) payload.status = "active" as TaskStatusEnum; // if reset
+      if (!isSubmitted) payload.status = TaskStatusEnum.ACTIVE; // if reset
 
       await doWithRetries(async () =>
         db.collection("Routine").updateOne(

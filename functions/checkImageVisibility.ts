@@ -18,7 +18,7 @@ export default async function checkImageVisibility({
     const messages = [
       {
         role: "system",
-        content: `Is the object on the image clearly visible with no shadows obscuring it's features? Respond with a "yes" if yes, and "no" if no. Say nothing more but yes or no.`,
+        content: `Is the human on the image clearly visible with no shadows obscuring their features? Respond with a "yes" if yes, and "no" if no. Say nothing more but yes or no.`,
       },
       {
         role: "user",

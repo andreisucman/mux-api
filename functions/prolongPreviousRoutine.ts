@@ -9,6 +9,8 @@ import {
   TypeEnum,
   PartEnum,
   CategoryNameEnum,
+  RoutineStatusEnum,
+  AllTaskType,
 } from "types.js";
 import addAdditionalTasks from "functions/addAdditionalTasks.js";
 import deactivatePreviousRoutineAndTasks from "functions/deactivatePreviousRoutineAndTasks.js";
@@ -19,6 +21,7 @@ import {
 import httpError from "helpers/httpError.js";
 import { db } from "init.js";
 import updateTasksAnalytics from "./updateTasksCreatedAnalytics.js";
+import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 
 type Props = {
   type: TypeEnum;
@@ -75,7 +78,7 @@ export default async function prolongPreviousRoutine({
       const updatedTask: TaskType = {
         ...rest,
         _id: new ObjectId(),
-        status: "active" as TaskStatusEnum,
+        status: TaskStatusEnum.ACTIVE,
         startsAt,
         expiresAt,
         type,
@@ -96,17 +99,24 @@ export default async function prolongPreviousRoutine({
     }
 
     const dateKeys = resetTasks.map((task) => ({
+      _id: task._id,
       key: task.key,
       concern: task.concern,
       startsAt: task.startsAt.toDateString(),
     }));
 
     const schedule = dateKeys.reduce(
-      (acc: { [key: string]: { key: string; concern: string }[] }, obj) => {
+      (acc: { [key: string]: ScheduleTaskType[] }, obj) => {
         if (acc[obj.startsAt]) {
-          acc[obj.startsAt].push({ key: obj.key, concern: obj.concern });
+          acc[obj.startsAt].push({
+            _id: obj._id,
+            key: obj.key,
+            concern: obj.concern,
+          });
         } else {
-          acc[obj.startsAt] = [{ key: obj.key, concern: obj.concern }];
+          acc[obj.startsAt] = [
+            { _id: obj._id, key: obj.key, concern: obj.concern },
+          ];
         }
         return acc;
       },
@@ -120,7 +130,16 @@ export default async function prolongPreviousRoutine({
         const task = resetTasks.find((t) => t.key === key);
         if (!task) return null;
 
+        const ids = resetTasks
+          .filter((t) => t.key === key)
+          .map((t) => ({
+            _id: t._id,
+            startsAt: t.startsAt,
+            status: TaskStatusEnum.ACTIVE,
+          }));
+
         return {
+          ids,
           key: task.key,
           name: task.name,
           icon: task.icon,
@@ -138,8 +157,8 @@ export default async function prolongPreviousRoutine({
 
     await deactivatePreviousRoutineAndTasks(String(previousRoutineId));
 
-    let finalRoutineAllTasks;
-    let finalTasksToInsert;
+    let finalRoutineAllTasks = [];
+    let finalTasksToInsert: Partial<TaskType>[] = [];
     let finalSchedule = {};
 
     if (resetTasks.length < 20) {
@@ -170,7 +189,7 @@ export default async function prolongPreviousRoutine({
         userName,
         concerns: partConcerns,
         finalSchedule,
-        status: "active",
+        status: RoutineStatusEnum.ACTIVE,
         createdAt: new Date(),
         lastDate: new Date(lastDate),
         allTasks,
