@@ -3,22 +3,17 @@ dotenv.config();
 
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
-import { db } from "init.js";
-import {
-  CustomRequest,
-  RequiredSubmissionType,
-  TaskStatusEnum,
-  TaskType,
-} from "types.js";
+import { CustomRequest, TaskType } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
+import { db } from "init.js";
 
 const route = Router();
 
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { taskId, submissionId, isSubmitted } = req.body;
+    const { taskId, isSubmitted } = req.body;
 
     try {
       const taskInfo = (await doWithRetries(async () =>
@@ -26,7 +21,6 @@ route.post(
           { _id: new ObjectId(taskId), userId: new ObjectId(req.userId) },
           {
             projection: {
-              requiredSubmissions: 1,
               userId: 1,
               key: 1,
               routineId: 1,
@@ -38,25 +32,16 @@ route.post(
 
       if (!taskInfo) throw httpError(`Task ${taskId} not found`);
 
-      const { proofEnabled, requiredSubmissions, routineId, key } = taskInfo;
+      const { proofEnabled, routineId, key } = taskInfo;
 
-      const relevantSubmission: RequiredSubmissionType =
-        requiredSubmissions.find((s) => s.submissionId === submissionId);
-
-      if ((proofEnabled && isSubmitted) || relevantSubmission.proofId) {
+      if (proofEnabled && isSubmitted) {
         res.status(400).json({ error: "Bad request" });
         return;
       }
 
-      const updatedSubmissions = requiredSubmissions.map((s) =>
-        s.submissionId === submissionId ? { ...s, isSubmitted } : s
-      );
-
       const payload: Partial<TaskType> = {
-        requiredSubmissions: updatedSubmissions,
+        isSubmitted,
       };
-
-      if (!isSubmitted) payload.status = TaskStatusEnum.ACTIVE; // if reset
 
       await doWithRetries(async () =>
         db.collection("Routine").updateOne(
@@ -70,12 +55,6 @@ route.post(
         )
       );
 
-      const allCompleted = updatedSubmissions.every(
-        (s) => s.isSubmitted === true
-      );
-
-      if (allCompleted) payload.status = "completed" as TaskStatusEnum;
-
       await doWithRetries(async () =>
         db.collection("Task").updateOne(
           { _id: new ObjectId(taskId) },
@@ -88,7 +67,6 @@ route.post(
       res.status(200).json({
         message: {
           status: payload.status,
-          requiredSubmissions: updatedSubmissions,
         },
       });
     } catch (err) {

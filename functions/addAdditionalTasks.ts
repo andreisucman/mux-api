@@ -19,7 +19,7 @@ import {
 import { db } from "init.js";
 import httpError from "@/helpers/httpError.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
-import addDateToAllTaskIds from "@/helpers/addDateToAllTasks.js";
+import addDateToAllTasks from "@/helpers/addDateToAllTasks.js";
 
 type Props = {
   type: TypeEnum;
@@ -37,6 +37,7 @@ export default async function addAdditionalTasks({
   part,
   userInfo,
   concerns,
+  currentTasks,
   currentSchedule,
   allSolutions,
   categoryName,
@@ -66,9 +67,14 @@ export default async function addAdditionalTasks({
         )
     );
 
+    const existingAllTasksKeys = currentTasks.map((t) => t.key);
+    let filteredSolutionsAndFrequencies = solutionsAndFrequencies.filter(
+      (r) => !existingAllTasksKeys.includes(r.key)
+    );
+
     const { rawSchedule: rawNewSchedule } = await doWithRetries(async () =>
       getRawSchedule({
-        solutionsAndFrequencies,
+        solutionsAndFrequencies: filteredSolutionsAndFrequencies,
         concerns,
         days: 6,
       })
@@ -76,10 +82,10 @@ export default async function addAdditionalTasks({
 
     const mergedSchedule = await doWithRetries(async () =>
       mergeSchedules({
+        type,
         rawNewSchedule,
         currentSchedule,
         userId: String(userId),
-        type,
         categoryName,
       })
     );
@@ -104,7 +110,7 @@ export default async function addAdditionalTasks({
       })
     );
 
-    const allTasksWithDates = addDateToAllTaskIds({
+    const allTasksWithDates = addDateToAllTasks({
       allTasksWithoutDates: solutionsAndFrequencies,
       tasksToInsert,
     });

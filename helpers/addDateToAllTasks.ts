@@ -5,7 +5,7 @@ type Props = {
   tasksToInsert: Partial<TaskType>[];
 };
 
-export default function addDateToAllTaskIds({
+export default function addDateToAllTasks({
   allTasksWithoutDates,
   tasksToInsert,
 }: Props) {

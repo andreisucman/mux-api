@@ -439,7 +439,9 @@ export type TaskType = {
   part: PartEnum;
   status: TaskStatusEnum;
   concern: string;
+  isSubmitted: boolean;
   proofEnabled: boolean;
+  proofId: string;
   isCreated: boolean;
   isRecipe: boolean;
   recipe: RecipeType | null;
@@ -451,7 +453,6 @@ export type TaskType = {
   completedAt: Date | null;
   nextCanStartDate: Date | null;
   restDays: number;
-  requiredSubmissions: RequiredSubmissionType[] | null;
   revisionDate: Date | null;
   embedding: number[];
 };

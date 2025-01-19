@@ -7,7 +7,6 @@ import {
   PartEnum,
   CategoryNameEnum,
   RoutineStatusEnum,
-  AllTaskType,
 } from "types.js";
 import getSolutionsAndFrequencies from "functions/getSolutionsAndFrequencies.js";
 import getRawSchedule from "functions/getRawSchedule.js";
@@ -20,7 +19,8 @@ import {
 import httpError from "helpers/httpError.js";
 import updateTasksAnalytics from "./updateTasksCreatedAnalytics.js";
 import { db } from "init.js";
-import addDateToAllTaskIds from "@/helpers/addDateToAllTasks.js";
+import addDateToAllTasks from "@/helpers/addDateToAllTasks.js";
+import combineAllTasks from "@/helpers/combineAllTasks.js";
 
 type Props = {
   type: TypeEnum;
@@ -105,31 +105,37 @@ export default async function updateCurrentRoutine({
       type,
       userInfo,
       allSolutions,
-      finalSchedule: mergedSchedule,
       categoryName,
+      finalSchedule: mergedSchedule,
       createOnlyTheseKeys: solutionsAndFrequencies.map((sol) => sol.key),
     });
 
-    tasksToInsert = tasksToInsert.map((task) => ({
-      ...task,
-      routineId: new ObjectId(currentRoutine._id),
-    }));
+    const newTaskIds = solutionsAndFrequencies
+      .flatMap((r) => r.ids)
+      .map((idObj) => String(idObj._id));
+
+    tasksToInsert = tasksToInsert
+      .filter((t) => newTaskIds.includes(String(t._id)))
+      .map((task) => ({
+        ...task,
+        routineId: new ObjectId(currentRoutine._id),
+      }));
 
     await doWithRetries(async () =>
       db.collection("Task").insertMany(tasksToInsert)
     );
 
-    const allTasksWithDates = addDateToAllTaskIds({
+    const allTasksWithDates = addDateToAllTasks({
       allTasksWithoutDates: solutionsAndFrequencies,
       tasksToInsert,
     });
 
-    const newAllTasks: AllTaskType[] = [
-      ...currentRoutine.allTasks,
-      ...allTasksWithDates,
-    ];
+    const newAllTasks = combineAllTasks({
+      oldAllTasks: currentRoutine.allTasks,
+      newAllTasks: allTasksWithDates,
+    });
 
-    const allUniqueConcerns = [
+    const allUniqueConcerns: UserConcernType[] = [
       ...currentRoutine.concerns,
       ...partConcerns,
     ].filter((obj, i, arr) => arr.findIndex((o) => o.name === obj.name) === i);

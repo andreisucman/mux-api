@@ -66,7 +66,7 @@ import updateSex from "@/routes/updateSex.js";
 import updateClubPrivacy from "routes/updateClubPrivacy.js";
 import updateContentBlurType from "routes/updateContentBlurType.js";
 import updateProofUpload from "routes/updateProofUpload.js";
-import updateRequiredSubmission from "routes/updateRequiredSubmission.js";
+import updateRequiredSubmission from "@/routes/updateSubmissionStatus.js";
 import updateSpecialConsiderations from "routes/updateSpecialConsiderations.js";
 import updateStatusOfTasks from "routes/updateStatusOfTasks.js";
 import uploadProof from "routes/uploadProof.js";
@@ -97,6 +97,7 @@ import saveDiaryRecord from "routes/saveDiaryRecord.js";
 import transcribe from "routes/transcribe.js";
 import deleteContent from "routes/deleteContent.js";
 import changeCountry from "routes/changeCountry.js";
+import updateSubmissionStatus from "routes/updateSubmissionStatus.js";
 import signOut from "routes/signOut.js";
 import findProductsForGeneralTasks from "routes/findProductsForGeneralTasks.js";
 
@@ -188,6 +189,7 @@ app.use("/getAllProofRecords", getAllProofRecords);
 // protected routes
 app.use((req, res, next) => checkAccess(req, res, next, true));
 app.use("/deleteContent", deleteContent);
+app.use("/updateSubmissionStatus", updateSubmissionStatus);
 app.use("/updateConcernStatus", updateConcernStatus);
 app.use("/generateBioFromQuestions", generateBioFromQuestions);
 app.use("/getAboutQuestions", getAboutQuestions);

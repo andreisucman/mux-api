@@ -337,7 +337,6 @@ route.post(
           startsAt: starts,
           expiresAt: expires,
           completedAt: null,
-          requiredSubmissions: submissions[i],
         });
       }
 

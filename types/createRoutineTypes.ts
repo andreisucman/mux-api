@@ -24,7 +24,6 @@ export type CreateRoutineUserInfoType = {
 type TaskExampleType = { type: string; url: string };
 
 export type CreateRoutineAllSolutionsType = {
-  requiredSubmissions: RequiredSubmissionType[];
   instruction: string;
   description: string;
   requisite: string;

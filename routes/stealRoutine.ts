@@ -56,7 +56,11 @@ route.post(
         db
           .collection("Routine")
           .find(
-            { userId: new ObjectId(req.userId), type, status: RoutineStatusEnum.ACTIVE },
+            {
+              userId: new ObjectId(req.userId),
+              type,
+              status: RoutineStatusEnum.ACTIVE,
+            },
             { projection: { _id: 1 } }
           )
           .sort({ _id: -1 })
@@ -83,22 +87,16 @@ route.post(
         routineId: newRoutineId,
         proofEnabled: true,
         status: TaskStatusEnum.ACTIVE,
-        requiredSubmissions: task.requiredSubmissions.map(
-          (submission: RequiredSubmissionType) => ({
-            ...submission,
-            proofId: "",
-            isSubmitted: false,
-          })
-        ),
+        isSubmitted: false,
       }));
 
       /* get the frequencies for each task */
       const taskFrequencyMap = replacementTasks.reduce(
         (a: { [key: string]: any }, c: TaskType) => {
           if (a[c.key]) {
-            a[c.key] += c.requiredSubmissions.length;
+            a[c.key] += 1;
           } else {
-            a[c.key] = c.requiredSubmissions.length;
+            a[c.key] = 1;
           }
           return a;
         },
@@ -244,7 +242,7 @@ route.post(
           .collection("Task")
           .updateMany(
             { routineId: new ObjectId(currentRoutine._id) },
-            { $set: { status: "canceled" } }
+            { $set: { status: TaskStatusEnum.CANCELED } }
           )
       );
 

@@ -32,9 +32,7 @@ import getReadyBlurredUrls from "functions/getReadyBlurredUrls.js";
 import selectItemsAtEqualDistances from "helpers/utils.js";
 import httpError from "@/helpers/httpError.js";
 import extractImagesAndTextFromVideo from "@/functions/extractImagesAndTextFromVideo.js";
-import getTheMostSuspiciousResult from "@/helpers/getTheMostSuspiciousResult.js";
 import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.js";
-import updateAnalytics from "@/functions/updateAnalytics.js";
 import updateTasksAnalytics from "@/functions/updateTasksCreatedAnalytics.js";
 
 const route = Router();
@@ -104,7 +102,6 @@ route.post(
               concern: 1,
               requisite: 1,
               routineId: 1,
-              requiredSubmissions: 1,
               restDays: 1,
               isRecipe: 1,
               isCreated: 1,
@@ -395,55 +392,35 @@ route.post(
         db.collection("Proof").insertOne(newProof)
       );
 
-      const relevantSubmission = taskInfo.requiredSubmissions.find(
-        (s) => s.submissionId === submissionId
-      );
-
-      const restRequiredSubmissions = taskInfo.requiredSubmissions.filter(
-        (s) => s.submissionId !== submissionId
-      );
-
-      const updatedRequiredSubmissions = [
-        ...restRequiredSubmissions,
-        { ...relevantSubmission, proofId: newProof._id, isSubmitted: true },
-      ];
-
-      const isTaskCompleted = updatedRequiredSubmissions.every(
-        (submission) => submission.isSubmitted === true
-      );
-
       const taskUpdate = {
         $set: {
-          requiredSubmissions: updatedRequiredSubmissions,
-        } as { [key: string]: any },
+          proofId: newProof._id,
+          completedAt: new Date(),
+          status: TaskStatusEnum.COMPLETED,
+          nextCanStartDate: daysFrom({
+            days: taskInfo.restDays,
+          }),
+        },
       };
 
-      if (isTaskCompleted) {
-        taskUpdate.$set.completedAt = new Date();
-        taskUpdate.$set.status = "completed" as TaskStatusEnum;
-        taskUpdate.$set.nextCanStartDate = daysFrom({
-          days: taskInfo.restDays,
-        });
+      updateTasksAnalytics({
+        userId: req.userId,
+        tasksToInsert: [taskInfo] as Partial<TaskType>[],
+        keyOne: "tasksCompleted",
+        keyTwo: "manualTasksCompleted",
+      });
 
-        updateTasksAnalytics({
-          userId: req.userId,
-          tasksToInsert: [taskInfo] as Partial<TaskType>[],
-          keyOne: "tasksCompleted",
-          keyTwo: "manualTasksCompleted",
-        });
-
-        await doWithRetries(async () =>
-          db.collection("Routine").updateOne(
-            { _id: new ObjectId(routineId), "allTasks.key": key },
-            {
-              $inc: {
-                [`allTasks.$.completed`]: 1,
-                [`allTasks.$.unknown`]: -1,
-              },
-            }
-          )
-        );
-      }
+      await doWithRetries(async () =>
+        db.collection("Routine").updateOne(
+          { _id: new ObjectId(routineId), "allTasks.key": key },
+          {
+            $inc: {
+              [`allTasks.$.completed`]: 1,
+              [`allTasks.$.unknown`]: -1,
+            },
+          }
+        )
+      );
 
       const userUpdatePayload = {
         $inc: streaksToIncrement,

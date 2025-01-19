@@ -10,6 +10,7 @@ import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 type Props = {
   userId: string;
   type: TypeEnum;
+  filterOverwhelming?: boolean;
   categoryName: CategoryNameEnum;
   rawNewSchedule: { [key: string]: ScheduleTaskType[] };
   currentSchedule: {
@@ -23,11 +24,14 @@ export default async function mergeSchedules({
   categoryName,
   rawNewSchedule,
   currentSchedule,
+  filterOverwhelming,
 }: Props) {
   try {
-    const systemContent = `You are a ${
+    let systemContent = `You are a ${
       type === "head" ? "dermatologist and dentist" : "fitness coach"
-    }. The user gives you two schedules - 1 and 2. Your goal is to merge schedule 2 into schedule one without moving the dates of the schedule 1. Your response is the merged schedule in the original Json object format.`;
+    }. The user gives you two task schedules - 1 and 2. Your goal is to {${
+      filterOverwhelming ? "add some of the tasks from" : "merge"
+    }} schedule 2 into schedule 1 without moving the dates of the schedule 1. Your response is the merged schedule in the original JSON object format.`;
 
     const userContent: RunType[] = [
       {
@@ -43,24 +47,57 @@ export default async function mergeSchedules({
           },
         ],
       },
-      {
-        isMini: true,
-        content: [
-          {
-            type: "text",
-            text: "Can you confirm that the dates of the schedule 1 haven't changed? They must not change.",
-          },
-        ],
-      },
-      {
-        isMini: true,
-        content: [
-          {
-            type: "text",
-            text: "Can you confirm that you've transferred all of the tasks from the schedule 2 into the schedule 1?",
-          },
-        ],
-      },
+    ];
+
+    if (filterOverwhelming) {
+      userContent.push(
+        {
+          isMini: true,
+          content: [
+            {
+              type: "text",
+              text: "Which tasks from schedule 2 can safely be transferred into schedule 1 without overwhelming it?",
+            },
+            {
+              type: "text",
+              text: "Which tasks from schedule 2 can safely be transferred into schedule 1 without conflicting with the existing tasks of the schedule 1?",
+            },
+          ],
+        },
+        {
+          isMini: true,
+          content: [
+            {
+              type: "text",
+              text: "If there are safe to transfer tasks in the schedule 2, transfer them into schedue 1 without moving the dates of the existing tasks of schedule 1.",
+            },
+          ],
+        }
+      );
+    } else {
+      userContent.push(
+        {
+          isMini: true,
+          content: [
+            {
+              type: "text",
+              text: "Can you confirm that the dates of the original tasks in schedule 1 haven't changed? They must not change.",
+            },
+          ],
+        },
+        {
+          isMini: true,
+          content: [
+            {
+              type: "text",
+              text: "Can you confirm that you've transferred all of the tasks from the schedule 2 into the schedule 1?",
+            },
+          ],
+        }
+      );
+    }
+
+    userContent.push(
       {
         isMini: true,
         content: [
@@ -75,11 +112,11 @@ export default async function mergeSchedules({
         content: [
           {
             type: "text",
-            text: `Return the latest updated schedule as JSON.`,
+            text: `Return the latest updated schedule in the original JSON format.`,
           },
         ],
-      },
-    ];
+      }
+    );
 
     const mergedSchedule: { [key: string]: ScheduleTaskType[] } =
       await askRepeatedly({

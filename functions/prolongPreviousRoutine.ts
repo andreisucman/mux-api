@@ -10,7 +10,6 @@ import {
   PartEnum,
   CategoryNameEnum,
   RoutineStatusEnum,
-  AllTaskType,
 } from "types.js";
 import addAdditionalTasks from "functions/addAdditionalTasks.js";
 import deactivatePreviousRoutineAndTasks from "functions/deactivatePreviousRoutineAndTasks.js";
@@ -22,6 +21,7 @@ import httpError from "helpers/httpError.js";
 import { db } from "init.js";
 import updateTasksAnalytics from "./updateTasksCreatedAnalytics.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
+import combineAllTasks from "@/helpers/combineAllTasks.js";
 
 type Props = {
   type: TypeEnum;
@@ -73,6 +73,7 @@ export default async function prolongPreviousRoutine({
         date: rest.startsAt,
         days: daysDifference - 1,
       });
+
       const expiresAt = daysFrom({ date: startsAt, days: 1 });
 
       const updatedTask: TaskType = {
@@ -83,6 +84,7 @@ export default async function prolongPreviousRoutine({
         expiresAt,
         type,
         part,
+        isSubmitted: false,
       };
 
       const recipe = rest.recipe;
@@ -90,10 +92,6 @@ export default async function prolongPreviousRoutine({
       if (recipe) {
         updatedTask.recipe = { ...recipe, canPersonalize: true };
       }
-
-      updatedTask.requiredSubmissions = updatedTask.requiredSubmissions.map(
-        (obj: RequiredSubmissionType) => ({ ...obj, isSubmitted: false })
-      );
 
       resetTasks.push(updatedTask);
     }
@@ -158,27 +156,25 @@ export default async function prolongPreviousRoutine({
 
     await deactivatePreviousRoutineAndTasks(String(previousRoutineId));
 
-    let finalRoutineAllTasks = [];
-    let finalTasksToInsert: Partial<TaskType>[] = [];
-    let finalSchedule = {};
+    const { additionalAllTasks, additionalTasksToInsert, mergedSchedule } =
+      await addAdditionalTasks({
+        type,
+        part,
+        userInfo,
+        categoryName,
+        allSolutions,
+        concerns: partConcerns,
+        currentTasks: resetTasks,
+        currentSchedule: schedule,
+      });
 
-    if (resetTasks.length < 20) {
-      const { additionalAllTasks, additionalTasksToInsert, mergedSchedule } =
-        await addAdditionalTasks({
-          allSolutions,
-          concerns: partConcerns,
-          userInfo,
-          type,
-          part,
-          categoryName,
-          currentTasks: resetTasks,
-          currentSchedule: schedule,
-        });
+    const finalRoutineAllTasks = combineAllTasks({
+      oldAllTasks: allTasks,
+      newAllTasks: additionalAllTasks,
+    });
 
-      finalRoutineAllTasks = [...allTasks, ...additionalAllTasks];
-      finalTasksToInsert = [...resetTasks, ...additionalTasksToInsert];
-      finalSchedule = mergedSchedule;
-    }
+    const finalTasksToInsert = [...resetTasks, ...additionalTasksToInsert];
+    const finalSchedule = mergedSchedule;
 
     /* add the new routine object */
     const dates = Object.keys(finalSchedule);
@@ -188,12 +184,12 @@ export default async function prolongPreviousRoutine({
       db.collection("Routine").insertOne({
         userId: new ObjectId(userId),
         userName,
-        concerns: partConcerns,
         finalSchedule,
+        concerns: partConcerns,
         status: RoutineStatusEnum.ACTIVE,
         createdAt: new Date(),
         lastDate: new Date(lastDate),
-        allTasks,
+        allTasks: finalRoutineAllTasks,
         type,
         part,
       })

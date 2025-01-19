@@ -79,7 +79,6 @@ export default async function createRoutine({
           { nearestConcerns: { $in: concernNames } },
           {
             projection: {
-              requiredSubmissions: 1,
               instruction: 1,
               description: 1,
               requisite: 1,
@@ -149,29 +148,27 @@ export default async function createRoutine({
         .toArray()
     )) as unknown as TaskType[];
 
-    if (draftTasksToProlong.length > 0) {
-      if (existingActiveTask) {
-        await updateCurrentRoutine({
-          type,
-          part,
-          routineId: existingActiveTask.routineId,
-          partConcerns,
-          userInfo,
-          allSolutions,
-          categoryName,
-          specialConsiderations,
-        });
-      } else {
-        await prolongPreviousRoutine({
-          type,
-          part,
-          partConcerns,
-          userInfo,
-          allSolutions,
-          tasksToProlong: draftTasksToProlong,
-          categoryName,
-        });
-      }
+    if (existingActiveTask) {
+      await updateCurrentRoutine({
+        type,
+        part,
+        routineId: existingActiveTask.routineId,
+        partConcerns,
+        userInfo,
+        allSolutions,
+        categoryName,
+        specialConsiderations,
+      });
+    } else if (draftTasksToProlong.length > 0) {
+      await prolongPreviousRoutine({
+        type,
+        part,
+        partConcerns,
+        userInfo,
+        allSolutions,
+        tasksToProlong: draftTasksToProlong,
+        categoryName,
+      });
     } else {
       await makeANewRoutine({
         type,

@@ -97,7 +97,6 @@ route.post(
               recipe: 1,
               concern: 1,
               instruction: 1,
-              requiredSubmissions: 1,
             },
           }
         )
@@ -105,7 +104,7 @@ route.post(
 
       if (!taskInfo) throw httpError(`Task ${taskId} not found`);
 
-      const { instruction, concern, requiredSubmissions, recipe } = taskInfo;
+      const { instruction, concern, recipe } = taskInfo;
 
       if (recipe) {
         res.status(200).json({
@@ -233,22 +232,6 @@ route.post(
         callback: () =>
           incrementProgress({
             increment: 5,
-            operationKey: analysisType,
-            userId: req.userId,
-          }),
-      });
-
-      runs.push({
-        isMini: false,
-        content: [
-          {
-            type: "text",
-            text: `In your recipe is the amount of products enough to make ${requiredSubmissions.length} servings of the dish? If not increase the amounts accordingly.`,
-          },
-        ],
-        callback: () =>
-          incrementProgress({
-            increment: 25,
             operationKey: analysisType,
             userId: req.userId,
           }),

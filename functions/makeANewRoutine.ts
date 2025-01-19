@@ -19,7 +19,7 @@ import {
 import { db } from "init.js";
 import httpError from "helpers/httpError.js";
 import updateTasksAnalytics from "./updateTasksCreatedAnalytics.js";
-import addDateToAllTaskIds from "@/helpers/addDateToAllTasks.js";
+import addDateToAllTasks from "@/helpers/addDateToAllTasks.js";
 
 type Props = {
   userId: string;
@@ -138,7 +138,7 @@ export default async function makeANewRoutine({
 
     const { name: userName } = userInfo;
 
-    const allTasksWithDates = addDateToAllTaskIds({
+    const allTasksWithDates = addDateToAllTasks({
       allTasksWithoutDates: solutionsAndFrequencies,
       tasksToInsert,
     });

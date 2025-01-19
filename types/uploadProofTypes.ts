@@ -33,7 +33,6 @@ export type UploadProofTaskType = {
   requisite: string;
   routineId: ObjectId;
   isRecipe: boolean;
-  requiredSubmissions: RequiredSubmissionType[];
   restDays: number;
   isCreated: boolean;
 };

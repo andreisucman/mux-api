@@ -44,13 +44,13 @@ route.post(
 
       const { timeZone } = userInfo;
 
-      let taskToAdd = await doWithRetries(async () =>
+      let taskToAdd = (await doWithRetries(async () =>
         db
           .collection("Task")
           .find({ routineId: new ObjectId(routineId), key: taskKey })
           .sort({ expiresAt: -1 })
           .next()
-      );
+      )) as unknown as TaskType;
 
       if (!taskToAdd)
         throw httpError(
@@ -75,15 +75,8 @@ route.post(
         _id: new ObjectId(),
         routineId: new ObjectId(currentRoutine._id),
         proofEnabled: true,
-        requiredSubmissions: taskToAdd.requiredSubmissions.map(
-          (submission: RequiredSubmissionType) => ({
-            _id: nanoid(),
-            proofId: "",
-            ...submission,
-            isSubmitted: false,
-          })
-        ),
-      } as unknown as TaskType;
+        isSubmitted: false,
+      };
 
       const draftTasks: TaskType[] = [];
 

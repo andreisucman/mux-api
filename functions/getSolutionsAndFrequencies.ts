@@ -410,26 +410,14 @@ export default async function getSolutionsAndFrequencies({
 
       if (!relevantSolution) continue;
 
-      const {
-        name,
-        icon,
-        color,
-        description,
-        instruction,
-        requiredSubmissions,
-      } = relevantSolution;
+      const { name, icon, color, description, instruction } = relevantSolution;
 
-      const totalApplications = Math.max(
+      const total = Math.max(
         Math.round(Number(findFrequencyResponse[key]) / 4.285714301020408), // needed to turn monthly frequency into weekly
         1
       );
 
-      const totalUses = Math.max(
-        1,
-        Math.round(totalApplications / requiredSubmissions.length)
-      );
-
-      const ids = new Array(totalUses)
+      const ids = new Array(total)
         .fill(new ObjectId())
         .map((_id) => ({ _id, status: TaskStatusEnum.ACTIVE }));
 
@@ -445,7 +433,7 @@ export default async function getSolutionsAndFrequencies({
         concern: null,
         completed: 0,
         unknown: 0,
-        total: totalUses,
+        total,
       };
 
       const indexOfConcern = concernSolutions.findIndex((arrayOfSolutions) =>

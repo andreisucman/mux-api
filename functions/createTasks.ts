@@ -73,6 +73,7 @@ export default async function createTasks({
           key: rawTaskObject.key,
           concern: rawTaskObject.concern,
           ...informationObject,
+          isSubmitted: false,
         };
       })
       .filter(Boolean);
