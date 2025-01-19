@@ -336,6 +336,7 @@ route.post(
           embedding,
           startsAt: starts,
           expiresAt: expires,
+          completedAt: null,
           requiredSubmissions: submissions[i],
         });
       }

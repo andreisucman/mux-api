@@ -108,6 +108,7 @@ route.post(
           ...(taskToAdd as TaskType),
           startsAt: starts,
           expiresAt: expires,
+          completedAt: null,
         });
       }
 

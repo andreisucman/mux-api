@@ -431,6 +431,18 @@ route.post(
           keyOne: "tasksCompleted",
           keyTwo: "manualTasksCompleted",
         });
+
+        await doWithRetries(async () =>
+          db.collection("Routine").updateOne(
+            { _id: new ObjectId(routineId), "allTasks.key": key },
+            {
+              $inc: {
+                [`allTasks.$.completed`]: 1,
+                [`allTasks.$.unknown`]: -1,
+              },
+            }
+          )
+        );
       }
 
       const userUpdatePayload = {
@@ -465,18 +477,6 @@ route.post(
         db
           .collection("Task")
           .updateOne({ _id: new ObjectId(taskId) }, taskUpdate)
-      );
-
-      await doWithRetries(async () =>
-        db.collection("Routine").updateOne(
-          { _id: new ObjectId(routineId), "allTasks.key": key },
-          {
-            $inc: {
-              [`allTasks.$.completed`]: 1,
-              [`allTasks.$.unknown`]: -1,
-            },
-          }
-        )
       );
 
       await doWithRetries(async () =>

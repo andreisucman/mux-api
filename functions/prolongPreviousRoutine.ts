@@ -103,6 +103,7 @@ export default async function prolongPreviousRoutine({
       key: task.key,
       concern: task.concern,
       startsAt: task.startsAt.toDateString(),
+      completedAt: null as Date | null,
     }));
 
     const schedule = dateKeys.reduce(

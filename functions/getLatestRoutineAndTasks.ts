@@ -73,6 +73,7 @@ export default async function getLatestRoutinesAndTasks({ userId }: Props) {
       description: 1,
       requiredSubmissions: 1,
       startsAt: 1,
+      completedAt: 1,
       expiresAt: 1,
     };
 

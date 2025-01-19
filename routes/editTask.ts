@@ -119,6 +119,7 @@ route.post(
         startsAt: newStarts,
         expiresAt:
           newExpires > latestDateOfWeeek ? latestDateOfWeeek : newExpires,
+        completedAt: null as Date | null,
         description: updatedDescription,
         instruction: updatedInstruction,
       };

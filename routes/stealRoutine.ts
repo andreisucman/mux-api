@@ -135,6 +135,7 @@ route.post(
             ...relevantTaskInfo,
             startsAt: starts,
             expiresAt: expires,
+            completedAt: null,
           } as unknown as TaskType);
         }
       }

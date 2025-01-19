@@ -448,7 +448,7 @@ export type TaskType = {
   productTypes: string[] | null;
   startsAt: Date | null;
   expiresAt: Date | null;
-  completedAt?: Date;
+  completedAt: Date | null;
   nextCanStartDate: Date | null;
   restDays: number;
   requiredSubmissions: RequiredSubmissionType[] | null;

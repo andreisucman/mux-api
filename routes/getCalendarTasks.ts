@@ -31,8 +31,6 @@ route.get(
             date: new Date(),
             timeZone: String(timeZone),
           }),
-        },
-        expiresAt: {
           $lte: setUtcMidnight({
             date: daysFrom({ days: 7 }),
             timeZone: String(timeZone),
@@ -50,7 +48,7 @@ route.get(
           };
 
         if (dateTo)
-          filter.expiresAt = {
+          filter.startsAt = {
             $lte: dateTo,
           };
       }

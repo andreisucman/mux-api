@@ -153,6 +153,7 @@ export default async function createTasks({
           type,
           part,
           startsAt,
+          completedAt: null,
           expiresAt,
           revisionDate: daysFrom({ date: startsAt, days: 30 }),
         };
