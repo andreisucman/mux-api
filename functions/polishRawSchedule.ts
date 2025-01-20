@@ -33,14 +33,9 @@ export default async function polishRawSchedule({
       type === "head" ? "dermatologist and dentist" : "fitness coach"
     }. The user gives you their ${
       type === "head" ? "skincare routine" : "workout routine"
-    } schedule. Your goal is edit the schedule for maximum effectiveness in improving these concerns: ${JSON.stringify(
+    } schedule. Your goal is to optimize the dates of the tasks in the schedule for the maximum effectiveness of the improvement of these concerns: ${JSON.stringify(
       concerns
-    )}. ${
-      specialConsiderations
-        ? "Consider the following special requirement of the user when eiting the schedule" +
-          specialConsiderations
-        : ""
-    }. YOU CAN DELETE OR MOVE THE EXISTING TASKS IN THE SCHEDULE, BUT NOT ADD NEW ONES. MAINTAIN THE SCHEMA OF THE SCHEDULE. Be concise and to the point. Think step-by-step`;
+    )}. YOU CAN MOVE THE EXISTING TASKS IN THE SCHEDULE. MAINTAIN THE SCHEMA OF THE SCHEDULE. Be concise and to the point. Think step-by-step`;
 
     const userContent: RunType[] = [
       {
@@ -61,7 +56,7 @@ export default async function polishRawSchedule({
         content: [
           {
             type: "text",
-            text: `Are there tasks that complement each other or conflict with each other? If yes, reschedule them for maximum effectiveness and safety.`,
+            text: `Are there any tasks that complement or conflict with each other? If yes, move them to different dates as needed for maximum effectiveness and safety.`,
           },
         ],
         callback,
@@ -74,7 +69,7 @@ export default async function polishRawSchedule({
         content: [
           {
             type: "text",
-            text: `Arrange the exercises according to the push-pull-legs model for maximum effectiveness. You can move them across the schedule as needed.`,
+            text: `Arrange the exercises according to the push-pull-legs model for the maximum effectiveness. You can move them across the schedule as needed.`,
           },
         ],
         callback,
@@ -82,11 +77,11 @@ export default async function polishRawSchedule({
     }
 
     userContent.push({
-      isMini: true,
+      isMini: false,
       content: [
         {
           type: "text",
-          text: `For each day, reorder the tasks according to their best sequence of application. Be concise and to the point.`,
+          text: `Should any of the tasks be moved to different dates for a more efficient and safe experience? If yes, move them, if not, leave as is.`,
         },
       ],
       callback,
@@ -98,7 +93,7 @@ export default async function polishRawSchedule({
         content: [
           {
             type: "text",
-            text: `Does the schedule respect the following special consideration? Special consideration: ${specialConsiderations}. If not, change the schedule to confirm it.`,
+            text: `Does the schedule respect the following special consideration? Special consideration: ${specialConsiderations}. If not, edit the schedule to account for it.`,
           },
         ],
         callback,

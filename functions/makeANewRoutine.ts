@@ -61,7 +61,7 @@ export default async function makeANewRoutine({
         .collection("AnalysisStatus")
         .updateOne(
           { userId: new ObjectId(userId), operationKey: type },
-          { $inc: { progress: 20 } }
+          { $inc: { progress: 10 } }
         )
     );
 

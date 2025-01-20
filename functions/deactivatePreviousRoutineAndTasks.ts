@@ -12,6 +12,7 @@ export default async function deactivatePreviousRoutineAndTasks(
       db.collection("Routine").updateOne(
         {
           _id: new ObjectId(routineId),
+          status: RoutineStatusEnum.ACTIVE,
         },
         { $set: { status: RoutineStatusEnum.INACTIVE } }
       )
@@ -21,6 +22,7 @@ export default async function deactivatePreviousRoutineAndTasks(
       db.collection("Task").updateMany(
         {
           routineId: new ObjectId(routineId),
+          status: TaskStatusEnum.ACTIVE,
         },
         { $set: { status: TaskStatusEnum.CANCELED } }
       )
