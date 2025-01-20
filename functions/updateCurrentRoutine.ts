@@ -19,7 +19,7 @@ import {
 import httpError from "helpers/httpError.js";
 import updateTasksAnalytics from "./updateTasksAnalytics.js";
 import { db } from "init.js";
-import addDateToAllTasks from "@/helpers/addDateToAllTasks.js";
+import addDateAndIdsToAllTasks from "@/helpers/addDateAndIdsToAllTasks.js";
 import combineAllTasks from "@/helpers/combineAllTasks.js";
 
 type Props = {
@@ -82,7 +82,7 @@ export default async function updateCurrentRoutine({
       })
     );
 
-    const { rawSchedule } = await doWithRetries(async () =>
+    const rawSchedule = await doWithRetries(async () =>
       getRawSchedule({
         solutionsAndFrequencies,
         concerns: partConcerns,
@@ -110,29 +110,18 @@ export default async function updateCurrentRoutine({
       createOnlyTheseKeys: solutionsAndFrequencies.map((sol) => sol.key),
     });
 
-    const newTaskIds = solutionsAndFrequencies
-      .flatMap((r) => r.ids)
-      .map((idObj) => String(idObj._id));
-
-    tasksToInsert = tasksToInsert
-      .filter((t) => newTaskIds.includes(String(t._id)))
-      .map((task) => ({
-        ...task,
-        routineId: new ObjectId(currentRoutine._id),
-      }));
-
     await doWithRetries(async () =>
       db.collection("Task").insertMany(tasksToInsert)
     );
 
-    const allTasksWithDates = addDateToAllTasks({
+    const allTasksWithDateAndIds = addDateAndIdsToAllTasks({
       allTasksWithoutDates: solutionsAndFrequencies,
       tasksToInsert,
     });
 
     const newAllTasks = combineAllTasks({
       oldAllTasks: currentRoutine.allTasks,
-      newAllTasks: allTasksWithDates,
+      newAllTasks: allTasksWithDateAndIds,
     });
 
     const allUniqueConcerns: UserConcernType[] = [

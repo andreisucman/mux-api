@@ -77,7 +77,7 @@ export default async function getRawSchedule({
       });
     }
 
-    return { rawSchedule: sortedSchedule };
+    return sortedSchedule;
   } catch (error) {
     throw httpError(error);
   }

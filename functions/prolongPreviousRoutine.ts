@@ -107,14 +107,11 @@ export default async function prolongPreviousRoutine({
       (acc: { [key: string]: ScheduleTaskType[] }, obj) => {
         if (acc[obj.startsAt]) {
           acc[obj.startsAt].push({
-            _id: obj._id,
             key: obj.key,
             concern: obj.concern,
           });
         } else {
-          acc[obj.startsAt] = [
-            { _id: obj._id, key: obj.key, concern: obj.concern },
-          ];
+          acc[obj.startsAt] = [{ key: obj.key, concern: obj.concern }];
         }
         return acc;
       },

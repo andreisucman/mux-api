@@ -19,7 +19,7 @@ import {
 import { db } from "init.js";
 import httpError from "@/helpers/httpError.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
-import addDateToAllTasks from "@/helpers/addDateToAllTasks.js";
+import addDateAndIdsToAllTasks from "@/helpers/addDateAndIdsToAllTasks.js";
 
 type Props = {
   type: TypeEnum;
@@ -72,7 +72,7 @@ export default async function addAdditionalTasks({
       (r) => !existingAllTasksKeys.includes(r.key)
     );
 
-    const { rawSchedule: rawNewSchedule } = await doWithRetries(async () =>
+    const rawNewSchedule = await doWithRetries(async () =>
       getRawSchedule({
         solutionsAndFrequencies: filteredSolutionsAndFrequencies,
         concerns,
@@ -110,7 +110,7 @@ export default async function addAdditionalTasks({
       })
     );
 
-    const allTasksWithDates = addDateToAllTasks({
+    const allTasksWithDates = addDateAndIdsToAllTasks({
       allTasksWithoutDates: solutionsAndFrequencies,
       tasksToInsert,
     });

@@ -417,12 +417,7 @@ export default async function getSolutionsAndFrequencies({
         1
       );
 
-      const ids = new Array(total)
-        .fill(null)
-        .map((_id) => ({ _id: new ObjectId(), status: TaskStatusEnum.ACTIVE }));
-
       const record: AllTaskType = {
-        ids,
         name,
         key,
         icon,

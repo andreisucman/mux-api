@@ -344,13 +344,11 @@ route.post(
       let finalSchedule: { [key: string]: ScheduleTaskType[] } =
         latestRelevantRoutine.finalSchedule || {};
 
-      /* update final schedule */
       for (let i = 0; i < draftTasks.length; i++) {
         const task = draftTasks[i];
         const dateString = new Date(task.startsAt).toDateString();
 
         const simpleTaskContent: ScheduleTaskType = {
-          _id: task._id,
           key: task.key,
           concern: task.concern,
         };

@@ -4,7 +4,7 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import {
-  AllTaskTypeWithDate,
+  AllTaskTypeWithIds,
   CategoryNameEnum,
   CustomRequest,
   RoutineType,
@@ -161,10 +161,9 @@ route.post(
       const dates = Object.keys(finalSchedule);
       const lastRoutineDate = dates[dates.length - 1];
 
-      const relevantAllTask: AllTaskTypeWithDate =
-        relevantRoutine.allTasks.find(
-          (t: AllTaskTypeWithDate) => t.key === relevantTask.key
-        );
+      const relevantAllTask: AllTaskTypeWithIds = relevantRoutine.allTasks.find(
+        (t: AllTaskTypeWithIds) => t.key === relevantTask.key
+      );
 
       const newAllTaskId = {
         _id: relevantTask._id,

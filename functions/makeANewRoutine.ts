@@ -19,7 +19,7 @@ import {
 import { db } from "init.js";
 import httpError from "helpers/httpError.js";
 import updateTasksAnalytics from "./updateTasksAnalytics.js";
-import addDateToAllTasks from "@/helpers/addDateToAllTasks.js";
+import addDateAndIdsToAllTasks from "@/helpers/addDateAndIdsToAllTasks.js";
 
 type Props = {
   userId: string;
@@ -65,7 +65,7 @@ export default async function makeANewRoutine({
         )
     );
 
-    const { rawSchedule } = await doWithRetries(async () =>
+    const rawSchedule = await doWithRetries(async () =>
       getRawSchedule({
         solutionsAndFrequencies,
         concerns: partConcerns,
@@ -138,7 +138,7 @@ export default async function makeANewRoutine({
 
     const { name: userName } = userInfo;
 
-    const allTasksWithDates = addDateToAllTasks({
+    const allTasksWithDateAndIds = addDateAndIdsToAllTasks({
       allTasksWithoutDates: solutionsAndFrequencies,
       tasksToInsert,
     });
@@ -151,7 +151,7 @@ export default async function makeANewRoutine({
         finalSchedule,
         status: RoutineStatusEnum.ACTIVE,
         createdAt: new Date(),
-        allTasks: allTasksWithDates,
+        allTasks: allTasksWithDateAndIds,
         lastDate: new Date(lastDate),
         type,
         part,

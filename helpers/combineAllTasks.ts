@@ -1,8 +1,8 @@
-import { AllTaskType } from "@/types.js";
+import { AllTaskTypeWithIds } from "@/types.js";
 
 interface Props {
-  oldAllTasks: AllTaskType[];
-  newAllTasks: AllTaskType[];
+  oldAllTasks: AllTaskTypeWithIds[];
+  newAllTasks: AllTaskTypeWithIds[];
 }
 
 // Deep merge function with handling for adding number fields
@@ -36,7 +36,7 @@ function deepMerge(target: any, source: any): any {
 }
 
 export default function combineAllTasks({ oldAllTasks, newAllTasks }: Props) {
-  const mergedTasksMap = new Map<string, AllTaskType>();
+  const mergedTasksMap = new Map<string, AllTaskTypeWithIds>();
 
   // First, add tasks from the oldAllTasks array to the map
   oldAllTasks.forEach((task) => {

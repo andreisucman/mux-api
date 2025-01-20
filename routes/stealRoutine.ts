@@ -149,7 +149,6 @@ route.post(
         const dateString = new Date(task.startsAt).toDateString();
 
         const simpleTaskContent: ScheduleTaskType = {
-          _id: task._id,
           key: task.key,
           concern: task.concern,
         };

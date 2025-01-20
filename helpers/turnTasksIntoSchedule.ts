@@ -1,5 +1,4 @@
 import { AllTaskType } from "@/types.js";
-import { ObjectId } from "mongodb";
 import generateTaskIntervals from "./generateTaskIntervals.js";
 import sortTasksInScheduleByDate from "./sortTasksInScheduleByDate.js";
 
@@ -11,7 +10,6 @@ type TurnTasksIntoScheduleProps = {
 };
 
 export type ScheduleTaskType = {
-  _id: ObjectId;
   date?: string;
   key: string;
   concern: string;
@@ -37,7 +35,6 @@ export default function turnTasksIntoSchedule({
     if (intervals) {
       for (let i = 0; i < intervals.length; i++) {
         scheduleTasks.push({
-          _id: solution.ids[i]._id,
           date: intervals[i],
           key: solution.key,
           concern: solution.concern,
@@ -50,7 +47,7 @@ export default function turnTasksIntoSchedule({
     (acc: { [key: string]: ScheduleTaskType[] }, current) => {
       const { date, ...otherCurrent } = current;
       if (acc[date]) {
-        acc[date].push(otherCurrent);
+        acc[date].push(current);
       } else {
         acc[date] = [otherCurrent];
       }

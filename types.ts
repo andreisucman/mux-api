@@ -459,7 +459,7 @@ export type RoutineType = {
   finalSchedule: { [key: string]: any };
   status: RoutineStatusEnum;
   createdAt: Date;
-  allTasks: AllTaskTypeWithDate[];
+  allTasks: AllTaskTypeWithIds[];
   lastDate: Date;
 };
 
@@ -471,7 +471,6 @@ export type ConcernType = {
 };
 
 export type AllTaskType = {
-  ids: { _id: ObjectId; status: TaskStatusEnum }[];
   name: string;
   color: string;
   description: string;
@@ -484,7 +483,7 @@ export type AllTaskType = {
   concern: string;
 };
 
-export interface AllTaskTypeWithDate extends AllTaskType {
+export interface AllTaskTypeWithIds extends AllTaskType {
   ids: { _id: ObjectId; startsAt: Date; status: TaskStatusEnum }[];
 }
 
