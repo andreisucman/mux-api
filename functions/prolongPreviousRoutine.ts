@@ -2,7 +2,6 @@ import { ObjectId } from "mongodb";
 import doWithRetries from "helpers/doWithRetries.js";
 import { daysFrom, calculateDaysDifference } from "helpers/utils.js";
 import {
-  RequiredSubmissionType,
   UserConcernType,
   TaskStatusEnum,
   TaskType,
@@ -19,7 +18,7 @@ import {
 } from "types/createRoutineTypes.js";
 import httpError from "helpers/httpError.js";
 import { db } from "init.js";
-import updateTasksAnalytics from "./updateTasksCreatedAnalytics.js";
+import updateTasksAnalytics from "./updateTasksAnalytics.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import combineAllTasks from "@/helpers/combineAllTasks.js";
 

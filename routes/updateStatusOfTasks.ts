@@ -2,24 +2,33 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import { ObjectId } from "mongodb";
-import { Router, Response, NextFunction } from "express";
 import { db } from "init.js";
+import { Router, Response, NextFunction } from "express";
 import { CustomRequest, TaskStatusEnum } from "types.js";
 import getLatestRoutineAndTasks from "functions/getLatestRoutineAndTasks.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import updateAnalytics from "@/functions/updateAnalytics.js";
+import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 
 const route = Router();
 
 type Props = {
   taskIds: string[];
   newStatus: TaskStatusEnum;
+  returnOnlyRoutines?: boolean;
+  isVoid?: boolean;
 };
+
+const allowedStatuses = ["active", "canceled", "deleted"];
 
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { taskIds, newStatus }: Props = req.body;
+    const { taskIds, newStatus, returnOnlyRoutines, isVoid }: Props = req.body;
+
+    if (!allowedStatuses.includes(newStatus)) {
+      res.status(400).json({ error: "Bad request" });
+      return;
+    }
 
     try {
       const tasksToUpdate = await doWithRetries(async () =>
@@ -30,46 +39,24 @@ route.post(
               _id: { $in: taskIds.map((id: string) => new ObjectId(id)) },
               userId: new ObjectId(req.userId),
             },
-            { projection: { part: 1, isCreated: 1, routineId: 1 } }
+            { projection: { part: 1, isCreated: 1, routineId: 1, type: 1 } }
           )
           .toArray()
       );
 
       if (newStatus === TaskStatusEnum.CANCELED) {
-        const partsCreatedTasks = tasksToUpdate
-          .map((t) => t.part)
-          .reduce((a: { [key: string]: number }, c: string) => {
-            const key = `overview.tasks.part.tasksCanceled.${c}`;
-            if (a[key]) {
-              a[key] += 1;
-            } else {
-              a[key] = 1;
-            }
-
-            return a;
-          }, {});
-
-        const partsCreatedManualTasks = tasksToUpdate
-          .filter((t) => t.isCreated)
-          .map((t) => t.part)
-          .reduce((a: { [key: string]: number }, c: string) => {
-            const key = `overview.tasks.part.manualTasksCanceled.${c}`;
-            if (a[key]) {
-              a[key] += 1;
-            } else {
-              a[key] = 1;
-            }
-
-            return a;
-          }, {});
-
-        updateAnalytics({
+        await updateTasksAnalytics({
+          tasksToInsert: tasksToUpdate,
+          keyOne: "tasksCanceled",
+          keyTwo: "manualTasksCanceled",
           userId: req.userId,
-          incrementPayload: {
-            "overview.usage.tasksCanceled": tasksToUpdate.length,
-            ...partsCreatedTasks,
-            ...partsCreatedManualTasks,
-          },
+        });
+      } else if (newStatus === TaskStatusEnum.DELETED) {
+        await updateTasksAnalytics({
+          tasksToInsert: tasksToUpdate,
+          keyOne: "tasksDeleted",
+          keyTwo: "manualTasksDeleted",
+          userId: req.userId,
         });
       }
 
@@ -83,16 +70,13 @@ route.post(
         )
       );
 
-      const relevantRoutineAndTaskIds = tasksToUpdate.map((tObj) => ({
-        taskId: tObj._id,
-        routineId: tObj.routineId,
-      }));
+      const relevantTaskIds = tasksToUpdate.map((tObj) => tObj._id);
 
-      const updateStatusOps = relevantRoutineAndTaskIds.map((obj) => {
+      const updateStatusOps = relevantTaskIds.map((taskId) => {
         return {
           updateOne: {
             filter: {
-              "allTasks.ids._id": obj.taskId,
+              "allTasks.ids._id": taskId,
             },
             update: {
               $set: {
@@ -101,7 +85,7 @@ route.post(
             },
             arrayFilters: [
               {
-                "elem._id": obj.taskId,
+                "elem._id": taskId,
               },
             ],
           },
@@ -112,7 +96,18 @@ route.post(
         db.collection("Routine").bulkWrite(updateStatusOps)
       );
 
-      const response = await getLatestRoutineAndTasks({ userId: req.userId });
+      if (isVoid) {
+        res.status(200).end();
+        return;
+      }
+
+      const typesUpdated = [...new Set(tasksToUpdate.map((t) => t.type))];
+
+      const response = await getLatestRoutineAndTasks({
+        userId: req.userId,
+        filter: { type: { $in: typesUpdated } },
+        returnOnlyRoutines,
+      });
 
       res.status(200).json({ message: response });
     } catch (err) {

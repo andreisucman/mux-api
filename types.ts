@@ -315,6 +315,7 @@ export enum TaskStatusEnum {
   COMPLETED = "completed",
   EXPIRED = "expired",
   CANCELED = "canceled",
+  DELETED = "deleted",
 }
 
 export enum RoutineStatusEnum {
@@ -416,14 +417,6 @@ export type RecipeType = {
   calories: number;
 };
 
-export type RequiredSubmissionType = {
-  submissionId: string;
-  name: string;
-  proofId: string;
-  dayTime: "morning" | "noon" | "evening";
-  isSubmitted: boolean;
-};
-
 export type TaskType = {
   _id: ObjectId;
   userId: ObjectId;
@@ -465,7 +458,7 @@ export type RoutineType = {
   finalSchedule: { [key: string]: any };
   status: RoutineStatusEnum;
   createdAt: Date;
-  allTasks: AllTaskType[];
+  allTasks: AllTaskTypeWithDate[];
   lastDate: Date;
 };
 
@@ -484,7 +477,6 @@ export type AllTaskType = {
   instruction: string;
   key: string;
   icon: string;
-  part: PartEnum;
   total: number;
   completed: number;
   unknown: number;

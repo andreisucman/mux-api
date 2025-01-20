@@ -7,16 +7,23 @@ import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
+  filter?: { [key: string]: any };
+  returnOnlyRoutines?: boolean;
 };
 
-export default async function getLatestRoutinesAndTasks({ userId }: Props) {
+export default async function getLatestRoutinesAndTasks({
+  userId,
+  filter = {},
+  returnOnlyRoutines,
+}: Props) {
   try {
+    const match = { userId: new ObjectId(userId), ...filter };
     const routines = await doWithRetries(
       async () =>
         await db
           .collection("Routine")
           .aggregate([
-            { $match: { userId: new ObjectId(userId) } },
+            { $match: match },
             { $sort: { createdAt: -1 } },
             {
               $group: {
@@ -27,6 +34,7 @@ export default async function getLatestRoutinesAndTasks({ userId }: Props) {
                 createdAt: { $first: "$createdAt" },
                 lastDate: { $first: "$lastDate" },
                 allTasks: { $first: "$allTasks" },
+                status: { $first: "$status" },
               },
             },
             {
@@ -37,6 +45,7 @@ export default async function getLatestRoutinesAndTasks({ userId }: Props) {
                 createdAt: 1,
                 allTasks: 1,
                 lastDate: 1,
+                status: 1,
               },
             },
           ])
@@ -45,6 +54,10 @@ export default async function getLatestRoutinesAndTasks({ userId }: Props) {
 
     if (!routines || routines.length === 0) {
       return { routines: [] as RoutineType[], tasks: [] as TaskType[] };
+    }
+
+    if (returnOnlyRoutines) {
+      return { routines, tasks: [] as TaskType[] };
     }
 
     const closestDates = await getClosestTaskDates({

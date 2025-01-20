@@ -2,7 +2,6 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import { ObjectId } from "mongodb";
-import { nanoid } from "nanoid";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "../helpers/doWithRetries.js";
 import setUtcMidnight from "helpers/setUtcMidnight.js";
@@ -10,7 +9,6 @@ import { daysFrom } from "helpers/utils.js";
 import sortTasksInScheduleByDate from "helpers/sortTasksInScheduleByDate.js";
 import {
   CustomRequest,
-  RequiredSubmissionType,
   RoutineStatusEnum,
   TaskStatusEnum,
   TaskType,
@@ -19,7 +17,7 @@ import {
 import { db } from "init.js";
 import httpError from "@/helpers/httpError.js";
 import getUserInfo from "@/functions/getUserInfo.js";
-import updateTasksAnalytics from "@/functions/updateTasksCreatedAnalytics.js";
+import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 
 const route = Router();

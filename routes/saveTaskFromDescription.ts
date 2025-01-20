@@ -32,7 +32,7 @@ import incrementProgress from "@/helpers/incrementProgress.js";
 import filterRelevantProductTypes from "@/functions/filterRelevantTypes.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import moderateContent from "@/functions/moderateContent.js";
-import updateTasksAnalytics from "@/functions/updateTasksCreatedAnalytics.js";
+import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 
 const route = Router();

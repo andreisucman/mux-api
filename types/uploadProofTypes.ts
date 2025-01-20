@@ -4,7 +4,6 @@ import {
   DemographicsType,
   LatestScoresType,
   PartEnum,
-  RequiredSubmissionType,
   TypeEnum,
 } from "types.js";
 

@@ -33,7 +33,7 @@ import selectItemsAtEqualDistances from "helpers/utils.js";
 import httpError from "@/helpers/httpError.js";
 import extractImagesAndTextFromVideo from "@/functions/extractImagesAndTextFromVideo.js";
 import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.js";
-import updateTasksAnalytics from "@/functions/updateTasksCreatedAnalytics.js";
+import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 
 const route = Router();
 

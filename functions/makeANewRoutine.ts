@@ -18,7 +18,7 @@ import {
 } from "types/createRoutineTypes.js";
 import { db } from "init.js";
 import httpError from "helpers/httpError.js";
-import updateTasksAnalytics from "./updateTasksCreatedAnalytics.js";
+import updateTasksAnalytics from "./updateTasksAnalytics.js";
 import addDateToAllTasks from "@/helpers/addDateToAllTasks.js";
 
 type Props = {

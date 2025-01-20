@@ -7,7 +7,6 @@ import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import {
   CustomRequest,
-  RequiredSubmissionType,
   RoutineStatusEnum,
   TaskStatusEnum,
   TaskType,
@@ -20,7 +19,7 @@ import { daysFrom } from "helpers/utils.js";
 import httpError from "@/helpers/httpError.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
-import updateTasksAnalytics from "@/functions/updateTasksCreatedAnalytics.js";
+import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 
 const route = Router();

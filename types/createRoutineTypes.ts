@@ -1,7 +1,6 @@
 import { ObjectId } from "mongodb";
 import {
   UserConcernType,
-  RequiredSubmissionType,
   TypeEnum,
   RecipeType,
   DemographicsType,

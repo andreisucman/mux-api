@@ -427,7 +427,6 @@ export default async function getSolutionsAndFrequencies({
         key,
         icon,
         color,
-        part,
         description,
         instruction,
         concern: null,
