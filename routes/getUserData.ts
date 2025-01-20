@@ -3,7 +3,6 @@ import { CustomRequest, ModerationStatusEnum } from "types.js";
 import getUserData from "functions/getUserData.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import signOut from "@/functions/signOut.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 

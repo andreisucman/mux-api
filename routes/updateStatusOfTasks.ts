@@ -4,7 +4,7 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import { Router, Response, NextFunction } from "express";
-import { CustomRequest, TaskStatusEnum } from "types.js";
+import { CustomRequest, RoutineStatusEnum, TaskStatusEnum } from "types.js";
 import getLatestRoutineAndTasks from "functions/getLatestRoutineAndTasks.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
@@ -38,6 +38,7 @@ route.post(
             {
               _id: { $in: taskIds.map((id: string) => new ObjectId(id)) },
               userId: new ObjectId(req.userId),
+              expiresAt: { $gt: new Date() },
             },
             { projection: { part: 1, isCreated: 1, routineId: 1, type: 1 } }
           )
@@ -72,7 +73,7 @@ route.post(
 
       const relevantTaskIds = tasksToUpdate.map((tObj) => tObj._id);
 
-      const updateStatusOps = relevantTaskIds.map((taskId) => {
+      const routineUpdateOps: any[] = relevantTaskIds.map((taskId) => {
         return {
           updateOne: {
             filter: {
@@ -92,8 +93,43 @@ route.post(
         };
       });
 
+      const relevantRoutineIds = tasksToUpdate.map((t) => t.routineId);
+
+      if (newStatus === TaskStatusEnum.DELETED) {
+        const routinesWithActiveTasks = await doWithRetries(async () =>
+          db
+            .collection("Task")
+            .find(
+              {
+                routineId: { $in: relevantRoutineIds },
+                status: TaskStatusEnum.ACTIVE,
+              },
+              { projection: { routineId: 1 } }
+            )
+            .toArray()
+        );
+
+        const activeRoutineIds = routinesWithActiveTasks
+          .map((r) => r.routineId)
+          .map((id) => String(id));
+
+        const routinesToDelete = relevantRoutineIds.filter(
+          (id) => !activeRoutineIds.includes(String(id))
+        );
+
+        if (routinesToDelete.length > 0)
+          routineUpdateOps.push(
+            ...routinesToDelete.map((id) => ({
+              updateOne: {
+                filter: { _id: new ObjectId(id) },
+                update: { $set: { status: RoutineStatusEnum.DELETED } },
+              },
+            }))
+          );
+      }
+
       await doWithRetries(async () =>
-        db.collection("Routine").bulkWrite(updateStatusOps)
+        db.collection("Routine").bulkWrite(routineUpdateOps)
       );
 
       if (isVoid) {
@@ -105,7 +141,10 @@ route.post(
 
       const response = await getLatestRoutineAndTasks({
         userId: req.userId,
-        filter: { type: { $in: typesUpdated } },
+        filter: {
+          type: { $in: typesUpdated },
+          status: RoutineStatusEnum.ACTIVE,
+        },
         returnOnlyRoutines,
       });
 

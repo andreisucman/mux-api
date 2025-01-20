@@ -5,7 +5,11 @@ import { ObjectId, Sort } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import checkTrackedRBAC from "functions/checkTrackedRBAC.js";
-import { CustomRequest, SubscriptionTypeNamesEnum } from "types.js";
+import {
+  CustomRequest,
+  RoutineStatusEnum,
+  SubscriptionTypeNamesEnum,
+} from "types.js";
 import checkSubscriptionStatus from "@/functions/checkSubscription.js";
 import aqp from "api-query-params";
 import { db } from "init.js";
@@ -52,7 +56,10 @@ route.get(
         }
       }
 
-      const filter: { [key: string]: any } = { type };
+      const filter: { [key: string]: any } = {
+        type,
+        status: { $ne: RoutineStatusEnum.DELETED },
+      };
 
       if (followingUserName) {
         filter.userName = followingUserName;

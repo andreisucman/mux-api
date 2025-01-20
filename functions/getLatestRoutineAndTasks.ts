@@ -2,7 +2,7 @@ import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import getClosestTaskDates from "functions/getClosestTaskDates.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import { RoutineType, TaskType } from "types.js";
+import { RoutineType, TaskStatusEnum, TaskType } from "types.js";
 import httpError from "@/helpers/httpError.js";
 
 type Props = {
@@ -159,6 +159,7 @@ export default async function getLatestRoutinesAndTasks({
         await db
           .collection("Task")
           .aggregate([
+            { $match: { status: TaskStatusEnum.ACTIVE } },
             {
               $facet: facet,
             },

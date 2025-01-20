@@ -322,6 +322,7 @@ export enum RoutineStatusEnum {
   ACTIVE = "active",
   INACTIVE = "inactive",
   REPLACED = "replaced",
+  DELETED = "deleted",
 }
 
 export type StreaksType = {
