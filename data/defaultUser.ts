@@ -221,9 +221,9 @@ export const defaultUser: UserType = {
   toAnalyze: { head: [], body: [] },
   coachEnergy: 150000,
   nutrition: {
-    dailyCalorieGoal: 0,
-    recommendedDailyCalorieGoal: 0,
-    remainingDailyCalories: 0,
+    dailyCalorieGoal: null,
+    recommendedDailyCalorieGoal: null,
+    remainingDailyCalories: null,
   },
   canRejoinClubAfter: null,
   lastActiveOn: null,

@@ -28,9 +28,9 @@ export type UploadProgressUserInfo = {
     body: ProgressType[];
   };
   nutrition: {
-    dailyCalorieGoal: number;
-    recommendedDailyCalorieGoal: number;
-    remainingDailyCalories: number;
+    dailyCalorieGoal: number | null;
+    recommendedDailyCalorieGoal: number | null;
+    remainingDailyCalories: number | null;
   };
   toAnalyze: { head: ToAnalyzeType[]; body: ToAnalyzeType[] };
   concerns: UserConcernType[];
