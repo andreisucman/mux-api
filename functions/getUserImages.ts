@@ -1,18 +1,30 @@
 import { ObjectId } from "mongodb";
 import doWithRetries from "@/helpers/doWithRetries.js";
-import { ProgressImageType } from "@/types.js";
+import { PartEnum, ProgressImageType, TypeEnum } from "@/types.js";
 import httpError from "@/helpers/httpError.js";
 import { db } from "@/init.js";
 
-export default async function getUsersImage(userId: string) {
+type Props = {
+  userId: string;
+  part?: PartEnum;
+  type?: TypeEnum;
+};
+
+export default async function getUsersImages({
+  userId,
+  type,
+  part,
+}: Props): Promise<ProgressImageType[]> {
   try {
+    const filter: { [key: string]: any } = { userId: new ObjectId(userId) };
+
+    if (type) filter.type = type;
+    if (part) filter.part = part;
+
     const latestHeadProgressRecord = await doWithRetries(async () =>
       db
         .collection("Progress")
-        .find(
-          { userId: new ObjectId(userId), type: "head" },
-          { projection: { images: 1 } }
-        )
+        .find(filter, { projection: { images: 1 } })
         .sort({ createdAt: -1 })
         .next()
     );
@@ -21,11 +33,7 @@ export default async function getUsersImage(userId: string) {
 
     const { images } = latestHeadProgressRecord;
 
-    const frontalImage = images.find(
-      (o: ProgressImageType) => o.position === "front"
-    );
-
-    return frontalImage.mainUrl.url;
+    return images;
   } catch (err) {
     throw httpError(err);
   }

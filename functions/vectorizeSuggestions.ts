@@ -22,8 +22,6 @@ export default async function vectorizeSuggestions({
   suggestions,
 }: Props) {
   try {
-    const uniqueSuggestion = [...new Set(suggestions.map((s) => s.suggestion))];
-
     await doWithRetries(async () =>
       db.collection("SuggestionVector").deleteMany({})
     );

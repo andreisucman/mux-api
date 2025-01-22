@@ -9,6 +9,7 @@ import {
   TypeEnum,
   PartEnum,
   CategoryNameEnum,
+  ProgressImageType,
 } from "@/types.js";
 import getSolutionsAndFrequencies from "./getSolutionsAndFrequencies.js";
 import addAnalysisStatusError from "functions/addAnalysisStatusError.js";
@@ -24,8 +25,9 @@ import addDateAndIdsToAllTasks from "@/helpers/addDateAndIdsToAllTasks.js";
 type Props = {
   type: TypeEnum;
   part: PartEnum;
+  partImages: ProgressImageType[];
   categoryName: CategoryNameEnum;
-  concerns: UserConcernType[];
+  partConcerns: UserConcernType[];
   currentTasks: TaskType[];
   currentSchedule: { [key: string]: ScheduleTaskType[] };
   userInfo: CreateRoutineUserInfoType;
@@ -36,7 +38,8 @@ export default async function addAdditionalTasks({
   type,
   part,
   userInfo,
-  concerns,
+  partImages,
+  partConcerns,
   currentTasks,
   currentSchedule,
   allSolutions,
@@ -50,7 +53,8 @@ export default async function addAdditionalTasks({
         userId: String(userId),
         type,
         part,
-        concerns,
+        partImages,
+        partConcerns,
         specialConsiderations,
         allSolutions,
         demographics,
@@ -75,7 +79,7 @@ export default async function addAdditionalTasks({
     const rawNewSchedule = await doWithRetries(async () =>
       getRawSchedule({
         solutionsAndFrequencies: filteredSolutionsAndFrequencies,
-        concerns,
+        concerns: partConcerns,
         days: 6,
       })
     );

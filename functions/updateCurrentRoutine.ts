@@ -7,6 +7,7 @@ import {
   PartEnum,
   CategoryNameEnum,
   RoutineStatusEnum,
+  ProgressImageType,
 } from "types.js";
 import getSolutionsAndFrequencies from "functions/getSolutionsAndFrequencies.js";
 import getRawSchedule from "functions/getRawSchedule.js";
@@ -26,6 +27,7 @@ type Props = {
   type: TypeEnum;
   part: PartEnum;
   routineId: string;
+  partImages: ProgressImageType[];
   partConcerns: UserConcernType[];
   allSolutions: CreateRoutineAllSolutionsType[];
   userInfo: CreateRoutineUserInfoType;
@@ -36,6 +38,7 @@ type Props = {
 export default async function updateCurrentRoutine({
   type,
   part,
+  partImages,
   partConcerns,
   routineId,
   allSolutions,
@@ -74,11 +77,12 @@ export default async function updateCurrentRoutine({
         specialConsiderations,
         allSolutions,
         categoryName,
-        concerns: partConcerns,
+        partConcerns,
         demographics: userInfo.demographics,
         userId: String(userId),
-        type,
+        partImages,
         part,
+        type,
       })
     );
 
@@ -110,9 +114,10 @@ export default async function updateCurrentRoutine({
       createOnlyTheseKeys: solutionsAndFrequencies.map((sol) => sol.key),
     });
 
-    await doWithRetries(async () =>
-      db.collection("Task").insertMany(tasksToInsert)
-    );
+    if (tasksToInsert.length > 0)
+      await doWithRetries(async () =>
+        db.collection("Task").insertMany(tasksToInsert)
+      );
 
     const allTasksWithDateAndIds = addDateAndIdsToAllTasks({
       allTasksWithoutDates: solutionsAndFrequencies,

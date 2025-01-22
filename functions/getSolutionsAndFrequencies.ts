@@ -1,6 +1,6 @@
+import { z } from "zod";
 import askRepeatedly from "functions/askRepeatedly.js";
 import { convertKeysAndValuesTotoSnakeCase } from "helpers/utils.js";
-import { combineSolutions } from "helpers/utils.js";
 import incrementProgress from "helpers/incrementProgress.js";
 import {
   UserConcernType,
@@ -9,50 +9,44 @@ import {
   PartEnum,
   CategoryNameEnum,
   DemographicsType,
-  TaskStatusEnum,
+  ProgressImageType,
 } from "types.js";
 import { RunType } from "types/askOpenaiTypes.js";
 import { CreateRoutineAllSolutionsType } from "types/createRoutineTypes.js";
 import httpError from "helpers/httpError.js";
-import getUsersImage from "./getUserImage.js";
-import { ObjectId } from "mongodb";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
+import { zodResponseFormat } from "openai/helpers/zod.mjs";
 
 type Props = {
-  specialConsiderations: string;
-  allSolutions: CreateRoutineAllSolutionsType[];
-  concerns: UserConcernType[];
   type: TypeEnum;
   part: PartEnum;
-  categoryName: CategoryNameEnum;
   userId: string;
+  specialConsiderations: string;
+  allSolutions: CreateRoutineAllSolutionsType[];
+  partConcerns: UserConcernType[];
+  partImages: ProgressImageType[];
+  categoryName: CategoryNameEnum;
   demographics: DemographicsType;
 };
 
 export default async function getSolutionsAndFrequencies({
   specialConsiderations,
   allSolutions,
-  concerns,
+  partConcerns,
   categoryName,
-  type,
+  partImages,
   demographics,
   userId,
+  type,
   part,
 }: Props) {
   const { sex } = demographics;
 
-  const concernsNames = concerns.map((c) => c.name);
+  const concernsNames = partConcerns.map((c) => c.name);
 
-  let userImage = null;
-
-  if (sex === "male" && type === "head") {
-    userImage = await getUsersImage(String(userId));
-  }
-
-  const dontSuggestCleanShave =
+  const checkFacialHair =
     sex === "male" &&
-    type === "head" &&
-    userImage &&
+    part === "face" &&
     concernsNames.includes("ungroomed_facial_hair");
 
   try {
@@ -63,17 +57,17 @@ export default async function getSolutionsAndFrequencies({
         userId: String(userId),
       });
 
-    const moustacheCheck = {
+    const facialHairCheck: RunType = {
       isMini: true,
       content: [
         {
           type: "text",
-          text: `Does the person have a beard or moustache? If yes, don't suggest a clean shave.`,
+          text: `Does it appear like the user is growing beard or moustache? If yes, don't suggest a clean shave.`,
         },
         {
           type: "image_url",
           image_url: {
-            url: userImage,
+            url: partImages.find((imo) => imo.position === "front").mainUrl.url,
             detail: "low",
           },
         },
@@ -85,11 +79,12 @@ export default async function getSolutionsAndFrequencies({
 
     const findSolutionsInstruction = `You are a ${
       type === "head" ? "dermatologist and dentist" : "fitness coach"
-    }. The user gives you a list of their concerns. Your goal is to select the single most effective solution for each of their concerns from this list of solutions: ${allSolutionsList.join(
+    }. The user gives you a list of their concerns. Your goal is to select all solutions for each of their concerns from this list of solutions: ${allSolutionsList.join(
       ", "
-    )}. ALL NAMES FORMAT MUST BE EXACTLY AS IN THE LIST. Be concise and to the point.`;
+    )}. SOLUTION NAMES MUST BE EXACTLY AS IN THE LIST. Be concise and to the point.`;
 
-    const allConcerns = concerns.map(
+    const allConcerns = partConcerns.map((co) => co.name);
+    const concernsWithExplanations = partConcerns.map(
       (concern, index) =>
         `${index + 1}: ${concern.name}. Details: ${concern.explanation} ##`
     );
@@ -100,249 +95,103 @@ export default async function getSolutionsAndFrequencies({
         content: [
           {
             type: "text",
-            text: `My concerns are: ${allConcerns.join(", ")}`,
-          },
-          {
-            type: "text",
-            text: `Consider this my condition when choosing the solutions: ${specialConsiderations}`,
+            text: `My concerns are: ${concernsWithExplanations.join(", ")}`,
           },
         ],
-        callback,
-      },
-      {
-        isMini: false,
-        content: [
-          {
-            type: "text",
-            text: `Are there any more effective solutions for each concern in the list or not?`,
-          },
-        ],
+
         callback,
       },
     ];
 
-    if (dontSuggestCleanShave && userImage) {
-      findSolutionsContentArray.push(moustacheCheck as any);
-    }
-
-    findSolutionsContentArray.push(
-      {
-        isMini: true,
-        content: [
-          {
-            type: "text",
-            text: `Are all names written exactly as in the lists? If not, make all names exactly as in the lists.`,
-          },
-        ],
-        callback,
-      },
-      {
-        isMini: true,
-        content: [
-          {
-            type: "text",
-            text: `Format your latest suggestion as a JSON object with this schema: {name of the concern: name of the solution}.`,
-          },
-        ],
-        callback,
-      },
-      {
-        isMini: true,
-        content: [
-          {
-            type: "text",
-            text: `Are there any concerns that have no solutions from the list? If yes, remove them from the object.`,
-          },
-        ],
-        callback,
-      },
-      {
-        isMini: true,
-        content: [
-          {
-            type: "text",
-            text: `Return your latest updated JSON object in this format: {name of the concern: name of the solution}.`,
-          },
-        ],
-        callback,
-      }
-    );
-
-    const findSolutionsResponse = await askRepeatedly({
-      userId: String(userId),
-      categoryName,
-      systemContent: findSolutionsInstruction,
-      runs: findSolutionsContentArray as RunType[],
-      functionName: "getSolutionsAndFrequencies",
-    });
-
-    /* get additional solutions */
-    const findAdditionalSolutionsInstruction = `In this all solutions list: \n\n<-- ALL SOLUTIONS LIST -->\n\n ${allSolutionsList.join(
-      ", "
-    )}\n\n<-- ALL SOLUTIONS LIST -->\n\n are there any solutions that would increase the effectiveness or comfort of these selected solutions: \n\n<-- SELECTED SOLUTIONS LIST -->\n\n ${JSON.stringify(
-      findSolutionsResponse
-    )}?. ALL NAMES FORMAT EXACTLY AS IN THE LIST. Think step-by-step. Be concise and to the point.`;
-
-    const findAdditionalSolutionsContentArray = [
-      {
-        isMini: false,
-        content: [
-          {
-            type: "text",
-            text: `Does the list have any supportive solutions that are typically used with the main solutions? If yes add them to the main list.`,
-          },
-        ],
-        callback,
-      },
-      {
-        isMini: false,
-        content: [
-          {
-            type: "text",
-            text: `Does you updated main list have any solutions that contradict each other or are contraindicated? If yes, remove the least relevant contradicated solutions.`,
-          },
-        ],
-        callback,
-      },
-      {
-        isMini: false,
-        content: [
-          {
-            type: "text",
-            text: `Does your latest list have any solutions that are very similar to each other such that using them together could be detrimental for effectiveness or health? If yes, remove the redundant solutions.`,
-          },
-        ],
-        callback,
-      },
-      {
-        isMini: false,
-        content: [
-          {
-            type: "text",
-            text: `Does your latest list have any solutions that are not related to these concerns: ${JSON.stringify(
-              allConcerns
-            )}? If yes, remove them.`,
-          },
-        ],
-        callback,
-      },
-    ];
-
-    if (dontSuggestCleanShave && userImage) {
-      findAdditionalSolutionsContentArray.push(moustacheCheck as any);
+    if (checkFacialHair) {
+      findSolutionsContentArray.push(facialHairCheck);
     }
 
     if (specialConsiderations) {
-      findAdditionalSolutionsContentArray.push({
-        isMini: true,
+      findSolutionsContentArray.push({
+        isMini: false,
         content: [
           {
             type: "text",
-            text: `Does your latest list have any solutions that contradict this user's condition: ${specialConsiderations}? If yes, remove them.`,
+            text: `The user has this special consideration: ${specialConsiderations}. Is it contraindicated for any of the solutions? If yes, remove those solutions.`,
           },
         ],
+
         callback,
       });
     }
 
-    findAdditionalSolutionsContentArray.push(
-      {
-        isMini: true,
-        content: [
-          {
-            type: "text",
-            text: `Does your latest list have any solutions that don't exist in the original list? If yes remove those.`,
-          },
-        ],
-        callback,
+    const findSolutionsResponseMap = allConcerns.reduce(
+      (a: { [key: string]: any }, c) => {
+        a[c] = z
+          .array(
+            z
+              .string()
+              .describe(
+                `name of a solution for concern ${c} from the list of solution`
+              )
+          )
+          .describe(`list of solutions for concern ${c}`);
+        return a;
       },
-      {
-        isMini: true,
-        content: [
-          {
-            type: "text",
-            text: `Are all the names in your latest suggestions written exaclty as in the lists? If not, rewrite them exactly as in the lists.`,
-          },
-        ],
-        callback,
-      }
+      {}
     );
 
-    findAdditionalSolutionsContentArray.push({
+    const FindSolutionsResponseType = z
+      .object(findSolutionsResponseMap)
+      .describe("concern:solutions[] map");
+
+    findSolutionsContentArray.push({
       isMini: true,
       content: [
         {
           type: "text",
-          text: `Format your latest suggestion as a JSON object with this schema: {name of the existing solution: [name of the complementary solution, name of the complementary solution, ... ]}.`,
+          text: `Are all solution names written exactly as in the list? Ensure that all are written exactly as in the list.`,
         },
       ],
+      responseFormat: zodResponseFormat(
+        FindSolutionsResponseType,
+        "FindSolutionsResponseType"
+      ),
       callback,
     });
 
-    const findAdditionalSolutionsResponse = await askRepeatedly({
-      userId: String(userId),
-      categoryName,
-      systemContent: findAdditionalSolutionsInstruction,
-      runs: findAdditionalSolutionsContentArray as RunType[],
-      functionName: "getSolutionsAndFrequencies",
-    });
-
-    let updatedConcernsSolutionsMap = combineSolutions(
-      findSolutionsResponse,
-      findAdditionalSolutionsResponse
-    );
-
-    updatedConcernsSolutionsMap = convertKeysAndValuesTotoSnakeCase(
-      updatedConcernsSolutionsMap
-    );
+    const findSolutionsResponse: { [key: string]: string } =
+      await askRepeatedly({
+        userId: String(userId),
+        categoryName,
+        systemContent: findSolutionsInstruction,
+        runs: findSolutionsContentArray as RunType[],
+        functionName: "getSolutionsAndFrequencies",
+      });
 
     /* come up with frequencies for the solutions */
     const findFrequenciesInstruction = `You are a ${
       type === "head" ? "dermatologist and dentist" : "fitness coach"
-    }. The user gives you a list of solutions they are going to use. Your goal is to tell how many times in a month each solution should be done. Think step-by-step. Be concise and to the point. YOUR RESPONSE IS A TOTAL NUMBER OF APPLICATIONS IN A MONTH, NOT DAY OR WEEK.`;
+    }. The user tells you their concerns and solutions that they are going to use to improve them. Your goal is to tell how many times each solution should be used in a month to most effectively improve their concern based on their image. Be concise and to the point. YOUR RESPONSE IS A TOTAL NUMBER OF APPLICATIONS IN A MONTH, NOT DAY OR WEEK.`;
 
-    const stringOfSolutions = Object.values(updatedConcernsSolutionsMap)
-      .flat()
-      .join(", ");
-
-    const findFrequenciesContentArray = [
+    const findFrequenciesContentArray: RunType[] = [
       {
         isMini: false,
         content: [
           {
             type: "text",
-            text: `I'm going to use these solutions: ${stringOfSolutions}. What would be the best usage frequency for each solution?`,
+            text: `I want to combat these concerns and plan to use the solutions in square brackets to do that: ${JSON.stringify(
+              findSolutionsResponse
+            )}. What would be the best usage frequency for each solution?`,
           },
+          {
+            type: "text",
+            text: "Here are the images of my concerns for your reference:",
+          },
+          ...partImages.map((imo) => ({
+            type: "image_url" as "image_url",
+            image_url: { url: imo.mainUrl.url, detail: "low" as "low" },
+          })),
         ],
         callback,
       },
     ];
-
-    if (type === "head") {
-      findFrequenciesContentArray.push({
-        isMini: false,
-        content: [
-          {
-            type: "text",
-            text: `Do you think the frequencies should be modified for better effectiveness? If yes, modify them, if not leave as is.`,
-          },
-        ],
-        callback,
-      });
-    }
-
-    if (type === "body") {
-      findFrequenciesContentArray.push({
-        isMini: false,
-        content: [
-          {
-            type: "text",
-            text: `My general approach is to train each muscle group 2 times a week. Do you think the frequencies should be modified for achieving that? If yes, modify them. if not leave as is.`,
-          },
-        ],
-        callback,
-      });
-    }
 
     if (specialConsiderations) {
       findFrequenciesContentArray.push({
@@ -350,35 +199,43 @@ export default async function getSolutionsAndFrequencies({
         content: [
           {
             type: "text",
-            text: `The user has the following condition: ${specialConsiderations}. Does it affect the frequencies? If yes modify the frequencies if not leave as is.`,
+            text: `I have the following condition: ${specialConsiderations}. Does it change the frequencies? If yes modify the frequencies, if not leave as is.`,
           },
         ],
         callback,
       });
     }
 
-    findFrequenciesContentArray.push(
-      {
-        isMini: false,
-        content: [
-          {
-            type: "text",
-            text: `Can you confirm that each frequency is represented as a total number of applications for a month? If not, make each frequency a single total number for a month.`,
-          },
-        ],
-        callback,
+    const solutionsList = Object.values(findSolutionsResponse).flat();
+
+    const findFrequenciesInstructionMap = solutionsList.reduce(
+      (a: { [key: string]: any }, c) => {
+        a[c] = z
+          .number()
+          .describe("number of times in a MONTH this solution should be used");
+        return a;
       },
-      {
-        isMini: true,
-        content: [
-          {
-            type: "text",
-            text: `Format your latest suggestions as a JSON object with this schema: {name of the solution: number of times it should be done in a month}.`,
-          },
-        ],
-        callback,
-      }
+      {}
     );
+
+    const FindFrequenciesInstructionResponse = z
+      .object(findFrequenciesInstructionMap)
+      .describe("solution:monthlyFrequency map");
+
+    findFrequenciesContentArray.push({
+      isMini: false,
+      content: [
+        {
+          type: "text" as "text",
+          text: `Do you think the frequencies should be modified for better effectiveness? If yes, modify them, if not leave as is.`,
+        },
+      ],
+      responseFormat: zodResponseFormat(
+        FindFrequenciesInstructionResponse,
+        "FindFrequenciesInstructionResponse"
+      ),
+      callback,
+    });
 
     let findFrequencyResponse: { [key: string]: ScheduleTaskType[] } =
       await askRepeatedly({
@@ -398,7 +255,7 @@ export default async function getSolutionsAndFrequencies({
 
     const keysOfSolutions = Object.keys(findFrequencyResponse);
 
-    const entriesOfConcerns = Object.entries(updatedConcernsSolutionsMap);
+    const entriesOfConcerns = Object.entries(findSolutionsResponse);
     const namesOfConcerns = entriesOfConcerns.map((entry) =>
       entry[0].toLowerCase()
     );

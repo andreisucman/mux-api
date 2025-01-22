@@ -108,7 +108,7 @@ export function convertKeysAndValuesTotoSnakeCase(obj: { [key: string]: any }) {
 
 export function combineSolutions(
   findSolutionsResponse: { [key: string]: string },
-  findAdditionalSolutionsResponse: { [key: string]: string }
+  findAdditionalSolutionsResponse: { [key: string]: string[] }
 ) {
   const combinedSolutions: { [key: string]: string[] } = {};
 

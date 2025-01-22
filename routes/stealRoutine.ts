@@ -244,9 +244,9 @@ route.post(
           )
       );
 
-      await doWithRetries(async () =>
-        db.collection("Task").insertMany(replacementTaskWithDates)
-      );
+        await doWithRetries(async () =>
+          db.collection("Task").insertMany(replacementTaskWithDates)
+        );
 
       const { routines, tasks } = await getLatestRoutinesAndTasks({
         userId: req.userId,

@@ -20,6 +20,7 @@ import addAnalysisStatusError from "functions/addAnalysisStatusError.js";
 import prolongPreviousRoutine from "functions/prolongPreviousRoutine.js";
 import updateCurrentRoutine from "functions/updateCurrentRoutine.js";
 import httpError from "@/helpers/httpError.js";
+import getUsersImages from "./getUserImages.js";
 import { db } from "init.js";
 
 type Props = {
@@ -148,10 +149,13 @@ export default async function createRoutine({
         .toArray()
     )) as unknown as TaskType[];
 
+    const partImages = await getUsersImages({ userId, part });
+
     if (existingActiveTask) {
       await updateCurrentRoutine({
         type,
         part,
+        partImages,
         routineId: existingActiveTask.routineId,
         partConcerns,
         userInfo,
@@ -163,6 +167,7 @@ export default async function createRoutine({
       await prolongPreviousRoutine({
         type,
         part,
+        partImages,
         partConcerns,
         userInfo,
         allSolutions,
@@ -174,6 +179,7 @@ export default async function createRoutine({
         type,
         part,
         userId,
+        partImages,
         userInfo,
         partConcerns,
         allSolutions,

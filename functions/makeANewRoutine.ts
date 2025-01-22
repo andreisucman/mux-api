@@ -11,6 +11,7 @@ import {
   PartEnum,
   CategoryNameEnum,
   RoutineStatusEnum,
+  ProgressImageType,
 } from "types.js";
 import {
   CreateRoutineUserInfoType,
@@ -25,6 +26,7 @@ type Props = {
   userId: string;
   type: TypeEnum;
   part: PartEnum;
+  partImages: ProgressImageType[];
   userInfo: CreateRoutineUserInfoType;
   partConcerns: UserConcernType[];
   specialConsiderations: string;
@@ -36,6 +38,7 @@ export default async function makeANewRoutine({
   userId,
   type,
   part,
+  partImages,
   userInfo,
   partConcerns,
   categoryName,
@@ -46,10 +49,11 @@ export default async function makeANewRoutine({
     const solutionsAndFrequencies = await doWithRetries(async () =>
       getSolutionsAndFrequencies({
         specialConsiderations,
-        concerns: partConcerns,
         demographics: userInfo.demographics,
+        partConcerns,
         allSolutions,
         categoryName,
+        partImages,
         userId,
         type,
         part,
@@ -163,9 +167,10 @@ export default async function makeANewRoutine({
       routineId: newRoutineObject.insertedId,
     }));
 
-    await doWithRetries(async () =>
-      db.collection("Task").insertMany(tasksToInsert)
-    );
+    if (tasksToInsert.length > 0)
+      await doWithRetries(async () =>
+        db.collection("Task").insertMany(tasksToInsert)
+      );
 
     updateTasksAnalytics({
       userId,

@@ -9,6 +9,7 @@ import {
   PartEnum,
   CategoryNameEnum,
   RoutineStatusEnum,
+  ProgressImageType,
 } from "types.js";
 import addAdditionalTasks from "functions/addAdditionalTasks.js";
 import deactivatePreviousRoutineAndTasks from "functions/deactivatePreviousRoutineAndTasks.js";
@@ -25,6 +26,7 @@ import combineAllTasks from "@/helpers/combineAllTasks.js";
 type Props = {
   type: TypeEnum;
   part: PartEnum;
+  partImages: ProgressImageType[];
   categoryName: CategoryNameEnum;
   partConcerns: UserConcernType[];
   tasksToProlong: TaskType[];
@@ -35,6 +37,7 @@ type Props = {
 export default async function prolongPreviousRoutine({
   type,
   part,
+  partImages,
   partConcerns,
   categoryName,
   allSolutions,
@@ -157,9 +160,10 @@ export default async function prolongPreviousRoutine({
         type,
         part,
         userInfo,
+        partImages,
         categoryName,
         allSolutions,
-        concerns: partConcerns,
+        partConcerns,
         currentTasks: resetTasks,
         currentSchedule: schedule,
       });
@@ -197,9 +201,10 @@ export default async function prolongPreviousRoutine({
       routineId: newRoutineObject.insertedId,
     }));
 
-    await doWithRetries(async () =>
-      db.collection("Task").insertMany(finalTasks)
-    );
+    if (finalTasks.length > 0)
+      await doWithRetries(async () =>
+        db.collection("Task").insertMany(finalTasks)
+      );
 
     updateTasksAnalytics({
       userId: String(userId),

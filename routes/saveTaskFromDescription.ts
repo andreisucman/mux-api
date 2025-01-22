@@ -433,9 +433,10 @@ route.post(
         )
       );
 
-      await doWithRetries(async () =>
-        db.collection("Task").insertMany(draftTasks)
-      );
+      if (draftTasks.length > 0)
+        await doWithRetries(async () =>
+          db.collection("Task").insertMany(draftTasks)
+        );
 
       updateTasksAnalytics({
         userId: req.userId,
