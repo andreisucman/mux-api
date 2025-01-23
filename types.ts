@@ -461,6 +461,7 @@ export type RoutineType = {
   createdAt: Date;
   allTasks: AllTaskTypeWithIds[];
   lastDate: Date;
+  stolenFrom: string;
 };
 
 export type ConcernType = {

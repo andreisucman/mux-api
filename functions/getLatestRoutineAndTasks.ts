@@ -159,7 +159,13 @@ export default async function getLatestRoutinesAndTasks({
         await db
           .collection("Task")
           .aggregate([
-            { $match: { status: TaskStatusEnum.ACTIVE } },
+            {
+              $match: {
+                status: {
+                  $in: [TaskStatusEnum.ACTIVE, TaskStatusEnum.COMPLETED],
+                },
+              },
+            },
             {
               $facet: facet,
             },

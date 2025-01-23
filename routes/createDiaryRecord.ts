@@ -65,6 +65,7 @@ route.post(
               mainThumbnail: 1,
               icon: 1,
               type: 1,
+              taskId: 1
             },
           })
           .toArray()
@@ -73,9 +74,10 @@ route.post(
       for (const proof of todaysProof) {
         results.push({
           contentId: proof._id,
+          taskId: proof.taskId,
           name: proof.taskName,
           url: proof.mainUrl.url,
-          thumbnail: proof.mainThumbnail.url,
+          thumbnail: proof.type === "video" ? proof.mainThumbnail.url : "",
           icon: proof.icon,
           categoryName: "proof",
           contentType: proof.contentType,

@@ -27,7 +27,7 @@ const route = Router();
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { routineId, type } = req.body;
+    const { routineId, userName, type } = req.body;
 
     if (!routineId || !type) {
       res.status(400).json({ error: "Bad request" });
@@ -215,7 +215,12 @@ route.post(
           .collection("Routine")
           .updateOne(
             { _id: new ObjectId(currentRoutine._id) },
-            { $set: { status: RoutineStatusEnum.REPLACED } }
+            {
+              $set: {
+                status: RoutineStatusEnum.REPLACED,
+                stolenFrom: userName,
+              },
+            }
           )
       );
 
@@ -244,9 +249,9 @@ route.post(
           )
       );
 
-        await doWithRetries(async () =>
-          db.collection("Task").insertMany(replacementTaskWithDates)
-        );
+      await doWithRetries(async () =>
+        db.collection("Task").insertMany(replacementTaskWithDates)
+      );
 
       const { routines, tasks } = await getLatestRoutinesAndTasks({
         userId: req.userId,

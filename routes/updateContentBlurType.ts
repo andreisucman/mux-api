@@ -13,18 +13,11 @@ import {
 import doWithRetries from "helpers/doWithRetries.js";
 import blurContent from "functions/blurContent.js";
 import { db } from "init.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
 type UpdateProgressRecordProps = {
   images: ProgressImageType[];
-  blurType: BlurTypeEnum;
-};
-
-type UpdateStyleRecord = {
-  urls: BlurredUrlType[];
-  mainUrl: BlurredUrlType;
   blurType: BlurTypeEnum;
 };
 
@@ -84,11 +77,12 @@ async function updateProgressRecord({
   }
 }
 
-async function updateStyleRecord({
-  urls,
-  mainUrl,
-  blurType,
-}: UpdateStyleRecord) {
+type UpdateStyleRecord = {
+  urls: BlurredUrlType[];
+  blurType: BlurTypeEnum;
+};
+
+async function updateStyleRecord({ urls, blurType }: UpdateStyleRecord) {
   const existingBlurRecord = urls.find(
     (rec: { name: string }) => rec.name === blurType
   );
@@ -96,10 +90,13 @@ async function updateStyleRecord({
   if (existingBlurRecord) {
     return { mainUrl: existingBlurRecord };
   } else {
+    const originalUrl = urls.find(
+      (rec: { name: string }) => rec.name === "original"
+    );
     const blurredImage = await blurContent({
       blurType,
       endpoint: "blurImage",
-      originalUrl: mainUrl.url,
+      originalUrl: originalUrl.url,
     });
 
     const newUrl = { name: blurType, url: blurredImage.url };
@@ -197,13 +194,16 @@ route.post(
           message.mainThumbnail = existingThumbnailRecord;
         } else {
           if (contentCategory === "proof") {
-            const extension = mainUrl.url.split(".").pop();
+            const originalUrl = urls.find(
+              (r: BlurredUrlType) => r.name === "original"
+            );
+            const extension = originalUrl.url.split(".").pop();
             const isVideo = extension === "webm" || extension === "mp4";
 
             const blurredVideoResponse = await blurContent({
               blurType,
               endpoint: isVideo ? "blurVideo" : "blurImage",
-              originalUrl: mainUrl.url,
+              originalUrl: originalUrl.url,
             });
 
             const { hash, url, thumbnail } = blurredVideoResponse || {};
@@ -224,7 +224,6 @@ route.post(
           } else {
             const updateStyleResult = await updateStyleRecord({
               blurType,
-              mainUrl,
               urls,
             });
 

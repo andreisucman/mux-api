@@ -23,7 +23,7 @@ export default function addDateAndIdsToAllTasks({
       return newIo;
     });
 
-    return { ...obj, ids: newIds };
+    return { ...obj, ids: newIds, total: filteredTasks.length };
   });
 
   return allTasksWithDates;

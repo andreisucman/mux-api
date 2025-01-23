@@ -81,7 +81,7 @@ export default async function getSolutionsAndFrequencies({
       type === "head" ? "dermatologist and dentist" : "fitness coach"
     }. The user gives you a list of their concerns. Your goal is to select all solutions for each of their concerns from this list of solutions: ${allSolutionsList.join(
       ", "
-    )}. SOLUTION NAMES MUST BE EXACTLY AS IN THE LIST. Be concise and to the point.`;
+    )}. DON'T MODIFY THE NAMES OF CONCERNS AND SOLUTIONS. Be concise and to the point.`;
 
     const allConcerns = partConcerns.map((co) => co.name);
     const concernsWithExplanations = partConcerns.map(
@@ -168,7 +168,7 @@ export default async function getSolutionsAndFrequencies({
     /* come up with frequencies for the solutions */
     const findFrequenciesInstruction = `You are a ${
       type === "head" ? "dermatologist and dentist" : "fitness coach"
-    }. The user tells you their concerns and solutions that they are going to use to improve them. Your goal is to tell how many times each solution should be used in a month to most effectively improve their concern based on their image. Be concise and to the point. YOUR RESPONSE IS A TOTAL NUMBER OF APPLICATIONS IN A MONTH, NOT DAY OR WEEK.`;
+    }. The user tells you their concerns and solutions that they are going to use to improve them. Your goal is to tell how many times each solution should be used in a month to most effectively improve their concern based on their image. YOUR RESPONSE IS A TOTAL NUMBER OF APPLICATIONS IN A MONTH, NOT DAY OR WEEK. DON'T MODIFY THE NAMES OF CONCERNS AND SOLUTIONS.`;
 
     const findFrequenciesContentArray: RunType[] = [
       {
@@ -199,7 +199,7 @@ export default async function getSolutionsAndFrequencies({
         content: [
           {
             type: "text",
-            text: `I have the following condition: ${specialConsiderations}. Does it change the frequencies? If yes modify the frequencies, if not leave as is.`,
+            text: `I have the following condition: ${specialConsiderations}. Does it change the frequencies? If yes change the frequencies, if not leave as is.`,
           },
         ],
         callback,

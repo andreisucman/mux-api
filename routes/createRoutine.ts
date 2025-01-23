@@ -116,14 +116,23 @@ route.post(
           type,
         });
       } else {
-        /* get the analyzed parts of the user */
+        /* to prevent cases when the user creates all routines and routines for not analyzed parts are created too */
         const relevantScan = nextScan.find((obj) => obj.type === type);
-        const relevantParts = relevantScan.parts.filter((obj) =>
+        const scannedParts = relevantScan.parts.filter((obj) =>
           Boolean(obj.date)
         );
-        const scannedPartsKeys = relevantParts.map((obj) => obj.part);
+        /* to prevent cases when the user creates all routines and routines for parts in cooldown are created too */
+        const relevantRoutine = nextRoutine.find((obj) => obj.type === type);
+        const partsInCooldown = relevantRoutine.parts.filter(
+          (obj) => Boolean(obj.date) && new Date(obj.date) > new Date()
+        );
+        const partsInCooldownKeys = partsInCooldown.map((p) => p.part);
 
-        const promises = scannedPartsKeys.map((partKey) =>
+        const availableParts = scannedParts
+          .map((p) => p.part)
+          .filter((part) => !partsInCooldownKeys.includes(part));
+
+        const promises = availableParts.map((partKey) =>
           doWithRetries(
             async () =>
               await createRoutine({
@@ -141,7 +150,7 @@ route.post(
 
         updatedNextRoutine = updateNextRoutine({
           nextRoutine,
-          parts: scannedPartsKeys,
+          parts: availableParts,
           type,
         });
       }

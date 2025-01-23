@@ -20,7 +20,7 @@ route.get(
   "/:followingUserName?",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { followingUserName } = req.params;
-    const { skip, filter, sort } = aqp(req.query);
+    const { skip, filter, sort = {} } = aqp(req.query);
     const { type } = filter;
 
     if (!type) {
@@ -71,16 +71,21 @@ route.get(
         _id: 1,
         createdAt: 1,
         type: 1,
+        part: 1,
         allTasks: 1,
         status: 1,
         lastDate: 1,
       };
 
+      const finalSort = sort
+        ? { ...sort, status: -1 }
+        : { createdAt: 1, status: -1 };
+
       const routines = await doWithRetries(async () =>
         db
           .collection("Routine")
           .find(filter, { projection })
-          .sort((sort as Sort) || { createdAt: -1 })
+          .sort(finalSort as Sort)
           .skip(Number(skip) || 0)
           .limit(21)
           .toArray()

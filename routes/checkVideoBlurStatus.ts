@@ -1,9 +1,8 @@
 import { Response, Router, NextFunction } from "express";
 import { ObjectId } from "mongodb";
-import { BlurredUrlType, CustomRequest } from "types.js";
+import { CustomRequest } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { db } from "init.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -60,9 +59,9 @@ route.post(
       const proofRecord = await doWithRetries(async () =>
         db.collection("Proof").findOne(
           {
-            hash: job.hash,
+            hash,
           },
-          { projection: { _id: 0, urls: 1 } }
+          { projection: { urls: 1, thumbnails: 1 } }
         )
       );
 
@@ -70,13 +69,9 @@ route.post(
       let newMainThumbnail = { name: job.blurType, url: job.thumbnail };
 
       if (proofRecord) {
-        const newUrls = proofRecord.urls.map((url: BlurredUrlType) =>
-          url.name === job.blurType ? newMainUrl : url
-        );
-        const newThumbnails = proofRecord.thumbnails.map(
-          (thumbnail: BlurredUrlType) =>
-            thumbnail.name === job.blurType ? newMainThumbnail : thumbnail
-        );
+        const newUrls = [...proofRecord.urls, newMainUrl];
+        const newThumbnails = [...proofRecord.thumbnails, newMainThumbnail];
+
         await doWithRetries(async () =>
           db.collection("Proof").updateOne(
             {

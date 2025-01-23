@@ -40,12 +40,12 @@ const route = Router();
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { taskId, url, submissionId, blurType } = req.body;
+    const { taskId, url, blurType } = req.body;
 
     const urlExtension = url.includes(".") ? url.split(".").pop() : "";
     const correctExtension = ["jpg", "webm", "mp4"].includes(urlExtension);
 
-    if (!taskId || !url || !submissionId || !correctExtension) {
+    if (!taskId || !url || !correctExtension) {
       res.status(400).json({
         error: "Bad request",
       });
