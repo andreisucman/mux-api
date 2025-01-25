@@ -84,20 +84,24 @@ route.get(
         scores: {},
       };
 
-      const anyPartInHeadEnabled = privacy
-        .find((typePrivacy) => typePrivacy.name === "head")
-        .parts.some((part) => part.value);
+      const progressPrivacy = privacy.find(
+        (privacy) => privacy.name === "progress"
+      );
 
-      const anyPartInBodyEnabled = privacy
-        .find((typePrivacy) => typePrivacy.name === "body")
-        .parts.some((part) => part.value);
+      const progressHeadPublic = progressPrivacy.types.find(
+        (tp) => tp.name === "head"
+      ).value;
 
-      if (anyPartInHeadEnabled) {
+      const progressBodyPublic = progressPrivacy.types.find(
+        (tp) => tp.name === "body"
+      ).value;
+
+      if (progressHeadPublic) {
         result.scores.headCurrentScore = latestScores.head.overall;
         result.scores.headTotalProgress = latestScoresDifference.head.overall;
       }
 
-      if (anyPartInBodyEnabled) {
+      if (progressBodyPublic) {
         result.scores.bodyCurrentScore = latestScores.body.overall;
         result.scores.bodyTotalProgress = latestScoresDifference.body.overall;
       }

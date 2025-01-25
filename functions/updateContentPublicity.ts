@@ -31,12 +31,74 @@ export default async function updateContentPublicity({
       newPrivacy
     );
 
-    const toUpdateProgresProofBa = difference.map(
+    const progressDifferences = difference.filter(
+      (pr) => pr.category === "progress"
+    );
+
+    const toUpdateProgressAndBA = progressDifferences.map(
       (obj: { name: string; type: string; value: boolean }) => ({
         updateOne: {
           filter: {
             userId: new ObjectId(userId),
-            part: obj.name,
+            type: obj.name,
+          },
+          update: {
+            $set: {
+              isPublic: obj.value,
+              userName: name,
+              avatar,
+            },
+          },
+        },
+      })
+    );
+
+    const proofDifferences = difference.filter((pr) => pr.category === "proof");
+
+    const toUpdateProof = proofDifferences.map(
+      (obj: { name: string; type: string; value: boolean }) => ({
+        updateOne: {
+          filter: {
+            userId: new ObjectId(userId),
+            type: obj.name,
+          },
+          update: {
+            $set: {
+              isPublic: obj.value,
+              userName: name,
+              avatar,
+            },
+          },
+        },
+      })
+    );
+
+    const diaryDifferences = difference.filter((pr) => pr.category === "diary");
+
+    const toUpdateDiary = diaryDifferences.map(
+      (obj: { name: string; type: string; value: boolean }) => ({
+        updateOne: {
+          filter: {
+            userId: new ObjectId(userId),
+          },
+          update: {
+            $set: {
+              isPublic: obj.value,
+              userName: name,
+              avatar,
+            },
+          },
+        },
+      })
+    );
+
+    const styleDifferences = difference.filter((pr) => pr.category === "style");
+
+    const toUpdateStyle = styleDifferences.map(
+      (obj: { name: string; type: string; value: boolean }) => ({
+        updateOne: {
+          filter: {
+            userId: new ObjectId(userId),
             type: obj.type,
           },
           update: {
@@ -50,25 +112,11 @@ export default async function updateContentPublicity({
       })
     );
 
-    const toUpdateDiary = difference.map(
-      (obj: { name: string; type: string; value: boolean }) => ({
-        updateOne: {
-          filter: {
-            userId: new ObjectId(userId),
-            type: obj.type,
-          },
-          update: {
-            $set: {
-              isPublic: obj.value,
-              userName: name,
-              avatar,
-            },
-          },
-        },
-      })
+    const answerDifference = difference.filter(
+      (pr) => pr.category === "answer"
     );
 
-    const toUpdateStyle = difference.map(
+    const toUpdateAnswers = answerDifference.map(
       (obj: { name: string; type: string; value: boolean }) => ({
         updateOne: {
           filter: {
@@ -85,19 +133,24 @@ export default async function updateContentPublicity({
       })
     );
 
-    if (toUpdateProgresProofBa.length > 0)
+    if (toUpdateAnswers.length > 0)
       await doWithRetries(async () =>
-        db.collection("Proof").bulkWrite(toUpdateProgresProofBa)
+        db.collection("Answer").bulkWrite(toUpdateAnswers)
       );
 
-    if (toUpdateProgresProofBa.length > 0)
+    if (toUpdateProof.length > 0)
       await doWithRetries(async () =>
-        db.collection("Progress").bulkWrite(toUpdateProgresProofBa)
+        db.collection("Proof").bulkWrite(toUpdateProof)
       );
 
-    if (toUpdateProgresProofBa.length > 0)
+    if (toUpdateProgressAndBA.length > 0)
       await doWithRetries(async () =>
-        db.collection("BeforeAfter").bulkWrite(toUpdateProgresProofBa)
+        db.collection("Progress").bulkWrite(toUpdateProgressAndBA)
+      );
+
+    if (toUpdateProgressAndBA.length > 0)
+      await doWithRetries(async () =>
+        db.collection("BeforeAfter").bulkWrite(toUpdateProgressAndBA)
       );
 
     if (toUpdateStyle.length > 0)
@@ -110,13 +163,21 @@ export default async function updateContentPublicity({
         db.collection("Diary").bulkWrite(toUpdateDiary)
       );
 
+    const userUpdatePayload: { [key: string]: any } = {
+      "club.privacy": newPrivacy,
+    };
+
+    const aboutDifference = difference.find((obj) => obj.category === "about");
+
+    if (aboutDifference) userUpdatePayload.isPublic = aboutDifference.value;
+
     await doWithRetries(async () =>
       db.collection("User").updateOne(
         {
           _id: new ObjectId(userId),
           moderationStatus: ModerationStatusEnum.ACTIVE,
         },
-        { $set: { "club.privacy": newPrivacy } }
+        { $set: userUpdatePayload }
       )
     );
   } catch (err) {

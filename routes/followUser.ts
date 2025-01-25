@@ -58,11 +58,11 @@ route.post(
 
       const { privacy } = followingClub;
 
-      const allPartPrivacies = privacy.flatMap((typePrivacy) =>
-        typePrivacy.parts.map((partPrivacy) => partPrivacy.value)
+      const allTypePrivacies = privacy.flatMap((pr) =>
+        pr.types.map((tpr) => tpr.value)
       );
 
-      const allPrivate = allPartPrivacies.every((value) => !Boolean(value));
+      const allPrivate = allTypePrivacies.every((value) => !Boolean(value));
 
       if (allPrivate) {
         res.status(200).json({ error: "This user's hasn't shared anything." });

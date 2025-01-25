@@ -30,6 +30,7 @@ export default async function analyzeCalories({
       proteins: z.number().describe("number of proteins"),
       carbohydrates: z.number().describe("number of carbohydrates"),
       fats: z.number().describe("number of fats"),
+      fiber: z.number().describe("number of fibers"),
     });
 
     const runs: RunType[] = [

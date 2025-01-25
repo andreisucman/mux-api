@@ -362,7 +362,7 @@ export default async function analyzeAppearance({
         )
     );
 
-    /* update the beforeafters with the latest overal scores to be shown on the cars meta panel */
+    /* update the beforeafters with the latest overal scores to be shown on the cards meta panel */
     if (club) {
       const { privacy } = club;
 

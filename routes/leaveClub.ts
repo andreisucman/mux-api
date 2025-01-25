@@ -4,8 +4,6 @@ dotenv.config();
 import { Router, Response, NextFunction } from "express";
 import { CustomRequest } from "types.js";
 import removeFromClub from "functions/removeFromClub.js";
-import getUserInfo from "@/functions/getUserInfo.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 

@@ -104,8 +104,9 @@ route.post(
       const { type } = relevantStyle;
       const { privacy } = club;
 
-      const relevantPrivacyType = privacy.find(
-        (typePrivacy) => typePrivacy.name === type
+      const stylePrivacies = privacy.find((pr) => pr.name === "style");
+      const relevantPrivacyType = stylePrivacies.types.find(
+        (tp) => tp.name === type
       );
 
       if (!relevantPrivacyType.value) {

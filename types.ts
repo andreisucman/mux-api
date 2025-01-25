@@ -63,6 +63,7 @@ export type UserType = {
   timeZoneOffsetInMinutes: number;
   demographics: DemographicsType;
   auth: string;
+  isPublic: boolean;
   createdAt: Date;
   specialConsiderations: string;
   streaks: StreaksType;
@@ -183,7 +184,7 @@ export type SubscriptionType = {
 export type PrivacyType = {
   name: string;
   value: boolean;
-  parts: { name: string; value: boolean }[];
+  types: { name: string; value: boolean }[];
 };
 
 export type ClubBioType = {

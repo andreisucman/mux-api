@@ -7,7 +7,6 @@ import { FollowerType } from "@/types/getFollowYouTypes.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { CustomRequest, ModerationStatusEnum } from "types.js";
 import { db } from "init.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -60,21 +59,22 @@ route.get(
           scores: {} as { [key: string]: number },
         };
 
-        const anyPartInHeadEnabled = privacy
-          .find((typePrivacy) => typePrivacy.name === "head")
-          .parts.some((part) => part.value);
+        const progressPrivacy = privacy.find((pr) => pr.name === "progress");
+        const progressHeadEnabled = progressPrivacy.types.find(
+          (tp) => tp.name === "head"
+        ).value;
 
-        const anyPartInBodyEnabled = privacy
-          .find((typePrivacy) => typePrivacy.name === "body")
-          .parts.some((part) => part.value);
+        const progressBodyEnabled = progressPrivacy.types.find(
+          (tp) => tp.name === "body"
+        ).value;
 
-        if (anyPartInHeadEnabled) {
+        if (progressHeadEnabled) {
           updated.scores.headCurrentScore = latestScores.head.overall;
           updated.scores.headTotalProgress =
             latestScoresDifference.head.overall;
         }
 
-        if (anyPartInBodyEnabled) {
+        if (progressBodyEnabled) {
           updated.scores.bodyCurrentScore = latestScores.body.overall;
           updated.scores.bodyTotalProgress =
             latestScoresDifference.body.overall;

@@ -13,7 +13,6 @@ import {
   CustomRequest,
   ProofType,
   TaskStatusEnum,
-  PrivacyType,
   CategoryNameEnum,
   TaskType,
 } from "types.js";
@@ -362,21 +361,18 @@ route.post(
         latestHeadScoreDifference: 0,
       };
 
-      const relevantTypePrivacy = privacy?.find(
-        (typePrivacyObj: PrivacyType) => typePrivacyObj.name === type
-      );
+      const proofPrivacy = privacy.find((pr) => pr.name === "proof");
 
-      const relevantPartPrivacy = relevantTypePrivacy?.parts?.find(
-        (partPrivacyObj: { name: string }) => partPrivacyObj.name === part
-      );
-
-      if (relevantPartPrivacy) {
-        newProof.isPublic = relevantPartPrivacy.value;
+      if (proofPrivacy) {
+        const relevantProofTypePrivacy = proofPrivacy.types.find(
+          (pt) => pt.name === type
+        );
+        newProof.isPublic = relevantProofTypePrivacy.value;
       }
 
       const { streakDates, timeZone } = userInfo;
       const { newStreakDates, streaksToIncrement } = getStreaksToIncrement({
-        partPrivacy: relevantPartPrivacy,
+        privacy,
         part,
         streakDates,
         timeZone,

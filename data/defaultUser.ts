@@ -221,11 +221,12 @@ export const defaultUser: UserType = {
   toAnalyze: { head: [], body: [] },
   coachEnergy: 150000,
   nutrition: {
-    dailyCalorieGoal: null,
+    dailyCalorieGoal: 2000,
     recommendedDailyCalorieGoal: null,
     remainingDailyCalories: null,
   },
   canRejoinClubAfter: null,
   lastActiveOn: null,
+  isPublic: false,
   moderationStatus: ModerationStatusEnum.ACTIVE,
 };

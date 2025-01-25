@@ -187,6 +187,7 @@ export default async function getLatestRoutinesAndTasks({
             {
               $sort: {
                 status: 1,
+                startsAt: 1,
               },
             },
           ])

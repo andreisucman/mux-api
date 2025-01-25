@@ -277,19 +277,14 @@ export default async function analyzePart({
     };
 
     if (club) {
-      const relevantTypePrivacy = club.privacy.find(
-        (rec: PrivacyType) => rec.name === type
+      const progressPrivacy = club.privacy.find(
+        (rec: PrivacyType) => rec.name === "progress"
       );
-      if (relevantTypePrivacy) {
-        const relevantPartPrivacy = relevantTypePrivacy.parts.find(
-          (par: { name: string }) => par.name === part
-        );
 
-        if (relevantPartPrivacy) {
-          recordOfProgress.isPublic = relevantPartPrivacy.value;
-          beforeAfterUpdate.isPublic = relevantPartPrivacy.value;
-        }
-      }
+      const typePrivacy = progressPrivacy.types.find((pt) => pt.name === type);
+
+      recordOfProgress.isPublic = typePrivacy.value;
+      beforeAfterUpdate.isPublic = typePrivacy.value;
 
       recordOfProgress.avatar = avatar;
       recordOfProgress.userName = name;

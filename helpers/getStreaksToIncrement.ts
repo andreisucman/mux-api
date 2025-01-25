@@ -1,4 +1,4 @@
-import { PartEnum } from "types.js";
+import { PartEnum, PrivacyType } from "types.js";
 import setUtcMidnight from "helpers/setUtcMidnight.js";
 import httpError from "./httpError.js";
 import { daysFrom } from "./utils.js";
@@ -10,7 +10,7 @@ type StreakDatesType = {
 
 type Props = {
   part: PartEnum;
-  partPrivacy?: { name: string; value: boolean };
+  privacy: PrivacyType[];
   streakDates: StreakDatesType;
   timeZone: string;
 };
@@ -27,7 +27,7 @@ function getCanIncrement(
 export default function getStreaksToIncrement({
   part,
   timeZone,
-  partPrivacy,
+  privacy,
   streakDates,
 }: Props) {
   try {
@@ -68,21 +68,24 @@ export default function getStreaksToIncrement({
       };
     }
 
-    if (partPrivacy && canIncrementClub) {
-      if (partPrivacy.value) {
-        if (partPrivacy.name === "face" && part === "face") {
+    const progressPrivacy = privacy.find((pr) => pr.name === "progress");
+    const headPrivacy = progressPrivacy.types.find((tp) => tp.name === "head");
+
+    if (headPrivacy && canIncrementClub) {
+      if (headPrivacy.value) {
+        if (part === "face") {
           streaksToIncrement["streaks.clubFaceStreak"] = 1;
         }
 
-        if (partPrivacy.name === "mouth" && part === "mouth") {
+        if (part === "mouth") {
           streaksToIncrement["streaks.clubMouthStreak"] = 1;
         }
 
-        if (partPrivacy.name === "scalp" && part === "scalp") {
+        if (part === "scalp") {
           streaksToIncrement["streaks.clubScalpStreak"] = 1;
         }
 
-        if (partPrivacy.name === "body" && part === "body") {
+        if (part === "body") {
           streaksToIncrement["streaks.clubBodyStreak"] = 1;
         }
 

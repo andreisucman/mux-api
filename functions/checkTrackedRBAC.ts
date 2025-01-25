@@ -21,7 +21,7 @@ export default async function checkTrackedRBAC({
 }: Props) {
   try {
     const result = {
-      isSelf: true,
+      isSelf: false,
       inClub: true,
       isFollowing: true,
       subscriptionActive: true,
@@ -52,7 +52,7 @@ export default async function checkTrackedRBAC({
       result.inClub = false;
     }
 
-    if (String(targetUserInfo?._id) === userId) {
+    if (String(targetUserInfo?._id) === String(userId)) {
       result.isSelf = true;
       return result;
     }
@@ -91,7 +91,7 @@ export default async function checkTrackedRBAC({
       result.subscriptionActive = false;
     }
 
-    const { followingUserName: requesterFollowsUserName } = club;
+    const { followingUserName: requesterFollowsUserName } = club || {};
 
     if (followingUserName !== requesterFollowsUserName) {
       if (throwOnError) {

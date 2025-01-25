@@ -23,7 +23,7 @@ export default async function removeFromClub({ userId }: Props) {
     await doWithRetries(async () =>
       db.collection("User").updateOne(
         {
-          userId: new ObjectId(userId),
+          _id: new ObjectId(userId),
           moderationStatus: ModerationStatusEnum.ACTIVE,
         },
         { $set: { club: null, name: null, avatar: null, canRejoinClubAfter } }

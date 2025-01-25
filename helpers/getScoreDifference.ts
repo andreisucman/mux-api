@@ -13,32 +13,22 @@ export default function getScoreDifference({
   let latestBodyScoreDifference = 0;
 
   if (privacy) {
-    const headPrivacy = privacy.find(
-      (typePrivacyObj: PrivacyType) => typePrivacyObj.name === "head"
+    const progressPrivacy = privacy.find((pr) => pr.name === "progress");
+
+    const headPrivacy = progressPrivacy.types.find(
+      (pt: PrivacyType) => pt.name === "head"
     );
 
-    if (headPrivacy) {
-      const someHeadPrivacyEnabled = headPrivacy.parts.some(
-        (partObj: { value: boolean }) => partObj.value
-      );
-
-      if (someHeadPrivacyEnabled) {
-        latestHeadScoreDifference = latestScoresDifference?.head?.overall;
-      }
+    if (headPrivacy.value) {
+      latestHeadScoreDifference = latestScoresDifference?.head?.overall;
     }
 
-    const bodyPrivacy = privacy.find(
-      (typePrivacyObj: PrivacyType) => typePrivacyObj.name === "body"
+    const bodyPrivacy = progressPrivacy.types.find(
+      (pt: PrivacyType) => pt.name === "body"
     );
 
-    if (bodyPrivacy) {
-      const someBodyPrivacyEnabled = bodyPrivacy.parts.some(
-        (partObj: { value: boolean }) => partObj.value
-      );
-
-      if (someBodyPrivacyEnabled) {
-        latestBodyScoreDifference = latestScoresDifference?.body?.overall;
-      }
+    if (bodyPrivacy.value) {
+      latestBodyScoreDifference = latestScoresDifference?.body?.overall;
     }
   }
 

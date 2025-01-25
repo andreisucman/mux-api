@@ -140,6 +140,8 @@ export default async function createClubProfile({ userId }: Props) {
       db.collection("FaqAnswer").insertMany(aboutQuestions)
     );
 
+    await updateContentPublicity({ userId, newPrivacy: defaultClubPrivacy });
+
     return defaultClubData;
   } catch (err) {
     throw httpError(err);

@@ -216,20 +216,12 @@ route.post(
       };
 
       if (privacy) {
-        const relevantTypePrivacy = privacy.find(
-          (typePrivacyObj: PrivacyType) => typePrivacyObj.name === type
+        const stylePrivacies = privacy.find((pr) => pr.name === "style");
+        const relevantTypePrivacy = stylePrivacies.types.find(
+          (tp: PrivacyType) => tp.name === type
         );
 
-        if (relevantTypePrivacy) {
-          const somePartEnabled = relevantTypePrivacy.parts.some(
-            (partPrivacyObj: { value: boolean }) =>
-              Boolean(partPrivacyObj.value)
-          );
-
-          if (somePartEnabled) {
-            styleAnalysis.isPublic = somePartEnabled;
-          }
-        }
+        styleAnalysis.isPublic = relevantTypePrivacy.value;
       }
 
       if (userInfo) {
