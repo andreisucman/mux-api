@@ -13,9 +13,8 @@ import {
   UserConcernType,
 } from "types.js";
 import sortTasksInScheduleByDate from "helpers/sortTasksInScheduleByDate.js";
-import getLatestRoutinesAndTasks from "functions/getLatestRoutineAndTasks.js";
 import setUtcMidnight from "helpers/setUtcMidnight.js";
-import { daysFrom } from "helpers/utils.js";
+import { calculateDaysDifference, daysFrom } from "helpers/utils.js";
 import httpError from "@/helpers/httpError.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
@@ -37,7 +36,7 @@ route.post(
     try {
       const userInfo = await getUserInfo({
         userId: req.userId,
-        projection: { timeZone: 1 },
+        projection: { timeZone: 1, name: 1 },
       });
 
       if (!userInfo) throw httpError(`User ${req.userId} not found`);
@@ -70,7 +69,7 @@ route.post(
         db
           .collection("Task")
           .find({ routineId: new ObjectId(routineId) })
-          .sort({ expiresAt: -1 })
+          .sort({ startsAt: 1 })
           .toArray()
       )) as unknown as TaskType[];
 
@@ -81,12 +80,12 @@ route.post(
       /* reset personalized fields */
       replacementTasks = replacementTasks.map((task) => ({
         ...task,
-        _id: new ObjectId(),
         userId: new ObjectId(req.userId),
         routineId: newRoutineId,
         proofEnabled: true,
         status: TaskStatusEnum.ACTIVE,
         isSubmitted: false,
+        stolenFrom: userName,
       }));
 
       /* get the frequencies for each task */
@@ -112,15 +111,35 @@ route.post(
           (task: TaskType) => task.key === taskKeys[i]
         );
 
-        const distanceInDays = Math.round(Math.max(7 / frequency, 1));
+        const relevantTasks = replacementTasks.filter(
+          (t) => t.key === taskKeys[i]
+        );
 
-        for (let j = 0; j < Math.min(frequency, 7); j++) {
-          const starts = daysFrom({
-            date: setUtcMidnight({
+        for (let j = 0; j < frequency; j++) {
+          console.log("j", j);
+          const currentHostDate =
+            j === 0 ? relevantTasks[j].startsAt : relevantTasks[j - 1].startsAt;
+          let nextHostDate = relevantTasks[j]?.startsAt;
+
+          const hostDayDifference = calculateDaysDifference(
+            currentHostDate,
+            nextHostDate
+          );
+
+          const previousNewDate =
+            replacementTaskWithDates[replacementTaskWithDates.length - 1]
+              ?.startsAt ||
+            setUtcMidnight({
               date: new Date(),
               timeZone,
+            });
+
+          const starts = daysFrom({
+            date: setUtcMidnight({
+              date: previousNewDate,
+              timeZone,
             }),
-            days: distanceInDays * j,
+            days: hostDayDifference,
           });
 
           const expires = daysFrom({
@@ -130,6 +149,7 @@ route.post(
 
           replacementTaskWithDates.push({
             ...relevantTaskInfo,
+            _id: new ObjectId(),
             startsAt: starts,
             expiresAt: expires,
             completedAt: null,
@@ -163,15 +183,13 @@ route.post(
       finalSchedule = sortTasksInScheduleByDate(finalSchedule);
 
       /* update concerns */
-      const currentConcerns = concerns.map((c: UserConcernType) => c.name);
+      const currentConcerns = concerns
+        .map((c: UserConcernType) => c.name)
+        .filter(Boolean);
+
       const newConcerns = replacementTaskWithDates
         .filter((obj: TaskType) => !currentConcerns.includes(obj.concern))
-        .map((t) => ({
-          name: t.concern,
-          type,
-          isDisabled: false,
-          imported: true,
-        }));
+        .map((t) => t.concern);
 
       if (newConcerns.length > 0) {
         concerns.push(...newConcerns);
@@ -179,10 +197,15 @@ route.post(
 
       /* update allTasks */
       const uniqueTaskKeys = [...new Set(taskKeys)];
+
       allTasks = uniqueTaskKeys.map((taskKey: string) => {
         const ids = replacementTaskWithDates
           .filter((t) => t.key === taskKey)
-          .map((t) => ({ _id: t._id, status: TaskStatusEnum.ACTIVE }));
+          .map((t) => ({
+            _id: t._id,
+            startsAt: t.startsAt,
+            status: TaskStatusEnum.ACTIVE,
+          }));
 
         const relevantInfoTask = replacementTaskWithDates.find(
           (task) => task.key === taskKey
@@ -210,19 +233,27 @@ route.post(
       const dates = Object.keys(finalSchedule);
       const lastRoutineDate = dates[dates.length - 1];
 
-      await doWithRetries(async () =>
-        db
-          .collection("Routine")
-          .updateOne(
+      if (currentRoutine) {
+        await doWithRetries(async () =>
+          db.collection("Routine").updateOne(
             { _id: new ObjectId(currentRoutine._id) },
             {
               $set: {
                 status: RoutineStatusEnum.REPLACED,
-                stolenFrom: userName,
               },
             }
           )
-      );
+        );
+
+        await doWithRetries(async () =>
+          db
+            .collection("Task")
+            .updateMany(
+              { routineId: new ObjectId(currentRoutine._id) },
+              { $set: { status: TaskStatusEnum.CANCELED } }
+            )
+        );
+      }
 
       const newRoutine = {
         ...replacementRoutine,
@@ -231,9 +262,11 @@ route.post(
         createdAt: new Date(),
         finalSchedule,
         allTasks,
-        concerns,
+        concerns: [...new Set(concerns)],
         lastDate: new Date(lastRoutineDate),
         status: RoutineStatusEnum.ACTIVE,
+        userName: userInfo.name,
+        stolenFrom: userName,
       };
 
       await doWithRetries(async () =>
@@ -241,21 +274,8 @@ route.post(
       );
 
       await doWithRetries(async () =>
-        db
-          .collection("Task")
-          .updateMany(
-            { routineId: new ObjectId(currentRoutine._id) },
-            { $set: { status: TaskStatusEnum.CANCELED } }
-          )
-      );
-
-      await doWithRetries(async () =>
         db.collection("Task").insertMany(replacementTaskWithDates)
       );
-
-      const { routines, tasks } = await getLatestRoutinesAndTasks({
-        userId: req.userId,
-      });
 
       updateTasksAnalytics({
         userId: req.userId,
@@ -278,7 +298,7 @@ route.post(
         },
       });
 
-      res.status(200).json({ message: { routines, tasks } });
+      res.status(200).end();
     } catch (err) {
       next(err);
     }

@@ -8,11 +8,12 @@ import setUtcMidnight from "helpers/setUtcMidnight.js";
 import { daysFrom } from "helpers/utils.js";
 import sortTasksInScheduleByDate from "helpers/sortTasksInScheduleByDate.js";
 import {
+  AllTaskType,
   CustomRequest,
   RoutineStatusEnum,
+  RoutineType,
   TaskStatusEnum,
   TaskType,
-  UserConcernType,
 } from "types.js";
 import { db } from "init.js";
 import httpError from "@/helpers/httpError.js";
@@ -35,7 +36,7 @@ route.post(
 
       const userInfo = await getUserInfo({
         userId: req.userId,
-        projection: { timeZone: 1 },
+        projection: { timeZone: 1, name:1 },
       });
 
       if (!userInfo) throw httpError(`User ${req.userId} not found`);
@@ -56,7 +57,7 @@ route.post(
         );
 
       /* get the user's current routine */
-      const currentRoutine = await doWithRetries(async () =>
+      const currentRoutine = (await doWithRetries(async () =>
         db
           .collection("Routine")
           .find({
@@ -65,16 +66,20 @@ route.post(
             status: RoutineStatusEnum.ACTIVE,
           })
           .next()
-      );
+      )) as unknown as RoutineType;
 
       /* reset personalized fields */
       taskToAdd = {
         ...taskToAdd,
         _id: new ObjectId(),
-        routineId: new ObjectId(currentRoutine._id),
         proofEnabled: true,
         isSubmitted: false,
+        stolenFrom: followingUserName,
       };
+
+      if (currentRoutine) {
+        taskToAdd.routineId = new ObjectId(currentRoutine._id);
+      }
 
       const draftTasks: TaskType[] = [];
 
@@ -103,10 +108,15 @@ route.post(
         });
       }
 
-      let { concerns, allTasks } = currentRoutine;
+      let {
+        concerns,
+        allTasks: currentAllTasks,
+        finalSchedule: currentFinalSchedule,
+      } = currentRoutine || {};
 
       let finalSchedule: { [key: string]: ScheduleTaskType[] } =
-        currentRoutine.finalSchedule || {};
+        currentFinalSchedule || {};
+      let allTasks: AllTaskType[] = currentAllTasks || [];
 
       /* update final schedule */
       for (let i = 0; i < draftTasks.length; i++) {
@@ -128,19 +138,15 @@ route.post(
 
       finalSchedule = sortTasksInScheduleByDate(finalSchedule);
 
-      /* update concerns */
-      const currentConcerns = concerns.map((c: UserConcernType) => c.name);
-      const newConcerns = draftTasks
-        .filter((obj: TaskType) => !currentConcerns.includes(obj.concern))
-        .map((t) => ({
-          type,
-          name: t.concern,
-          isDisabled: false,
-          imported: true,
-        }));
+      if (concerns) {
+        /* update concerns */
+        const newConcerns = draftTasks
+          .filter((obj: TaskType) => !concerns.includes(obj.concern))
+          .map((t) => t.concern);
 
-      if (newConcerns.length > 0) {
-        concerns.push(...newConcerns);
+        if (newConcerns.length > 0) {
+          concerns.push(...newConcerns);
+        }
       }
 
       /* update allTasks */
@@ -180,19 +186,36 @@ route.post(
       const dates = Object.keys(finalSchedule);
       const lastRoutineDate = dates[dates.length - 1];
 
-      await doWithRetries(async () =>
-        db.collection("Routine").updateOne(
-          { _id: new ObjectId(currentRoutine._id) },
-          {
-            $set: {
-              finalSchedule,
-              allTasks,
-              concerns,
-              lastDate: new Date(lastRoutineDate),
-            },
-          }
-        )
-      );
+      if (currentRoutine) {
+        await doWithRetries(async () =>
+          db.collection("Routine").updateOne(
+            { _id: new ObjectId(currentRoutine?._id) },
+            {
+              $set: {
+                finalSchedule,
+                allTasks,
+                concerns,
+                lastDate: new Date(lastRoutineDate),
+              },
+            }
+          )
+        );
+      } else {
+        await doWithRetries(async () =>
+          db.collection("Routine").insertOne({
+            userId: new ObjectId(req.userId),
+            allTasks,
+            finalSchedule,
+            type: taskToAdd.type,
+            part: taskToAdd.part,
+            concerns: [taskToAdd.concern],
+            status: RoutineStatusEnum.ACTIVE,
+            lastDate: new Date(lastRoutineDate),
+            createdAt: new Date(),
+            userName: userInfo.name,
+          })
+        );
+      }
 
       await doWithRetries(async () =>
         db.collection("Task").insertMany(draftTasks)

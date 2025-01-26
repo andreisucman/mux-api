@@ -450,6 +450,7 @@ export type TaskType = {
   restDays: number;
   revisionDate: Date | null;
   embedding: number[];
+  stolenFrom?: string;
 };
 
 export type RoutineType = {
@@ -457,7 +458,7 @@ export type RoutineType = {
   userId: ObjectId;
   type: string;
   part: string;
-  concerns: ConcernType[];
+  concerns: string[];
   finalSchedule: { [key: string]: any };
   status: RoutineStatusEnum;
   createdAt: Date;
