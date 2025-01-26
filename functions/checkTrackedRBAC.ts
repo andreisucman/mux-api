@@ -19,6 +19,7 @@ export default async function checkTrackedRBAC({
   targetProjection = {},
   userProjection = {},
 }: Props) {
+
   try {
     const result = {
       isSelf: false,
@@ -52,12 +53,12 @@ export default async function checkTrackedRBAC({
       result.inClub = false;
     }
 
+    result.targetUserInfo = targetUserInfo;
+
     if (String(targetUserInfo?._id) === String(userId)) {
       result.isSelf = true;
       return result;
     }
-
-    result.targetUserInfo = targetUserInfo;
 
     const userFilter = { _id: new ObjectId(userId) };
 

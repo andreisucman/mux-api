@@ -16,16 +16,27 @@ type Props = {
   newStatus: TaskStatusEnum;
   returnOnlyRoutines?: boolean;
   isVoid?: boolean;
+  routineStatus?: string;
 };
 
-const allowedStatuses = ["active", "canceled", "deleted"];
+const allowedTaskStatuses = ["active", "canceled", "deleted"];
+const allowedRoutineStatuses = ["active", "inactive", "replaced"];
 
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { taskIds, newStatus, returnOnlyRoutines, isVoid }: Props = req.body;
+    const {
+      taskIds,
+      newStatus,
+      routineStatus,
+      returnOnlyRoutines,
+      isVoid,
+    }: Props = req.body;
 
-    if (!allowedStatuses.includes(newStatus)) {
+    if (
+      !allowedTaskStatuses.includes(newStatus) ||
+      !allowedRoutineStatuses.includes(routineStatus)
+    ) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
@@ -45,6 +56,11 @@ route.post(
           .toArray()
       );
 
+      if (tasksToUpdate.length === 0) {
+        res.status(200).json({ error: "Can't update an expired task." });
+        return;
+      }
+
       if (newStatus === TaskStatusEnum.CANCELED) {
         await updateTasksAnalytics({
           tasksToInsert: tasksToUpdate,
@@ -61,37 +77,31 @@ route.post(
         });
       }
 
+      const relevantTaskIds = tasksToUpdate.map((tObj) => tObj._id);
+
       await doWithRetries(async () =>
         db.collection("Task").updateMany(
           {
-            _id: { $in: taskIds.map((id: string) => new ObjectId(id)) },
+            _id: { $in: relevantTaskIds },
             userId: new ObjectId(req.userId),
           },
           { $set: { status: newStatus } }
         )
       );
 
-      const relevantTaskIds = tasksToUpdate.map((tObj) => tObj._id);
-
-      const routineUpdateOps: any[] = relevantTaskIds.map((taskId) => {
-        return {
-          updateOne: {
-            filter: {
-              "allTasks.ids._id": taskId,
-            },
-            update: {
-              $set: {
-                "allTasks.$.ids.$[elem].status": newStatus,
-              },
-            },
-            arrayFilters: [
-              {
-                "elem._id": taskId,
-              },
-            ],
+      const routineUpdateOps: any[] = relevantTaskIds.map((taskId) => ({
+        updateOne: {
+          filter: {
+            "allTasks.ids._id": new ObjectId(taskId),
           },
-        };
-      });
+          update: {
+            $set: {
+              "allTasks.$.ids.$[element].status": newStatus,
+            },
+          },
+          arrayFilters: [{ "element._id": new ObjectId(taskId) }],
+        },
+      }));
 
       const relevantRoutineIds = tasksToUpdate.map((t) => t.routineId);
 
@@ -143,7 +153,7 @@ route.post(
         userId: req.userId,
         filter: {
           type: { $in: typesUpdated },
-          status: RoutineStatusEnum.ACTIVE,
+          status: routineStatus,
         },
         returnOnlyRoutines,
       });

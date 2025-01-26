@@ -30,6 +30,7 @@ export default async function getLatestRoutinesAndTasks({
                 _id: "$part",
                 tempId: { $first: "$_id" },
                 type: { $first: "$type" },
+                part: { $first: "$part" },
                 finalSchedule: { $first: "$finalSchedule" },
                 createdAt: { $first: "$createdAt" },
                 lastDate: { $first: "$lastDate" },
@@ -41,6 +42,7 @@ export default async function getLatestRoutinesAndTasks({
               $project: {
                 _id: "$tempId",
                 type: 1,
+                part: 1,
                 finalSchedule: 1,
                 createdAt: 1,
                 allTasks: 1,

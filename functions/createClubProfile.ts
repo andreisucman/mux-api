@@ -142,6 +142,15 @@ export default async function createClubProfile({ userId }: Props) {
 
     await updateContentPublicity({ userId, newPrivacy: defaultClubPrivacy });
 
+    await doWithRetries(async () =>
+      db
+        .collection("Routine")
+        .updateMany(
+          { userId: new ObjectId(userId) },
+          { $set: { userName: randomName } }
+        )
+    );
+
     return defaultClubData;
   } catch (err) {
     throw httpError(err);

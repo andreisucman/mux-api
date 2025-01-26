@@ -16,7 +16,7 @@ const route = Router();
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { taskId } = req.body;
+    const { taskId, routineStatus } = req.body;
 
     try {
       const currentTask = (await doWithRetries(async () =>
@@ -28,12 +28,27 @@ route.post(
       const { routineId } = currentTask;
 
       const currentRoutine = (await doWithRetries(async () =>
-        db.collection("Routine").findOne({ _id: new ObjectId(routineId) })
+        db.collection("Routine").findOne(
+          { _id: new ObjectId(routineId), userId: new ObjectId(req.userId) },
+          {
+            projection: {
+              allTasks: 1,
+              finalSchedule: 1,
+              lastDate: 1,
+              status: 1,
+            },
+          }
+        )
       )) as unknown as RoutineType;
 
       if (!currentRoutine) throw httpError(`Routine ${routineId} not found`);
 
-      const { allTasks, finalSchedule, lastDate } = currentRoutine || {};
+      const { allTasks, finalSchedule, lastDate, status } = currentRoutine || {};
+
+      if (!["active", "replaced"].includes(status)) {
+        res.status(200).json({ error: `Can't edit an inactive routine` });
+        return;
+      }
 
       const relevantAllTask = allTasks.find((r) => r.key === currentTask.key);
 
@@ -117,9 +132,14 @@ route.post(
         )
       );
 
+      const finalRoutineStatus =
+        routineStatus === "replaced"
+          ? { $in: ["active", "replaced"] }
+          : routineStatus;
+
       const response = await getLatestRoutinesAndTasks({
         userId: req.userId,
-        filter: { type: currentTask.type },
+        filter: { type: currentTask.type, status: finalRoutineStatus },
         returnOnlyRoutines: true,
       });
 

@@ -456,6 +456,7 @@ export type RoutineType = {
   _id: ObjectId;
   userId: ObjectId;
   type: string;
+  part: string;
   concerns: ConcernType[];
   finalSchedule: { [key: string]: any };
   status: RoutineStatusEnum;
@@ -463,6 +464,9 @@ export type RoutineType = {
   allTasks: AllTaskTypeWithIds[];
   lastDate: Date;
   stolenFrom: string;
+  avatar: { [key: string]: any };
+  userName: string;
+  isPublic: boolean;
 };
 
 export type ConcernType = {

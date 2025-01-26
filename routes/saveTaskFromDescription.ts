@@ -20,7 +20,6 @@ import askRepeatedly from "functions/askRepeatedly.js";
 import isActivityHarmful from "@/functions/isActivityHarmful.js";
 import findRelevantSolutions from "functions/findRelevantSolutions.js";
 import setUtcMidnight from "@/helpers/setUtcMidnight.js";
-import distributeSubmissions from "@/helpers/distributeSubmissions.js";
 import sortTasksInScheduleByDate from "@/helpers/sortTasksInScheduleByDate.js";
 import { daysFrom, toSnakeCase } from "helpers/utils.js";
 import doWithRetries from "helpers/doWithRetries.js";
@@ -34,6 +33,7 @@ import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import moderateContent from "@/functions/moderateContent.js";
 import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
+import getUserInfo from "@/functions/getUserInfo.js";
 
 const route = Router();
 
@@ -144,14 +144,6 @@ route.post(
       )) || { _id: new ObjectId() };
 
       const systemContent = `The user gives you the description and instruction of an activity and a list of concerns. Your goal is to create a task based on this info.`;
-      // Here is what you should to:
-      // 1. Come up with a short name for the task in imperative form.
-      // 2. Come up with a single keyword for emoji based on the task description for the closest emoji search (e.g. tomato, potato, shoe, weights... etc. ).
-      // 3. Choose one the most relevant concern for the task from the list of concerns provided.
-      // 4. Choose all related concerns for the task from the list of concerns provided.
-      // 5. Describe what requisite the user has to provide to prove the completion of the activity.
-      // 6. How many days the user should rest before repeating this activity?
-      // 7. Which part of the body the task is related to the most?`;
 
       const TaskType = z.object({
         name: z.string().describe("The name of the task in an imperative form"),
@@ -298,12 +290,6 @@ route.post(
 
       const moderatedFrequency = Math.min(frequency, 70);
 
-      const submissions = distributeSubmissions(
-        moderatedFrequency,
-        7,
-        generalTaskInfo.name
-      );
-
       const distanceInDays = Math.round(Math.max(7 / moderatedFrequency, 1));
 
       const draftTasks: TaskType[] = [];
@@ -402,16 +388,26 @@ route.post(
         increment: 20,
       });
 
+      const userInfo = await getUserInfo({
+        userId: req.userId,
+        projection: { name: 1 },
+      });
+
       const payload: Partial<RoutineType> = {
         ...latestRelevantRoutine,
         userId: new ObjectId(req.userId),
         type,
+        part: generalTaskInfo.part,
         concerns,
         allTasks,
         finalSchedule,
         status: RoutineStatusEnum.ACTIVE,
         lastDate: new Date(lastRoutineDate),
       };
+
+      if (userInfo.name) {
+        payload.userName = userInfo.name;
+      }
 
       if (!createdAt) {
         payload.createdAt = new Date();

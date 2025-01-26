@@ -5,11 +5,7 @@ import { ObjectId, Sort } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import checkTrackedRBAC from "functions/checkTrackedRBAC.js";
-import {
-  CustomRequest,
-  RoutineStatusEnum,
-  SubscriptionTypeNamesEnum,
-} from "types.js";
+import { CustomRequest, SubscriptionTypeNamesEnum } from "types.js";
 import checkSubscriptionStatus from "@/functions/checkSubscription.js";
 import aqp from "api-query-params";
 import { db } from "init.js";
@@ -21,34 +17,32 @@ route.get(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { followingUserName } = req.params;
     const { skip, filter, sort = {} } = aqp(req.query);
-    const { type } = filter;
+    const { type, status } = filter;
 
-    if (!type) {
+    if (!type || !["active", "inactive"].includes(status)) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
 
     try {
       if (followingUserName) {
-        const { inClub, isFollowing, subscriptionActive } =
+        const { inClub, isSelf, isFollowing, subscriptionActive } =
           await checkTrackedRBAC({
             userId: req.userId,
             followingUserName,
           });
 
-        if (!inClub || !isFollowing || !subscriptionActive) {
+        if ((!inClub || !isFollowing || !subscriptionActive) && !isSelf) {
           res.status(200).json({ message: [] });
           return;
         }
-      }
 
-      if (followingUserName) {
         const isSubscriptionValid = await checkSubscriptionStatus({
           userId: req.userId,
           subscriptionType: SubscriptionTypeNamesEnum.PEEK,
         });
 
-        if (!isSubscriptionValid) {
+        if (!isSubscriptionValid && !isSelf) {
           res.status(200).json({
             error: "subscription expired",
           });
@@ -56,9 +50,12 @@ route.get(
         }
       }
 
+      const finalStatus =
+        status === "active" ? { $in: ["active", "replaced"] } : status;
+
       const filter: { [key: string]: any } = {
         type,
-        status: { $ne: RoutineStatusEnum.DELETED },
+        status: finalStatus,
       };
 
       if (followingUserName) {
