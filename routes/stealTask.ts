@@ -36,7 +36,7 @@ route.post(
 
       const userInfo = await getUserInfo({
         userId: req.userId,
-        projection: { timeZone: 1, name:1 },
+        projection: { timeZone: 1, name: 1 },
       });
 
       if (!userInfo) throw httpError(`User ${req.userId} not found`);
@@ -74,6 +74,7 @@ route.post(
         _id: new ObjectId(),
         proofEnabled: true,
         isSubmitted: false,
+        userName: userInfo.name,
         stolenFrom: followingUserName,
       };
 

@@ -78,8 +78,8 @@ route.post(
 
       const { isHarmful, explanation } = await isActivityHarmful({
         userId: req.userId,
-        text,
         categoryName: CategoryNameEnum.TASKS,
+        text,
       });
 
       if (isHarmful) {
@@ -138,8 +138,8 @@ route.post(
       const latestRelevantRoutine = (await doWithRetries(async () =>
         db.collection("Routine").findOne({
           userId: new ObjectId(req.userId),
-          type,
           status: RoutineStatusEnum.ACTIVE,
+          type,
         })
       )) || { _id: new ObjectId() };
 
@@ -204,6 +204,11 @@ route.post(
         functionName: "saveTaskFromDescription",
       });
 
+      const userInfo = await getUserInfo({
+        userId: req.userId,
+        projection: { name: 1 },
+      });
+
       await incrementProgress({
         operationKey: type,
         userId: req.userId,
@@ -229,6 +234,7 @@ route.post(
         key: toSnakeCase(otherResponse.name),
         description,
         instruction,
+        userName: userInfo.name,
         isCreated: true,
         color,
         type,
@@ -361,7 +367,7 @@ route.post(
 
       const ids = draftTasks.map((t) => ({
         _id: t._id,
-        startsAt: t.startsAt,
+        startsAt: new Date(t.startsAt),
         status: TaskStatusEnum.ACTIVE,
       }));
 
@@ -386,11 +392,6 @@ route.post(
         operationKey: type,
         userId: req.userId,
         increment: 20,
-      });
-
-      const userInfo = await getUserInfo({
-        userId: req.userId,
-        projection: { name: 1 },
       });
 
       const payload: Partial<RoutineType> = {

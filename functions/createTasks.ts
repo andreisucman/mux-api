@@ -46,7 +46,7 @@ export default async function createTasks({
   categoryName,
   createOnlyTheseKeys,
 }: Props) {
-  const { _id: userId } = userInfo;
+  const { _id: userId, name: userName } = userInfo;
 
   try {
     const values = Object.values(finalSchedule);
@@ -158,6 +158,10 @@ export default async function createTasks({
           expiresAt,
           revisionDate: daysFrom({ date: startsAt, days: 30 }),
         };
+
+        if (userName) {
+          insertObject.userName = userName;
+        }
 
         if (relevantInfo) {
           insertObject = {

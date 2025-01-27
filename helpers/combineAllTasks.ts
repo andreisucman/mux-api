@@ -6,10 +6,16 @@ interface Props {
 }
 
 // Deep merge function with handling for adding number fields
-function deepMerge(target: any, source: any): any {
+function deepMerge(target: any, source: any, sortKey?: string): any {
   // If both target and source are arrays, merge them (concatenate for arrays)
   if (Array.isArray(target) && Array.isArray(source)) {
-    return [...target, ...source];
+    const concatenated = [...target, ...source];
+    if (sortKey)
+      return concatenated.sort(
+        (a, b) =>
+          new Date(a[sortKey]).getTime() - new Date(b[sortKey]).getTime()
+      );
+    return concatenated;
   }
 
   // If both target and source are objects, recursively merge them
@@ -54,7 +60,7 @@ export default function combineAllTasks({ oldAllTasks, newAllTasks }: Props) {
         unknown: deepMerge(existingTask.unknown, task.unknown),
         completed: deepMerge(existingTask.completed, task.completed),
         total: deepMerge(existingTask.total, task.total),
-        ids: deepMerge(existingTask.ids, task.ids),
+        ids: deepMerge(existingTask.ids, task.ids, "startsAt"),
       });
     } else {
       // If no existing task, simply add the new task

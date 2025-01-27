@@ -151,6 +151,15 @@ export default async function createClubProfile({ userId }: Props) {
         )
     );
 
+    await doWithRetries(async () =>
+      db
+        .collection("Task")
+        .updateMany(
+          { userId: new ObjectId(userId) },
+          { $set: { userName: randomName } }
+        )
+    );
+
     return defaultClubData;
   } catch (err) {
     throw httpError(err);

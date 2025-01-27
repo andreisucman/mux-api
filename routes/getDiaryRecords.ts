@@ -63,16 +63,16 @@ route.get(
       )) as unknown as DiaryRecordType[];
 
       if (userName) {
-        const typePrivaciesToExclude = privacy
+        const categoriesToExclude = privacy
           .filter((ob) => !ob.value)
           .map((r) => r.name);
 
-        if (typePrivaciesToExclude.length > 0) {
+        if (categoriesToExclude.length > 0) {
           results = results.map((r) => {
             return {
               ...r,
               activity: r.activity.filter(
-                (a) => !typePrivaciesToExclude.includes(a.type)
+                (a) => !categoriesToExclude.includes(a.categoryName)
               ),
             };
           });

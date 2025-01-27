@@ -85,6 +85,7 @@ route.post(
         proofEnabled: true,
         status: TaskStatusEnum.ACTIVE,
         isSubmitted: false,
+        userName: userInfo.name,
         stolenFrom: userName,
       }));
 
@@ -116,7 +117,6 @@ route.post(
         );
 
         for (let j = 0; j < frequency; j++) {
-          console.log("j", j);
           const currentHostDate =
             j === 0 ? relevantTasks[j].startsAt : relevantTasks[j - 1].startsAt;
           let nextHostDate = relevantTasks[j]?.startsAt;

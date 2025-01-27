@@ -7,17 +7,20 @@ import { CustomRequest, RoutineType, TaskStatusEnum, TaskType } from "types.js";
 import { daysFrom } from "helpers/utils.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
-import { db } from "init.js";
 import combineAllTasks from "@/helpers/combineAllTasks.js";
 import getLatestRoutinesAndTasks from "@/functions/getLatestRoutineAndTasks.js";
+import { db } from "init.js";
+import sortTasksInScheduleByDate from "@/helpers/sortTasksInScheduleByDate.js";
 
 const route = Router();
 
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { taskId, routineStatus } = req.body;
+    const { taskId, startingDate, returnRoutinesWithStatus, returnTask } =
+      req.body;
 
+    console.log("req.body", req.body);
     try {
       const currentTask = (await doWithRetries(async () =>
         db
@@ -43,7 +46,8 @@ route.post(
 
       if (!currentRoutine) throw httpError(`Routine ${routineId} not found`);
 
-      const { allTasks, finalSchedule, lastDate, status } = currentRoutine || {};
+      const { allTasks, finalSchedule, lastDate, status } =
+        currentRoutine || {};
 
       if (!["active", "replaced"].includes(status)) {
         res.status(200).json({ error: `Can't edit an inactive routine` });
@@ -54,21 +58,40 @@ route.post(
 
       const interval = Math.floor(7 / relevantAllTask.ids.length);
 
-      const newStartsAt = daysFrom({
-        date: new Date(currentTask.startsAt),
-        days: Math.max(1, interval),
-      });
+      const sanitizedStartingDate = startingDate
+        ? new Date(startingDate) >= new Date()
+          ? new Date(startingDate)
+          : null
+        : null;
+
+      const newStartsAt = sanitizedStartingDate
+        ? sanitizedStartingDate
+        : daysFrom({
+            date: new Date(currentTask.startsAt),
+            days: Math.max(1, interval),
+          });
 
       const newExpiresAt = daysFrom({
         date: new Date(newStartsAt),
         days: 1,
       });
 
-      const resetTask = {
+      const newRevisionDate =
+        currentTask.revisionDate > new Date()
+          ? currentTask.revisionDate
+          : daysFrom({ days: 7 });
+
+      const newNextCanStartDate = daysFrom({ days: currentTask.restDays });
+
+      const resetTask: TaskType = {
         ...currentTask,
         startsAt: newStartsAt,
         expiresAt: newExpiresAt,
         isSubmitted: false,
+        proofId: null,
+        completedAt: null,
+        nextCanStartDate: newNextCanStartDate,
+        revisionDate: newRevisionDate,
         status: TaskStatusEnum.ACTIVE,
       };
 
@@ -93,6 +116,8 @@ route.post(
       } else {
         updatedSchedule[dateKey] = [newFinalScheduleRecord];
       }
+
+      updatedSchedule = sortTasksInScheduleByDate(updatedSchedule);
 
       const newAllTaskRecord = {
         ids: [
@@ -132,19 +157,36 @@ route.post(
         )
       );
 
-      const finalRoutineStatus =
-        routineStatus === "replaced"
-          ? { $in: ["active", "replaced"] }
-          : routineStatus;
+      let result: { [key: string]: any } = {};
 
-      const response = await getLatestRoutinesAndTasks({
-        userId: req.userId,
-        filter: { type: currentTask.type, status: finalRoutineStatus },
-        returnOnlyRoutines: true,
-      });
+      if (returnRoutinesWithStatus) {
+        const finalRoutineStatus =
+          returnRoutinesWithStatus === "replaced"
+            ? { $in: ["active", "replaced"] }
+            : returnRoutinesWithStatus;
+
+        const routinesFilter = {
+          type: currentTask.type,
+          status: finalRoutineStatus,
+        };
+
+        if (finalRoutineStatus) routinesFilter.status = finalRoutineStatus;
+
+        const response = await getLatestRoutinesAndTasks({
+          userId: req.userId,
+          filter: routinesFilter,
+          returnOnlyRoutines: true,
+        });
+
+        result = { ...response };
+      }
+
+      if (returnTask) {
+        result.newTask = resetTask;
+      }
 
       res.status(200).json({
-        message: response,
+        message: result,
       });
     } catch (err) {
       next(err);
