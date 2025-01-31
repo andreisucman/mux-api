@@ -2,7 +2,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import { ObjectId } from "mongodb";
-import aqp from "api-query-params";
+import aqp, { AqpQuery } from "api-query-params";
 import { Router, Response } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
@@ -15,7 +15,7 @@ const route = Router();
 
 route.get("/:followingUserName?", async (req: CustomRequest, res: Response) => {
   const { followingUserName } = req.params;
-  const { filter, skip, sort } = aqp(req.query);
+  const { filter, skip, sort } = aqp(req.query as any) as AqpQuery;
   const { onlyCheck, showType, query } = filter || {};
 
   try {

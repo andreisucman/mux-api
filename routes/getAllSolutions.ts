@@ -3,7 +3,7 @@ dotenv.config();
 
 import { Router, Response } from "express";
 import { db } from "init.js";
-import aqp from "api-query-params";
+import aqp, { AqpQuery } from "api-query-params";
 import { CustomRequest } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
@@ -11,7 +11,7 @@ import httpError from "@/helpers/httpError.js";
 const route = Router();
 
 route.get("/", async (req: CustomRequest, res: Response) => {
-  const { filter, skip } = aqp(req.query);
+  const { filter, skip } = aqp(req.query as any) as AqpQuery;
   const { query, concern } = filter;
 
   try {

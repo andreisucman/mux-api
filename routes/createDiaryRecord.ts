@@ -65,9 +65,10 @@ route.post(
               mainThumbnail: 1,
               icon: 1,
               type: 1,
-              taskId: 1
+              taskId: 1,
             },
           })
+          .sort({ _id: -1 })
           .toArray()
       );
 
@@ -97,6 +98,7 @@ route.post(
           .find(styleFilters, {
             projection: { styleName: 1, mainUrl: 1, type: 1, styleIcon: 1 },
           })
+          .sort({ _id: -1 })
           .toArray()
       );
 
@@ -123,6 +125,7 @@ route.post(
           .find(foodFilters, {
             projection: { url: 1 },
           })
+          .sort({ _id: -1 })
           .toArray()
       );
 

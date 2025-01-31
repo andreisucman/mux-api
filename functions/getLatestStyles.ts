@@ -22,7 +22,7 @@ export default async function getLatestStyles({ userId }: Props) {
                 moderationStatus: ModerationStatusEnum.ACTIVE,
               },
             },
-            { $sort: { createdAt: -1 } },
+            { $sort: { _id: -1 } },
             {
               $group: {
                 _id: "$type",

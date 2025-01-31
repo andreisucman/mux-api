@@ -24,7 +24,7 @@ route.get(
         db
           .collection("FoodAnalysis")
           .find(filters)
-          .sort({ createdAt: -1 })
+          .sort({ _id: -1 })
           .next()
       );
 

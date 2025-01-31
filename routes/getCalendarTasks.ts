@@ -6,7 +6,7 @@ import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import setUtcMidnight from "helpers/setUtcMidnight.js";
 import { CustomRequest } from "types.js";
-import aqp from "api-query-params";
+import aqp, { AqpQuery } from "api-query-params";
 import { db } from "init.js";
 import { daysFrom } from "@/helpers/utils.js";
 
@@ -15,7 +15,7 @@ const route = Router();
 route.get(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { filter } = aqp(req.query);
+    const { filter } = aqp(req.query as any) as AqpQuery;
     const { status, type, timeZone, dateFrom, dateTo } = filter;
 
     if (!timeZone) {

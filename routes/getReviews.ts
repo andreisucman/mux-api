@@ -14,7 +14,7 @@ route.get(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
       const rewards = await doWithRetries(async () =>
-        db.collection("Review").find().sort({ createdAt: -1 }).toArray()
+        db.collection("Review").find().sort({ _id: -1 }).toArray()
       );
 
       res.status(200).json({ message: rewards });

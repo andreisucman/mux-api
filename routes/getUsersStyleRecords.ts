@@ -1,12 +1,11 @@
 import { ObjectId, Sort } from "mongodb";
 import { Router, NextFunction } from "express";
 import { db } from "init.js";
-import aqp from "api-query-params";
+import aqp, { AqpQuery } from "api-query-params";
 import checkTrackedRBAC from "functions/checkTrackedRBAC.js";
 import { CustomRequest } from "types.js";
 import { ModerationStatusEnum } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -14,7 +13,7 @@ route.get(
   "/:followingUserName?",
   async (req: CustomRequest, res, next: NextFunction) => {
     const { followingUserName } = req.params;
-    const { filter, skip, sort } = aqp(req.query);
+    const { filter, skip, sort } = aqp(req.query as any) as AqpQuery;
     const { type, styleName } = filter;
 
     if (!followingUserName && !req.userId) {

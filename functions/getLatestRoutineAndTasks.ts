@@ -24,7 +24,7 @@ export default async function getLatestRoutinesAndTasks({
           .collection("Routine")
           .aggregate([
             { $match: match },
-            { $sort: { createdAt: -1 } },
+            { $sort: { _id: -1 } },
             {
               $group: {
                 _id: "$part",

@@ -25,7 +25,7 @@ export default async function transferTrials({
             projection: { subscriptions: 1 },
           }
         )
-        .sort({ createdAt: -1 })
+        .sort({ _id: -1 })
         .next()
     );
 

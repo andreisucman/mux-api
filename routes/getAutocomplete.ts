@@ -1,14 +1,13 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import aqp from "api-query-params";
+import aqp, { AqpQuery } from "api-query-params";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import { CustomRequest } from "types.js";
 import { ModerationStatusEnum } from "types.js";
 import checkTrackedRBAC from "functions/checkTrackedRBAC.js";
 import { db } from "init.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -40,7 +39,7 @@ route.get(
   "/:followingUserName?",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { followingUserName } = req.params;
-    const { filter } = aqp(req.query);
+    const { filter } = aqp(req.query as any) as AqpQuery;
     const { query, collection } = filter || {};
 
     try {

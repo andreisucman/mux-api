@@ -22,8 +22,8 @@ route.get(
           .find(
             {
               "club.followingUserId": new ObjectId(req.userId),
-              moderationStatus: ModerationStatusEnum.ACTIVE,
               "subscriptions.peek.validUntil": { $gte: new Date() },
+              moderationStatus: ModerationStatusEnum.ACTIVE,
             },
             {
               projection: {

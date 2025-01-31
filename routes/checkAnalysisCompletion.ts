@@ -25,8 +25,8 @@ route.post(
       const job = await doWithRetries(async () =>
         db.collection("AnalysisStatus").findOne(
           {
-            userId: new ObjectId(userId),
             operationKey,
+            userId: new ObjectId(userId),
           },
           {
             projection: {

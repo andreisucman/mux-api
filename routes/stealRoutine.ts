@@ -69,7 +69,7 @@ route.post(
         db
           .collection("Task")
           .find({ routineId: new ObjectId(routineId) })
-          .sort({ startsAt: 1 })
+          .sort({ _id: 1 })
           .toArray()
       )) as unknown as TaskType[];
 

@@ -1,7 +1,7 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import aqp from "api-query-params";
+import aqp, { AqpQuery } from "api-query-params";
 import { ObjectId, Sort } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import checkTrackedRBAC from "@/functions/checkTrackedRBAC.js";
@@ -17,7 +17,7 @@ route.get(
   "/:userName?",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { userName } = req.params;
-    const { sort, skip } = aqp(req.query);
+    const { sort, skip } = aqp(req.query as any) as AqpQuery;
 
     try {
       let privacy: PrivacyType[] = [];
@@ -55,7 +55,7 @@ route.get(
         db
           .collection("Diary")
           .find(filters)
-          .sort((sort as Sort) || { createdAt: -1 })
+          .sort((sort as Sort) || { _id: -1 })
           .skip(skip || 0)
           .project(projection)
           .limit(21)

@@ -31,9 +31,9 @@ export default async function calculateHigherThanType({
             $match: {
               userId: { $ne: new ObjectId(userId) },
               type,
-              moderationStatus: ModerationStatusEnum.ACTIVE,
               "demographics.sex": sex,
               "demographics.ageInterval": ageInterval,
+              moderationStatus: ModerationStatusEnum.ACTIVE,
             },
           },
           { $sort: { createdAt: -1 } },

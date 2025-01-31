@@ -2,13 +2,12 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import { ObjectId } from "mongodb";
-import aqp from "api-query-params";
+import aqp, { AqpQuery } from "api-query-params";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import checkTrackedRBAC from "functions/checkTrackedRBAC.js";
 import { ModerationStatusEnum, CustomRequest } from "types.js";
 import { db } from "init.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -22,7 +21,7 @@ route.get(
   "/:followingUserName?",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { followingUserName } = req.params;
-    const { filter, projection } = aqp(req.query);
+    const { filter, projection } = aqp(req.query as any) as AqpQuery;
     const { collection, type } = filter;
 
     if (!collection || (!followingUserName && !req.userId)) {
@@ -56,7 +55,7 @@ route.get(
       };
 
       if (followingUserName) {
-        match.name = followingUserName;
+        match.userName = followingUserName;
       } else {
         match.userId = new ObjectId(req.userId);
       }

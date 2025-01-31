@@ -20,7 +20,6 @@ route.post(
     const { taskId, startingDate, returnRoutinesWithStatus, returnTask } =
       req.body;
 
-    console.log("req.body", req.body);
     try {
       const currentTask = (await doWithRetries(async () =>
         db

@@ -7,7 +7,7 @@ import doWithRetries from "helpers/doWithRetries.js";
 import checkTrackedRBAC from "functions/checkTrackedRBAC.js";
 import { CustomRequest, SubscriptionTypeNamesEnum } from "types.js";
 import checkSubscriptionStatus from "@/functions/checkSubscription.js";
-import aqp from "api-query-params";
+import aqp, { AqpQuery } from "api-query-params";
 import { db } from "init.js";
 
 const route = Router();
@@ -16,7 +16,7 @@ route.get(
   "/:followingUserName?",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { followingUserName } = req.params;
-    const { skip, filter, sort = {} } = aqp(req.query);
+    const { skip, filter, sort = {} } = aqp(req.query as any) as AqpQuery;
     const { type, status } = filter;
 
     if (!type || !["active", "inactive"].includes(status)) {

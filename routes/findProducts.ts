@@ -46,14 +46,14 @@ route.post(
           {
             userId: new ObjectId(req.userId),
             expiresAt: { $gt: new Date() },
-            key: taskKey,
+            taskKey,
           },
           {
             projection: {
               description: 1,
               productTypes: 1,
               concern: 1,
-              key: 1,
+              taskKey: 1,
             },
           }
         )

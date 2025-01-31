@@ -1,6 +1,6 @@
 import { ObjectId, Sort } from "mongodb";
 import { NextFunction, Router } from "express";
-import aqp from "api-query-params";
+import aqp, { AqpQuery } from "api-query-params";
 import { ModerationStatusEnum, CustomRequest } from "types.js";
 import checkTrackedRBAC from "functions/checkTrackedRBAC.js";
 import doWithRetries from "helpers/doWithRetries.js";
@@ -13,7 +13,7 @@ route.get(
   "/:followingUserName?",
   async (req: CustomRequest, res, next: NextFunction) => {
     const { followingUserName } = req.params;
-    const { filter, skip, sort } = aqp(req.query);
+    const { filter, skip, sort } = aqp(req.query as any) as AqpQuery;
     const { type, part, position } = filter;
 
     if (!followingUserName && !req.userId) {

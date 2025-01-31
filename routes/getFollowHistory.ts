@@ -2,7 +2,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import { ObjectId } from "mongodb";
-import aqp from "api-query-params";
+import aqp, { AqpQuery } from "api-query-params";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import { CustomRequest } from "types.js";
@@ -14,7 +14,7 @@ const route = Router();
 route.get(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { skip } = aqp(req.query);
+    const { skip } = aqp(req.query as any) as AqpQuery;
 
     try {
       const pastFollowers = await doWithRetries(async () =>
