@@ -21,8 +21,6 @@ type Props = {
   isResultString?: boolean;
 };
 
-const defaultSeed = Number(process.env.DEFAULT_OPENAI_SEED);
-
 async function askRepeatedly({
   runs,
   seed,
@@ -37,7 +35,7 @@ async function askRepeatedly({
       throw httpError("Invalid userId format and no meta");
 
     let finalSeed = seed;
-    let result;
+    let result: string;
 
     if (!finalSeed) {
       finalSeed = generateSeed(userId);
@@ -57,7 +55,7 @@ async function askRepeatedly({
         userId,
         functionName,
         categoryName,
-        seed: seed || defaultSeed,
+        seed,
         messages: conversation,
         isMini: runs[i].isMini,
         isJson: isResultString ? false : i === runs.length - 1,

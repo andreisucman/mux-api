@@ -1,5 +1,4 @@
 import * as emoji from "node-emoji";
-import searchEmojilib from "./searchEmojilib.js";
 import emojiDictionary from "emoji-dictionary";
 import emojione from "emojione";
 
@@ -9,10 +8,6 @@ export default async function findEmoji(key: string) {
   let current = null;
 
   current = emoji.find(key)?.emoji;
-
-  if (!current) {
-    current = searchEmojilib(key)[0]?.name;
-  }
 
   if (!current) {
     current = emojiDictionary.getUnicode(key);

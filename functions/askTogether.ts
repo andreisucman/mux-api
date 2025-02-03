@@ -8,6 +8,7 @@ import updateSpend from "./updateSpend.js";
 import httpError from "@/helpers/httpError.js";
 import { ObjectId } from "mongodb";
 import generateSeed from "@/helpers/generateSeed.js";
+import getCompletionCost from "@/helpers/getCompletionCost.js";
 
 type AskTogetherProps = {
   userId: string;
@@ -17,14 +18,6 @@ type AskTogetherProps = {
   functionName: string;
   categoryName: CategoryNameEnum;
   responseFormat?: any;
-};
-
-const { LLAMA_2_11B_VISION_PRICE } = process.env;
-
-const priceMap: { [key: string]: number } = {
-  "meta-llama/Llama-3_2-11B-Vision-Instruct-Turbo": Number(
-    LLAMA_2_11B_VISION_PRICE
-  ),
 };
 
 async function askTogether({
@@ -37,7 +30,6 @@ async function askTogether({
   responseFormat,
 }: AskTogetherProps) {
   try {
-    if (!model) throw httpError("Model is missing");
     if (!ObjectId.isValid(userId)) throw httpError("Invalid userId");
 
     let finalSeed = seed;
@@ -63,15 +55,21 @@ async function askTogether({
     const inputTokens = completion.usage.prompt_tokens;
     const outputTokens = completion.usage.completion_tokens;
 
+    const { unitCost, units } = getCompletionCost({
+      inputTokens,
+      modelName: model,
+      outputTokens,
+      divisor: 1000000,
+    });
+
     const modelKey = model.split(".").join("_");
-    const unitCost = priceMap[modelKey] / 1000000;
 
     updateSpend({
       functionName,
       modelName: modelKey,
       categoryName,
       unitCost,
-      units: inputTokens + outputTokens,
+      units,
       userId,
     });
 

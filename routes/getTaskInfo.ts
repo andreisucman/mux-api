@@ -3,7 +3,6 @@ import { Router, NextFunction } from "express";
 import { db } from "init.js";
 import { CustomRequest } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 

@@ -20,6 +20,18 @@ export default function getOauthRedirectUri(redirectPath: string) {
     case "/club/routines":
       redirectUrl = process.env.CLUB_ROUTINES_REDIRECT_URI;
       break;
+    case "/club/progress":
+      redirectUrl = process.env.CLUB_PROGRESS_REDIRECT_URI;
+      break;
+    case "/club/style":
+      redirectUrl = process.env.CLUB_STYLE_REDIRECT_URI;
+      break;
+    case "/club/proof":
+      redirectUrl = process.env.CLUB_PROOF_REDIRECT_URI;
+      break;
+    case "/club/diary":
+      redirectUrl = process.env.CLUB_DIARY_REDIRECT_URI;
+      break;
     case "/club/about":
       redirectUrl = process.env.CLUB_ABOUT_REDIRECT_URI;
       break;
@@ -28,6 +40,9 @@ export default function getOauthRedirectUri(redirectPath: string) {
       break;
     case "/plans":
       redirectUrl = process.env.PLANS_REDIRECT_URI;
+      break;
+    case "/rewards":
+      redirectUrl = process.env.REWARDS_REDIRECT_URI;
       break;
     default:
       redirectUrl = process.env.WAITROOM_REDIRECT_URI;

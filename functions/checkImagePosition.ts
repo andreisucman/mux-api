@@ -1,3 +1,6 @@
+import * as dotenv from "dotenv";
+dotenv.config();
+
 import { CategoryNameEnum, PartEnum } from "@/types.js";
 import askTogether from "./askTogether.js";
 import httpError from "@/helpers/httpError.js";
@@ -60,7 +63,7 @@ export default async function checkImagePosition({
       messages,
       userId,
       categoryName,
-      model: "meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo",
+      model: process.env.LLAMA_11B_VISION,
       functionName: "checkImagePosition",
     });
 

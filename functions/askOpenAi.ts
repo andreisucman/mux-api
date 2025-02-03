@@ -7,17 +7,7 @@ import { AskOpenaiProps } from "types/askOpenaiTypes.js";
 import httpError from "@/helpers/httpError.js";
 import updateSpend from "./updateSpend.js";
 import { ChatCompletionCreateParams } from "openai/resources/index.mjs";
-
-const {
-  DEFAULT_4O_MINI_INPUT_PRICE,
-  DEFAULT_4O_MINI_OUTPUT_PRICE,
-  DEFAULT_4O_INPUT_PRICE,
-  DEFAULT_4O_OUTPUT_PRICE,
-  FINETUNED_4O_MINI_INPUT_PRICE,
-  FINETUNED_4O_MINI_OUTPUT_PRICE,
-  FINETUNED_4O_INPUT_PRICE,
-  FINETUNED_4O_OUTPUT_PRICE,
-} = process.env;
+import getCompletionCost from "@/helpers/getCompletionCost.js";
 
 async function askOpenai({
   messages,
@@ -25,18 +15,18 @@ async function askOpenai({
   model,
   functionName,
   categoryName,
-  isMini,
   userId,
+  isMini,
   responseFormat,
   isJson = true,
 }: AskOpenaiProps) {
-  try {
-    const finalModel = model
-      ? model
-      : isMini
-      ? process.env.MODEL_MINI
-      : process.env.MODEL;
+  const finalModel = model
+    ? model
+    : isMini
+    ? process.env.GPT_4O_MINI
+    : process.env.GPT_4O;
 
+  try {
     const options: ChatCompletionCreateParams = {
       messages,
       seed,
@@ -54,33 +44,19 @@ async function askOpenai({
     const inputTokens = completion.usage.prompt_tokens;
     const outputTokens = completion.usage.completion_tokens;
 
-    const inputPrice = isMini
-      ? model
-        ? FINETUNED_4O_MINI_INPUT_PRICE
-        : DEFAULT_4O_MINI_INPUT_PRICE
-      : model
-      ? FINETUNED_4O_INPUT_PRICE
-      : DEFAULT_4O_INPUT_PRICE;
-
-    const outputPrice = isMini
-      ? model
-        ? FINETUNED_4O_MINI_OUTPUT_PRICE
-        : DEFAULT_4O_MINI_OUTPUT_PRICE
-      : model
-      ? FINETUNED_4O_OUTPUT_PRICE
-      : DEFAULT_4O_OUTPUT_PRICE;
-
-    const unitCost =
-      ((inputTokens / (inputTokens + outputTokens)) * Number(inputPrice) +
-        (outputTokens / (inputTokens + outputTokens)) * Number(outputPrice)) /
-      1000000;
+    const { unitCost, units } = getCompletionCost({
+      inputTokens,
+      outputTokens,
+      modelName: finalModel,
+      divisor: 1000000,
+    });
 
     updateSpend({
       functionName,
       modelName: finalModel,
       categoryName,
       unitCost,
-      units: inputTokens + outputTokens,
+      units,
       userId,
     });
 

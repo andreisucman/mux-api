@@ -1,4 +1,3 @@
-import httpError from "@/helpers/httpError.js";
 import { Router, NextFunction } from "express";
 
 const route = Router();

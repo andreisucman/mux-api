@@ -1,3 +1,6 @@
+import * as dotenv from "dotenv";
+dotenv.config();
+
 import uploadFilesToS3 from "functions/uploadFilesToS3.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import askTogether from "functions/askTogether.js";
@@ -34,7 +37,7 @@ export default async function generateImage({
       messages,
       userId,
       categoryName,
-      model: "meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo",
+      model: process.env.LLAMA_8B,
       functionName: "generateImage",
     });
 
