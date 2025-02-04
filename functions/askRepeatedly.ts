@@ -35,7 +35,7 @@ async function askRepeatedly({
       throw httpError("Invalid userId format and no meta");
 
     let finalSeed = seed;
-    let result: string;
+    let result;
 
     if (!finalSeed) {
       finalSeed = generateSeed(userId);

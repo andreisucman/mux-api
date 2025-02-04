@@ -90,7 +90,7 @@ export const defaultRequiredProgress = {
       part: PartEnum.BODY,
       title: "Progress: Body - front",
       instruction:
-        "Remove all clothes except underwear and take a full-height picture of your body from the front.",
+        "Take a full-height photo of your body from the front.",
     },
     {
       type: TypeEnum.BODY,
@@ -98,7 +98,7 @@ export const defaultRequiredProgress = {
       part: PartEnum.BODY,
       title: "Progress: Body - right",
       instruction:
-        "Remove all clothes except underwear and take a full-hight picture of your body from the right.",
+        "Take a full-height photo of your body from the right.",
     },
     {
       type: TypeEnum.BODY,
@@ -106,7 +106,7 @@ export const defaultRequiredProgress = {
       part: PartEnum.BODY,
       title: "Progress: Body - left",
       instruction:
-        "Remove all clothes except underwear and take a full-hight picture of your body from the left.",
+        "Take a full-height photo of your body from the left.",
     },
     {
       type: TypeEnum.BODY,
@@ -114,7 +114,7 @@ export const defaultRequiredProgress = {
       part: PartEnum.BODY,
       title: "Progress: Body - back",
       instruction:
-        "Remove all clothes except underwear and take a full-hight picture of your body from the back.",
+        "Take a full-height photo of your body from the back.",
     },
   ],
 };

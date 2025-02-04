@@ -202,7 +202,7 @@ route.post(
         userId: req.userId,
         categoryName: CategoryNameEnum.TASKS,
         functionName: "saveTaskFromDescription",
-      });
+      })
 
       const userInfo = await getUserInfo({
         userId: req.userId,
