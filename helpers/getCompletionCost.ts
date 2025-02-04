@@ -2,6 +2,12 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 const {
+  TUNED_MODELS,
+
+  GPT_4O,
+  GPT_4O_INPUT_PRICE,
+  GPT_4O_OUTPUT_PRICE,
+
   GPT_4O_MINI,
   GPT_4O_MINI_INPUT_PRICE,
   GPT_4O_MINI_OUTPUT_PRICE,
@@ -13,12 +19,19 @@ const {
   LLAMA_8B,
   LLAMA_11B_VISION,
   LLAMA_8B_PRICE,
-  LLAMA_11B_VISION_PRICE
+  LLAMA_11B_VISION_PRICE,
 } = process.env;
 
 const priceMap: { [key: string]: { input: number; output: number } } = {
   [LLAMA_8B]: { input: Number(LLAMA_8B_PRICE), output: Number(LLAMA_8B_PRICE) },
-  [LLAMA_11B_VISION]: { input: Number(LLAMA_11B_VISION_PRICE), output: Number(LLAMA_11B_VISION_PRICE) },
+  [LLAMA_11B_VISION]: {
+    input: Number(LLAMA_11B_VISION_PRICE),
+    output: Number(LLAMA_11B_VISION_PRICE),
+  },
+  [GPT_4O]: {
+    input: Number(GPT_4O_INPUT_PRICE),
+    output: Number(GPT_4O_OUTPUT_PRICE),
+  },
   [GPT_4O_MINI]: {
     input: Number(GPT_4O_MINI_INPUT_PRICE),
     output: Number(GPT_4O_MINI_OUTPUT_PRICE),
@@ -42,7 +55,9 @@ export default function getCompletionCost({
   inputTokens,
   outputTokens,
 }: GetCompletionCostProps) {
-  const price = priceMap[modelName];
+  const isTuned = TUNED_MODELS.split(",").includes(modelName);
+  const price =
+    priceMap[modelName] || isTuned ? priceMap[GPT_4O_MINI_TUNED] : undefined;
 
   const units = inputTokens + outputTokens;
   const inputShare = inputTokens / (inputTokens + outputTokens);

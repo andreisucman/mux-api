@@ -120,7 +120,7 @@ export const defaultRequiredProgress = {
 };
 
 export const defaultDemographics: DemographicsType = {
-  sex: SexEnum.FEMALE,
+  sex: null,
   ageInterval: null,
   bodyType: null,
   ethnicity: null,
