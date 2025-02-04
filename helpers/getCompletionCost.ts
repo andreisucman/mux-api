@@ -42,6 +42,8 @@ const priceMap: { [key: string]: { input: number; output: number } } = {
   },
 };
 
+console.log("priceMap", priceMap);
+
 type GetCompletionCostProps = {
   modelName: string;
   inputTokens: number;
@@ -55,9 +57,18 @@ export default function getCompletionCost({
   inputTokens,
   outputTokens,
 }: GetCompletionCostProps) {
+  console.log("model name", modelName);
+
   const isTuned = TUNED_MODELS.split(",").includes(modelName);
+
+  console.log("isTuned", isTuned);
+
   const price =
     priceMap[modelName] || isTuned ? priceMap[GPT_4O_MINI_TUNED] : undefined;
+
+  console.log("priceMap[modelName]", priceMap[modelName]);
+
+  console.log("price", price);
 
   const units = inputTokens + outputTokens;
   const inputShare = inputTokens / (inputTokens + outputTokens);

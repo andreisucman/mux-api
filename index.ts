@@ -109,6 +109,8 @@ client.connect();
 const app = express();
 app.set("trust proxy", 1);
 
+console.log("helllo")
+
 const corsOptions = {
   origin: process.env.ALLOWED_ORIGINS?.split(","),
   methods: ["GET", "POST", "OPTIONS", "HEAD"],
