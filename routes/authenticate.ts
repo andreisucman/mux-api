@@ -242,7 +242,7 @@ route.post(
       const { csrfToken, csrfSecret } = createCsrf();
 
       res.cookie("MUX_csrfSecret", csrfSecret, {
-        // domain: ".muxout.com",
+        domain: ".muxout.com",
         expires: sessionExpiry,
         httpOnly: false,
         secure: true,
@@ -250,14 +250,14 @@ route.post(
       });
 
       res.cookie("MUX_csrfToken", csrfToken, {
-        // domain: ".muxout.com",
+        domain: ".muxout.com",
         expires: sessionExpiry,
         secure: true,
         sameSite: "none",
       });
 
       res.cookie("MUX_accessToken", accessToken, {
-        // domain: ".muxout.com",
+        domain: ".muxout.com",
         expires: sessionExpiry,
         httpOnly: true,
         secure: true,
@@ -265,7 +265,7 @@ route.post(
       });
 
       res.cookie("MUX_isLoggedIn", true, {
-        // domain: ".muxout.com",
+        domain: ".muxout.com",
         expires: sessionExpiry,
         secure: true,
         sameSite: "none",
