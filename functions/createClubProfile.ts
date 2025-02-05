@@ -56,7 +56,7 @@ export default async function createClubProfile({ userId }: Props) {
     const { sex, ethnicity } = demographics;
 
     const niceAvatar = await import("react-nice-avatar");
-    const { genConfig } = niceAvatar;
+    const { genConfig } = niceAvatar.default || niceAvatar;
 
     const avatarConfig = genConfig({
       sex: avatarSexMap[sex || "male"] as Sex,

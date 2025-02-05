@@ -100,10 +100,12 @@ route.post(
 
       const checkUserPresenceFilter: { [key: string]: any } = {};
 
-      if (localUserId) {
-        checkUserPresenceFilter._id = new ObjectId(localUserId);
-      } else {
+      if (finalEmail) {
         checkUserPresenceFilter.email = finalEmail;
+      } else {
+        if (localUserId) {
+          checkUserPresenceFilter._id = new ObjectId(localUserId);
+        }
       }
 
       const userInfo = await checkIfUserExists({

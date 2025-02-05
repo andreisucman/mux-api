@@ -7,7 +7,6 @@ import { CustomRequest } from "types.js";
 import getUserData from "functions/getUserData.js";
 import getLatestRoutinesAndTasks from "functions/getLatestRoutineAndTasks.js";
 import getLatestStyles from "functions/getLatestStyles.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -17,7 +16,7 @@ route.post(
     const { userId, operationKey } = req.body;
 
     try {
-      if (!ObjectId.isValid(userId)) {
+      if (!ObjectId.isValid(userId) || !operationKey) {
         res.status(400).json({ error: "Bad request" });
         return;
       }

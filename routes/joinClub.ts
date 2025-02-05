@@ -9,7 +9,6 @@ import doWithRetries from "helpers/doWithRetries.js";
 import formatDate from "@/helpers/formatDate.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
 import { db } from "init.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 

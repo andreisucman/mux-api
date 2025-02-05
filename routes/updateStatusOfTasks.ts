@@ -34,8 +34,8 @@ route.post(
     }: Props = req.body;
 
     if (
-      !allowedTaskStatuses.includes(newStatus) ||
-      !allowedRoutineStatuses.includes(routineStatus)
+      (newStatus && !allowedTaskStatuses.includes(newStatus)) ||
+      (routineStatus && !allowedRoutineStatuses.includes(routineStatus))
     ) {
       res.status(400).json({ error: "Bad request" });
       return;
