@@ -98,19 +98,18 @@ route.post(
         finalEmail = email;
       }
 
-      const checkUserPresenceFilter: { [key: string]: any } = {};
+      const filter = { $or: [] };
 
       if (finalEmail) {
-        checkUserPresenceFilter.email = finalEmail;
-        checkUserPresenceFilter.auth = auth;
+        filter.$or.push({ email: finalEmail, auth });
       } else {
         if (localUserId) {
-          checkUserPresenceFilter._id = new ObjectId(localUserId);
+          filter.$or.push({ _id: new ObjectId(localUserId) });
         }
       }
 
       const userInfo = await checkIfUserExists({
-        filter: checkUserPresenceFilter,
+        filter,
       });
 
       if (userInfo) {
@@ -126,6 +125,8 @@ route.post(
         userData = userInfo;
 
         const { _id: userId, email, password: storedPassword } = userInfo;
+
+        console.log("userInfo", userInfo);
 
         if (email) {
           // login
@@ -147,6 +148,10 @@ route.post(
               { $set: { timeZone, timeZoneOffsetInMinutes } }
             )
           );
+
+          userData = await getUserData({ userId: String(userId) });
+
+          console.log("line 152");
         } else {
           // registration after the analysis
           const { stripeUserId } = userInfo;
@@ -182,6 +187,8 @@ route.post(
               email: finalEmail,
             });
           }
+
+          console.log("line 189", userData);
         }
 
         updateAnalytics({
