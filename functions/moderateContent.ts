@@ -9,6 +9,7 @@ import {
 } from "openai/resources/moderations.mjs";
 import httpError from "@/helpers/httpError.js";
 import doWithRetries from "@/helpers/doWithRetries.js";
+import { urlToBase64 } from "@/helpers/utils.js";
 
 export type ModerationResultType = {
   type: "text" | "image_url";
@@ -58,7 +59,9 @@ export default async function moderateContent({ content }: Props) {
       } else {
         moderationResults.push({
           type: content[i].type,
-          content: (content[i] as ModerationImageURLInput).image_url.url,
+          content: await urlToBase64(
+            (content[i] as ModerationImageURLInput).image_url.url
+          ),
           scores: results[i].category_scores,
         });
       }

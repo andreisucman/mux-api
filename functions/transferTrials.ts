@@ -38,29 +38,31 @@ export default async function transferTrials({
       projection: { subscriptions: 1 },
     });
 
-    const { subscriptions: newSubscriptions } = newUserInfo;
+    if (newUserInfo) {
+      const { subscriptions: newSubscriptions } = newUserInfo;
 
-    const updatedSubscriptions = Object.keys(newSubscriptions).reduce(
-      (a: { [key: string]: SubscriptionType }, c: string) => {
-        a[c] = newSubscriptions[c as "improvement"];
+      const updatedSubscriptions = Object.keys(newSubscriptions).reduce(
+        (a: { [key: string]: SubscriptionType }, c: string) => {
+          a[c] = newSubscriptions[c as "improvement"];
 
-        if (!a[c].isTrialUsed) {
-          a[c].isTrialUsed =
-            existingSubscriptions[c as "improvement"].isTrialUsed;
-        }
-        return a;
-      },
-      {} as { [key: string]: SubscriptionType }
-    );
+          if (!a[c].isTrialUsed) {
+            a[c].isTrialUsed =
+              existingSubscriptions[c as "improvement"].isTrialUsed;
+          }
+          return a;
+        },
+        {} as { [key: string]: SubscriptionType }
+      );
 
-    await doWithRetries(async () =>
-      db
-        .collection("User")
-        .updateOne(
-          { _id: new ObjectId(newUserId) },
-          { $set: { subscriptions: updatedSubscriptions } }
-        )
-    );
+      await doWithRetries(async () =>
+        db
+          .collection("User")
+          .updateOne(
+            { _id: new ObjectId(newUserId) },
+            { $set: { subscriptions: updatedSubscriptions } }
+          )
+      );
+    }
   } catch (err) {
     throw httpError(err);
   }

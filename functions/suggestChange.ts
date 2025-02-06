@@ -3,6 +3,7 @@ import askRepeatedly from "functions/askRepeatedly.js";
 import { RunType } from "types/askOpenaiTypes.js";
 import { StyleGoalsType, TypeEnum, CategoryNameEnum } from "types.js";
 import httpError from "@/helpers/httpError.js";
+import { urlToBase64 } from "@/helpers/utils.js";
 
 type Props = {
   userId: string;
@@ -35,6 +36,7 @@ export default async function suggestChange({
     }
 
     analysisSystemContent += `Think step-by-step. Use only the information provided.`;
+
     const runs = [
       {
         isMini: false,
@@ -42,7 +44,7 @@ export default async function suggestChange({
           {
             type: "image_url" as "image_url",
             image_url: {
-              url: image,
+              url: await urlToBase64(image),
               detail: "low" as "low",
             },
           },

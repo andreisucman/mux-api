@@ -4,6 +4,7 @@ import { RunType } from "@/types/askOpenaiTypes.js";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import httpError from "@/helpers/httpError.js";
 import { CategoryNameEnum } from "@/types.js";
+import { urlToBase64 } from "@/helpers/utils.js";
 
 type Props = {
   userId: string;
@@ -39,7 +40,7 @@ export default async function analyzeCalories({
         content: [
           {
             type: "image_url",
-            image_url: { url, detail: "low" },
+            image_url: { url: await urlToBase64(url), detail: "low" },
           },
         ],
       },
@@ -84,7 +85,10 @@ export default async function analyzeCalories({
         {
           isMini: true,
           content: [
-            { type: "image_url", image_url: { url, detail: "low" } },
+            {
+              type: "image_url",
+              image_url: { url: await urlToBase64(url), detail: "low" },
+            },
             {
               type: "text",
               text: `User information. ${userAbout}`,

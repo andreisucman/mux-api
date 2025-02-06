@@ -4,6 +4,7 @@ import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import { ToAnalyzeType, CategoryNameEnum } from "types.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import httpError from "@/helpers/httpError.js";
+import { urlToBase64 } from "@/helpers/utils.js";
 
 type Props = {
   toAnalyzeObjects: ToAnalyzeType[];
@@ -35,7 +36,7 @@ export default async function getCalorieGoal({
           {
             type: "image_url",
             image_url: {
-              url: frontalBody.mainUrl.url,
+              url: await urlToBase64(frontalBody.mainUrl.url),
               detail: "low",
             },
           },

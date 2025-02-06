@@ -5,7 +5,7 @@ import { CategoryNameEnum, PartEnum } from "@/types.js";
 import askTogether from "./askTogether.js";
 import httpError from "@/helpers/httpError.js";
 import { imagePositionRequirements } from "@/data/imagePositionRequirements.js";
-import { cleanString } from "@/helpers/utils.js";
+import { cleanString, urlToBase64 } from "@/helpers/utils.js";
 
 type Props = {
   userId: string;
@@ -48,7 +48,7 @@ export default async function checkImagePosition({
           {
             type: "image_url",
             image_url: {
-              url: image,
+              url: await urlToBase64(image),
             },
           },
         ],

@@ -81,6 +81,7 @@ export default async function analyzeAppearance({
     const parts = [...new Set(toAnalyzeObjects.map((obj) => obj.part))];
 
     const toUpdateUser = { $set: {} as { [key: string]: any } };
+    
     if (defaulttoUpdateUser) {
       toUpdateUser.$set = { ...(defaulttoUpdateUser.$set || {}) };
     }

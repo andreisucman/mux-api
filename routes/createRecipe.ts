@@ -22,6 +22,7 @@ import checkSubscriptionStatus from "functions/checkSubscription.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import { db } from "init.js";
 import httpError from "@/helpers/httpError.js";
+import { urlToBase64 } from "@/helpers/utils.js";
 
 const route = Router();
 
@@ -169,7 +170,7 @@ route.post(
           {
             type: "image_url" as "image_url",
             image_url: {
-              url: productsImage,
+              url: await urlToBase64(productsImage),
               detail: "low",
             },
           }

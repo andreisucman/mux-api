@@ -24,6 +24,7 @@ import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.j
 import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
 import httpError from "@/helpers/httpError.js";
+import { urlToBase64 } from "@/helpers/utils.js";
 
 const route = Router();
 
@@ -44,7 +45,9 @@ route.post(
 
       if (req.userId) {
         const moderationResponse = await moderateContent({
-          content: [{ type: "image_url", image_url: { url } }],
+          content: [
+            { type: "image_url", image_url: { url: await urlToBase64(url) } },
+          ],
         });
 
         isSafe = moderationResponse.isSafe;

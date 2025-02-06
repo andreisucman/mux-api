@@ -10,6 +10,7 @@ import {
 import { RunType } from "@/types/askOpenaiTypes.js";
 import httpError from "@/helpers/httpError.js";
 import updateAnalytics from "./updateAnalytics.js";
+import { urlToBase64 } from "@/helpers/utils.js";
 
 type Props = {
   toAnalyzeObjects: ToAnalyzeType[];
@@ -68,18 +69,22 @@ export default async function getDemographics({
     });
   }
 
+  const images = [];
+
+  for (const obj of toAnalyzeObjects) {
+    images.push({
+      type: "image_url",
+      image_url: {
+        url: await urlToBase64(obj.mainUrl.url),
+        detail: "low",
+      },
+    });
+  }
+
   const runs = [
     {
       isMini: false,
-      content: [
-        ...toAnalyzeObjects.map((object) => ({
-          type: "image_url",
-          image_url: {
-            url: object.mainUrl.url,
-            detail: "low",
-          },
-        })),
-      ],
+      content: images,
       responseFormat: zodResponseFormat(
         DemographicsResponseType,
         "demographics"

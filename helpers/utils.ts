@@ -154,3 +154,10 @@ export function cleanString(str: string) {
 export function keepNumbersAndCommas(str: string) {
   return str.replace(/[^0-9,]/g, "");
 }
+
+export async function urlToBase64(url: string): Promise<string> {
+  const response = await fetch(url);
+  const buffer = await response.arrayBuffer();
+  const contentType = response.headers.get("content-type");
+  return `data:${contentType};base64,${Buffer.from(buffer).toString("base64")}`;
+}

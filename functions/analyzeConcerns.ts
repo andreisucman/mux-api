@@ -16,6 +16,7 @@ import { db } from "init.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import httpError from "@/helpers/httpError.js";
 import updateConcernsAnalytics from "./updateConcernsAnalytics.js";
+import { urlToBase64 } from "@/helpers/utils.js";
 
 type Props = {
   userId: string;
@@ -80,16 +81,22 @@ export default async function analyzeConcerns({
         .describe(""),
     });
 
+    const images = [];
+
+    for (const obj of toAnalyzeObjects) {
+      images.push({
+        type: "image_url",
+        image_url: {
+          url: await urlToBase64(obj.mainUrl.url),
+          detail: "high",
+        },
+      })
+    }
+
     const userContent = [
       {
         isMini: false,
-        content: toAnalyzeObjects.map((object) => ({
-          type: "image_url",
-          image_url: {
-            url: object.mainUrl.url,
-            detail: "high",
-          },
-        })),
+        content: images,
         responseFormat: zodResponseFormat(
           ConcernsResponseType,
           "ConcernsResponseType"

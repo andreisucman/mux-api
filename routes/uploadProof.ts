@@ -4,7 +4,7 @@ import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import checkProofImage from "functions/checkProofImage.js";
-import { daysFrom } from "helpers/utils.js";
+import { daysFrom, urlToBase64 } from "helpers/utils.js";
 import isMajorityOfImagesIdentical from "functions/isMajorityOfImagesIdentical.js";
 import { extensionTypeMap } from "data/extensionTypeMap.js";
 import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
@@ -188,7 +188,7 @@ route.post(
             content: [
               {
                 type: "image_url",
-                image_url: { url: image },
+                image_url: { url: await urlToBase64(image) },
               },
             ],
           });

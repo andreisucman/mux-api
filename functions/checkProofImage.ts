@@ -4,6 +4,7 @@ import askRepeatedly from "functions/askRepeatedly.js";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import httpError from "@/helpers/httpError.js";
 import { CategoryNameEnum } from "@/types.js";
+import { urlToBase64 } from "@/helpers/utils.js";
 
 type Props = {
   image: string;
@@ -32,7 +33,7 @@ export default async function checkProofImage({
         content: [
           {
             type: "image_url",
-            image_url: { url: image, detail: "low" },
+            image_url: { url: await urlToBase64(image), detail: "low" },
           },
         ],
         responseFormat: zodResponseFormat(

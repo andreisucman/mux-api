@@ -8,6 +8,7 @@ import { CategoryNameEnum } from "types.js";
 import { ModerationStatusEnum, UserProgressRecordType } from "types.js";
 import { RunType } from "types/askOpenaiTypes.js";
 import httpError from "@/helpers/httpError.js";
+import { urlToBase64 } from "@/helpers/utils.js";
 
 type Props = {
   userImage?: string;
@@ -67,14 +68,14 @@ export default async function checkIfSelf({
             {
               type: "image_url",
               image_url: {
-                url: image,
+                url: await urlToBase64(image),
                 detail: "low",
               },
             },
             {
               type: "image_url",
               image_url: {
-                url: userImage,
+                url: await urlToBase64(userImage),
                 detail: "low",
               },
             },

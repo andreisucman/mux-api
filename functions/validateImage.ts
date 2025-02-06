@@ -4,6 +4,7 @@ import askRepeatedly from "functions/askRepeatedly.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import { CategoryNameEnum } from "@/types.js";
 import httpError from "@/helpers/httpError.js";
+import { urlToBase64 } from "@/helpers/utils.js";
 
 type Props = {
   userId: string;
@@ -32,7 +33,7 @@ export default async function validateImage({
           {
             type: "image_url",
             image_url: {
-              url: image,
+              url: await urlToBase64(image),
               detail: "low",
             },
           },

@@ -8,7 +8,6 @@ import { db, stripe } from "init.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
 import doWithRetries from "@/helpers/doWithRetries.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 

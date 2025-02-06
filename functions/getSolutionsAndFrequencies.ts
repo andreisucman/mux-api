@@ -1,6 +1,9 @@
 import { z } from "zod";
 import askRepeatedly from "functions/askRepeatedly.js";
-import { convertKeysAndValuesTotoSnakeCase } from "helpers/utils.js";
+import {
+  convertKeysAndValuesTotoSnakeCase,
+  urlToBase64,
+} from "helpers/utils.js";
 import incrementProgress from "helpers/incrementProgress.js";
 import {
   UserConcernType,
@@ -57,6 +60,8 @@ export default async function getSolutionsAndFrequencies({
         userId: String(userId),
       });
 
+    const relevantImage = partImages.find((imo) => imo.position === "front");
+
     const facialHairCheck: RunType = {
       isMini: true,
       content: [
@@ -67,7 +72,7 @@ export default async function getSolutionsAndFrequencies({
         {
           type: "image_url",
           image_url: {
-            url: partImages.find((imo) => imo.position === "front").mainUrl.url,
+            url: await urlToBase64(relevantImage.mainUrl.url),
             detail: "low",
           },
         },
@@ -170,6 +175,18 @@ export default async function getSolutionsAndFrequencies({
       type === "head" ? "dermatologist and dentist" : "fitness coach"
     }. The user tells you their concerns and solutions that they are going to use to improve them. Your goal is to tell how many times each solution should be used in a month to most effectively improve their concern based on their image. YOUR RESPONSE IS A TOTAL NUMBER OF APPLICATIONS IN A MONTH, NOT DAY OR WEEK. DON'T MODIFY THE NAMES OF CONCERNS AND SOLUTIONS.`;
 
+    const images = [];
+
+    for (const partImo of partImages) {
+      images.push({
+        type: "image_url" as "image_url",
+        image_url: {
+          url: await urlToBase64(partImo.mainUrl.url),
+          detail: "low" as "low",
+        },
+      });
+    }
+
     const findFrequenciesContentArray: RunType[] = [
       {
         isMini: false,
@@ -184,10 +201,7 @@ export default async function getSolutionsAndFrequencies({
             type: "text",
             text: "Here are the images of my concerns for your reference:",
           },
-          ...partImages.map((imo) => ({
-            type: "image_url" as "image_url",
-            image_url: { url: imo.mainUrl.url, detail: "low" as "low" },
-          })),
+          ...images,
         ],
         callback,
       },

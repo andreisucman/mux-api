@@ -29,6 +29,7 @@ import { PartResultType } from "@/types/analyzePartTypes.js";
 import { db } from "init.js";
 import checkIfSelf from "./checkIfSelf.js";
 import httpError from "@/helpers/httpError.js";
+import { urlToBase64 } from "@/helpers/utils.js";
 
 type Props = {
   userId: string;
@@ -72,7 +73,10 @@ export default async function analyzePart({
     for (const object of partToAnalyzeObjects) {
       const moderationResponse = await moderateContent({
         content: [
-          { type: "image_url", image_url: { url: object.mainUrl.url } },
+          {
+            type: "image_url",
+            image_url: { url: await urlToBase64(object.mainUrl.url) },
+          },
         ],
       });
 

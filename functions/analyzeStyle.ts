@@ -4,7 +4,7 @@ import incrementProgress from "@/helpers/incrementProgress.js";
 import { CategoryNameEnum, TypeEnum } from "types.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import { outlookStyles } from "data/outlookStyles.js";
-import { sortObjectByNumberValue } from "helpers/utils.js";
+import { sortObjectByNumberValue, urlToBase64 } from "helpers/utils.js";
 import askRepeatedly from "./askRepeatedly.js";
 import httpError from "@/helpers/httpError.js";
 
@@ -41,7 +41,7 @@ export default async function analyzeStyle({
           {
             type: "image_url" as "image_url",
             image_url: {
-              url: image,
+              url: await urlToBase64(image),
               detail: "low" as "low",
             },
           },
@@ -101,7 +101,7 @@ export default async function analyzeStyle({
           {
             type: "image_url" as "image_url",
             image_url: {
-              url: image,
+              url: await urlToBase64(image),
               detail: "low" as "low",
             },
           },

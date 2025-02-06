@@ -4,7 +4,7 @@ dotenv.config();
 import { CategoryNameEnum } from "@/types.js";
 import askTogether from "./askTogether.js";
 import httpError from "@/helpers/httpError.js";
-import { keepNumbersAndCommas } from "@/helpers/utils.js";
+import { keepNumbersAndCommas, urlToBase64 } from "@/helpers/utils.js";
 
 type Props = {
   userId: string;
@@ -29,7 +29,7 @@ export default async function checkPeopleSimilarity({
           {
             type: "image_url",
             image_url: {
-              url: image,
+              url: await urlToBase64(image),
             },
           },
         ],

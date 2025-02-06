@@ -7,6 +7,7 @@ import { SexEnum, TypeEnum, CategoryNameEnum } from "types.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import { FeaturePotentialAnalysisType } from "@/types/rateFeaturePotentialTypes.js";
 import httpError from "@/helpers/httpError.js";
+import { urlToBase64 } from "@/helpers/utils.js";
 
 type RateFeaturePotentialProps = {
   userId: string;
@@ -37,17 +38,23 @@ export default async function rateFeaturePotential({
 
     initialSystemContent += ` Be detailed. Don't recommend any solutions for improvement. Think step-by-step.`;
 
+    const base64Images = [];
+
+    for (const image of images) {
+      base64Images.push({
+        type: "image_url",
+        image_url: {
+          url: await urlToBase64(image),
+          detail: "low",
+        },
+      });
+    }
+
     const initialRuns = [
       {
         isMini: false,
         content: [
-          ...images.map((image) => ({
-            type: "image_url",
-            image_url: {
-              url: image,
-              detail: "low",
-            },
-          })),
+          ...base64Images,
           { type: "text", text: `The ${type} part to analyze is: ${feature}.` },
           {
             type: "text",

@@ -12,6 +12,7 @@ import {
 } from "types.js";
 import { FeatureAnalysisResultType } from "@/types/analyzeFeatureType.js";
 import httpError from "@/helpers/httpError.js";
+import { urlToBase64 } from "@/helpers/utils.js";
 
 type Props = {
   userId: string;
@@ -45,18 +46,22 @@ export default async function analyzeFeature({
       suggestion: z.string(),
     });
 
+    const base64Images = [];
+
+    for (const url of images) {
+      base64Images.push({
+        type: "image_url",
+        image_url: {
+          url: await urlToBase64(url),
+          detail: "high",
+        },
+      });
+    }
+
     const runs = [
       {
         isMini: false,
-        content: [
-          ...images.map((image) => ({
-            type: "image_url" as "image_url",
-            image_url: {
-              url: image,
-              detail: "high" as "high",
-            },
-          })),
-        ],
+        content: base64Images,
         responseFormat: zodResponseFormat(
           FeatureResponseFormatType,
           "analysis"

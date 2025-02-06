@@ -22,6 +22,7 @@ import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
 import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.js";
 import checkAndRecordTwin from "@/functions/checkAndRecordTwin.js";
+import { urlToBase64 } from "@/helpers/utils.js";
 
 const route = Router();
 
@@ -81,7 +82,9 @@ route.post(
 
       const { isSafe, isSuspicious, moderationResults } = await moderateContent(
         {
-          content: [{ type: "image_url", image_url: { url: image } }],
+          content: [
+            { type: "image_url", image_url: { url: await urlToBase64(image) } },
+          ],
         }
       );
 
