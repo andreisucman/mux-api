@@ -15,7 +15,7 @@ import updateAnalytics from "./updateAnalytics.js";
 export default async function handleConnectWebhook(event: any) {
   const object = event.data.object;
 
-  if (event.type !== "account.updated" && event.type !== "transfer.paid")
+  if (event.type !== "account.updated" && event.type !== "transfer.updated")
     return;
 
   const userInfo = await doWithRetries(async () =>
@@ -114,7 +114,7 @@ export default async function handleConnectWebhook(event: any) {
     }
   }
 
-  if (event.type === "transfer.paid") {
+  if (event.type === "transfer.updated") {
     try {
       const { amount, status } = object || {};
 
