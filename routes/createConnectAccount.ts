@@ -57,9 +57,11 @@ async function createAccountAndLink({ userId, params }: Props) {
       return { account, accLink, errorText };
     }
 
-    const agreementMustBeRecipient = err.raw.message.includes(
-      "you must either specify the `recipient` service agreement"
-    );
+    const agreementMustBeRecipient =
+      err.raw.message.includes(
+        "you must either specify the `recipient` service agreement"
+      ) ||
+      err.raw.message.includes("`recipient` service agreement is required for accounts");
 
     if (agreementMustBeRecipient) {
       const updatedParams = {

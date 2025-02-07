@@ -79,9 +79,11 @@ route.get(
         });
       }
 
-      let match: { [key: string]: any } = {
-        moderationStatus: ModerationStatusEnum.ACTIVE,
-      };
+      let match: { [key: string]: any } = {};
+
+      if (collection !== "solution") {
+        match.moderationStatus = ModerationStatusEnum.ACTIVE;
+      }
 
       if (followingUserName) {
         match.userName = followingUserName;

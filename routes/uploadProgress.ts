@@ -99,11 +99,11 @@ route.post(
         return;
       }
 
-      const isClearlyVisible = await checkImageVisibility({
-        categoryName: CategoryNameEnum.PROGRESSSCAN,
-        image,
-        userId,
-      });
+      // const isClearlyVisible = await checkImageVisibility({
+      //   categoryName: CategoryNameEnum.PROGRESSSCAN,
+      //   image,
+      //   userId,
+      // });
 
       // if (isClearlyVisible) {
       //   res.status(200).json({
@@ -113,19 +113,19 @@ route.post(
       //   return;
       // }
 
-      const { verdict: isPosiitonValid, message: changePositionMessage } =
-        await checkImagePosition({
-          image,
-          part,
-          position,
-          userId: finalUserId,
-          categoryName: CategoryNameEnum.PROGRESSSCAN,
-        });
+      // const { verdict: isPosiitonValid, message: changePositionMessage } =
+      //   await checkImagePosition({
+      //     image,
+      //     part,
+      //     position,
+      //     userId: finalUserId,
+      //     categoryName: CategoryNameEnum.PROGRESSSCAN,
+      //   });
 
-      if (!isPosiitonValid) {
-        res.status(200).json({ error: changePositionMessage });
-        return;
-      }
+      // if (!isPosiitonValid) {
+      //   res.status(200).json({ error: changePositionMessage });
+      //   return;
+      // }
 
       const userInfo = (await doWithRetries(async () =>
         db.collection("User").findOne(

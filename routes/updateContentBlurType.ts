@@ -138,7 +138,6 @@ route.post(
           {
             projection: {
               images: 1,
-              mainUrl: 1,
               urls: 1,
               thumbnails: 1,
               initialImages: 1,
@@ -179,7 +178,7 @@ route.post(
             )
         );
       } else {
-        const { mainUrl, urls, thumbnails } = relevantRecord;
+        const { urls, thumbnails } = relevantRecord;
 
         const existingBlurRecord = urls.find(
           (rec: { name: string }) => rec.name === blurType

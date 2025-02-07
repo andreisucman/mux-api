@@ -13,6 +13,7 @@ import { Sex } from "react-nice-avatar";
 import getUserInfo from "./getUserInfo.js";
 import createRandomName from "./createRandomName.js";
 import httpError from "@/helpers/httpError.js";
+import * as reactNiceAvatar from "react-nice-avatar";
 import { AboutQuestionType } from "@/types/saveAboutResponseTypes.js";
 import updateContentPublicity from "./updateContentPublicity.js";
 
@@ -55,10 +56,7 @@ export default async function createClubProfile({ userId }: Props) {
     const { demographics } = (userInfo as unknown as Partial<UserType>) || {};
     const { sex, ethnicity } = demographics;
 
-    const niceAvatar = await import("react-nice-avatar");
-    const { genConfig } = niceAvatar.default || niceAvatar;
-
-    const avatarConfig = genConfig({
+    const avatarConfig = reactNiceAvatar.default.genConfig({
       sex: avatarSexMap[sex || "male"] as Sex,
       faceColor: avatarSkinColorMap[ethnicity],
       mouthStyle: "peace",
