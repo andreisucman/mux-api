@@ -26,7 +26,6 @@ import { ModerationStatusEnum } from "types.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import analyzeCalories from "functions/analyzeCalories.js";
 import getStreaksToIncrement from "helpers/getStreaksToIncrement.js";
-import getScoreDifference from "helpers/getScoreDifference.js";
 import getReadyBlurredUrls from "functions/getReadyBlurredUrls.js";
 import selectItemsAtEqualDistances from "helpers/utils.js";
 import httpError from "@/helpers/httpError.js";
@@ -377,12 +376,6 @@ route.post(
         streakDates,
         timeZone,
       });
-
-      const { latestBodyScoreDifference, latestHeadScoreDifference } =
-        getScoreDifference({ latestScoresDifference, privacy });
-
-      newProof.latestHeadScoreDifference = latestHeadScoreDifference;
-      newProof.latestBodyScoreDifference = latestBodyScoreDifference;
 
       await doWithRetries(async () =>
         db.collection("Proof").insertOne(newProof)

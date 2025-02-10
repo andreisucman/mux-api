@@ -4,12 +4,10 @@ import getFeaturesToAnalyze from "helpers/getFeaturesToAnalyze.js";
 import analyzeFeature from "functions/analyzeFeature.js";
 import analyzeConcerns from "functions/analyzeConcerns.js";
 import analyzePotential from "functions/analyzePotential.js";
-import calculateHigherThanPart from "functions/calculateHigherThanPart.js";
 import formatRatings from "@/helpers/formatRatings.js";
 import {
   DemographicsType,
   ToAnalyzeType,
-  TypeEnum,
   UserConcernType,
   ProgressType,
   ClubDataType,
@@ -36,13 +34,12 @@ type Props = {
   name: string;
   avatar: { [key: string]: any } | null;
   blurType: BlurTypeEnum;
-  type: TypeEnum;
   part: PartEnum;
   club: ClubDataType;
   specialConsiderations: string;
   concerns: UserConcernType[] | null;
   demographics: DemographicsType;
-  toAnalyzeObjects: ToAnalyzeType[];
+  toAnalyze: ToAnalyzeType[];
   categoryName: CategoryNameEnum;
 };
 
@@ -51,26 +48,23 @@ export default async function analyzePart({
   name,
   avatar,
   club,
-  type,
   part,
   blurType,
   concerns = [],
   categoryName,
   demographics,
   specialConsiderations,
-  toAnalyzeObjects,
+  toAnalyze,
 }: Props): Promise<PartResultType> {
   try {
     const partConcerns = concerns.filter((obj) => obj.part === part);
-    const partToAnalyzeObjects = toAnalyzeObjects.filter(
-      (obj) => obj.part === part
-    );
+    const partToAnalyze = toAnalyze.filter((obj) => obj.part === part);
 
     let isSuspicious = false;
     let isSafe = false;
     let moderationResults: ModerationResultType[] = [];
 
-    for (const object of partToAnalyzeObjects) {
+    for (const object of partToAnalyze) {
       const moderationResponse = await moderateContent({
         content: [
           {
@@ -115,7 +109,6 @@ export default async function analyzePart({
     const featuresToAnalyze = getFeaturesToAnalyze({
       sex: demographics.sex,
       part,
-      type,
     });
 
     const appearanceAnalysisResults = await doWithRetries(async () =>
@@ -123,13 +116,12 @@ export default async function analyzePart({
         featuresToAnalyze.map((feature: string) =>
           doWithRetries(async () =>
             analyzeFeature({
-              type,
               part,
               userId,
               feature,
               categoryName,
               sex: demographics.sex,
-              toAnalyzeObjects: partToAnalyzeObjects,
+              toAnalyze: partToAnalyze,
             })
           )
         )
@@ -140,18 +132,17 @@ export default async function analyzePart({
       db
         .collection("AnalysisStatus")
         .updateOne(
-          { userId: new ObjectId(userId), operationKey: type },
+          { userId: new ObjectId(userId), operationKey: "progress" },
           { $inc: { progress: 2 } }
         )
     );
 
     const newConcerns = await analyzeConcerns({
-      type,
       part,
       userId,
       categoryName,
       sex: demographics.sex,
-      toAnalyzeObjects: partToAnalyzeObjects,
+      toAnalyze: partToAnalyze,
     });
 
     if (newConcerns && newConcerns.length > 0) {
@@ -167,9 +158,8 @@ export default async function analyzePart({
     const scoresAndExplanations = await analyzePotential({
       userId,
       categoryName,
-      type: type as TypeEnum,
       sex: demographics.sex,
-      toAnalyzeObjects: partToAnalyzeObjects,
+      toAnalyze: partToAnalyze,
       ageInterval: demographics.ageInterval,
       listOfFeatures: featuresToAnalyze,
       analysisResults: appearanceAnalysisResults,
@@ -179,7 +169,7 @@ export default async function analyzePart({
       db
         .collection("AnalysisStatus")
         .updateOne(
-          { userId: new ObjectId(userId), operationKey: type },
+          { userId: new ObjectId(userId), operationKey: "progress" },
           { $inc: { progress: 6 } }
         )
     );
@@ -189,28 +179,12 @@ export default async function analyzePart({
     /* add the record of progress to the Progress collection*/
     const scores = formatRatings(appearanceAnalysisResults);
 
-    /* calculate the higher than percentages */
-    const { partCurrentlyHigherThan, partPotentiallyHigherThan } =
-      await calculateHigherThanPart({
-        userId,
-        part,
-        type,
-        sex: demographics.sex,
-        ageInterval: demographics.ageInterval,
-        currentScore: scores.overall,
-        potentialScore: scoresAndExplanations.overall,
-      });
-
-    partResult.currentlyHigherThan = partCurrentlyHigherThan;
-    partResult.potentiallyHigherThan = partPotentiallyHigherThan;
-
     /* calculate the progress so far */
     let initialProgress = (await doWithRetries(async () =>
       db
         .collection("Progress")
         .find({
           userId: new ObjectId(userId),
-          type,
           part,
           moderationStatus: ModerationStatusEnum.ACTIVE,
         })
@@ -236,7 +210,7 @@ export default async function analyzePart({
       {}
     );
 
-    const images = partToAnalyzeObjects.map((record: ToAnalyzeType) => ({
+    const images = partToAnalyze.map((record: ToAnalyzeType) => ({
       position: record.position,
       mainUrl: record.mainUrl,
       urls: record.contentUrlTypes,
@@ -250,7 +224,6 @@ export default async function analyzePart({
     const recordOfProgress: ProgressType = {
       _id: new ObjectId(),
       userId: new ObjectId(userId),
-      type,
       part,
       scores,
       demographics,
@@ -268,7 +241,6 @@ export default async function analyzePart({
 
     const beforeAfterUpdate: BeforeAfterType = {
       images,
-      type,
       part,
       scores,
       demographics,
@@ -285,10 +257,10 @@ export default async function analyzePart({
         (rec: PrivacyType) => rec.name === "progress"
       );
 
-      const typePrivacy = progressPrivacy.types.find((pt) => pt.name === type);
+      const partPrivacy = progressPrivacy.types.find((pt) => pt.name === part);
 
-      recordOfProgress.isPublic = typePrivacy.value;
-      beforeAfterUpdate.isPublic = typePrivacy.value;
+      recordOfProgress.isPublic = partPrivacy.value;
+      beforeAfterUpdate.isPublic = partPrivacy.value;
 
       recordOfProgress.avatar = avatar;
       recordOfProgress.userName = name;
@@ -304,7 +276,7 @@ export default async function analyzePart({
       db
         .collection("BeforeAfter")
         .updateOne(
-          { userId: new ObjectId(userId), type, part },
+          { userId: new ObjectId(userId), part },
           { $set: beforeAfterUpdate },
           { upsert: true }
         )

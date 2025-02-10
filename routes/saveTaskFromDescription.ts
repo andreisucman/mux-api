@@ -42,7 +42,7 @@ route.post(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const {
       sex,
-      type,
+      part,
       description,
       instruction,
       startDate,
@@ -56,7 +56,7 @@ route.post(
       !startDate ||
       !frequency ||
       !sex ||
-      !type
+      !part
     ) {
       res.status(400).json({ error: "Bad request" });
       return;
@@ -100,7 +100,7 @@ route.post(
       const { satisfies, condition } = await checkIfTaskIsRelated({
         userId: req.userId,
         text,
-        type,
+        part,
         categoryName: CategoryNameEnum.TASKS,
       });
 
@@ -111,7 +111,7 @@ route.post(
 
       await doWithRetries(async () =>
         db.collection("AnalysisStatus").updateOne(
-          { userId: new ObjectId(req.userId), operationKey: type },
+          { userId: new ObjectId(req.userId), operationKey: "routine" },
           {
             $set: { isRunning: true, progress: 1 },
             $unset: { isError: "" },
@@ -127,7 +127,7 @@ route.post(
           .collection("Concern")
           .find(
             {
-              types: { $in: [type] },
+              parts: { $in: [part] },
               $or: [{ sex }, { sex: "all" }],
             },
             { projection: { key: 1 } }
@@ -139,7 +139,7 @@ route.post(
         db.collection("Routine").findOne({
           userId: new ObjectId(req.userId),
           status: RoutineStatusEnum.ACTIVE,
-          type,
+          part,
         })
       )) || { _id: new ObjectId() };
 
@@ -172,9 +172,6 @@ route.post(
           .describe(
             "Number of days the user should rest before repeating this activity"
           ),
-        part: z
-          .enum(["face", "mouth", "scalp", "body", "health"])
-          .describe("The part of the body the task is most related to"),
       });
 
       const listOfConcernNames = JSON.stringify(
@@ -202,7 +199,7 @@ route.post(
         userId: req.userId,
         categoryName: CategoryNameEnum.TASKS,
         functionName: "saveTaskFromDescription",
-      })
+      });
 
       const userInfo = await getUserInfo({
         userId: req.userId,
@@ -210,7 +207,7 @@ route.post(
       });
 
       await incrementProgress({
-        operationKey: type,
+        operationKey: "routine",
         userId: req.userId,
         increment: 10,
       });
@@ -237,7 +234,7 @@ route.post(
         userName: userInfo.name,
         isCreated: true,
         color,
-        type,
+        part,
         revisionDate: daysFrom({ date: otherResponse.startsAt, days: 30 }),
       };
 
@@ -250,14 +247,14 @@ route.post(
       });
 
       await incrementProgress({
-        operationKey: type,
+        operationKey: "routine",
         userId: req.userId,
         increment: 25,
       });
 
       await doWithRetries(async () =>
         db.collection("AnalysisStatus").updateOne(
-          { userId: new ObjectId(req.userId), operationKey: type },
+          { userId: new ObjectId(req.userId), operationKey: "routine" },
           {
             $inc: { progress: 25 },
           }
@@ -389,7 +386,7 @@ route.post(
       const lastRoutineDate = dates[dates.length - 1];
 
       await incrementProgress({
-        operationKey: type,
+        operationKey: "routine",
         userId: req.userId,
         increment: 20,
       });
@@ -397,8 +394,7 @@ route.post(
       const payload: Partial<RoutineType> = {
         ...latestRelevantRoutine,
         userId: new ObjectId(req.userId),
-        type,
-        part: generalTaskInfo.part,
+        part,
         concerns,
         allTasks,
         finalSchedule,
@@ -415,7 +411,7 @@ route.post(
       }
 
       await incrementProgress({
-        operationKey: type,
+        operationKey: "routine",
         userId: req.userId,
         increment: 15,
       });
@@ -444,7 +440,7 @@ route.post(
 
       await doWithRetries(async () =>
         db.collection("AnalysisStatus").updateOne(
-          { userId: new ObjectId(req.userId), operationKey: type },
+          { userId: new ObjectId(req.userId), operationKey: "routine" },
           {
             $set: { isRunning: false, progress: 0 },
             $unset: { isError: "" },
@@ -456,7 +452,7 @@ route.post(
         userId: req.userId,
         message: "An unexpected error occured. Please try again.",
         originalMessage: err.message,
-        operationKey: type,
+        operationKey: "routine",
       });
       next(err);
     }

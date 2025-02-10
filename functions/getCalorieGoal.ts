@@ -7,13 +7,13 @@ import httpError from "@/helpers/httpError.js";
 import { urlToBase64 } from "@/helpers/utils.js";
 
 type Props = {
-  toAnalyzeObjects: ToAnalyzeType[];
+  toAnalyze: ToAnalyzeType[];
   userId: string;
   categoryName: CategoryNameEnum;
 };
 
 export default async function getCalorieGoal({
-  toAnalyzeObjects,
+  toAnalyze,
   userId,
   categoryName,
 }: Props) {
@@ -22,8 +22,8 @@ export default async function getCalorieGoal({
 
     const CalorieGoalResponseType = z.number();
 
-    const frontalBody = toAnalyzeObjects.find(
-      (obj) => obj.type === "body" && obj.position === "front"
+    const frontalBody = toAnalyze.find(
+      (obj) => obj.part === "body" && obj.position === "front"
     );
 
     if (!frontalBody)

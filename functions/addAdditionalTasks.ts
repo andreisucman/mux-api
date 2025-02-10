@@ -6,8 +6,6 @@ import getRawSchedule from "functions/getRawSchedule.js";
 import {
   UserConcernType,
   TaskType,
-  TypeEnum,
-  PartEnum,
   CategoryNameEnum,
   ProgressImageType,
 } from "@/types.js";
@@ -23,11 +21,9 @@ import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import addDateAndIdsToAllTasks from "@/helpers/addDateAndIdsToAllTasks.js";
 
 type Props = {
-  type: TypeEnum;
-  part: PartEnum;
-  partImages: ProgressImageType[];
+  images: ProgressImageType[];
   categoryName: CategoryNameEnum;
-  partConcerns: UserConcernType[];
+  concerns: UserConcernType[];
   currentTasks: TaskType[];
   currentSchedule: { [key: string]: ScheduleTaskType[] };
   userInfo: CreateRoutineUserInfoType;
@@ -35,11 +31,9 @@ type Props = {
 };
 
 export default async function addAdditionalTasks({
-  type,
-  part,
   userInfo,
-  partImages,
-  partConcerns,
+  images,
+  concerns,
   currentTasks,
   currentSchedule,
   allSolutions,
@@ -51,10 +45,8 @@ export default async function addAdditionalTasks({
     const solutionsAndFrequencies = await doWithRetries(async () =>
       getSolutionsAndFrequencies({
         userId: String(userId),
-        type,
-        part,
-        partImages,
-        partConcerns,
+        images,
+        concerns,
         specialConsiderations,
         allSolutions,
         demographics,
@@ -66,7 +58,7 @@ export default async function addAdditionalTasks({
       db
         .collection("AnalysisStatus")
         .updateOne(
-          { userId: new ObjectId(userId), operationKey: type },
+          { userId: new ObjectId(userId), operationKey: "routine" },
           { $inc: { progress: 2 } }
         )
     );
@@ -79,14 +71,13 @@ export default async function addAdditionalTasks({
     const rawNewSchedule = await doWithRetries(async () =>
       getRawSchedule({
         solutionsAndFrequencies: filteredSolutionsAndFrequencies,
-        concerns: partConcerns,
+        concerns: concerns,
         days: 6,
       })
     );
 
     const mergedSchedule = await doWithRetries(async () =>
       mergeSchedules({
-        type,
         rawNewSchedule,
         currentSchedule,
         userId: String(userId),
@@ -98,7 +89,7 @@ export default async function addAdditionalTasks({
       db
         .collection("AnalysisStatus")
         .updateOne(
-          { userId: new ObjectId(userId), operationKey: type },
+          { userId: new ObjectId(userId), operationKey: "routine" },
           { $inc: { progress: 3 } }
         )
     );
@@ -109,8 +100,6 @@ export default async function addAdditionalTasks({
         allSolutions,
         categoryName,
         userInfo,
-        type,
-        part,
       })
     );
 
@@ -126,7 +115,7 @@ export default async function addAdditionalTasks({
     };
   } catch (error) {
     await addAnalysisStatusError({
-      operationKey: type,
+      operationKey: "routine",
       userId: String(userId),
       message: "An unexpected error occured. Please try again.",
       originalMessage: error.message,

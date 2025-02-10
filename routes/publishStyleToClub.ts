@@ -36,8 +36,6 @@ route.post(
               "demographics.sex": 1,
               latestStyleAnalysis: 1,
               latestProgress: 1,
-              "latestScoresDifference.head.overall": 1,
-              "latestScoresDifference.body.overall": 1,
             },
           }
         )
@@ -51,9 +49,6 @@ route.post(
         res.status(200).json({ error: "You need to join the Club first." });
         return;
       }
-      const { latestScoresDifference } = userInfo || {};
-      const { head: headScoreDifference, body: bodyScoreDifference } =
-        latestScoresDifference || {};
 
       const relevantStyle = await doWithRetries(async () =>
         db.collection("StyleAnalysis").findOne(
@@ -80,8 +75,7 @@ route.post(
       }
 
       const { latestProgress, name, avatar } = userInfo;
-      const { head } = latestProgress;
-      const { face } = head;
+      const { face } = latestProgress;
 
       const userImage = face.images.find(
         (imageObj) => imageObj.position === "front"
@@ -101,17 +95,13 @@ route.post(
         return;
       }
 
-      const { type } = relevantStyle;
       const { privacy } = club;
 
-      const stylePrivacies = privacy.find((pr) => pr.name === "style");
-      const relevantPrivacyType = stylePrivacies.types.find(
-        (tp) => tp.name === type
-      );
+      const stylePrivacy = privacy.find((pr) => pr.name === "style");
 
-      if (!relevantPrivacyType.value) {
+      if (!stylePrivacy.value) {
         res.status(200).json({
-          error: `You need to enable the ${type} data sharing in the club settings to be able to publish to Club.`,
+          error: `You need to enable the style data sharing in the club settings to be able to publish to Club.`,
         });
         return;
       }
@@ -124,8 +114,6 @@ route.post(
               avatar,
               isPublic: true,
               userName: name,
-              latestHeadScoreDifference: headScoreDifference.overall,
-              latestBodyScoreDifference: bodyScoreDifference.overall,
             },
           }
         )

@@ -5,6 +5,5 @@ export type FeatureAnalysisResultType = {
   explanation: string;
   suggestion: string;
   feature: string;
-  type: TypeEnum;
   part: PartEnum;
 };

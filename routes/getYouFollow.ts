@@ -26,8 +26,6 @@ route.get(
         avatar: 1,
         "club.privacy": 1,
         "club.bio": 1,
-        latestScores: 1,
-        latestScoresDifference: 1,
       };
 
       let userInfo: Partial<UserType> = {};
@@ -71,42 +69,16 @@ route.get(
 
       if (!userInfo) throw httpError(`User ${followingUserName} not found`);
 
-      const { _id, club, name, avatar, latestScores, latestScoresDifference } =
-        userInfo as GetYouFollowUserType;
+      const { _id, club, name, avatar } = userInfo as GetYouFollowUserType;
 
-      const { bio, privacy } = club;
+      const { bio } = club;
 
       const result: { [key: string]: any } = {
         _id,
         name,
         avatar,
         bio,
-        scores: {},
       };
-
-      const progressPrivacy = privacy.find(
-        (privacy) => privacy.name === "progress"
-      );
-
-      const progressHeadPublic = progressPrivacy.types.find(
-        (tp) => tp.name === "head"
-      ).value;
-
-      const progressBodyPublic = progressPrivacy.types.find(
-        (tp) => tp.name === "body"
-      ).value;
-
-      if (progressHeadPublic) {
-        result.scores.headCurrentScore = latestScores.head.overall;
-        result.scores.headTotalProgress = latestScoresDifference.head.overall;
-      }
-
-      if (progressBodyPublic) {
-        result.scores.bodyCurrentScore = latestScores.body.overall;
-        result.scores.bodyTotalProgress = latestScoresDifference.body.overall;
-      }
-
-      if (Object.keys(result.scores).length === 0) result.scores = null;
 
       res.status(200).json({ message: result });
     } catch (err) {

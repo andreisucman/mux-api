@@ -8,8 +8,6 @@ import incrementProgress from "helpers/incrementProgress.js";
 import {
   UserConcernType,
   AllTaskType,
-  TypeEnum,
-  PartEnum,
   CategoryNameEnum,
   DemographicsType,
   ProgressImageType,
@@ -21,13 +19,11 @@ import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 
 type Props = {
-  type: TypeEnum;
-  part: PartEnum;
   userId: string;
   specialConsiderations: string;
   allSolutions: CreateRoutineAllSolutionsType[];
-  partConcerns: UserConcernType[];
-  partImages: ProgressImageType[];
+  concerns: UserConcernType[];
+  images: ProgressImageType[];
   categoryName: CategoryNameEnum;
   demographics: DemographicsType;
 };
@@ -35,32 +31,28 @@ type Props = {
 export default async function getSolutionsAndFrequencies({
   specialConsiderations,
   allSolutions,
-  partConcerns,
+  concerns,
   categoryName,
-  partImages,
+  images,
   demographics,
   userId,
-  type,
-  part,
 }: Props) {
   const { sex } = demographics;
 
-  const concernsNames = partConcerns.map((c) => c.name);
+  const concernsNames = concerns.map((c) => c.name);
 
   const checkFacialHair =
-    sex === "male" &&
-    part === "face" &&
-    concernsNames.includes("ungroomed_facial_hair");
+    sex === "male" && concernsNames.includes("ungroomed_facial_hair");
 
   try {
     const callback = () =>
       incrementProgress({
-        operationKey: type,
+        operationKey: "routine",
         increment: 1,
         userId: String(userId),
       });
 
-    const relevantImage = partImages.find((imo) => imo.position === "front");
+    const relevantImage = images.find((imo) => imo.position === "front");
 
     const facialHairCheck: RunType = {
       isMini: true,
@@ -80,16 +72,12 @@ export default async function getSolutionsAndFrequencies({
       callback,
     };
 
-    const allSolutionsList = allSolutions.map((obj) => obj.key);
+    const allSolutionsList = allSolutions.map((obj) => obj.key).join(", ");
 
-    const findSolutionsInstruction = `You are a ${
-      type === "head" ? "dermatologist and dentist" : "fitness coach"
-    }. The user gives you a list of their concerns. Your goal is to select all solutions for each of their concerns from this list of solutions: ${allSolutionsList.join(
-      ", "
-    )}. DON'T MODIFY THE NAMES OF CONCERNS AND SOLUTIONS. Be concise and to the point.`;
+    const findSolutionsInstruction = `You are a dermatologist, dentist and a fitness coach. The user gives you a list of their concerns. Your goal is to select all solutions for each of their concerns from this list of solutions: ${allSolutionsList}. DON'T MODIFY THE NAMES OF CONCERNS AND SOLUTIONS. Be concise and to the point.`;
 
-    const allConcerns = partConcerns.map((co) => co.name);
-    const concernsWithExplanations = partConcerns.map(
+    const allConcerns = concerns.map((co) => co.name);
+    const concernsWithExplanations = concerns.map(
       (concern, index) =>
         `${index + 1}: ${concern.name}. Details: ${concern.explanation} ##`
     );
@@ -171,14 +159,12 @@ export default async function getSolutionsAndFrequencies({
       });
 
     /* come up with frequencies for the solutions */
-    const findFrequenciesInstruction = `You are a ${
-      type === "head" ? "dermatologist and dentist" : "fitness coach"
-    }. The user tells you their concerns and solutions that they are going to use to improve them. Your goal is to tell how many times each solution should be used in a month to most effectively improve their concern based on their image. YOUR RESPONSE IS A TOTAL NUMBER OF APPLICATIONS IN A MONTH, NOT DAY OR WEEK. DON'T MODIFY THE NAMES OF CONCERNS AND SOLUTIONS.`;
+    const findFrequenciesInstruction = `You are a dermatologist, dentist and a fitness coach. The user tells you their concerns and solutions that they are going to use to improve them. Your goal is to tell how many times each solution should be used in a month to most effectively improve their concern based on their image. YOUR RESPONSE IS A TOTAL NUMBER OF APPLICATIONS IN A MONTH, NOT DAY OR WEEK. DON'T MODIFY THE NAMES OF CONCERNS AND SOLUTIONS.`;
 
-    const images = [];
+    const formattedImages = [];
 
-    for (const partImo of partImages) {
-      images.push({
+    for (const partImo of images) {
+      formattedImages.push({
         type: "image_url" as "image_url",
         image_url: {
           url: await urlToBase64(partImo.mainUrl.url),
@@ -201,7 +187,7 @@ export default async function getSolutionsAndFrequencies({
             type: "text",
             text: "Here are the images of my concerns for your reference:",
           },
-          ...images,
+          ...formattedImages,
         ],
         callback,
       },

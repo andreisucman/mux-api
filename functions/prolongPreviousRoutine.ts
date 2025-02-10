@@ -5,8 +5,6 @@ import {
   UserConcernType,
   TaskStatusEnum,
   TaskType,
-  TypeEnum,
-  PartEnum,
   CategoryNameEnum,
   RoutineStatusEnum,
   ProgressImageType,
@@ -24,21 +22,17 @@ import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import combineAllTasks from "@/helpers/combineAllTasks.js";
 
 type Props = {
-  type: TypeEnum;
-  part: PartEnum;
-  partImages: ProgressImageType[];
+  images: ProgressImageType[];
   categoryName: CategoryNameEnum;
-  partConcerns: UserConcernType[];
+  concerns: UserConcernType[];
   tasksToProlong: TaskType[];
   allSolutions: CreateRoutineAllSolutionsType[];
   userInfo: CreateRoutineUserInfoType;
 };
 
 export default async function prolongPreviousRoutine({
-  type,
-  part,
-  partImages,
-  partConcerns,
+  images,
+  concerns,
   categoryName,
   allSolutions,
   userInfo,
@@ -61,7 +55,7 @@ export default async function prolongPreviousRoutine({
     const resetTasks: TaskType[] = [];
 
     /* reset fields */
-    const concernsList = partConcerns.map((obj) => obj.name);
+    const concernsList = concerns.map((obj) => obj.name);
 
     for (const draft of tasksToProlong) {
       const { _id, ...rest } = draft;
@@ -84,8 +78,6 @@ export default async function prolongPreviousRoutine({
         status: TaskStatusEnum.ACTIVE,
         startsAt,
         expiresAt,
-        type,
-        part,
         isSubmitted: false,
       };
 
@@ -157,13 +149,11 @@ export default async function prolongPreviousRoutine({
 
     const { additionalAllTasks, additionalTasksToInsert, mergedSchedule } =
       await addAdditionalTasks({
-        type,
-        part,
         userInfo,
-        partImages,
+        images,
         categoryName,
         allSolutions,
-        partConcerns,
+        concerns,
         currentTasks: resetTasks,
         currentSchedule: schedule,
       });
@@ -185,13 +175,11 @@ export default async function prolongPreviousRoutine({
         userId: new ObjectId(userId),
         userName,
         finalSchedule,
-        concerns: partConcerns,
+        concerns: concerns,
         status: RoutineStatusEnum.ACTIVE,
         createdAt: new Date(),
         lastDate: new Date(lastDate),
         allTasks: finalRoutineAllTasks,
-        type,
-        part,
       })
     );
 

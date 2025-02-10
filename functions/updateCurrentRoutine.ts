@@ -3,7 +3,6 @@ import doWithRetries from "helpers/doWithRetries.js";
 import { calculateDaysDifference } from "helpers/utils.js";
 import {
   UserConcernType,
-  TypeEnum,
   PartEnum,
   CategoryNameEnum,
   RoutineStatusEnum,
@@ -24,11 +23,9 @@ import addDateAndIdsToAllTasks from "@/helpers/addDateAndIdsToAllTasks.js";
 import combineAllTasks from "@/helpers/combineAllTasks.js";
 
 type Props = {
-  type: TypeEnum;
-  part: PartEnum;
   routineId: string;
-  partImages: ProgressImageType[];
-  partConcerns: UserConcernType[];
+  images: ProgressImageType[];
+  concerns: UserConcernType[];
   allSolutions: CreateRoutineAllSolutionsType[];
   userInfo: CreateRoutineUserInfoType;
   specialConsiderations: string;
@@ -36,10 +33,8 @@ type Props = {
 };
 
 export default async function updateCurrentRoutine({
-  type,
-  part,
-  partImages,
-  partConcerns,
+  images,
+  concerns,
   routineId,
   allSolutions,
   userInfo,
@@ -77,19 +72,17 @@ export default async function updateCurrentRoutine({
         specialConsiderations,
         allSolutions,
         categoryName,
-        partConcerns,
+        concerns,
         demographics: userInfo.demographics,
         userId: String(userId),
-        partImages,
-        part,
-        type,
+        images,
       })
     );
 
     const rawSchedule = await doWithRetries(async () =>
       getRawSchedule({
         solutionsAndFrequencies,
-        concerns: partConcerns,
+        concerns,
         days: daysDifference,
       })
     );
@@ -100,13 +93,10 @@ export default async function updateCurrentRoutine({
         currentSchedule: currentRoutine.finalSchedule,
         userId: String(userId),
         categoryName,
-        type,
       })
     );
 
     let tasksToInsert = await createTasks({
-      part,
-      type,
       userInfo,
       allSolutions,
       categoryName,
@@ -131,7 +121,7 @@ export default async function updateCurrentRoutine({
 
     const allUniqueConcerns: UserConcernType[] = [
       ...currentRoutine.concerns,
-      ...partConcerns,
+      ...concerns,
     ].filter((obj, i, arr) => arr.findIndex((o) => o.name === obj.name) === i);
 
     await doWithRetries(async () =>

@@ -1,48 +1,31 @@
-import { NextActionType, ToAnalyzeType, TypeEnum } from "types.js";
+import { NextActionType, ToAnalyzeType } from "types.js";
 
 type Props = {
-  type: TypeEnum;
-  toAnalyze: { head: ToAnalyzeType[]; body: ToAnalyzeType[] };
-  nextScan: NextActionType;
+  toAnalyze: ToAnalyzeType[];
+  nextScan: NextActionType[];
 };
 
-export default function checkCanScan({ nextScan, toAnalyze, type }: Props) {
-  const typeToAnalyze = toAnalyze[type as "head"];
-  const typeScan = nextScan.find((obj) => obj.type === type);
+export default function checkCanScan({ nextScan, toAnalyze }: Props) {
+  const canScanParts = nextScan
+    .filter((scan) => !scan.date || scan.date > new Date())
+    .map((obj) => obj.part);
 
-  if (typeToAnalyze.length === 0) {
-    if (typeScan.date > new Date()) {
-      return {
-        canScan: false,
-        canScanDate: typeScan.date,
-      };
-    }
-  }
+  const filteredToAnalyze = toAnalyze.filter((taObj) =>
+    canScanParts.includes(taObj.part)
+  );
 
-  if (!typeScan.parts) {
-    return {
-      canScan: true,
-      canScanDate: new Date(),
-    };
-  }
+  const canScanDate =
+    nextScan && nextScan.length
+      ? Math.min(
+          ...nextScan.map((r) =>
+            r.date ? new Date(r.date).getTime() : Infinity
+          )
+        )
+      : null;
 
-  let earliestCanScanDate = new Date();
-
-  for (const analysis of typeToAnalyze) {
-    const relevantPart = typeScan.parts.find(
-      (obj) => obj.part === analysis.part
-    );
-    if (
-      relevantPart.date > new Date() &&
-      relevantPart.date < earliestCanScanDate
-    ) {
-      earliestCanScanDate = relevantPart.date;
-    }
-  }
-
-  if (earliestCanScanDate > new Date()) {
-    return { canScan: false, canScanDate: earliestCanScanDate };
-  }
-
-  return { canScan: true, canScanDate: new Date() };
+  return {
+    canScan: canScanParts.length > 0,
+    filteredToAnalyze,
+    canScanDate: new Date(Math.round(canScanDate)),
+  };
 }

@@ -15,16 +15,20 @@ import { daysFrom } from "helpers/utils.js";
 import setUtcMidnight from "@/helpers/setUtcMidnight.js";
 import { db } from "init.js";
 import getUserInfo from "@/functions/getUserInfo.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { description, type, timeZone = "America/New_York" } = req.body;
+    const {
+      description,
+      part,
+      concern,
+      timeZone = "America/New_York",
+    } = req.body;
 
-    if (!description || !type) {
+    if (!description) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
@@ -36,15 +40,13 @@ route.post(
         projection: { nextScan: 1 },
       });
 
-      const finalType = type === "head" ? type : "body";
-
       const relevantScanType = userInfo.nextScan.find(
-        (obj) => obj.type === finalType
+        (obj) => obj.part === part
       );
 
       if (new Date() >= new Date(relevantScanType.date)) {
         res.status(200).json({
-          error: `You need to scan your ${finalType} first.`,
+          error: `You need to scan your ${part} first.`,
         });
         return;
       }
@@ -93,27 +95,17 @@ route.post(
         return;
       }
 
-      const { satisfies } = await checkIfTaskIsRelated({
+      const satisfies = await checkIfTaskIsRelated({
         userId: req.userId,
         text: description,
         categoryName: CategoryNameEnum.TASKS,
-        type,
+        part,
       });
 
       if (!satisfies) {
-        let error;
-        switch (type) {
-          case "head":
-            error = `You can only create head improvement tasks in the Head mode. To create other type of tasks change the mode to Body or Health.`;
-            break;
-          case "head":
-            error = `You can only create body improvement tasks in the Body mode. To create other type of tasks change the mode to Head or Health.`;
-            break;
-          case "health":
-            error = `You can only create food and health related tasks in the Health mode. To create other type of tasks change the mode to Head or Body.`;
-            break;
-        }
-        res.status(200).json({ error });
+        res
+          .status(200)
+          .json({ error: `The activity is not related to ${part}.` });
         return;
       }
 
@@ -134,6 +126,10 @@ route.post(
             {
               type: "text",
               text: `Activity description: ${description}`,
+            },
+            {
+              type: "text",
+              text: `Concern targeted: ${concern}. Relevant part of the body: ${part}.`,
             },
           ],
           model:

@@ -18,15 +18,16 @@ import formatDate from "helpers/formatDate.js";
 import httpError from "@/helpers/httpError.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import { db } from "init.js";
+import checkCanRoutine from "@/helpers/checkCanRoutine.js";
 
 const route = Router();
 
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { concerns, type, part, specialConsiderations } = req.body;
+    const { concerns, specialConsiderations } = req.body;
 
-    if (!concerns || !type) {
+    if (!concerns) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
@@ -55,24 +56,27 @@ route.post(
         concerns: existingConcerns = [],
       } = userInfo;
 
-      const relevantTypeRoutine = nextRoutine.find((obj) => obj.type === type);
+      if (concerns.length === 0) {
+        // if the user disables all concerns
+        res.status(400).json({ error: "Bad request" });
+        return;
+      }
 
-      const cooldown = new Date() < new Date(relevantTypeRoutine.date);
+      const { canRoutine, availableRoutines, canRoutineDate } = checkCanRoutine(
+        {
+          nextScan,
+          nextRoutine,
+        }
+      );
 
-      if (cooldown) {
+      if (canRoutine) {
         const formattedDate = formatDate({
-          date: new Date(relevantTypeRoutine.date),
+          date: new Date(canRoutineDate),
           hideYear: true,
         });
         res.status(200).json({
           error: `You can generate a routine once a week only. Try again after ${formattedDate}.`,
         });
-        return;
-      }
-
-      if (concerns.length === 0) {
-        // if the user disables all concerns
-        res.status(400).json({ error: "Bad request" });
         return;
       }
 
@@ -92,68 +96,23 @@ route.post(
         db
           .collection("AnalysisStatus")
           .updateOne(
-            { userId: new ObjectId(req.userId), operationKey: type },
+            { userId: new ObjectId(req.userId), operationKey: "routine" },
             { $set: { isRunning: true, progress: 1, isError: false } },
             { upsert: true }
           )
       );
 
-      let updatedNextRoutine;
+      await createRoutine({
+        userId: req.userId,
+        concerns,
+        specialConsiderations,
+        categoryName: CategoryNameEnum.TASKS,
+      });
 
-      if (part) {
-        await createRoutine({
-          type,
-          part,
-          userId: req.userId,
-          concerns,
-          specialConsiderations,
-          categoryName: CategoryNameEnum.TASKS,
-        });
-
-        updatedNextRoutine = updateNextRoutine({
-          nextRoutine,
-          parts: [part],
-          type,
-        });
-      } else {
-        /* to prevent cases when the user creates all routines and routines for not analyzed parts are created too */
-        const relevantScan = nextScan.find((obj) => obj.type === type);
-        const scannedParts = relevantScan.parts.filter((obj) =>
-          Boolean(obj.date)
-        );
-        /* to prevent cases when the user creates all routines and routines for parts in cooldown are created too */
-        const relevantRoutine = nextRoutine.find((obj) => obj.type === type);
-        const partsInCooldown = relevantRoutine.parts.filter(
-          (obj) => Boolean(obj.date) && new Date(obj.date) > new Date()
-        );
-        const partsInCooldownKeys = partsInCooldown.map((p) => p.part);
-
-        const availableParts = scannedParts
-          .map((p) => p.part)
-          .filter((part) => !partsInCooldownKeys.includes(part));
-
-        const promises = availableParts.map((partKey) =>
-          doWithRetries(
-            async () =>
-              await createRoutine({
-                type,
-                userId: req.userId,
-                part: partKey,
-                concerns,
-                specialConsiderations,
-                categoryName: CategoryNameEnum.TASKS,
-              })
-          )
-        );
-
-        await Promise.all(promises);
-
-        updatedNextRoutine = updateNextRoutine({
-          nextRoutine,
-          parts: availableParts,
-          type,
-        });
-      }
+      const updatedNextRoutine = updateNextRoutine({
+        nextRoutine,
+        parts: availableRoutines,
+      });
 
       await doWithRetries(async () =>
         db.collection("User").updateOne(
@@ -174,7 +133,7 @@ route.post(
         db
           .collection("AnalysisStatus")
           .updateOne(
-            { userId: new ObjectId(req.userId), operationKey: type },
+            { userId: new ObjectId(req.userId), operationKey: "routine" },
             { $set: { isRunning: false, progress: 99 } }
           )
       );

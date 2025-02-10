@@ -1,12 +1,11 @@
 import askRepeatedly from "functions/askRepeatedly.js";
 import incrementProgress from "helpers/incrementProgress.js";
 import { RunType } from "types/askOpenaiTypes.js";
-import { TypeEnum, CategoryNameEnum } from "types.js";
+import { CategoryNameEnum } from "types.js";
 import httpError from "helpers/httpError.js";
 
 type Props = {
   description: string;
-  type: TypeEnum;
   categoryName: CategoryNameEnum;
   instruction: string;
   userInfo: { [key: string]: any };
@@ -19,12 +18,11 @@ export default async function personalizeInstruction({
   userInfo,
   categoryName,
   name,
-  type,
 }: Props) {
   const { city, country, specialConsiderations, _id: userId } = userInfo;
 
   const callback = () =>
-    incrementProgress({ operationKey: type, userId, increment: 1 });
+    incrementProgress({ operationKey: "routine", userId, increment: 1 });
 
   try {
     const systemContent = `The user gives you a name, description, and instruction of a task. Your goal is to modify the instruction such that it closely aligns with the description, user's location, and current date. Be concise and to the point. Think step-by-step.`;

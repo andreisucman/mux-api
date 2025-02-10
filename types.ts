@@ -21,11 +21,7 @@ export type HigherThanType = {
   body: { overall: number; body: number };
 };
 
-export type NextActionType = {
-  type: TypeEnum;
-  date: Date | null;
-  parts: { part: PartEnum; date: Date | null }[];
-}[];
+export type NextActionType = { part: PartEnum; date: Date | null };
 
 export type RequirementType = {
   title: string;
@@ -35,20 +31,18 @@ export type RequirementType = {
   position: PositionEnum;
 };
 
-export type UserPotentialRecordType = {
-  head: {
-    overall: number;
-    face: FormattedRatingType;
-    mouth: FormattedRatingType;
-    scalp: FormattedRatingType;
-  };
-  body: { overall: number; body: FormattedRatingType };
-};
-
 export type FormattedRatingType = {
   explanations?: { feature: string; explanation: string }[];
 } & {
   [key: string]: number;
+};
+
+export type LatestScoresType = {
+  overall: number;
+  face: number;
+  mouth: number;
+  scalp: number;
+  body: number;
 };
 
 export type UserType = {
@@ -67,11 +61,9 @@ export type UserType = {
   createdAt: Date;
   specialConsiderations: string;
   streaks: StreaksType;
-  latestProgress: UserProgressRecordType;
-  currentlyHigherThan: HigherThanType;
-  potentiallyHigherThan: HigherThanType;
-  nextScan: NextActionType;
-  nextRoutine: NextActionType;
+  latestProgress: LatestProgressType;
+  nextScan: NextActionType[];
+  nextRoutine: NextActionType[];
   streakDates: {
     default: {
       [key: string]: Date;
@@ -81,12 +73,9 @@ export type UserType = {
     };
   };
   concerns: UserConcernType[] | null;
-  potential: UserPotentialRecordType;
+  potential: PotentialType;
   tosAccepted: boolean;
-  requiredProgress: {
-    head: RequirementType[];
-    body: RequirementType[];
-  };
+  requiredProgress: RequirementType[];
   latestScores: LatestScoresType;
   latestScoresDifference: LatestScoresType;
   club: ClubDataType;
@@ -96,14 +85,8 @@ export type UserType = {
     peek: SubscriptionType;
     advisor: SubscriptionType;
   };
-  latestStyleAnalysis: {
-    head: StyleAnalysisType | null;
-    body: StyleAnalysisType | null;
-  };
-  toAnalyze: {
-    head: ToAnalyzeType[];
-    body: ToAnalyzeType[];
-  };
+  latestStyleAnalysis: StyleAnalysisType | null;
+  toAnalyze: ToAnalyzeType[];
   coachEnergy: number;
   stripeUserId: string;
   emailVerified: boolean;
@@ -121,7 +104,6 @@ export type UserType = {
 };
 
 export type ToAnalyzeType = {
-  type: TypeEnum | null;
   createdAt: Date;
   mainUrl: BlurredUrlType;
   contentUrlTypes: BlurredUrlType[];
@@ -144,7 +126,6 @@ export type StyleAnalysisType = {
   votes: number;
   compareVotes: number;
   demographics: DemographicsType;
-  type: TypeEnum;
   goalStyle: StyleGoalsType | null;
   hash: string;
   styleIcon: string;
@@ -154,8 +135,6 @@ export type StyleAnalysisType = {
   currentSuggestion: string;
   matchSuggestion: string;
   isPublic: boolean;
-  latestHeadScoreDifference: number;
-  latestBodyScoreDifference: number;
   analysis: { [key: string]: number } | null;
   compareAnalysis: { [key: string]: number } | null;
   userName: string | null;
@@ -215,16 +194,6 @@ export type ClubDataType = {
   payouts: ClubPayoutDataType;
   privacy: PrivacyType[];
   totalFollowers: number;
-};
-
-export type LatestScoresType = {
-  head: {
-    overall: number;
-    face: number;
-    mouth: number;
-    scalp: number;
-  } | null;
-  body: { overall: number; body: number } | null;
 };
 
 export type DemographicsType = {
@@ -331,17 +300,14 @@ export type StreaksType = {
   mouthStreak: number;
   scalpStreak: number;
   bodyStreak: number;
-  healthStreak: number;
   clubFaceStreak: number;
   clubMouthStreak: number;
   clubScalpStreak: number;
   clubBodyStreak: number;
-  clubHealthStreak: number;
 };
 
 export type UserConcernType = {
   name: string;
-  type: TypeEnum;
   part: PartEnum;
   explanation: string;
   importance: number;
@@ -382,7 +348,6 @@ export enum CategoryNameEnum {
 export type ProgressType = {
   _id: ObjectId;
   userId: ObjectId;
-  type: TypeEnum;
   part: PartEnum;
   initialDate: Date;
   createdAt: Date;
@@ -400,14 +365,20 @@ export type ProgressType = {
   moderationStatus: ModerationStatusEnum;
 };
 
-export type UserProgressRecordType = {
-  head: {
-    overall: number;
-    face: ProgressType;
-    mouth: ProgressType;
-    scalp: ProgressType;
-  };
-  body: { overall: number; body: ProgressType };
+export type LatestProgressType = {
+  overall: number;
+  face: ProgressType;
+  mouth: ProgressType;
+  scalp: ProgressType;
+  body: ProgressType;
+};
+
+export type PotentialType = {
+  overall: number;
+  face: FormattedRatingType;
+  mouth: FormattedRatingType;
+  scalp: FormattedRatingType;
+  body: FormattedRatingType;
 };
 
 export type RecipeType = {
@@ -509,7 +480,6 @@ export type BeforeAfterType = {
   isPublic: boolean;
   avatar?: { [key: string]: any };
   userName?: string;
-  type: TypeEnum;
   part: PartEnum;
 };
 

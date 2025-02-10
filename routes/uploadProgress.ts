@@ -6,7 +6,6 @@ import doWithRetries from "helpers/doWithRetries.js";
 import {
   CustomRequest,
   ToAnalyzeType,
-  TypeEnum,
   PartEnum,
   BlurTypeEnum,
   ModerationStatusEnum,
@@ -22,9 +21,7 @@ import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import analyzeAppearance from "functions/analyzeAppearance.js";
 import formatDate from "@/helpers/formatDate.js";
 import httpError from "@/helpers/httpError.js";
-import checkImagePosition from "@/functions/checkImagePosition.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
-import checkImageVisibility from "@/functions/checkImageVisibility.js";
 import checkAndRecordTwin from "@/functions/checkAndRecordTwin.js";
 
 const route = Router();
@@ -33,7 +30,6 @@ type Props = {
   image: string;
   blurredImage: string;
   contentUrlTypes: string[];
-  type: TypeEnum;
   part: PartEnum;
   position: string;
   userId: string;
@@ -47,7 +43,6 @@ route.post(
     const {
       image,
       blurredImage,
-      type,
       position,
       part,
       userId,
@@ -57,7 +52,7 @@ route.post(
 
     const finalUserId = req.userId || userId;
 
-    if (!image || !type || !position || !finalUserId) {
+    if (!image || !position || !finalUserId) {
       res.status(400).json({
         message: "Bad request",
       });
@@ -72,7 +67,6 @@ route.post(
           requestUserId: req.userId,
           registryFilter: {
             category: "progress",
-            type,
             part,
             position,
           },
@@ -179,8 +173,8 @@ route.post(
         potentiallyHigherThan,
       } = userInfo;
 
-      const { canScan, canScanDate } =
-        checkCanScan({ nextScan, toAnalyze, type }) || {};
+      const { canScan, filteredToAnalyze, canScanDate } =
+        checkCanScan({ nextScan, toAnalyze }) || {};
 
       if (!canScan) {
         const date = formatDate({ date: canScanDate });
@@ -191,18 +185,10 @@ route.post(
       }
 
       /* remove the current uploaded info from the remaining requirements */
-      const typeProgressRequirements = requiredProgress[type as "head"];
-
-      const remainingRequirements: ProgressType[] =
-        typeProgressRequirements.filter(
-          (record: ProgressType) =>
-            record.part !== part || record.position !== position
-        );
-
-      const newRequiredProgress = {
-        ...requiredProgress,
-        [type]: remainingRequirements,
-      };
+      const remainingRequirements: ProgressType[] = requiredProgress.filter(
+        (record: ProgressType) =>
+          record.part !== part || record.position !== position
+      );
 
       const contentUrlTypes = [];
 
@@ -216,7 +202,6 @@ route.post(
 
       /* add the current uploaded info to the info to analyze */
       const newToAnalyzeObject: ToAnalyzeType = {
-        type,
         part,
         position,
         createdAt: new Date(),
@@ -224,30 +209,22 @@ route.post(
         contentUrlTypes,
       };
 
-      const newTypeToAnalyze = [
-        ...toAnalyze[type as "head"],
-        newToAnalyzeObject,
-      ];
-
-      const newToAnalyze: { head: ToAnalyzeType[]; body: ToAnalyzeType[] } = {
-        ...toAnalyze,
-        [type]: newTypeToAnalyze,
-      };
+      const newToAnalyze = [...filteredToAnalyze, newToAnalyzeObject];
 
       let toUpdate: { $set: { [key: string]: any } } = {
         $set: {
-          requiredProgress: { ...newRequiredProgress },
-          toAnalyze: { ...newToAnalyze },
+          requiredProgress: remainingRequirements,
+          toAnalyze: newToAnalyze,
         },
       };
 
       /* when all required info is uploaded start the analysis */
-      if (requiredProgress[type as "head"].length === 1) {
+      if (requiredProgress.length === 1) {
         await doWithRetries(async () =>
           db
             .collection("AnalysisStatus")
             .updateOne(
-              { userId: new ObjectId(finalUserId), operationKey: type },
+              { userId: new ObjectId(finalUserId), operationKey: "progress" },
               { $set: { isRunning: true, progress: 1, isError: null } },
               { upsert: true }
             )
@@ -255,7 +232,7 @@ route.post(
 
         res.status(200).json({
           message: {
-            requiredProgress: newRequiredProgress,
+            requiredProgress: remainingRequirements,
             toAnalyze: newToAnalyze,
           },
         });
@@ -263,14 +240,11 @@ route.post(
         await analyzeAppearance({
           name,
           avatar,
-          type,
           club,
           nutrition,
           userId: finalUserId,
           blurType,
-          currentlyHigherThan,
-          potentiallyHigherThan,
-          defaulttoUpdateUser: toUpdate,
+          defaultToUpdateUser: toUpdate,
           concerns: concerns || [],
           nextScan,
           potential,
@@ -294,7 +268,7 @@ route.post(
         );
         res.status(200).json({
           message: {
-            requiredProgress: newRequiredProgress,
+            requiredProgress: remainingRequirements,
             toAnalyze: newToAnalyze,
           },
         });
@@ -306,7 +280,7 @@ route.post(
       });
     } catch (err) {
       await addAnalysisStatusError({
-        operationKey: type,
+        operationKey: "progress",
         userId: String(finalUserId),
         message: "An unexprected error occured. Please try again.",
         originalMessage: err.message,

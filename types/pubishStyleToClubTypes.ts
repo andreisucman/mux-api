@@ -1,9 +1,9 @@
 import {
   ClubDataType,
   DemographicsType,
+  LatestProgressType,
   LatestScoresType,
   StyleAnalysisType,
-  UserProgressRecordType,
 } from "types.js";
 
 export type PublishToClubUserInfoType = {
@@ -12,7 +12,7 @@ export type PublishToClubUserInfoType = {
   avatar: { [key: string]: any };
   latestStyleAnalysis: { head?: StyleAnalysisType; body?: StyleAnalysisType };
   latestScoresDifference: LatestScoresType;
+  latestProgress: LatestProgressType;
   demographics: DemographicsType;
-  latestProgress: UserProgressRecordType;
   club: ClubDataType;
 };

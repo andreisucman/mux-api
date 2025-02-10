@@ -4,9 +4,7 @@ import { daysFrom } from "helpers/utils.js";
 import {
   UserConcernType,
   TaskStatusEnum,
-  TypeEnum,
   TaskType,
-  PartEnum,
   ModerationStatusEnum,
   CategoryNameEnum,
 } from "@/types.js";
@@ -25,16 +23,12 @@ import { db } from "init.js";
 
 type Props = {
   userId: string;
-  type: TypeEnum;
-  part: PartEnum;
   categoryName: CategoryNameEnum;
   concerns: UserConcernType[];
   specialConsiderations: string;
 };
 
 export default async function createRoutine({
-  type,
-  part,
   userId,
   categoryName,
   concerns,
@@ -67,11 +61,7 @@ export default async function createRoutine({
 
     if (!userInfo) throw new Error("This user doesn't exist");
 
-    const partConcerns = concerns.filter(
-      (c) => c.type === type && c.part === part
-    );
-
-    const concernNames = partConcerns.map((obj) => obj.name);
+    const concernNames = concerns.map((obj) => obj.name);
 
     const allSolutions = (await doWithRetries(async () =>
       db
@@ -107,7 +97,6 @@ export default async function createRoutine({
       userId,
       days: 30,
       statuses: ["canceled"] as TaskStatusEnum[],
-      type,
     });
 
     const daysToProlong = 7;
@@ -117,8 +106,6 @@ export default async function createRoutine({
       db.collection("Task").findOne(
         {
           userId: new ObjectId(userId),
-          type,
-          part,
           status: TaskStatusEnum.ACTIVE,
         },
         { projection: { routineId: 1 } }
@@ -141,7 +128,6 @@ export default async function createRoutine({
                 nextCanStartDate: { $lte: new Date() },
               },
             ],
-            part,
           },
           { projection: { _id: 0 } }
         )
@@ -149,15 +135,13 @@ export default async function createRoutine({
         .toArray()
     )) as unknown as TaskType[];
 
-    const partImages = await getUsersImages({ userId, part });
+    const images = await getUsersImages({ userId });
 
     if (existingActiveTask) {
       await updateCurrentRoutine({
-        type,
-        part,
-        partImages,
+        images,
         routineId: existingActiveTask.routineId,
-        partConcerns,
+        concerns,
         userInfo,
         allSolutions,
         categoryName,
@@ -165,10 +149,8 @@ export default async function createRoutine({
       });
     } else if (draftTasksToProlong.length > 0) {
       await prolongPreviousRoutine({
-        type,
-        part,
-        partImages,
-        partConcerns,
+        images,
+        concerns,
         userInfo,
         allSolutions,
         tasksToProlong: draftTasksToProlong,
@@ -176,12 +158,10 @@ export default async function createRoutine({
       });
     } else {
       await makeANewRoutine({
-        type,
-        part,
         userId,
-        partImages,
+        images,
         userInfo,
-        partConcerns,
+        concerns,
         allSolutions,
         specialConsiderations,
         categoryName,
@@ -192,7 +172,7 @@ export default async function createRoutine({
       userId: String(userId),
       message: "An unexpected error occured. Please try again.",
       originalMessage: error.message,
-      operationKey: type,
+      operationKey: "routine",
     });
     throw httpError(error);
   }

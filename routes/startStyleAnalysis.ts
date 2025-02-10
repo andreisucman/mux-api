@@ -4,7 +4,6 @@ import { db } from "init.js";
 import {
   CustomRequest,
   StyleAnalysisType,
-  PrivacyType,
   ModerationStatusEnum,
   CategoryNameEnum,
 } from "types.js";
@@ -13,7 +12,6 @@ import { outlookStyles } from "@/data/outlookStyles.js";
 import { createHashKey } from "functions/createHashKey.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import getReadyBlurredUrls from "functions/getReadyBlurredUrls.js";
-import getScoreDifference from "@/helpers/getScoreDifference.js";
 import getStyleCompareRecord from "functions/getStyleCompareRecord.js";
 import { StartStyleAnalysisUserInfoType } from "types/startStyleAnalysisTypes.js";
 import moderateContent from "@/functions/moderateContent.js";
@@ -29,7 +27,7 @@ const route = Router();
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { image, type, blurType, localUserId } = req.body;
+    const { image, blurType, localUserId } = req.body;
 
     const finalUserId = req.userId || localUserId;
 
@@ -73,7 +71,7 @@ route.post(
         db.collection("AnalysisStatus").updateOne(
           {
             userId: new ObjectId(finalUserId),
-            operationKey: `style-${type}`,
+            operationKey: "style",
           },
           { $set: { isRunning: true, progress: 1, isError: null } },
           { upsert: true }
@@ -140,7 +138,6 @@ route.post(
       const styleAnalysisResponse = await analyzeStyle({
         userId: finalUserId,
         image,
-        type,
         categoryName: CategoryNameEnum.STYLESCAN,
       });
 
@@ -151,8 +148,7 @@ route.post(
         scores,
       } = styleAnalysisResponse;
 
-      const existingTypeAnaysis = latestStyleAnalysis?.[type as "head"];
-      const { _id, ...restExisting } = existingTypeAnaysis || {};
+      const { _id, ...restExisting } = latestStyleAnalysis || {};
 
       let mainUrl = { name: "original" as "original", url: image };
       let urls = [mainUrl];
@@ -190,10 +186,7 @@ route.post(
         userId: new ObjectId(finalUserId),
         ...restExisting,
         demographics: userInfo.demographics,
-        latestHeadScoreDifference: 0,
-        latestBodyScoreDifference: 0,
         goalStyle: null,
-        type,
         hash,
         mainUrl,
         urls,
@@ -219,33 +212,18 @@ route.post(
       };
 
       if (privacy) {
-        const stylePrivacies = privacy.find((pr) => pr.name === "style");
-        const relevantTypePrivacy = stylePrivacies.types.find(
-          (tp: PrivacyType) => tp.name === type
-        );
-
-        styleAnalysis.isPublic = relevantTypePrivacy.value;
+        const stylePrivacy = privacy.find((pr) => pr.name === "style");
+        styleAnalysis.isPublic = stylePrivacy.value;
       }
 
       if (userInfo) {
-        const { latestBodyScoreDifference, latestHeadScoreDifference } =
-          getScoreDifference({ latestScoresDifference, privacy });
-
-        styleAnalysis.latestHeadScoreDifference = latestHeadScoreDifference;
-        styleAnalysis.latestBodyScoreDifference = latestBodyScoreDifference;
-
-        const newLatestAnalysis = {
-          ...latestStyleAnalysis,
-          [type]: styleAnalysis,
-        };
-
         await doWithRetries(async () =>
           db.collection("User").updateOne(
             {
               _id: new ObjectId(req.userId),
               moderationStatus: ModerationStatusEnum.ACTIVE,
             },
-            { $set: { latestStyleAnalysis: newLatestAnalysis } }
+            { $set: { latestStyleAnalysis: styleAnalysis } }
           )
         );
       }
@@ -258,7 +236,7 @@ route.post(
         db.collection("AnalysisStatus").updateOne(
           {
             userId: new ObjectId(finalUserId),
-            operationKey: `style-${type}`,
+            operationKey: "style",
           },
           { $set: { isRunning: false, progress: 0, isError: null } }
         )
@@ -290,7 +268,7 @@ route.post(
     } catch (err) {
       await addAnalysisStatusError({
         userId: String(finalUserId),
-        operationKey: `style-${type}`,
+        operationKey: "style",
         message: "An unexpected error occured. Please try again.",
         originalMessage: err.message,
       });

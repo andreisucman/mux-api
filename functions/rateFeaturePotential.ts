@@ -3,7 +3,7 @@ import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import askRepeatedly from "functions/askRepeatedly.js";
 import criteria from "data/featureCriteria.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
-import { SexEnum, TypeEnum, CategoryNameEnum } from "types.js";
+import { SexEnum, CategoryNameEnum } from "types.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import { FeaturePotentialAnalysisType } from "@/types/rateFeaturePotentialTypes.js";
 import httpError from "@/helpers/httpError.js";
@@ -12,7 +12,6 @@ import { urlToBase64 } from "@/helpers/utils.js";
 type RateFeaturePotentialProps = {
   userId: string;
   sex: SexEnum;
-  type: TypeEnum;
   currentScore: number;
   feature: string;
   categoryName: CategoryNameEnum;
@@ -23,7 +22,6 @@ type RateFeaturePotentialProps = {
 export default async function rateFeaturePotential({
   userId,
   sex,
-  type,
   currentScore,
   feature,
   categoryName,
@@ -31,10 +29,7 @@ export default async function rateFeaturePotential({
   images,
 }: RateFeaturePotentialProps) {
   try {
-    let initialSystemContent =
-      type === "body"
-        ? `You are given the user's images, a grading criteria, the body part and its esthetics score. Your goal is to come up with the HIGHERST POSSIBLE esthetic beauty score achievable for that body part based on the grading criteria. <-->1. Describe the current condition from the images. Talk about the specific muscle groups, the extent of muscle sculpting, the development of the relevant muscle groups relative to the other body parts, etc. 2. Think what would be the highest potential score this person can achieve based on their age and any permanent structural defects (if present). 3. Give your detailed reasoning about why you think the potential score is this an not higher or lower?`
-        : `You are given the user's images, a grading criteria, the body part and its esthetics score. Your goal is to come up with the HIGHERST POSSIBLE esthetic beauty score achievable for that body part based on the grading criteria. <-->1. Describe the current condition from the images. Talk about the relevant attributes of the face part such as wrinkles, texture, color, elasticity, pigmentation, excess of hair, lack of hair etc. 2. Think what would be the highest potential score this person can achieve based on their age and any permanent structural defects (if present). 3. Give your detailed reasoning about why you think the potential score is this an not higher or lower?`;
+    let initialSystemContent = `You are given the user's images, a grading criteria, the body part and its esthetics score. Your goal is to come up with the HIGHERST POSSIBLE esthetic beauty score achievable for that body part based on the grading criteria. <-->1. Describe the current condition from the images. Talk about the relevant attributes such as wrinkles, texture, color, elasticity, pigmentation, excess of hair, lack of hair, muscle eveopment, fat deposits etc. 2. Think what would be the highest potential score this person can achieve based on their age and any permanent structural defects (if present). 3. Give your detailed reasoning about why you think the potential score is this an not higher or lower?`;
 
     initialSystemContent += ` Be detailed. Don't recommend any solutions for improvement. Think step-by-step.`;
 
@@ -55,7 +50,7 @@ export default async function rateFeaturePotential({
         isMini: false,
         content: [
           ...base64Images,
-          { type: "text", text: `The ${type} part to analyze is: ${feature}.` },
+          { type: "text", text: `The part to analyze is: ${feature}.` },
           {
             type: "text",
             text: `The user's current esthetic score is: ${currentScore}.`,
@@ -64,14 +59,12 @@ export default async function rateFeaturePotential({
           {
             type: "text",
             text: `Grading criteria is: ${
-              criteria[sex as SexEnum.FEMALE][type as TypeEnum.BODY][
-                feature as "belly"
-              ]
+              criteria[sex as SexEnum.FEMALE][feature as "belly"]
             }.`,
           },
         ],
         callback: () =>
-          incrementProgress({ operationKey: type, userId, increment: 1 }),
+          incrementProgress({ operationKey: "progress", userId, increment: 1 }),
       },
     ];
 
@@ -105,7 +98,7 @@ export default async function rateFeaturePotential({
         content: [
           {
             type: "text",
-            text: `The ${type} part to analyze is: ${feature}.<-->The user's current score is: ${currentScore}<-->The user's highest potential score is: ${
+            text: `The part to analyze is: ${feature}.<-->The user's current score is: ${currentScore}<-->The user's highest potential score is: ${
               initialResponse.score
             }<-->The user's age interval is: ${ageInterval}.<-->The user's sex is: ${
               sex === "all" ? "male or female" : sex
@@ -117,7 +110,7 @@ export default async function rateFeaturePotential({
           "rateFeaturePotentialRephraseOne"
         ),
         callback: () =>
-          incrementProgress({ operationKey: type, userId, increment: 1 }),
+          incrementProgress({ operationKey: "progress", userId, increment: 1 }),
       },
     ];
 
@@ -137,7 +130,6 @@ export default async function rateFeaturePotential({
       score: rate,
       explanation: explanation,
       feature,
-      type,
     };
 
     return updated;

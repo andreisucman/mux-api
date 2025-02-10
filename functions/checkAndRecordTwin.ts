@@ -13,7 +13,6 @@ type Props = {
   payloadUserId: string;
   image?: string;
   registryFilter?: { [key: string]: any };
-  ip?: string;
   categoryName: CategoryNameEnum;
 };
 

@@ -7,7 +7,7 @@ import recalculateLatestProgress from "@/functions/recalculateLatestProgress.js"
 import doWithRetries from "@/helpers/doWithRetries.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import { defaultUser } from "@/data/defaultUser.js";
-import { CustomRequest, NextActionType, ProgressType } from "types.js";
+import { CustomRequest, ProgressType } from "types.js";
 import { db } from "@/init.js";
 import httpError from "@/helpers/httpError.js";
 
@@ -56,23 +56,18 @@ route.post(
       switch (collectionKey) {
         case "progress":
           const {
-            demographics,
             _id: userId,
-            currentlyHigherThan,
-            potentiallyHigherThan,
             potential,
             latestScores,
             nextScan,
             latestScoresDifference,
           } = userInfo;
-          const { ageInterval, sex } = demographics;
 
           const substituteProgressRecord = (await doWithRetries(async () =>
             db
-              .collection(collectionMap[collectionKey])
+              .collection("Progress")
               .find({
                 userId: new ObjectId(req.userId),
-                type: recordToDelete.type,
                 part: recordToDelete.part,
               })
               .sort({ _id: -1 })
@@ -83,13 +78,8 @@ route.post(
 
           if (substituteProgressRecord) {
             recalculatedData = await recalculateLatestProgress({
-              sex,
-              ageInterval,
               potential,
               latestScores,
-              userId: String(userId),
-              currentlyHigherThan,
-              potentiallyHigherThan,
               latestScoresDifference,
               substituteProgressRecord,
             });
@@ -109,7 +99,6 @@ route.post(
               db.collection("BeforeAfter").updateOne(
                 {
                   userId: new ObjectId(userId),
-                  type: recordToDelete.type,
                   part: recordToDelete.part,
                 },
                 { $set: toUpdatePayload }
@@ -121,41 +110,26 @@ route.post(
               latestScores: defaultUser.latestScores,
               potential: defaultUser.potential,
               latestScoresDifference: defaultUser.latestScoresDifference,
-              currentlyHigherThan: defaultUser.currentlyHigherThan,
-              potentiallyHigherThan: defaultUser.potentiallyHigherThan,
             };
 
             await doWithRetries(() =>
               db.collection("BeforeAfter").deleteOne({
                 userId: new ObjectId(userId),
-                type: recordToDelete.type,
                 part: recordToDelete.part,
               })
             );
           }
 
           if (substituteProgressRecord) {
-            const relevantTypeScan = (nextScan as NextActionType).find(
-              (rec) => rec.type === substituteProgressRecord.type
-            );
-
-            if (!relevantTypeScan) throw httpError("Type scan not found");
-
-            const relevantPartScan = relevantTypeScan.parts.find(
+            const relevantScan = nextScan.find(
               (rec) => rec.part === substituteProgressRecord.part
             );
 
-            if (!relevantPartScan) throw httpError("Part scan not found");
+            if (!relevantScan) throw httpError("Type scan not found");
 
-            const newPartScans = relevantTypeScan.parts.map((rec) =>
-              rec.part === relevantPartScan.part
-                ? { ...relevantPartScan, date: new Date() }
-                : rec
-            );
-
-            const newTypeScans = (nextScan as NextActionType).map((rec) =>
-              rec.type === relevantTypeScan.type
-                ? { ...relevantTypeScan, parts: newPartScans, date: new Date() }
+            const newPartScans = nextScan.map((rec) =>
+              rec.part === relevantScan.part
+                ? { ...relevantScan, date: new Date() }
                 : rec
             );
 
@@ -164,38 +138,27 @@ route.post(
                 { _id: new ObjectId(req.userId) },
                 {
                   $set: recalculatedData,
-                  nextScan: {
-                    ...nextScan,
-                    [substituteProgressRecord.type]: newTypeScans,
-                  },
+                  nextScan: newPartScans,
                 }
               )
             );
           }
           break;
         case "style":
-          const { latestStyleAnalysis } = userInfo;
-
           const substituteStyleRecord = await doWithRetries(async () =>
             db
-              .collection(collectionMap[collectionKey])
+              .collection("StyleAnalysis")
               .find({
                 userId: new ObjectId(req.userId),
-                type: recordToDelete.type,
               })
               .sort({ _id: -1 })
               .next()
           );
 
-          let newLatestStyleAnalysis;
+          let newLatestStyleAnalysis = null;
 
           if (substituteStyleRecord) {
-            newLatestStyleAnalysis = {
-              ...latestStyleAnalysis,
-              [recordToDelete.type]: substituteStyleRecord,
-            };
-          } else {
-            newLatestStyleAnalysis = defaultUser.latestStyleAnalysis;
+            newLatestStyleAnalysis = substituteStyleRecord;
           }
 
           await doWithRetries(async () =>

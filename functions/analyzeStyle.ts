@@ -9,7 +9,6 @@ import askRepeatedly from "./askRepeatedly.js";
 import httpError from "@/helpers/httpError.js";
 
 type Props = {
-  type: TypeEnum;
   userId: string;
   image: string;
   categoryName: CategoryNameEnum;
@@ -18,21 +17,10 @@ type Props = {
 export default async function analyzeStyle({
   image,
   categoryName,
-  type,
   userId,
 }: Props) {
   try {
-    let analysisSystemContent = `You are given the names and descriptions of different outlook styles. Your goals are: 1) rate the user's appearance from 0 to 10 for each style based on how closely it matches that style 2) tell which style from the list the user is closest to in one word (e.g. minimalist).`;
-
-    if (type === "head") {
-      analysisSystemContent += `In your analysis consider only the head and neck parts of the person. Analyze the person's face shape, facial features, hair style, hair type, hair length, facial jewellery, tattoes and accessories. Ignore clothing.`;
-    }
-
-    if (type === "body") {
-      analysisSystemContent += `In your analysis consider only the body parts of the person. Analyze the person's physique, proportions, clothing, shoes, accessories, tattoes. Ignore facial features and hair style, focus on attire.`;
-    }
-
-    analysisSystemContent += `Think step-by-step. Use only the information provided.`;
+    const analysisSystemContent = `You are given the names and descriptions of different outlook styles. Your goals are: 1) rate the user's appearance from 0 to 10 for each style based on how closely it matches that style 2) tell which style from the list the user is closest to in one word (e.g. minimalist). Analyze the person's facial features, hair style, physique, proportions, clothing, shoes, accessories, tattoes. Think step-by-step. Use only the information provided.`;
 
     const runs = [
       {
@@ -55,7 +43,7 @@ export default async function analyzeStyle({
         ],
         callback: () =>
           incrementProgress({
-            operationKey: `style-${type}`,
+            operationKey: "style",
             increment: 5,
             userId,
           }),
@@ -70,7 +58,7 @@ export default async function analyzeStyle({
         ],
         callback: () =>
           incrementProgress({
-            operationKey: `style-${type}`,
+            operationKey: "style",
             increment: 10,
             userId,
           }),
@@ -86,13 +74,7 @@ export default async function analyzeStyle({
       functionName: "analyzeStyle",
     });
 
-    const currentSuggestionsSystemContent = `The user gives you their image. Your goal is to check if there are any tweaks ${
-      type === "head"
-        ? "SPECIFIC TO THEIR HEAD AND NECK ONLY"
-        : "SPECIFIC TO THEIR OUTFIT ONLY"
-    } that could improve the appearance of the user. If there are any suggestions be specific and describe what the user should do in detail. If there are no suggestions describe why the user looks good. Consider only ${
-      type === "head" ? "head and neck areas" : "outfit"
-    } in your analysis. Avoid skincare tips.`;
+    const currentSuggestionsSystemContent = `The user gives you their image. Your goal is to check if there are any tweaks that could improve the appearance of the user. If there are any suggestions be specific and describe what the user should do in detail. If there are no suggestions describe why the user looks good. Avoid skincare tips.`;
 
     const suggestionRuns = [
       {
@@ -108,7 +90,7 @@ export default async function analyzeStyle({
         ],
         callback: () =>
           incrementProgress({
-            operationKey: `style-${type}`,
+            operationKey: "style",
             increment: 15,
             userId,
           }),
@@ -119,14 +101,12 @@ export default async function analyzeStyle({
         content: [
           {
             type: "text" as "text",
-            text: `Look at the user's hair texture, skin color, face shape, weight. Is there anything the user can change in their ${
-              type === "head" ? "grooming and accessories" : "outfit"
-            } that would make them look better given their features?. If yes, give a detailed step-by-step instructions on what needs to be done and what will be the result. If not, speak about why the user's outlook has nothing to suggest. If something is not clear, don't suggest it. Avoid general tips. Speak about the user's specific features and how your suggestion improves them. Avoid giving a choice, be definite.`,
+            text: `Look at the user's hair texture, skin color, face shape, weight. Is there anything the user can change in their outlook that would make them look better given their features?. If yes, give a detailed step-by-step instructions on what needs to be done and what will be the result. If not, speak about why the user's outlook has nothing to suggest. If something is not clear, don't suggest it. Avoid general tips. Speak about the user's specific features and how your suggestion improves them. Avoid giving a choice, be definite.`,
           },
         ],
         callback: () =>
           incrementProgress({
-            operationKey: `style-${type}`,
+            operationKey: "style",
             increment: 5,
             userId,
           }),
@@ -173,7 +153,7 @@ export default async function analyzeStyle({
         ],
         callback: () =>
           incrementProgress({
-            operationKey: `style-${type}`,
+            operationKey: "style",
             increment: 5,
             userId,
           }),

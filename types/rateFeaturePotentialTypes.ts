@@ -5,5 +5,4 @@ export type FeaturePotentialAnalysisType = {
   score: number;
   explanation: string;
   feature: string;
-  type: TypeEnum;
 };

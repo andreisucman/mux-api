@@ -7,7 +7,6 @@ import getSolutionsAndFrequencies from "functions/getSolutionsAndFrequencies.js"
 import deactivatePreviousRoutineAndTasks from "functions/deactivatePreviousRoutineAndTasks.js";
 import {
   UserConcernType,
-  TypeEnum,
   PartEnum,
   CategoryNameEnum,
   RoutineStatusEnum,
@@ -24,11 +23,9 @@ import addDateAndIdsToAllTasks from "@/helpers/addDateAndIdsToAllTasks.js";
 
 type Props = {
   userId: string;
-  type: TypeEnum;
-  part: PartEnum;
-  partImages: ProgressImageType[];
+  images: ProgressImageType[];
   userInfo: CreateRoutineUserInfoType;
-  partConcerns: UserConcernType[];
+  concerns: UserConcernType[];
   specialConsiderations: string;
   categoryName: CategoryNameEnum;
   allSolutions: CreateRoutineAllSolutionsType[];
@@ -36,11 +33,9 @@ type Props = {
 
 export default async function makeANewRoutine({
   userId,
-  type,
-  part,
-  partImages,
+  images,
   userInfo,
-  partConcerns,
+  concerns,
   categoryName,
   specialConsiderations,
   allSolutions,
@@ -50,13 +45,11 @@ export default async function makeANewRoutine({
       getSolutionsAndFrequencies({
         specialConsiderations,
         demographics: userInfo.demographics,
-        partConcerns,
+        concerns,
         allSolutions,
         categoryName,
-        partImages,
+        images,
         userId,
-        type,
-        part,
       })
     );
 
@@ -64,7 +57,7 @@ export default async function makeANewRoutine({
       db
         .collection("AnalysisStatus")
         .updateOne(
-          { userId: new ObjectId(userId), operationKey: type },
+          { userId: new ObjectId(userId), operationKey: "routine" },
           { $inc: { progress: 10 } }
         )
     );
@@ -72,7 +65,7 @@ export default async function makeANewRoutine({
     const rawSchedule = await doWithRetries(async () =>
       getRawSchedule({
         solutionsAndFrequencies,
-        concerns: partConcerns,
+        concerns: concerns,
         days: 6,
       })
     );
@@ -81,16 +74,15 @@ export default async function makeANewRoutine({
       db
         .collection("AnalysisStatus")
         .updateOne(
-          { userId: new ObjectId(userId), operationKey: type },
+          { userId: new ObjectId(userId), operationKey: "routine" },
           { $inc: { progress: 5 } }
         )
     );
 
     const finalSchedule = await doWithRetries(async () =>
       polishRawSchedule({
-        type,
         userId,
-        concerns: partConcerns,
+        concerns: concerns,
         categoryName,
         rawSchedule,
         specialConsiderations,
@@ -101,7 +93,7 @@ export default async function makeANewRoutine({
       db
         .collection("AnalysisStatus")
         .updateOne(
-          { userId: new ObjectId(userId), operationKey: type },
+          { userId: new ObjectId(userId), operationKey: "routine" },
           { $inc: { progress: 5 } }
         )
     );
@@ -110,7 +102,7 @@ export default async function makeANewRoutine({
       db
         .collection("Routine")
         .find(
-          { userId: new ObjectId(userId), type, part },
+          { userId: new ObjectId(userId) },
           {
             projection: {
               _id: 1,
@@ -128,8 +120,6 @@ export default async function makeANewRoutine({
 
     let tasksToInsert = await doWithRetries(async () =>
       createTasks({
-        part,
-        type,
         allSolutions,
         finalSchedule,
         userInfo,
@@ -151,14 +141,12 @@ export default async function makeANewRoutine({
       db.collection("Routine").insertOne({
         userId: new ObjectId(userId),
         userName,
-        concerns: partConcerns,
+        concerns,
         finalSchedule,
         status: RoutineStatusEnum.ACTIVE,
         createdAt: new Date(),
         allTasks: allTasksWithDateAndIds,
         lastDate: new Date(lastDate),
-        type,
-        part,
       })
     );
 

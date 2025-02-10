@@ -3,7 +3,7 @@ dotenv.config();
 
 import askRepeatedly from "functions/askRepeatedly.js";
 import incrementProgress from "helpers/incrementProgress.js";
-import { UserConcernType, TypeEnum, CategoryNameEnum } from "types.js";
+import { UserConcernType, CategoryNameEnum } from "types.js";
 import { RunType } from "types/askOpenaiTypes.js";
 import httpError from "helpers/httpError.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
@@ -12,7 +12,6 @@ type Props = {
   rawSchedule: { [key: string]: ScheduleTaskType[] };
   concerns: UserConcernType[];
   userId: string;
-  type: TypeEnum;
   categoryName: CategoryNameEnum;
   specialConsiderations: string;
 };
@@ -21,21 +20,16 @@ export default async function polishRawSchedule({
   rawSchedule,
   concerns,
   userId,
-  type,
   categoryName,
   specialConsiderations,
 }: Props) {
   try {
     const callback = () =>
-      incrementProgress({ operationKey: type, increment: 1, userId });
+      incrementProgress({ operationKey: "routine", increment: 1, userId });
 
-    const systemContent = `You are a ${
-      type === "head" ? "dermatologist and dentist" : "fitness coach"
-    }. The user gives you their ${
-      type === "head" ? "skincare routine" : "workout routine"
-    } schedule. Your goal is to optimize the dates of the tasks in the schedule for the maximum effectiveness of the improvement of these concerns: ${JSON.stringify(
-      concerns
-    )}. YOU CAN MOVE THE EXISTING TASKS IN THE SCHEDULE. MAINTAIN THE SCHEMA OF THE SCHEDULE. Be concise and to the point. Think step-by-step`;
+    const listOfConcerns = JSON.stringify(concerns);
+
+    const systemContent = `You are a dermatologist, dentist, and a fitness coach. The user gives you their improvement routine schedule. Your goal is to optimize the dates of the tasks in the schedule for the maximum effectiveness of the improvement of these concerns: ${listOfConcerns}. YOU CAN MOVE THE EXISTING TASKS IN THE SCHEDULE. MAINTAIN THE SCHEMA OF THE SCHEDULE. Be concise and to the point. Think step-by-step`;
 
     const userContent: RunType[] = [
       {
@@ -50,31 +44,16 @@ export default async function polishRawSchedule({
       },
     ];
 
-    if (type === "head") {
-      userContent.push({
-        isMini: true,
-        content: [
-          {
-            type: "text",
-            text: `Are there any tasks that complement or conflict with each other? If yes, move them to different dates as needed for maximum effectiveness and safety.`,
-          },
-        ],
-        callback,
-      });
-    }
-
-    if (type === "body") {
-      userContent.push({
-        isMini: true,
-        content: [
-          {
-            type: "text",
-            text: `Arrange the exercises according to the push-pull-legs model for the maximum effectiveness. You can move them across the schedule as needed.`,
-          },
-        ],
-        callback,
-      });
-    }
+    userContent.push({
+      isMini: true,
+      content: [
+        {
+          type: "text",
+          text: `Are there any tasks that complement or conflict with each other? If yes, move them to different dates as needed for maximum effectiveness and safety.`,
+        },
+      ],
+      callback,
+    });
 
     userContent.push({
       isMini: false,
@@ -99,6 +78,7 @@ export default async function polishRawSchedule({
         callback,
       });
     }
+
     userContent.push({
       isMini: true,
       content: [

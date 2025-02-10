@@ -3,13 +3,12 @@ dotenv.config();
 
 import askRepeatedly from "functions/askRepeatedly.js";
 import { RunType } from "types/askOpenaiTypes.js";
-import { TypeEnum, CategoryNameEnum } from "types.js";
+import { CategoryNameEnum } from "types.js";
 import httpError from "helpers/httpError.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 
 type Props = {
   userId: string;
-  type: TypeEnum;
   filterOverwhelming?: boolean;
   categoryName: CategoryNameEnum;
   rawNewSchedule: { [key: string]: ScheduleTaskType[] };
@@ -19,7 +18,6 @@ type Props = {
 };
 
 export default async function mergeSchedules({
-  type,
   userId,
   categoryName,
   rawNewSchedule,
@@ -27,9 +25,7 @@ export default async function mergeSchedules({
   filterOverwhelming,
 }: Props) {
   try {
-    let systemContent = `You are a ${
-      type === "head" ? "dermatologist and dentist" : "fitness coach"
-    }. The user gives you two task schedules - 1 and 2. Your goal is to {${
+    let systemContent = `You are a dermatologist, dentist and a fitness coach. The user gives you two schedules - 1 and 2. Your goal is to {${
       filterOverwhelming ? "add some of the tasks from" : "merge"
     }} schedule 2 into schedule 1 without moving the dates of the schedule 1. Your response is the merged schedule in the original JSON object format.`;
 

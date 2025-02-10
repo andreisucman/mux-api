@@ -9,9 +9,7 @@ import personalizeInstruction from "functions/personalizeInstruction.js";
 import { tasksRequirePersonalizedInstruction } from "data/tasksRequirePersonalizedInstructions.js";
 import {
   UserInfoType,
-  TypeEnum,
   TaskType,
-  PartEnum,
   TaskStatusEnum,
   CategoryNameEnum,
 } from "types.js";
@@ -28,8 +26,6 @@ interface DraftTaskType extends CreateRoutineAllSolutionsType {
 }
 
 type Props = {
-  type: TypeEnum;
-  part: PartEnum;
   userInfo: UserInfoType;
   finalSchedule: { [key: string]: ScheduleTaskType[] };
   allSolutions: CreateRoutineAllSolutionsType[];
@@ -38,8 +34,6 @@ type Props = {
 };
 
 export default async function createTasks({
-  type,
-  part,
   userInfo,
   finalSchedule,
   allSolutions,
@@ -84,7 +78,7 @@ export default async function createTasks({
       db
         .collection("AnalysisStatus")
         .updateOne(
-          { userId: new ObjectId(userId), operationKey: type },
+          { userId: new ObjectId(userId), operationKey: "routine" },
           { $inc: { progress: 2 } }
         )
     );
@@ -92,7 +86,6 @@ export default async function createTasks({
     for (const draftTask of draftTasks) {
       if (tasksRequirePersonalizedInstruction.includes(draftTask.key)) {
         const personalInstruction = await personalizeInstruction({
-          type,
           userInfo,
           categoryName,
           name: draftTask.name,
@@ -104,7 +97,7 @@ export default async function createTasks({
           db
             .collection("AnalysisStatus")
             .updateOne(
-              { userId: new ObjectId(userId), operationKey: type },
+              { userId: new ObjectId(userId), operationKey: "routine" },
               { $inc: { progress: 2 } }
             )
         );
@@ -151,8 +144,6 @@ export default async function createTasks({
           status: TaskStatusEnum.ACTIVE,
           ...matchingDraft,
           proofEnabled: true,
-          type,
-          part,
           startsAt,
           completedAt: null,
           expiresAt,

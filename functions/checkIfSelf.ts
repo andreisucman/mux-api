@@ -4,8 +4,8 @@ import { ObjectId } from "mongodb";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import askRepeatedly from "functions/askRepeatedly.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import { CategoryNameEnum } from "types.js";
-import { ModerationStatusEnum, UserProgressRecordType } from "types.js";
+import { CategoryNameEnum, LatestProgressType } from "types.js";
+import { ModerationStatusEnum } from "types.js";
 import { RunType } from "types/askOpenaiTypes.js";
 import httpError from "@/helpers/httpError.js";
 import { urlToBase64 } from "@/helpers/utils.js";
@@ -35,11 +35,10 @@ export default async function checkIfSelf({
           },
           { projection: { latestProgress: 1 } }
         )
-      )) as unknown as { latestProgress: UserProgressRecordType };
+      )) as unknown as { latestProgress: LatestProgressType };
 
       const { latestProgress } = userInfo || {};
-      const { head } = latestProgress || {};
-      const { face } = head || {};
+      const { face } = latestProgress || {};
 
       if (face) {
         const { images } = face;

@@ -8,7 +8,7 @@ import {
 export type StartStyleAnalysisUserInfoType = {
   name: string;
   avatar: { [key: string]: any };
-  latestStyleAnalysis: { head?: StyleAnalysisType; body?: StyleAnalysisType };
+  latestStyleAnalysis: StyleAnalysisType;
   latestScoresDifference: LatestScoresType;
   demographics: DemographicsType;
   club: ClubDataType;

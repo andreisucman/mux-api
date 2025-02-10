@@ -30,13 +30,13 @@ type Props = {
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { userId, type, blurType }: Props = req.body;
+    const { userId, blurType }: Props = req.body;
 
     const finalUserId = req.userId || userId;
 
-    if (!finalUserId || !type || !["head", "body"].includes(type)) {
+    if (!finalUserId) {
       res.status(400).json({
-        message: `userId: ${finalUserId}, type: ${type} is missing`,
+        message: `userId: ${finalUserId} is missing`,
       });
       return;
     }
@@ -87,14 +87,12 @@ route.post(
         potential,
         latestProgress,
         latestScores,
-        currentlyHigherThan,
-        potentiallyHigherThan,
         latestScoresDifference,
         specialConsiderations,
       } = userInfo;
 
-      const { canScan, canScanDate } =
-        checkCanScan({ nextScan, toAnalyze, type }) || {};
+      const { canScan, filteredToAnalyze, canScanDate } =
+        checkCanScan({ nextScan, toAnalyze }) || {};
 
       if (!canScan) {
         const date = formatDate({ date: canScanDate });
@@ -108,7 +106,7 @@ route.post(
         db
           .collection("AnalysisStatus")
           .updateOne(
-            { userId: new ObjectId(finalUserId), operationKey: type },
+            { userId: new ObjectId(finalUserId), operationKey: "progress" },
             { $set: { isRunning: true, progress: 1, isError: null } },
             { upsert: true }
           )
@@ -117,7 +115,6 @@ route.post(
       res.status(200).end();
 
       await analyzeAppearance({
-        type,
         club,
         userId,
         name,
@@ -128,18 +125,16 @@ route.post(
         blurType,
         categoryName: CategoryNameEnum.PROGRESSSCAN,
         demographics,
-        toAnalyze,
+        toAnalyze: filteredToAnalyze,
         latestScores,
         latestProgress,
-        currentlyHigherThan,
-        potentiallyHigherThan,
         latestScoresDifference,
         newSpecialConsiderations: specialConsiderations,
         nutrition,
       });
     } catch (err) {
       await addAnalysisStatusError({
-        operationKey: type,
+        operationKey: "progress",
         userId: String(finalUserId),
         message:
           "An unexpected error occured. Please try again and inform us if the error persists.",

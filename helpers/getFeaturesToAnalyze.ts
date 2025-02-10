@@ -1,23 +1,22 @@
-import { PartEnum, SexEnum, TypeEnum } from "types.js";
+import { PartEnum, SexEnum } from "types.js";
 
 type Props = {
-  type: TypeEnum;
   sex: SexEnum;
   part: PartEnum;
 };
 
-export default function getFeaturesToAnalyze({ type, part, sex }: Props) {
-  if (type === "head") {
-    if (part === "face") {
-      return ["lips", "grooming", "eyes", "skin"];
-    }
-    if (part === "mouth") {
-      return ["mouth"];
-    }
-    if (part === "scalp") {
-      return ["scalp"];
-    }
-  } else if (type === "body") {
+export default function getFeaturesToAnalyze({ part, sex }: Props) {
+  if (part === "face") {
+    return ["lips", "grooming", "eyes", "skin"];
+  }
+  if (part === "mouth") {
+    return ["mouth"];
+  }
+  if (part === "scalp") {
+    return ["scalp"];
+  }
+
+  if (part === "body") {
     if (sex === "male") {
       return ["back", "legs", "arms", "chest", "belly", "shoulders"];
     } else {

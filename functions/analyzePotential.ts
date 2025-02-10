@@ -4,7 +4,6 @@ import filterImagesByFeature from "@/helpers/filterImagesByFeature.js";
 import formatRatings from "@/helpers/formatRatings.js";
 import {
   SexEnum,
-  TypeEnum,
   ToAnalyzeType,
   FormattedRatingType,
   CategoryNameEnum,
@@ -15,10 +14,9 @@ import httpError from "@/helpers/httpError.js";
 type Props = {
   userId: string;
   sex: SexEnum;
-  type: TypeEnum;
   ageInterval: string;
   analysisResults: FeatureAnalysisType[];
-  toAnalyzeObjects: ToAnalyzeType[];
+  toAnalyze: ToAnalyzeType[];
   listOfFeatures: string[];
   categoryName: CategoryNameEnum;
 };
@@ -26,11 +24,10 @@ type Props = {
 export default async function analyzePotential({
   userId,
   sex,
-  type,
   categoryName,
   analysisResults,
   ageInterval,
-  toAnalyzeObjects,
+  toAnalyze,
   listOfFeatures,
 }: Props) {
   try {
@@ -38,12 +35,11 @@ export default async function analyzePotential({
       Promise.all(
         listOfFeatures.map((feature) => {
           const currentScore = analysisResults.find(
-            (record) => record.type === type && record.feature === feature
+            (record) => record.feature === feature
           ).score;
 
           const filteredImages = filterImagesByFeature(
-            toAnalyzeObjects,
-            type,
+            toAnalyze,
             feature
           );
 
@@ -51,7 +47,6 @@ export default async function analyzePotential({
             rateFeaturePotential({
               userId,
               sex,
-              type,
               feature,
               currentScore,
               ageInterval,

@@ -151,8 +151,7 @@ route.post(
       let message: { [key: string]: any } = {};
 
       if (contentCategory === "progress") {
-        const { images, initialImages, type, part } =
-          relevantRecord as ProgressType;
+        const { images, initialImages, part } = relevantRecord as ProgressType;
 
         const { images: updatedImages } = await updateProgressRecord({
           images,
@@ -173,7 +172,7 @@ route.post(
           db
             .collection("BeforeAfter")
             .updateOne(
-              { userId: new ObjectId(req.userId), type, part },
+              { userId: new ObjectId(req.userId), part },
               { $set: message }
             )
         );

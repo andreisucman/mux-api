@@ -27,12 +27,8 @@ route.get(
             },
             {
               projection: {
-                "club.bio.intro": 1,
-                "club.privacy": 1,
                 name: 1,
                 avatar: 1,
-                latestScores: 1,
-                latestScoresDifference: 1,
               },
             }
           )
@@ -42,43 +38,13 @@ route.get(
       )) as unknown as FollowerType[];
 
       const results = followers.map((rec) => {
-        const {
-          club,
-          name,
-          avatar,
-          latestScores,
-          latestScoresDifference,
-          _id,
-        } = rec;
-        const { privacy } = club;
+        const { name, avatar, _id } = rec;
 
         const updated = {
           _id,
           name,
           avatar,
-          scores: {} as { [key: string]: number },
         };
-
-        const progressPrivacy = privacy.find((pr) => pr.name === "progress");
-        const progressHeadEnabled = progressPrivacy.types.find(
-          (tp) => tp.name === "head"
-        ).value;
-
-        const progressBodyEnabled = progressPrivacy.types.find(
-          (tp) => tp.name === "body"
-        ).value;
-
-        if (progressHeadEnabled) {
-          updated.scores.headCurrentScore = latestScores.head.overall;
-          updated.scores.headTotalProgress =
-            latestScoresDifference.head.overall;
-        }
-
-        if (progressBodyEnabled) {
-          updated.scores.bodyCurrentScore = latestScores.body.overall;
-          updated.scores.bodyTotalProgress =
-            latestScoresDifference.body.overall;
-        }
 
         return updated;
       });

@@ -3,13 +3,7 @@ import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import criteria from "data/featureCriteria.js";
 import askRepeatedly from "./askRepeatedly.js";
 import filterImagesByFeature from "@/helpers/filterImagesByFeature.js";
-import {
-  SexEnum,
-  TypeEnum,
-  PartEnum,
-  ToAnalyzeType,
-  CategoryNameEnum,
-} from "types.js";
+import { SexEnum, PartEnum, ToAnalyzeType, CategoryNameEnum } from "types.js";
 import { FeatureAnalysisResultType } from "@/types/analyzeFeatureType.js";
 import httpError from "@/helpers/httpError.js";
 import { urlToBase64 } from "@/helpers/utils.js";
@@ -20,25 +14,23 @@ type Props = {
   feature: string;
   part: PartEnum;
   categoryName: CategoryNameEnum;
-  toAnalyzeObjects: ToAnalyzeType[];
-  type: TypeEnum;
+  toAnalyze: ToAnalyzeType[];
 };
 
 export default async function analyzeFeature({
   sex,
   feature,
-  toAnalyzeObjects,
+  toAnalyze,
   part,
-  type,
   categoryName,
   userId,
 }: Props) {
   try {
     const systemContent = `Rate the ${feature} of the person on the provided images from 0 to 100 according to the following criteria: ### Criteria: ${
-      criteria[sex as "male"][type as "head"][feature as "mouth"]
+      criteria[sex as "male"][feature as "mouth"]
     }###. DO YOUR BEST AT PRODUCING A SCORE EVEN IF THE IMAGES ARE NOT CLEAR. Think step-by-step. Use only the information provided.`;
 
-    const images = filterImagesByFeature(toAnalyzeObjects, type, feature);
+    const images = filterImagesByFeature(toAnalyze, feature);
 
     const FeatureResponseFormatType = z.object({
       score: z.number(),
@@ -83,7 +75,6 @@ export default async function analyzeFeature({
       suggestion,
       feature,
       part,
-      type,
     };
 
     return response;
