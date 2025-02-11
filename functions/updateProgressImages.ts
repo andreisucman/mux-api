@@ -5,8 +5,10 @@ import doWithRetries from "helpers/doWithRetries.js";
 import { BlurTypeEnum, ProgressImageType } from "types.js";
 import blurContent from "functions/blurContent.js";
 import httpError from "@/helpers/httpError.js";
+import { CookieOptions } from "express";
 
 type Props = {
+  cookies: CookieOptions;
   blurType: BlurTypeEnum;
   currentImages: ProgressImageType[];
 };
@@ -14,6 +16,7 @@ type Props = {
 export default async function updateProgressImages({
   currentImages,
   blurType,
+  cookies,
 }: Props) {
   try {
     const newImages: ProgressImageType[] = [];
@@ -35,6 +38,7 @@ export default async function updateProgressImages({
             originalUrl: currentImageObject.mainUrl.url,
             blurType,
             endpoint: "blurImage",
+            cookies,
           })
         );
 

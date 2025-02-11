@@ -22,10 +22,12 @@ import getCalorieGoal from "functions/getCalorieGoal.js";
 import { db } from "init.js";
 import { ModerationStatusEnum } from "types.js";
 import httpError from "@/helpers/httpError.js";
+import { CookieOptions } from "express";
 
 type Props = {
   userId: string;
   name: string;
+  cookies: CookieOptions;
   avatar: { [key: string]: any } | null;
   nutrition: { [key: string]: number };
   categoryName: CategoryNameEnum;
@@ -48,6 +50,7 @@ export default async function analyzeAppearance({
   name,
   avatar,
   club,
+  cookies,
   blurType,
   nutrition,
   concerns = [],
@@ -138,6 +141,7 @@ export default async function analyzeAppearance({
         analyzePart({
           name,
           avatar,
+          cookies,
           club,
           part: part as PartEnum,
           userId,

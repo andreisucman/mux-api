@@ -6,8 +6,8 @@ export default function calculateDifferenceInPrivacies(
 ) {
   const oldTypesMap = new Map();
   oldPrivacy.forEach((typePrivacy) => {
-    typePrivacy.types.forEach((typePrivacy) => {
-      oldTypesMap.set(typePrivacy.name, typePrivacy.value);
+    typePrivacy.parts.forEach((partPrivacy) => {
+      oldTypesMap.set(partPrivacy.name, partPrivacy.value);
     });
   });
 
@@ -19,13 +19,13 @@ export default function calculateDifferenceInPrivacies(
   }[] = [];
 
   newPrivacy.forEach((privacy) => {
-    privacy.types.forEach((typePrivacy) => {
-      const oldValue = oldTypesMap.get(typePrivacy.name);
+    privacy.parts.forEach((partPrivacy) => {
+      const oldValue = oldTypesMap.get(partPrivacy.name);
 
-      if (oldValue !== typePrivacy.value) {
+      if (oldValue !== partPrivacy.value) {
         different.push({
           category: privacy.name,
-          ...typePrivacy,
+          ...partPrivacy,
           type: privacy.name,
         });
       }

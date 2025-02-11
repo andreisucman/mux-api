@@ -28,10 +28,12 @@ import { db } from "init.js";
 import checkIfSelf from "./checkIfSelf.js";
 import httpError from "@/helpers/httpError.js";
 import { urlToBase64 } from "@/helpers/utils.js";
+import { CookieOptions } from "express";
 
 type Props = {
   userId: string;
   name: string;
+  cookies: CookieOptions;
   avatar: { [key: string]: any } | null;
   blurType: BlurTypeEnum;
   part: PartEnum;
@@ -49,6 +51,7 @@ export default async function analyzePart({
   avatar,
   club,
   part,
+  cookies,
   blurType,
   concerns = [],
   categoryName,
@@ -219,6 +222,7 @@ export default async function analyzePart({
     const updatedImages = await updateProgressImages({
       currentImages: images,
       blurType,
+      cookies,
     });
 
     const recordOfProgress: ProgressType = {
@@ -257,7 +261,7 @@ export default async function analyzePart({
         (rec: PrivacyType) => rec.name === "progress"
       );
 
-      const partPrivacy = progressPrivacy.types.find((pt) => pt.name === part);
+      const partPrivacy = progressPrivacy.parts.find((pt) => pt.name === part);
 
       recordOfProgress.isPublic = partPrivacy.value;
       beforeAfterUpdate.isPublic = partPrivacy.value;

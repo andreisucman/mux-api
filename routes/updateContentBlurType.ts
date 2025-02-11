@@ -2,7 +2,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import { ObjectId } from "mongodb";
-import { Router, Response, NextFunction } from "express";
+import { Router, Response, NextFunction, CookieOptions } from "express";
 import {
   BlurredUrlType,
   BlurTypeEnum,
@@ -19,10 +19,12 @@ const route = Router();
 type UpdateProgressRecordProps = {
   images: ProgressImageType[];
   blurType: BlurTypeEnum;
+  cookies: CookieOptions;
 };
 
 async function updateProgressRecord({
   images,
+  cookies,
   blurType,
 }: UpdateProgressRecordProps) {
   const image = images[0];
@@ -52,6 +54,7 @@ async function updateProgressRecord({
     const promises = images.map((obj: { mainUrl: BlurredUrlType }) =>
       blurContent({
         blurType,
+        cookies,
         endpoint: "blurImage",
         originalUrl: obj.mainUrl.url,
       })
@@ -80,9 +83,14 @@ async function updateProgressRecord({
 type UpdateStyleRecord = {
   urls: BlurredUrlType[];
   blurType: BlurTypeEnum;
+  cookies: CookieOptions;
 };
 
-async function updateStyleRecord({ urls, blurType }: UpdateStyleRecord) {
+async function updateStyleRecord({
+  urls,
+  cookies,
+  blurType,
+}: UpdateStyleRecord) {
   const existingBlurRecord = urls.find(
     (rec: { name: string }) => rec.name === blurType
   );
@@ -95,6 +103,7 @@ async function updateStyleRecord({ urls, blurType }: UpdateStyleRecord) {
     );
     const blurredImage = await blurContent({
       blurType,
+      cookies,
       endpoint: "blurImage",
       originalUrl: originalUrl.url,
     });
@@ -156,11 +165,13 @@ route.post(
         const { images: updatedImages } = await updateProgressRecord({
           images,
           blurType,
+          cookies: req.cookies,
         });
 
         const { images: updatedInitialImages } = await updateProgressRecord({
           images: initialImages,
           blurType,
+          cookies: req.cookies,
         });
 
         message = {
@@ -202,6 +213,7 @@ route.post(
               blurType,
               endpoint: isVideo ? "blurVideo" : "blurImage",
               originalUrl: originalUrl.url,
+              cookies: req.cookies,
             });
 
             const { hash, url, thumbnail } = blurredVideoResponse || {};
@@ -223,6 +235,7 @@ route.post(
             const updateStyleResult = await updateStyleRecord({
               blurType,
               urls,
+              cookies: req.cookies,
             });
 
             message = { ...message, ...updateStyleResult };

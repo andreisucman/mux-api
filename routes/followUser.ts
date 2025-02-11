@@ -59,7 +59,7 @@ route.post(
       const { privacy } = followingClub;
 
       const allTypePrivacies = privacy.flatMap((pr) =>
-        pr.types.map((tpr) => tpr.value)
+        pr.parts.map((tpr) => tpr.value)
       );
 
       const allPrivate = allTypePrivacies.every((value) => !Boolean(value));

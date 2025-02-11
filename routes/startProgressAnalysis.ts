@@ -119,6 +119,7 @@ route.post(
         userId,
         name,
         avatar,
+        cookies: req.cookies,
         concerns: concerns || [],
         nextScan,
         potential,

@@ -241,6 +241,7 @@ route.post(
           name,
           avatar,
           club,
+          cookies: req.cookies,
           nutrition,
           userId: finalUserId,
           blurType,

@@ -2,40 +2,36 @@ export const defaultClubPrivacy = [
   {
     name: "about",
     value: false,
-    types: [{ name: "about", value: false }],
+    parts: [{ name: "about", value: false }],
   },
   {
     name: "progress",
     value: false,
-    types: [
-      { name: "head", value: false },
+    parts: [
+      { name: "face", value: false },
+      { name: "mouth", value: false },
+      { name: "scalp", value: false },
       { name: "body", value: false },
     ],
   },
   {
     name: "proof",
     value: false,
-    types: [
-      { name: "head", value: false },
-      { name: "body", value: false },
-    ],
+    parts: [{ name: "proof", value: false }],
   },
   {
     name: "style",
     value: false,
-    types: [
-      { name: "head", value: false },
-      { name: "body", value: false },
-    ],
+    parts: [{ name: "style", value: false }],
   },
   {
     name: "diary",
     value: false,
-    types: [{ name: "diary", value: false }],
+    parts: [{ name: "diary", value: false }],
   },
   {
     name: "answer",
     value: false,
-    types: [{ name: "answer", value: false }],
+    parts: [{ name: "answer", value: false }],
   },
 ];

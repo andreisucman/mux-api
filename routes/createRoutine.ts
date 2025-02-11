@@ -19,6 +19,7 @@ import httpError from "@/helpers/httpError.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import { db } from "init.js";
 import checkCanRoutine from "@/helpers/checkCanRoutine.js";
+import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 
 const route = Router();
 
@@ -90,13 +91,14 @@ route.post(
         const relevantRoutine = nextRoutine.find((r) => r.part === part);
         const isInCooldown = new Date(relevantRoutine.date) > new Date();
 
-        const formattedDate = formatDate({
-          date: new Date(relevantRoutine.date),
-        });
-
         if (isInCooldown) {
-          res.status(200).json({
-            error: `You can generate a routine once a week only. Try again after ${formattedDate}.`,
+          const formattedDate = formatDate({
+            date: new Date(relevantRoutine.date),
+          });
+          addAnalysisStatusError({
+            message: `You can create a routine once a week only. Try again after ${formattedDate}.`,
+            operationKey: "routine",
+            userId: req.userId,
           });
           return;
         }
@@ -121,13 +123,16 @@ route.post(
             nextRoutine,
           });
 
-        if (canRoutine) {
+        if (!canRoutine) {
           const formattedDate = formatDate({
             date: new Date(canRoutineDate),
             hideYear: true,
           });
-          res.status(200).json({
-            error: `You can generate a routine once a week only. Try again after ${formattedDate}.`,
+
+          addAnalysisStatusError({
+            message: `You can create a routine once a week only. Try again after ${formattedDate}.`,
+            operationKey: "routine",
+            userId: req.userId,
           });
           return;
         }
