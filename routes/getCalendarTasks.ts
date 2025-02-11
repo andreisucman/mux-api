@@ -16,7 +16,7 @@ route.get(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { filter } = aqp(req.query as any) as AqpQuery;
-    const { status, timeZone, dateFrom, dateTo } = filter;
+    const { status, timeZone, dateFrom, dateTo, key } = filter;
 
     if (!timeZone) {
       res.status(400).json({ error: "Bad request" });
@@ -42,7 +42,7 @@ route.get(
 
       if (dateFrom)
         filter.startsAt = {
-          $gte: dateFrom,
+          $gte: daysFrom({ date: dateFrom, days: -1 }),
         };
 
       if (dateTo)
@@ -50,6 +50,10 @@ route.get(
           ...filter.startsAt,
           $lte: dateTo,
         };
+
+      if (key) {
+        filter.key = key;
+      }
 
       const tasks = await doWithRetries(async () =>
         db

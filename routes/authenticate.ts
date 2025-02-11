@@ -126,8 +126,6 @@ route.post(
 
         const { _id: userId, email, password: storedPassword } = userInfo;
 
-        console.log("userInfo", userInfo);
-
         if (email) {
           // login
           if (auth === "e") {
@@ -150,8 +148,6 @@ route.post(
           );
 
           userData = await getUserData({ userId: String(userId) });
-
-          console.log("line 152");
         } else {
           // registration after the analysis
           const { stripeUserId } = userInfo;
@@ -187,8 +183,6 @@ route.post(
               email: finalEmail,
             });
           }
-
-          console.log("line 189", userData);
         }
 
         updateAnalytics({

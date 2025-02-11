@@ -251,14 +251,15 @@ route.post(
         userId: req.userId,
       });
 
-      const majorityIdentical = await isMajorityOfImagesIdentical(
+      const validSubmission = await isMajorityOfImagesIdentical(
         ...proofImages,
         ...oldProofImages
       );
 
-      if (majorityIdentical) {
+      if (!validSubmission) {
         await addAnalysisStatusError({
-          message: "This video is not accepted.",
+          message:
+            "This appears to be a copy of a previous content. Please upload another one.",
           userId: req.userId,
           operationKey: taskId,
         });

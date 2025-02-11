@@ -30,11 +30,8 @@ export default async function getReadyBlurredUrls({
       thumbnails = [mainThumbnail];
     }
 
-    console.log("getReadyBlurredUrls", mainUrl, mainThumbnail);
-
     if (blurType !== "original") {
       const endpoint = urlExtension === "jpg" ? "blurImage" : "blurVideo";
-      console.log("getReadyBlurredUrls endpoint", endpoint);
 
       const blurredUrlResponse = await blurContent({
         blurType,
@@ -52,13 +49,6 @@ export default async function getReadyBlurredUrls({
       urls.push(mainUrl);
       thumbnails.push(mainThumbnail);
     }
-
-    console.log("getReadyBlurredUrls 50", {
-      mainUrl,
-      mainThumbnail,
-      urls,
-      thumbnails,
-    });
 
     return { mainUrl, mainThumbnail, urls, thumbnails };
   } catch (err) {
