@@ -1,8 +1,10 @@
 import httpError from "@/helpers/httpError.js";
+import { CookieOptions } from "express";
 import blurContent from "functions/blurContent.js";
 import { BlurTypeEnum } from "types.js";
 
 type Props = {
+  cookies: CookieOptions;
   url: string;
   blurType: BlurTypeEnum;
   thumbnail?: string;
@@ -12,6 +14,7 @@ export default async function getReadyBlurredUrls({
   url,
   blurType,
   thumbnail,
+  cookies,
 }: Props) {
   try {
     const urlExtension = url.includes(".") ? url.split(".").pop() : "";
@@ -27,12 +30,17 @@ export default async function getReadyBlurredUrls({
       thumbnails = [mainThumbnail];
     }
 
+    console.log("getReadyBlurredUrls", mainUrl, mainThumbnail);
+
     if (blurType !== "original") {
       const endpoint = urlExtension === "jpg" ? "blurImage" : "blurVideo";
+      console.log("getReadyBlurredUrls endpoint", endpoint);
+
       const blurredUrlResponse = await blurContent({
         blurType,
         originalUrl: url,
         endpoint,
+        cookies,
       });
 
       // at this point the blur should already exist, therefore the response will contain a url
@@ -44,6 +52,13 @@ export default async function getReadyBlurredUrls({
       urls.push(mainUrl);
       thumbnails.push(mainThumbnail);
     }
+
+    console.log("getReadyBlurredUrls 50", {
+      mainUrl,
+      mainThumbnail,
+      urls,
+      thumbnails,
+    });
 
     return { mainUrl, mainThumbnail, urls, thumbnails };
   } catch (err) {

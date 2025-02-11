@@ -157,6 +157,7 @@ route.post(
         const blurredResponse = await getReadyBlurredUrls({
           url: image,
           blurType,
+          cookies: req.cookies,
         });
 
         mainUrl = blurredResponse.mainUrl;

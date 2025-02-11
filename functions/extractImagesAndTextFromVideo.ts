@@ -1,25 +1,30 @@
 import httpError from "@/helpers/httpError.js";
+import { CookieOptions } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 
 type Props = {
+  cookies: CookieOptions;
   url: string;
-  userId: string;
 };
 
 export default async function extractImagesAndTextFromVideo({
+  cookies,
   url,
-  userId,
 }: Props) {
   try {
+    const cookieString = Object.entries(cookies)
+      .map(([name, value]) => `${name}=${value}`)
+      .join("; ");
+
     const response = await doWithRetries(
       async () =>
         fetch(`${process.env.PROCESSING_SERVER_URL}/processVideo`, {
           headers: {
-            Authorization: process.env.PROCESSING_SECRET,
             "Content-Type": "application/json",
-            UserId: userId,
+            Cookie: cookieString,
           },
           method: "POST",
+          credentials: "include",
           body: JSON.stringify({ url }),
         }) // don't check network status
     );

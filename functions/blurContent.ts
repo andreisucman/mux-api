@@ -1,10 +1,12 @@
 import httpError from "@/helpers/httpError.js";
 import * as dotenv from "dotenv";
+import { CookieOptions } from "express";
 dotenv.config();
 
 import { BlurTypeEnum } from "types.js";
 
 type Props = {
+  cookies: CookieOptions;
   originalUrl: string;
   blurType: BlurTypeEnum;
   endpoint: "blurImage" | "blurVideo";
@@ -14,14 +16,20 @@ export default async function blurContent({
   originalUrl,
   blurType,
   endpoint,
+  cookies,
 }: Props) {
   try {
+    const cookieString = Object.entries(cookies)
+      .map(([name, value]) => `${name}=${value}`)
+      .join("; ");
+
     const response = await fetch(
       `${process.env.PROCESSING_SERVER_URL}/${endpoint}`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Cookie: cookieString,
         },
         body: JSON.stringify({
           url: originalUrl,

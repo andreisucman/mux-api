@@ -95,7 +95,6 @@ route.post(
               key: 1,
               color: 1,
               part: 1,
-              type: 1,
               icon: 1,
               concern: 1,
               requisite: 1,
@@ -154,8 +153,8 @@ route.post(
         if (urlType === "video") {
           const { status, message, error } =
             await extractImagesAndTextFromVideo({
+              cookies: req.cookies,
               url,
-              userId: req.userId,
             });
 
           if (status) {
@@ -173,6 +172,7 @@ route.post(
           proofImages = [url];
         }
       } catch (err) {
+        throw httpError(err);
       } finally {
         clearInterval(iId);
       }
@@ -283,19 +283,19 @@ route.post(
       }
 
       const checkFailed =
-        verdicts.filter(Boolean).length <
+        verdicts.filter((i) => i).length <
         Math.round(selectedProofImages.length / 2);
 
-      // if (checkFailed) {
-      //   await addAnalysisStatusError({
-      //     originalMessage: explanations.join("\n"),
-      //     message:
-      //       "This submission is not acceptable. Your proof must fulfill the requirement from the instructions.",
-      //     userId: req.userId,
-      //     operationKey: taskId,
-      //   });
-      //   return;
-      // }
+      if (checkFailed) {
+        await addAnalysisStatusError({
+          originalMessage: explanations.join("\n"),
+          message:
+            "This submission doesn't satisfy the requirements from the instructions.",
+          userId: req.userId,
+          operationKey: taskId,
+        });
+        return;
+      }
 
       let mainThumbnail = { name: blurType, url: proofImages[0] };
       let mainUrl = { name: blurType, url };
@@ -307,6 +307,7 @@ route.post(
           url,
           blurType,
           thumbnail: proofImages[0],
+          cookies: req.cookies,
         });
 
         mainThumbnail = response.mainThumbnail;
@@ -318,7 +319,6 @@ route.post(
       const {
         name: taskName,
         key,
-        type,
         part,
         color,
         icon,
@@ -326,8 +326,7 @@ route.post(
         requisite,
         routineId,
       } = taskInfo || {};
-      const { name, avatar, demographics, club, latestScoresDifference } =
-        userInfo || {};
+      const { name, avatar, demographics, club } = userInfo || {};
       const { privacy } = club || {};
 
       /* add a new proof */
@@ -344,7 +343,6 @@ route.post(
         mainUrl,
         urls,
         icon,
-        type,
         part,
         color,
         taskId: new ObjectId(taskId),
@@ -356,26 +354,31 @@ route.post(
         userName: name,
         isPublic: false,
         moderationStatus: ModerationStatusEnum.ACTIVE,
-        latestBodyScoreDifference: 0,
-        latestHeadScoreDifference: 0,
       };
 
-      const proofPrivacy = privacy.find((pr) => pr.name === "proof");
+      const userUpdatePayload: { [key: string]: any } = {};
 
-      if (proofPrivacy) {
-        const relevantProofTypePrivacy = proofPrivacy.types.find(
-          (pt) => pt.name === type
-        );
-        newProof.isPublic = relevantProofTypePrivacy.value;
+      if (privacy) {
+        const proofPrivacy = privacy.find((pr) => pr.name === "proof");
+
+        if (proofPrivacy) {
+          const relevantPartPrivacy = proofPrivacy.parts.find(
+            (p) => p.name === part
+          );
+          newProof.isPublic = relevantPartPrivacy.value;
+        }
+
+        const { streakDates, timeZone } = userInfo;
+        const { newStreakDates, streaksToIncrement } = getStreaksToIncrement({
+          privacy,
+          part,
+          streakDates,
+          timeZone,
+        });
+
+        userUpdatePayload.$inc = streaksToIncrement;
+        userUpdatePayload.$set = { streakDates: newStreakDates };
       }
-
-      const { streakDates, timeZone } = userInfo;
-      const { newStreakDates, streaksToIncrement } = getStreaksToIncrement({
-        privacy,
-        part,
-        streakDates,
-        timeZone,
-      });
 
       await doWithRetries(async () =>
         db.collection("Proof").insertOne(newProof)
@@ -411,33 +414,31 @@ route.post(
         )
       );
 
-      const userUpdatePayload = {
-        $inc: streaksToIncrement,
-        $set: { streakDates: newStreakDates } as { [key: string]: any },
-      };
-
       /* decrement the daily calories for food submissions */
       if (taskInfo.isRecipe) {
         const { dailyCalorieGoal } = userInfo;
+
         const foodAnalysis = await analyzeCalories({
           userId: req.userId,
           url: selectedProofImages[0],
           categoryName: CategoryNameEnum.PROOF,
         });
+
         const { energy } = foodAnalysis;
         const newDailyCalorieGoal = Math.max(0, dailyCalorieGoal - energy);
         userUpdatePayload.$set.dailyCalorieGoal = newDailyCalorieGoal;
       }
 
-      await doWithRetries(async () =>
-        db.collection("User").updateOne(
-          {
-            _id: new ObjectId(req.userId),
-            moderationStatus: ModerationStatusEnum.ACTIVE,
-          },
-          userUpdatePayload
-        )
-      );
+      if (Object.keys(userUpdatePayload).length > 0)
+        await doWithRetries(async () =>
+          db.collection("User").updateOne(
+            {
+              _id: new ObjectId(req.userId),
+              moderationStatus: ModerationStatusEnum.ACTIVE,
+            },
+            userUpdatePayload
+          )
+        );
 
       await doWithRetries(async () =>
         db

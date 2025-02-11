@@ -61,18 +61,20 @@ export default function getStreaksToIncrement({
 
       newStreakDates = {
         ...newStreakDates,
-        ["default"]: {
-          ...newStreakDates["default"],
+        default: {
+          ...newStreakDates.default,
           [part]: midnightUTCofTomorrow,
         },
       };
     }
 
     const progressPrivacy = privacy.find((pr) => pr.name === "progress");
-    const headPrivacy = progressPrivacy.types.find((tp) => tp.name === "head");
+    const relevantPrivacy = progressPrivacy.parts.find(
+      (tp) => tp.name === part
+    );
 
-    if (headPrivacy && canIncrementClub) {
-      if (headPrivacy.value) {
+    if (relevantPrivacy && canIncrementClub) {
+      if (relevantPrivacy.value) {
         if (part === "face") {
           streaksToIncrement["streaks.clubFaceStreak"] = 1;
         }
@@ -91,8 +93,8 @@ export default function getStreaksToIncrement({
 
         newStreakDates = {
           ...newStreakDates,
-          ["club"]: {
-            ...newStreakDates["club"],
+          club: {
+            ...newStreakDates.club,
             [part]: midnightUTCofTomorrow,
           },
         };

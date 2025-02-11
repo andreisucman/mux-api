@@ -163,7 +163,7 @@ export type SubscriptionType = {
 export type PrivacyType = {
   name: string;
   value: boolean;
-  types: { name: string; value: boolean }[];
+  parts: { name: string; value: boolean }[];
 };
 
 export type ClubBioType = {
@@ -444,7 +444,6 @@ export type RoutineType = {
 
 export type ConcernType = {
   name: string;
-  types: TypeEnum[];
   parts: PartEnum[];
   sex: SexEnum;
 };
@@ -498,7 +497,6 @@ export type ProofType = {
   mainThumbnail: BlurredUrlType;
   urls: BlurredUrlType[];
   thumbnails: BlurredUrlType[];
-  type: TypeEnum;
   part: PartEnum;
   icon: string;
   color: string;
@@ -508,8 +506,6 @@ export type ProofType = {
   avatar: { [key: string]: any } | null;
   userName: string;
   isPublic: boolean;
-  latestHeadScoreDifference: number;
-  latestBodyScoreDifference: number;
   moderationStatus: ModerationStatusEnum;
 };
 
