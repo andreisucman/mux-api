@@ -17,9 +17,9 @@ route.get(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { followingUserName } = req.params;
     const { skip, filter, sort = {} } = aqp(req.query as any) as AqpQuery;
-    const { type, status } = filter;
+    const { status } = filter;
 
-    if (!type || !["active", "inactive"].includes(status)) {
+    if (!["active", "inactive"].includes(status)) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
@@ -54,7 +54,6 @@ route.get(
         status === "active" ? { $in: ["active", "replaced"] } : status;
 
       const filter: { [key: string]: any } = {
-        type,
         status: finalStatus,
       };
 
@@ -67,7 +66,6 @@ route.get(
       const projection = {
         _id: 1,
         createdAt: 1,
-        type: 1,
         part: 1,
         allTasks: 1,
         status: 1,

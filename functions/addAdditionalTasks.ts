@@ -6,6 +6,7 @@ import getRawSchedule from "functions/getRawSchedule.js";
 import {
   UserConcernType,
   TaskType,
+  PartEnum,
   CategoryNameEnum,
   ProgressImageType,
 } from "@/types.js";
@@ -21,9 +22,10 @@ import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import addDateAndIdsToAllTasks from "@/helpers/addDateAndIdsToAllTasks.js";
 
 type Props = {
-  images: ProgressImageType[];
+  part: PartEnum;
+  partImages: ProgressImageType[];
   categoryName: CategoryNameEnum;
-  concerns: UserConcernType[];
+  partConcerns: UserConcernType[];
   currentTasks: TaskType[];
   currentSchedule: { [key: string]: ScheduleTaskType[] };
   userInfo: CreateRoutineUserInfoType;
@@ -31,9 +33,10 @@ type Props = {
 };
 
 export default async function addAdditionalTasks({
+  part,
   userInfo,
-  images,
-  concerns,
+  partImages,
+  partConcerns,
   currentTasks,
   currentSchedule,
   allSolutions,
@@ -45,8 +48,9 @@ export default async function addAdditionalTasks({
     const solutionsAndFrequencies = await doWithRetries(async () =>
       getSolutionsAndFrequencies({
         userId: String(userId),
-        images,
-        concerns,
+        part,
+        partImages,
+        partConcerns,
         specialConsiderations,
         allSolutions,
         demographics,
@@ -71,7 +75,7 @@ export default async function addAdditionalTasks({
     const rawNewSchedule = await doWithRetries(async () =>
       getRawSchedule({
         solutionsAndFrequencies: filteredSolutionsAndFrequencies,
-        concerns: concerns,
+        concerns: partConcerns,
         days: 6,
       })
     );
@@ -100,6 +104,7 @@ export default async function addAdditionalTasks({
         allSolutions,
         categoryName,
         userInfo,
+        part,
       })
     );
 

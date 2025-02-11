@@ -23,9 +23,10 @@ import addDateAndIdsToAllTasks from "@/helpers/addDateAndIdsToAllTasks.js";
 
 type Props = {
   userId: string;
-  images: ProgressImageType[];
+  part: PartEnum;
+  partImages: ProgressImageType[];
   userInfo: CreateRoutineUserInfoType;
-  concerns: UserConcernType[];
+  partConcerns: UserConcernType[];
   specialConsiderations: string;
   categoryName: CategoryNameEnum;
   allSolutions: CreateRoutineAllSolutionsType[];
@@ -33,9 +34,10 @@ type Props = {
 
 export default async function makeANewRoutine({
   userId,
-  images,
+  part,
+  partImages,
   userInfo,
-  concerns,
+  partConcerns,
   categoryName,
   specialConsiderations,
   allSolutions,
@@ -45,11 +47,12 @@ export default async function makeANewRoutine({
       getSolutionsAndFrequencies({
         specialConsiderations,
         demographics: userInfo.demographics,
-        concerns,
+        partConcerns,
         allSolutions,
         categoryName,
-        images,
+        partImages,
         userId,
+        part,
       })
     );
 
@@ -65,7 +68,7 @@ export default async function makeANewRoutine({
     const rawSchedule = await doWithRetries(async () =>
       getRawSchedule({
         solutionsAndFrequencies,
-        concerns: concerns,
+        concerns: partConcerns,
         days: 6,
       })
     );
@@ -82,7 +85,7 @@ export default async function makeANewRoutine({
     const finalSchedule = await doWithRetries(async () =>
       polishRawSchedule({
         userId,
-        concerns: concerns,
+        concerns: partConcerns,
         categoryName,
         rawSchedule,
         specialConsiderations,
@@ -102,7 +105,7 @@ export default async function makeANewRoutine({
       db
         .collection("Routine")
         .find(
-          { userId: new ObjectId(userId) },
+          { userId: new ObjectId(userId), part },
           {
             projection: {
               _id: 1,
@@ -120,6 +123,7 @@ export default async function makeANewRoutine({
 
     let tasksToInsert = await doWithRetries(async () =>
       createTasks({
+        part,
         allSolutions,
         finalSchedule,
         userInfo,
@@ -141,12 +145,13 @@ export default async function makeANewRoutine({
       db.collection("Routine").insertOne({
         userId: new ObjectId(userId),
         userName,
-        concerns,
+        concerns: partConcerns,
         finalSchedule,
         status: RoutineStatusEnum.ACTIVE,
         createdAt: new Date(),
         allTasks: allTasksWithDateAndIds,
         lastDate: new Date(lastDate),
+        part,
       })
     );
 

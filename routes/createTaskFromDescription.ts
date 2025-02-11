@@ -11,7 +11,7 @@ import askRepeatedly from "functions/askRepeatedly.js";
 import isActivityHarmful from "@/functions/isActivityHarmful.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import checkIfTaskIsRelated from "@/functions/checkIfTaskIsRelated.js";
-import { daysFrom } from "helpers/utils.js";
+import { daysFrom, toSentenceCase } from "helpers/utils.js";
 import setUtcMidnight from "@/helpers/setUtcMidnight.js";
 import { db } from "init.js";
 import getUserInfo from "@/functions/getUserInfo.js";
@@ -95,17 +95,18 @@ route.post(
         return;
       }
 
+      const normalizedConcern = concern.split("_").join(" ");
+      const condition = `The activity must be related to ${part} and ${normalizedConcern}.`;
+
       const satisfies = await checkIfTaskIsRelated({
         userId: req.userId,
         text: description,
         categoryName: CategoryNameEnum.TASKS,
-        part,
+        condition,
       });
 
       if (!satisfies) {
-        res
-          .status(200)
-          .json({ error: `The activity is not related to ${part}.` });
+        res.status(200).json({ error: condition });
         return;
       }
 

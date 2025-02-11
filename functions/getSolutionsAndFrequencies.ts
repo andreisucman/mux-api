@@ -8,6 +8,7 @@ import incrementProgress from "helpers/incrementProgress.js";
 import {
   UserConcernType,
   AllTaskType,
+  PartEnum,
   CategoryNameEnum,
   DemographicsType,
   ProgressImageType,
@@ -19,11 +20,12 @@ import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 
 type Props = {
+  part: PartEnum;
   userId: string;
   specialConsiderations: string;
   allSolutions: CreateRoutineAllSolutionsType[];
-  concerns: UserConcernType[];
-  images: ProgressImageType[];
+  partConcerns: UserConcernType[];
+  partImages: ProgressImageType[];
   categoryName: CategoryNameEnum;
   demographics: DemographicsType;
 };
@@ -31,18 +33,21 @@ type Props = {
 export default async function getSolutionsAndFrequencies({
   specialConsiderations,
   allSolutions,
-  concerns,
+  partConcerns,
   categoryName,
-  images,
+  partImages,
   demographics,
   userId,
+  part,
 }: Props) {
   const { sex } = demographics;
 
-  const concernsNames = concerns.map((c) => c.name);
+  const concernsNames = partConcerns.map((c) => c.name);
 
   const checkFacialHair =
-    sex === "male" && concernsNames.includes("ungroomed_facial_hair");
+    sex === "male" &&
+    part === "face" &&
+    concernsNames.includes("ungroomed_facial_hair");
 
   try {
     const callback = () =>
@@ -52,7 +57,7 @@ export default async function getSolutionsAndFrequencies({
         userId: String(userId),
       });
 
-    const relevantImage = images.find((imo) => imo.position === "front");
+    const relevantImage = partImages.find((imo) => imo.position === "front");
 
     const facialHairCheck: RunType = {
       isMini: true,
@@ -74,10 +79,10 @@ export default async function getSolutionsAndFrequencies({
 
     const allSolutionsList = allSolutions.map((obj) => obj.key).join(", ");
 
-    const findSolutionsInstruction = `You are a dermatologist, dentist and a fitness coach. The user gives you a list of their concerns. Your goal is to select all solutions for each of their concerns from this list of solutions: ${allSolutionsList}. DON'T MODIFY THE NAMES OF CONCERNS AND SOLUTIONS. Be concise and to the point.`;
+    const findSolutionsInstruction = `You are a dermatologist, dentist and fitness coach. The user gives you a list of their concerns. Your goal is to select all solutions for each of their concerns from this list of solutions: ${allSolutionsList}. DON'T MODIFY THE NAMES OF CONCERNS AND SOLUTIONS. Be concise and to the point.`;
 
-    const allConcerns = concerns.map((co) => co.name);
-    const concernsWithExplanations = concerns.map(
+    const allConcerns = partConcerns.map((co) => co.name);
+    const concernsWithExplanations = partConcerns.map(
       (concern, index) =>
         `${index + 1}: ${concern.name}. Details: ${concern.explanation} ##`
     );
@@ -159,12 +164,12 @@ export default async function getSolutionsAndFrequencies({
       });
 
     /* come up with frequencies for the solutions */
-    const findFrequenciesInstruction = `You are a dermatologist, dentist and a fitness coach. The user tells you their concerns and solutions that they are going to use to improve them. Your goal is to tell how many times each solution should be used in a month to most effectively improve their concern based on their image. YOUR RESPONSE IS A TOTAL NUMBER OF APPLICATIONS IN A MONTH, NOT DAY OR WEEK. DON'T MODIFY THE NAMES OF CONCERNS AND SOLUTIONS.`;
+    const findFrequenciesInstruction = `You are a dermatologist, dentist and fitness coach. The user tells you their concerns and solutions that they are going to use to improve them. Your goal is to tell how many times each solution should be used in a month to most effectively improve their concern based on their image. YOUR RESPONSE IS A TOTAL NUMBER OF APPLICATIONS IN A MONTH, NOT DAY OR WEEK. DON'T MODIFY THE NAMES OF CONCERNS AND SOLUTIONS.`;
 
-    const formattedImages = [];
+    const images = [];
 
-    for (const partImo of images) {
-      formattedImages.push({
+    for (const partImo of partImages) {
+      images.push({
         type: "image_url" as "image_url",
         image_url: {
           url: await urlToBase64(partImo.mainUrl.url),
@@ -187,7 +192,7 @@ export default async function getSolutionsAndFrequencies({
             type: "text",
             text: "Here are the images of my concerns for your reference:",
           },
-          ...formattedImages,
+          ...images,
         ],
         callback,
       },

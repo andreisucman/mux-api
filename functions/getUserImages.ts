@@ -12,13 +12,11 @@ type Props = {
 
 export default async function getUsersImages({
   userId,
-  type,
   part,
 }: Props): Promise<ProgressImageType[]> {
   try {
     const filter: { [key: string]: any } = { userId: new ObjectId(userId) };
 
-    if (type) filter.type = type;
     if (part) filter.part = part;
 
     const latestHeadProgressRecord = await doWithRetries(async () =>

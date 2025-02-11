@@ -5,6 +5,7 @@ import {
   UserConcernType,
   TaskStatusEnum,
   TaskType,
+  PartEnum,
   CategoryNameEnum,
   RoutineStatusEnum,
   ProgressImageType,
@@ -22,17 +23,19 @@ import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import combineAllTasks from "@/helpers/combineAllTasks.js";
 
 type Props = {
-  images: ProgressImageType[];
+  part: PartEnum;
+  partImages: ProgressImageType[];
   categoryName: CategoryNameEnum;
-  concerns: UserConcernType[];
+  partConcerns: UserConcernType[];
   tasksToProlong: TaskType[];
   allSolutions: CreateRoutineAllSolutionsType[];
   userInfo: CreateRoutineUserInfoType;
 };
 
 export default async function prolongPreviousRoutine({
-  images,
-  concerns,
+  part,
+  partImages,
+  partConcerns,
   categoryName,
   allSolutions,
   userInfo,
@@ -55,7 +58,7 @@ export default async function prolongPreviousRoutine({
     const resetTasks: TaskType[] = [];
 
     /* reset fields */
-    const concernsList = concerns.map((obj) => obj.name);
+    const concernsList = partConcerns.map((obj) => obj.name);
 
     for (const draft of tasksToProlong) {
       const { _id, ...rest } = draft;
@@ -78,6 +81,7 @@ export default async function prolongPreviousRoutine({
         status: TaskStatusEnum.ACTIVE,
         startsAt,
         expiresAt,
+        part,
         isSubmitted: false,
       };
 
@@ -149,11 +153,12 @@ export default async function prolongPreviousRoutine({
 
     const { additionalAllTasks, additionalTasksToInsert, mergedSchedule } =
       await addAdditionalTasks({
+        part,
         userInfo,
-        images,
+        partImages,
         categoryName,
         allSolutions,
-        concerns,
+        partConcerns,
         currentTasks: resetTasks,
         currentSchedule: schedule,
       });
@@ -175,11 +180,12 @@ export default async function prolongPreviousRoutine({
         userId: new ObjectId(userId),
         userName,
         finalSchedule,
-        concerns: concerns,
+        concerns: partConcerns,
         status: RoutineStatusEnum.ACTIVE,
         createdAt: new Date(),
         lastDate: new Date(lastDate),
         allTasks: finalRoutineAllTasks,
+        part,
       })
     );
 

@@ -5,6 +5,7 @@ import {
   UserConcernType,
   TaskStatusEnum,
   TaskType,
+  PartEnum,
   ModerationStatusEnum,
   CategoryNameEnum,
 } from "@/types.js";
@@ -23,12 +24,14 @@ import { db } from "init.js";
 
 type Props = {
   userId: string;
+  part: PartEnum;
   categoryName: CategoryNameEnum;
   concerns: UserConcernType[];
   specialConsiderations: string;
 };
 
 export default async function createRoutine({
+  part,
   userId,
   categoryName,
   concerns,
@@ -61,7 +64,9 @@ export default async function createRoutine({
 
     if (!userInfo) throw new Error("This user doesn't exist");
 
-    const concernNames = concerns.map((obj) => obj.name);
+    const partConcerns = concerns.filter((c) => c.part === part);
+
+    const concernNames = partConcerns.map((obj) => obj.name);
 
     const allSolutions = (await doWithRetries(async () =>
       db
@@ -76,7 +81,6 @@ export default async function createRoutine({
               example: 1,
               color: 1,
               name: 1,
-              type: 1,
               key: 1,
               icon: 1,
               recipe: 1,
@@ -106,6 +110,7 @@ export default async function createRoutine({
       db.collection("Task").findOne(
         {
           userId: new ObjectId(userId),
+          part,
           status: TaskStatusEnum.ACTIVE,
         },
         { projection: { routineId: 1 } }
@@ -128,6 +133,7 @@ export default async function createRoutine({
                 nextCanStartDate: { $lte: new Date() },
               },
             ],
+            part,
           },
           { projection: { _id: 0 } }
         )
@@ -135,13 +141,14 @@ export default async function createRoutine({
         .toArray()
     )) as unknown as TaskType[];
 
-    const images = await getUsersImages({ userId });
+    const partImages = await getUsersImages({ userId, part });
 
     if (existingActiveTask) {
       await updateCurrentRoutine({
-        images,
+        part,
+        partImages,
         routineId: existingActiveTask.routineId,
-        concerns,
+        partConcerns,
         userInfo,
         allSolutions,
         categoryName,
@@ -149,8 +156,9 @@ export default async function createRoutine({
       });
     } else if (draftTasksToProlong.length > 0) {
       await prolongPreviousRoutine({
-        images,
-        concerns,
+        part,
+        partImages,
+        partConcerns,
         userInfo,
         allSolutions,
         tasksToProlong: draftTasksToProlong,
@@ -158,10 +166,11 @@ export default async function createRoutine({
       });
     } else {
       await makeANewRoutine({
+        part,
         userId,
-        images,
+        partImages,
         userInfo,
-        concerns,
+        partConcerns,
         allSolutions,
         specialConsiderations,
         categoryName,

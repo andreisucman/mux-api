@@ -21,7 +21,7 @@ import isActivityHarmful from "@/functions/isActivityHarmful.js";
 import findRelevantSolutions from "functions/findRelevantSolutions.js";
 import setUtcMidnight from "@/helpers/setUtcMidnight.js";
 import sortTasksInScheduleByDate from "@/helpers/sortTasksInScheduleByDate.js";
-import { daysFrom, toSnakeCase } from "helpers/utils.js";
+import { daysFrom, toSentenceCase, toSnakeCase } from "helpers/utils.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import createTextEmbedding from "functions/createTextEmbedding.js";
 import checkIfTaskIsRelated from "functions/checkIfTaskIsRelated.js";
@@ -41,8 +41,8 @@ route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const {
-      sex,
       part,
+      concern,
       description,
       instruction,
       startDate,
@@ -55,7 +55,7 @@ route.post(
       !instruction ||
       !startDate ||
       !frequency ||
-      !sex ||
+      !concern ||
       !part
     ) {
       res.status(400).json({ error: "Bad request" });
@@ -87,7 +87,7 @@ route.post(
           db.collection("HarmfulTaskDescriptions").insertOne({
             userId: new ObjectId(req.userId),
             response: explanation,
-            type: "create",
+            type: "save",
             text,
           })
         );
@@ -97,10 +97,13 @@ route.post(
         return;
       }
 
-      const { satisfies, condition } = await checkIfTaskIsRelated({
+      const normalizedConcern = concern.split("_").join(" ");
+      const condition = `The activity must be related to ${part} and ${normalizedConcern}.`;
+
+      const satisfies = await checkIfTaskIsRelated({
         userId: req.userId,
         text,
-        part,
+        condition,
         categoryName: CategoryNameEnum.TASKS,
       });
 
@@ -122,19 +125,6 @@ route.post(
 
       res.status(200).end();
 
-      const listOfRelevantConcerns = await doWithRetries(async () =>
-        db
-          .collection("Concern")
-          .find(
-            {
-              parts: { $in: [part] },
-              $or: [{ sex }, { sex: "all" }],
-            },
-            { projection: { key: 1 } }
-          )
-          .toArray()
-      );
-
       const latestRelevantRoutine = (await doWithRetries(async () =>
         db.collection("Routine").findOne({
           userId: new ObjectId(req.userId),
@@ -147,20 +137,10 @@ route.post(
 
       const TaskType = z.object({
         name: z.string().describe("The name of the task in an imperative form"),
-        concern: z
-          .string()
-          .describe(
-            "One the most relevant concern for the task from the list of concerns provided."
-          ),
-        nearestConcerns: z
-          .array(z.string())
-          .describe(
-            "All related concerns for the task from the list of concerns provided"
-          ),
         word: z
           .string()
           .describe(
-            "A single word based on the description that can be userd for the closest emoji search (e.g. tomato, potato, shoe, weights... etc. )"
+            "A single word based on the description that can be userd for the closest node-emoji search (e.g. tomato, potato, shoe, weights... etc. )"
           ),
         requisite: z
           .string()
@@ -174,17 +154,13 @@ route.post(
           ),
       });
 
-      const listOfConcernNames = JSON.stringify(
-        listOfRelevantConcerns.map((obj) => obj.name)
-      );
-
       const runs = [
         {
           isMini: false,
           content: [
             {
               type: "text",
-              text: `Activity description: ${description}.<-->Activity instruction: ${instruction}.<-->List of concerns: ${listOfConcernNames}`,
+              text: `Activity description: ${description}.<-->Activity instruction: ${instruction}.`,
             },
           ],
           model:
@@ -235,6 +211,8 @@ route.post(
         isCreated: true,
         color,
         part,
+        concern,
+        nearestConcerns: [concern],
         revisionDate: daysFrom({ date: otherResponse.startsAt, days: 30 }),
       };
 
@@ -394,7 +372,6 @@ route.post(
       const payload: Partial<RoutineType> = {
         ...latestRelevantRoutine,
         userId: new ObjectId(req.userId),
-        part,
         concerns,
         allTasks,
         finalSchedule,
@@ -418,7 +395,7 @@ route.post(
 
       await doWithRetries(async () =>
         db.collection("Routine").updateOne(
-          { _id: new ObjectId(latestRelevantRoutine._id) },
+          { _id: new ObjectId(latestRelevantRoutine._id), part },
           {
             $set: payload,
           },

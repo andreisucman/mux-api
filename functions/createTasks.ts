@@ -9,7 +9,9 @@ import personalizeInstruction from "functions/personalizeInstruction.js";
 import { tasksRequirePersonalizedInstruction } from "data/tasksRequirePersonalizedInstructions.js";
 import {
   UserInfoType,
+  TypeEnum,
   TaskType,
+  PartEnum,
   TaskStatusEnum,
   CategoryNameEnum,
 } from "types.js";
@@ -26,6 +28,7 @@ interface DraftTaskType extends CreateRoutineAllSolutionsType {
 }
 
 type Props = {
+  part: PartEnum;
   userInfo: UserInfoType;
   finalSchedule: { [key: string]: ScheduleTaskType[] };
   allSolutions: CreateRoutineAllSolutionsType[];
@@ -34,6 +37,7 @@ type Props = {
 };
 
 export default async function createTasks({
+  part,
   userInfo,
   finalSchedule,
   allSolutions,
@@ -144,6 +148,7 @@ export default async function createTasks({
           status: TaskStatusEnum.ACTIVE,
           ...matchingDraft,
           proofEnabled: true,
+          part,
           startsAt,
           completedAt: null,
           expiresAt,

@@ -1,6 +1,5 @@
 import { ObjectId } from "mongodb";
 import { db } from "init.js";
-import getClosestTaskDates from "functions/getClosestTaskDates.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 import setUtcMidnight from "@/helpers/setUtcMidnight.js";

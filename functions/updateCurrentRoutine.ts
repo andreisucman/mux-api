@@ -3,6 +3,7 @@ import doWithRetries from "helpers/doWithRetries.js";
 import { calculateDaysDifference } from "helpers/utils.js";
 import {
   UserConcernType,
+  TypeEnum,
   PartEnum,
   CategoryNameEnum,
   RoutineStatusEnum,
@@ -23,9 +24,10 @@ import addDateAndIdsToAllTasks from "@/helpers/addDateAndIdsToAllTasks.js";
 import combineAllTasks from "@/helpers/combineAllTasks.js";
 
 type Props = {
+  part: PartEnum;
   routineId: string;
-  images: ProgressImageType[];
-  concerns: UserConcernType[];
+  partImages: ProgressImageType[];
+  partConcerns: UserConcernType[];
   allSolutions: CreateRoutineAllSolutionsType[];
   userInfo: CreateRoutineUserInfoType;
   specialConsiderations: string;
@@ -33,8 +35,9 @@ type Props = {
 };
 
 export default async function updateCurrentRoutine({
-  images,
-  concerns,
+  part,
+  partImages,
+  partConcerns,
   routineId,
   allSolutions,
   userInfo,
@@ -72,17 +75,18 @@ export default async function updateCurrentRoutine({
         specialConsiderations,
         allSolutions,
         categoryName,
-        concerns,
+        partConcerns,
         demographics: userInfo.demographics,
         userId: String(userId),
-        images,
+        partImages,
+        part,
       })
     );
 
     const rawSchedule = await doWithRetries(async () =>
       getRawSchedule({
         solutionsAndFrequencies,
-        concerns,
+        concerns: partConcerns,
         days: daysDifference,
       })
     );
@@ -97,6 +101,7 @@ export default async function updateCurrentRoutine({
     );
 
     let tasksToInsert = await createTasks({
+      part,
       userInfo,
       allSolutions,
       categoryName,
@@ -121,7 +126,7 @@ export default async function updateCurrentRoutine({
 
     const allUniqueConcerns: UserConcernType[] = [
       ...currentRoutine.concerns,
-      ...concerns,
+      ...partConcerns,
     ].filter((obj, i, arr) => arr.findIndex((o) => o.name === obj.name) === i);
 
     await doWithRetries(async () =>

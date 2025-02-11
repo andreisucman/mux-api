@@ -31,7 +31,6 @@ export type CreateRoutineAllSolutionsType = {
   example: TaskExampleType;
   color: string;
   name: string;
-  type: TypeEnum;
   key: string;
   productTypes: string[];
   isRecipe: boolean;

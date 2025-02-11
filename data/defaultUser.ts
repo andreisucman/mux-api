@@ -183,7 +183,7 @@ export const defaultUser: UserType = {
   nutrition: {
     dailyCalorieGoal: 2000,
     recommendedDailyCalorieGoal: null,
-    remainingDailyCalories: null,
+    remainingDailyCalories: 2000,
   },
   canRejoinClubAfter: null,
   lastActiveOn: null,
