@@ -231,18 +231,6 @@ export default async function analyzeAppearance({
       newLatestProgress.overall / analysesResults.length
     );
 
-    /* update the overall of type on each of its record */
-    const toUpdateProgress = analysesResults.map((rec) => ({
-      updateOne: {
-        filter: { _id: new ObjectId(rec.latestProgress._id) },
-        update: { $set: { overall: newLatestProgress.overall } },
-      },
-    }));
-
-    await doWithRetries(async () =>
-      db.collection("Progress").bulkWrite(toUpdateProgress)
-    );
-
     toUpdateUser.$set.potential = {
       ...potential,
       ...newPotential,

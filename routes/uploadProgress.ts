@@ -83,7 +83,7 @@ route.post(
       if (isSuspended) {
         res.status(200).json({
           error:
-            "You can't use the platform for violating our TOS. If you think this is a mistake contact us at info@muxout.com.",
+            "You can't use the platform for violating our TOS. For details contact us at info@muxout.com.",
         });
         return;
       }
@@ -107,7 +107,7 @@ route.post(
       //   return;
       // }
 
-      // const { verdict: isPosiitonValid, message: changePositionMessage } =
+      // const { verdict: isPositionValid, message: changePositionMessage } =
       //   await checkImagePosition({
       //     image,
       //     part,
@@ -116,7 +116,7 @@ route.post(
       //     categoryName: CategoryNameEnum.PROGRESSSCAN,
       //   });
 
-      // if (!isPosiitonValid) {
+      // if (!isPositionValid) {
       //   res.status(200).json({ error: changePositionMessage });
       //   return;
       // }
@@ -142,8 +142,6 @@ route.post(
               latestProgress: 1,
               specialConsiderations: 1,
               latestScoresDifference: 1,
-              currentlyHigherThan: 1,
-              potentiallyHigherThan: 1,
               latestScores: 1,
               club: 1,
               name: 1,
@@ -169,8 +167,6 @@ route.post(
         latestProgress,
         latestScores,
         latestScoresDifference,
-        currentlyHigherThan,
-        potentiallyHigherThan,
       } = userInfo;
 
       const { canScan, filteredToAnalyze, canScanDate } =
