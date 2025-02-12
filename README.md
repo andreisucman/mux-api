@@ -20,7 +20,7 @@ docker rm [ID]
 
 docker ps
 
-docker run -d --restart=always -p 80:3001 sunchainltd/muxout
+docker run -d --restart=always -p 80:3001 --env-file env.list.txt sunchainltd/mux-api:1.1
 
 # to make the bash script executable
 
@@ -28,4 +28,4 @@ chmod +x ./script.sh
 
 ./script.sh
 
-docker system prune -a --volumes
+docker system prune -a --volumes -f

@@ -129,7 +129,7 @@ export default async function checkForTwins({
 
         const collageImage = await createImageCollage({
           images: collageImageGroups,
-          isGrid: false
+          isGrid: false,
         });
 
         const twinIndexes = await checkPeopleSimilarity({

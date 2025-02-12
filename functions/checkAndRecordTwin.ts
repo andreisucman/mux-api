@@ -11,13 +11,14 @@ import transferTrials from "./transferTrials.js";
 type Props = {
   requestUserId?: string;
   payloadUserId: string;
-  image?: string;
+  image: string;
   registryFilter?: { [key: string]: any };
   categoryName: CategoryNameEnum;
 };
 
 const skipCheckingTheseParts = ["mouth", "scalp"];
 const skipCheckingThesePositions = ["back"];
+const skipCheckingTheseCombinations = ["body=right", "body=left"];
 
 export default async function checkAndRecordTwin({
   requestUserId,
@@ -29,27 +30,33 @@ export default async function checkAndRecordTwin({
   let response = { mustLogin: false, isSuspended: false, errorMessage: "" };
   const finalUserId = requestUserId || payloadUserId;
 
-  const { part, ...restFilter } = registryFilter;
-
-  const skip =
-    (part && skipCheckingTheseParts.includes(part)) ||
-    skipCheckingThesePositions.includes(restFilter.position);
-
-  if (skip) return response;
+  const { part, position } = registryFilter;
 
   try {
-    let embedding;
+    const { errorMessage, message: embedding } = await createHumanEmbedding(
+      image
+    );
 
-    if (image) {
-      const { errorMessage, message } = await createHumanEmbedding(image);
-
-      if (errorMessage) {
-        response.errorMessage = errorMessage as string;
-        return response;
-      }
-
-      embedding = message;
+    if (errorMessage) {
+      response.errorMessage = errorMessage as string;
+      return response;
     }
+
+    let skip = false;
+
+    for (const combination of skipCheckingTheseCombinations) {
+      const [skipPart, skipPosition] = combination.split("=");
+      if (part === skipPart && position === skipPosition) skip = true;
+    }
+
+    if (
+      skipCheckingTheseParts.includes(part) ||
+      skipCheckingThesePositions.includes(position)
+    ) {
+      skip = true;
+    }
+
+    if (skip) return response;
 
     response.isSuspended = await checkIfSuspended({
       embedding,
@@ -63,7 +70,7 @@ export default async function checkAndRecordTwin({
       finalUserId,
       image,
       embedding,
-      registryFilter: restFilter,
+      registryFilter,
       categoryName,
     });
 

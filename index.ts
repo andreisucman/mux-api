@@ -185,6 +185,7 @@ app.use("/startSuggestChangeAnalysis", startSuggestChangeAnalysis);
 app.use("/startTheFlow", startTheFlow);
 app.use("/uploadProgress", uploadProgress);
 app.use("/uploadToSpaces", uploadToSpaces);
+app.use("/updateSex", updateSex);
 app.use("/getAllProofRecords", getAllProofRecords);
 
 // protected routes
@@ -215,7 +216,6 @@ app.use("/createConnectAccount", createConnectAccount);
 app.use("/claimReward", claimReward);
 app.use("/findProducts", findProducts);
 app.use("/createRecipe", createRecipe);
-app.use("/updateSex", updateSex);
 app.use("/getCalendarTasks", getCalendarTasks);
 app.use("/getFollowYou", getFollowYou);
 app.use("/getCompletedTasks", getCompletedTasks);

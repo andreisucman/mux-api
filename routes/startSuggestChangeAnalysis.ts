@@ -50,7 +50,7 @@ route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
       image: mainUrl.url,
       payloadUserId: userId,
       requestUserId: req.userId,
-      registryFilter: { type, category: "style" },
+      registryFilter: { category: "style" },
       categoryName: CategoryNameEnum.STYLESCAN,
     });
 

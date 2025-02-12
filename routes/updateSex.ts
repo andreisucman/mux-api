@@ -6,6 +6,7 @@ import { Router, Response, NextFunction } from "express";
 import { CustomRequest, ModerationStatusEnum } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { db } from "init.js";
+import checkIfUserExists from "@/functions/checkIfUserExists.js";
 
 const route = Router();
 
@@ -24,6 +25,23 @@ route.post(
     }
 
     try {
+      const isRegistered = await checkIfUserExists({
+        filter: { _id: new ObjectId(userId), email: { $ne: "" } },
+        projection: { _id: 1 },
+      });
+
+      if (isRegistered) {
+        if (!req.userId) {
+          res.status(400).json({ error: "Bad request" });
+          return;
+        }
+
+        if (req.userId !== String(isRegistered._id)) {
+          res.status(400).json({ error: "Bad request" });
+          return;
+        }
+      }
+
       await doWithRetries(async () =>
         db.collection("User").updateOne(
           {

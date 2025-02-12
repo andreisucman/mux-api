@@ -29,7 +29,7 @@ export default async function rateFeaturePotential({
   images,
 }: RateFeaturePotentialProps) {
   try {
-    let initialSystemContent = `You are given the user's images, a grading criteria, the body part and its esthetics score. Your goal is to come up with the HIGHERST POSSIBLE esthetic beauty score achievable for that body part based on the grading criteria. <-->1. Describe the current condition from the images. Talk about the relevant attributes such as wrinkles, texture, color, elasticity, pigmentation, excess of hair, lack of hair, muscle eveopment, fat deposits etc. 2. Think what would be the highest potential score this person can achieve based on their age and any permanent structural defects (if present). 3. Give your detailed reasoning about why you think the potential score is this an not higher or lower?`;
+    let initialSystemContent = `You are given the user's images, a grading criteria, the body part and its esthetics score. Your goal is to come up with the HIGHERST POSSIBLE esthetic beauty score achievable for that body part based on the grading criteria. <-->1. Describe the current condition from the images. Talk about the relevant attributes such as wrinkles, texture, color, elasticity, pigmentation, excess of hair, lack of hair, muscle development, fat deposits etc. 2. Think what would be the highest potential score this person can achieve based on their age and any permanent structural defects (if present). 3. Give your detailed reasoning about why you think the potential score is this an not higher or lower?`;
 
     initialSystemContent += ` Be detailed. Don't recommend any solutions for improvement. Think step-by-step.`;
 

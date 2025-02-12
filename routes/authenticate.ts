@@ -50,15 +50,18 @@ route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
-      let { code, timeZone, localUserId, referrer, state, email, password } =
-        req.body;
+      let { code, timeZone, localUserId, state, email, password } = req.body;
+
+      const parsedState = state
+        ? JSON.parse(decodeURIComponent(state as string))
+        : {};
 
       if (localUserId && !ObjectId.isValid(localUserId)) {
         res.status(400).json({ error: "Bad request" });
         return;
       }
 
-      if (!allowedReferrers.includes(referrer)) {
+      if (!allowedReferrers.includes(parsedState.referrer)) {
         res.status(400).json({ error: "Bad request" });
         return;
       }
@@ -71,7 +74,7 @@ route.post(
       if (isSuspended) {
         res.status(200).json({
           error:
-            "You can't use the platform for violating our TOS in the past. For details contact us at info@muxout.com.",
+            "Sorry, but you can't use the platform. For details contact us at info@muxout.com.",
         });
         return;
       }
@@ -80,10 +83,6 @@ route.post(
       let accessToken = crypto.randomBytes(32).toString("hex");
       let finalEmail = email;
       const auth = code ? "g" : "e";
-
-      const parsedState = state
-        ? JSON.parse(decodeURIComponent(state as string))
-        : {};
 
       const { redirectPath } = parsedState;
 
@@ -102,10 +101,10 @@ route.post(
 
       if (finalEmail) {
         filter.$or.push({ email: finalEmail, auth });
-      } else {
-        if (localUserId) {
-          filter.$or.push({ _id: new ObjectId(localUserId) });
-        }
+      }
+
+      if (localUserId) {
+        filter.$or.push({ _id: new ObjectId(localUserId) });
       }
 
       const userInfo = await checkIfUserExists({
@@ -188,7 +187,7 @@ route.post(
         updateAnalytics({
           userId: req.userId,
           incrementPayload: {
-            [`overview.acquisition.signins.${referrer}`]: 1,
+            [`overview.acquisition.signins.${parsedState.referrer}`]: 1,
           },
         });
       } else {
@@ -226,7 +225,7 @@ route.post(
           userId: req.userId,
           incrementPayload: {
             "overview.user.count.registeredUsers": 1,
-            [`overview.acquisition.signups.${referrer}`]: 1,
+            [`overview.acquisition.signups.${parsedState.referrer}`]: 1,
           },
         });
       }
@@ -245,8 +244,10 @@ route.post(
 
       const { csrfToken, csrfSecret } = createCsrf();
 
+      const domain = process.env.ENV === "dev" ? undefined : ".muxout.com";
+
       res.cookie("MUX_csrfSecret", csrfSecret, {
-        domain: process.env.ENV === "dev" ? undefined : ".muxout.com",
+        domain,
         expires: sessionExpiry,
         httpOnly: false,
         secure: true,
@@ -254,14 +255,14 @@ route.post(
       });
 
       res.cookie("MUX_csrfToken", csrfToken, {
-        domain: process.env.ENV === "dev" ? undefined : ".muxout.com",
+        domain,
         expires: sessionExpiry,
         secure: true,
         sameSite: "none",
       });
 
       res.cookie("MUX_accessToken", accessToken, {
-        domain: process.env.ENV === "dev" ? undefined : ".muxout.com",
+        domain,
         expires: sessionExpiry,
         httpOnly: true,
         secure: true,
@@ -269,7 +270,7 @@ route.post(
       });
 
       res.cookie("MUX_isLoggedIn", true, {
-        domain: process.env.ENV === "dev" ? undefined : ".muxout.com",
+        domain,
         expires: sessionExpiry,
         secure: true,
         sameSite: "none",
