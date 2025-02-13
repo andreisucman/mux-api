@@ -73,10 +73,9 @@ export type UserType = {
     };
   };
   concerns: UserConcernType[] | null;
-  potential: PotentialType;
   tosAccepted: boolean;
   requiredProgress: RequirementType[];
-  latestScores: LatestScoresType;
+  latestScores: FormattedRatingType;
   latestScoresDifference: LatestScoresType;
   club: ClubDataType;
   deleteOn: Date;
@@ -355,14 +354,19 @@ export type ProgressType = {
   concerns: UserConcernType[];
   images: ProgressImageType[];
   initialImages: ProgressImageType[];
-  scores: { [key: string]: any };
+  scores: FormattedRatingType;
   scoresDifference: { [key: string]: any };
-  potential: FormattedRatingType;
   specialConsiderations: string;
   isPublic: boolean;
   avatar?: { [key: string]: any };
   userName?: string;
   moderationStatus: ModerationStatusEnum;
+};
+
+export type FeatureAnalysisType = {
+  feature: string;
+  score: number;
+  explanation: string;
 };
 
 export type LatestProgressType = {
@@ -371,14 +375,6 @@ export type LatestProgressType = {
   mouth: ProgressType;
   scalp: ProgressType;
   body: ProgressType;
-};
-
-export type PotentialType = {
-  overall: number;
-  face: FormattedRatingType;
-  mouth: FormattedRatingType;
-  scalp: FormattedRatingType;
-  body: FormattedRatingType;
 };
 
 export type RecipeType = {

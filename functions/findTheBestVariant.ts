@@ -47,7 +47,7 @@ export default async function findTheBestVariant({
   const callback = () =>
     incrementProgress({
       userId: String(userId),
-      increment: 5,
+      value: 5,
       operationKey: analysisType,
     });
 

@@ -25,7 +25,7 @@ export default async function polishRawSchedule({
 }: Props) {
   try {
     const callback = () =>
-      incrementProgress({ operationKey: "routine", increment: 1, userId });
+      incrementProgress({ operationKey: "routine", value: 1, userId });
 
     const listOfConcerns = JSON.stringify(concerns);
 

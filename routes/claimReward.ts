@@ -12,6 +12,7 @@ import checkRewardCompletion from "@/helpers/checkRewardRequirement.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
 import httpError from "@/helpers/httpError.js";
 import getUserInfo from "@/functions/getUserInfo.js";
+import findLatestRewards from "@/functions/findLatestRewards.js";
 
 const route = Router();
 
@@ -123,8 +124,10 @@ route.post(
         )
       );
 
+      const rewards = await findLatestRewards({ userId: req.userId });
+
       res.status(200).json({
-        message: `The reward of $${rewardValue} has been added to your Club balance.`,
+        message: rewards,
       });
     } catch (err) {
       next(err);

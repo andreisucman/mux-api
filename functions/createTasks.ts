@@ -22,6 +22,7 @@ import {
 import httpError from "helpers/httpError.js";
 import { db } from "init.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
+import incrementProgress from "@/helpers/incrementProgress.js";
 
 interface DraftTaskType extends CreateRoutineAllSolutionsType {
   concern: string;
@@ -78,14 +79,11 @@ export default async function createTasks({
 
     const personalizedInfo: PersonalizedInfoType[] = [];
 
-    await doWithRetries(async () =>
-      db
-        .collection("AnalysisStatus")
-        .updateOne(
-          { userId: new ObjectId(userId), operationKey: "routine" },
-          { $inc: { progress: 2 } }
-        )
-    );
+    await incrementProgress({
+      value: 2,
+      operationKey: "routine",
+      userId: String(userId),
+    });
 
     for (const draftTask of draftTasks) {
       if (tasksRequirePersonalizedInstruction.includes(draftTask.key)) {
@@ -97,14 +95,11 @@ export default async function createTasks({
           description: draftTask.description,
         });
 
-        await doWithRetries(async () =>
-          db
-            .collection("AnalysisStatus")
-            .updateOne(
-              { userId: new ObjectId(userId), operationKey: "routine" },
-              { $inc: { progress: 2 } }
-            )
-        );
+        await incrementProgress({
+          value: 2,
+          operationKey: "routine",
+          userId: String(userId),
+        });
 
         personalizedInfo.push({
           instruction: personalInstruction,

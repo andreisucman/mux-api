@@ -20,6 +20,7 @@ import { db } from "init.js";
 import httpError from "helpers/httpError.js";
 import updateTasksAnalytics from "./updateTasksAnalytics.js";
 import addDateAndIdsToAllTasks from "@/helpers/addDateAndIdsToAllTasks.js";
+import incrementProgress from "@/helpers/incrementProgress.js";
 
 type Props = {
   userId: string;
@@ -56,14 +57,11 @@ export default async function makeANewRoutine({
       })
     );
 
-    await doWithRetries(async () =>
-      db
-        .collection("AnalysisStatus")
-        .updateOne(
-          { userId: new ObjectId(userId), operationKey: "routine" },
-          { $inc: { progress: 10 } }
-        )
-    );
+    await incrementProgress({
+      value: 10,
+      operationKey: "routine",
+      userId: String(userId),
+    });
 
     const rawSchedule = await doWithRetries(async () =>
       getRawSchedule({
@@ -73,14 +71,11 @@ export default async function makeANewRoutine({
       })
     );
 
-    await doWithRetries(async () =>
-      db
-        .collection("AnalysisStatus")
-        .updateOne(
-          { userId: new ObjectId(userId), operationKey: "routine" },
-          { $inc: { progress: 5 } }
-        )
-    );
+    await incrementProgress({
+      value: 5,
+      operationKey: "routine",
+      userId: String(userId),
+    });
 
     const finalSchedule = await doWithRetries(async () =>
       polishRawSchedule({
@@ -92,14 +87,11 @@ export default async function makeANewRoutine({
       })
     );
 
-    await doWithRetries(async () =>
-      db
-        .collection("AnalysisStatus")
-        .updateOne(
-          { userId: new ObjectId(userId), operationKey: "routine" },
-          { $inc: { progress: 5 } }
-        )
-    );
+    await incrementProgress({
+      value: 5,
+      operationKey: "routine",
+      userId: String(userId),
+    });
 
     const previousRoutineRecord = await doWithRetries(async () =>
       db

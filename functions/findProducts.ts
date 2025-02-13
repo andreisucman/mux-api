@@ -13,6 +13,7 @@ import httpError from "@/helpers/httpError.js";
 import { UserInfoType } from "types.js";
 import { CategoryNameEnum } from "types.js";
 import { db } from "init.js";
+import incrementProgress from "@/helpers/incrementProgress.js";
 
 type Props = {
   userInfo: UserInfoType;
@@ -55,14 +56,11 @@ export default async function findProducts({
     );
 
     if (analysisType !== "findProductsForGeneralTasks") {
-      await doWithRetries(async () =>
-        db
-          .collection("AnalysisStatus")
-          .updateOne(
-            { userId: new ObjectId(userId), operationKey: analysisType },
-            { $inc: { progress: 2 } }
-          )
-      );
+      await incrementProgress({
+        value: 2,
+        operationKey: analysisType,
+        userId: String(userId),
+      });
     }
 
     const productCheckObjectsArray: ValidatedSuggestionType[] =
@@ -103,14 +101,11 @@ export default async function findProducts({
       );
 
       if (analysisType !== "findProductsForGeneralTasks") {
-        await doWithRetries(async () =>
-          db
-            .collection("AnalysisStatus")
-            .updateOne(
-              { userId: new ObjectId(userId), operationKey: analysisType },
-              { $inc: { progress: 3 } }
-            )
-        );
+        await incrementProgress({
+          value: 3,
+          operationKey: analysisType,
+          userId: String(userId),
+        });
       }
 
       const commonListOfFeatures = await createACommonTableOfProductFeatures({
@@ -120,14 +115,11 @@ export default async function findProducts({
       });
 
       if (analysisType !== "findProductsForGeneralTasks") {
-        await doWithRetries(async () =>
-          db
-            .collection("AnalysisStatus")
-            .updateOne(
-              { userId: new ObjectId(userId), operationKey: analysisType },
-              { $inc: { progress: 15 } }
-            )
-        );
+        await incrementProgress({
+          value: 15,
+          operationKey: analysisType,
+          userId: String(userId),
+        });
       }
 
       const resultArray = await findTheBestVariant({

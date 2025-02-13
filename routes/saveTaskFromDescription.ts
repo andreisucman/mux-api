@@ -185,7 +185,7 @@ route.post(
       await incrementProgress({
         operationKey: "routine",
         userId: req.userId,
-        increment: 10,
+        value: 10,
       });
 
       const { word, ...otherResponse } = response || {};
@@ -227,17 +227,8 @@ route.post(
       await incrementProgress({
         operationKey: "routine",
         userId: req.userId,
-        increment: 25,
+        value: 25,
       });
-
-      await doWithRetries(async () =>
-        db.collection("AnalysisStatus").updateOne(
-          { userId: new ObjectId(req.userId), operationKey: "routine" },
-          {
-            $inc: { progress: 25 },
-          }
-        )
-      );
 
       const relevantSolutions = await findRelevantSolutions(embedding);
 
@@ -366,7 +357,7 @@ route.post(
       await incrementProgress({
         operationKey: "routine",
         userId: req.userId,
-        increment: 20,
+        value: 20,
       });
 
       const payload: Partial<RoutineType> = {
@@ -390,7 +381,7 @@ route.post(
       await incrementProgress({
         operationKey: "routine",
         userId: req.userId,
-        increment: 15,
+        value: 15,
       });
 
       await doWithRetries(async () =>

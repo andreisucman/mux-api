@@ -1,4 +1,3 @@
-import { ObjectId } from "mongodb";
 import doWithRetries from "helpers/doWithRetries.js";
 import createTasks from "functions/createTasks.js";
 import mergeSchedules from "functions/mergeSchedules.js";
@@ -16,10 +15,10 @@ import {
   CreateRoutineUserInfoType,
   CreateRoutineAllSolutionsType,
 } from "types/createRoutineTypes.js";
-import { db } from "init.js";
 import httpError from "@/helpers/httpError.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import addDateAndIdsToAllTasks from "@/helpers/addDateAndIdsToAllTasks.js";
+import incrementProgress from "@/helpers/incrementProgress.js";
 
 type Props = {
   part: PartEnum;
@@ -58,14 +57,11 @@ export default async function addAdditionalTasks({
       })
     );
 
-    await doWithRetries(async () =>
-      db
-        .collection("AnalysisStatus")
-        .updateOne(
-          { userId: new ObjectId(userId), operationKey: "routine" },
-          { $inc: { progress: 2 } }
-        )
-    );
+    await incrementProgress({
+      value: 2,
+      operationKey: "routine",
+      userId: String(userId),
+    });
 
     const existingAllTasksKeys = currentTasks.map((t) => t.key);
     let filteredSolutionsAndFrequencies = solutionsAndFrequencies.filter(
@@ -89,14 +85,11 @@ export default async function addAdditionalTasks({
       })
     );
 
-    await doWithRetries(async () =>
-      db
-        .collection("AnalysisStatus")
-        .updateOne(
-          { userId: new ObjectId(userId), operationKey: "routine" },
-          { $inc: { progress: 3 } }
-        )
-    );
+    await incrementProgress({
+      value: 3,
+      operationKey: "routine",
+      userId: String(userId),
+    });
 
     const tasksToInsert = await doWithRetries(async () =>
       createTasks({

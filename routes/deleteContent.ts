@@ -57,7 +57,6 @@ route.post(
         case "progress":
           const {
             _id: userId,
-            potential,
             latestScores,
             nextScan,
             latestScoresDifference,
@@ -78,7 +77,6 @@ route.post(
 
           if (substituteProgressRecord) {
             recalculatedData = await recalculateLatestProgress({
-              potential,
               latestScores,
               latestScoresDifference,
               substituteProgressRecord,
@@ -108,7 +106,6 @@ route.post(
             recalculatedData = {
               latestProgress: defaultUser.latestProgress,
               latestScores: defaultUser.latestScores,
-              potential: defaultUser.potential,
               latestScoresDifference: defaultUser.latestScoresDifference,
             };
 

@@ -1,4 +1,4 @@
-import { FeatureAnalysisType } from "@/types/analyzePotentialTypes.js";
+import { FeatureAnalysisType } from "@/types.js";
 import { FormattedRatingType } from "@/types.js";
 
 export default function formatRatings(recordsArray: FeatureAnalysisType[]) {

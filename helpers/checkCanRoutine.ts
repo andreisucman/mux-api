@@ -6,13 +6,12 @@ type Props = {
 };
 
 export default function checkCanRoutine({ nextScan, nextRoutine }: Props) {
-  const validScanParts = nextScan.filter(
-    (no) => no.date && no.date > new Date()
-  );
-
+  const validScanParts = nextScan.filter((obj) => obj.date);
   const validScanPartKeys = validScanParts.map((ob) => ob.part);
 
-  const relevantRoutines = nextRoutine.filter((rt) => validScanPartKeys.includes(rt.part));
+  const relevantRoutines = nextRoutine.filter((rt) =>
+    validScanPartKeys.includes(rt.part)
+  );
 
   const availableRoutines = relevantRoutines
     .filter((scan) => !scan.date || scan.date > new Date())

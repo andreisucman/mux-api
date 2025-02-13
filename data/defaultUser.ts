@@ -162,7 +162,6 @@ export const defaultUser: UserType = {
     scalp: null,
     body: null,
   },
-  potential: { overall: 0, face: null, mouth: null, scalp: null, body: null },
   createdAt: new Date(),
   streaks: defaultStreaks,
   specialConsiderations: "",

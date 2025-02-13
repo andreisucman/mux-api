@@ -7,7 +7,7 @@ type Props = {
 
 export default function checkCanScan({ nextScan, toAnalyze }: Props) {
   const canScanParts = nextScan
-    .filter((scan) => !scan.date || scan.date > new Date())
+    .filter((scan) => !scan.date || scan.date < new Date())
     .map((obj) => obj.part);
 
   const filteredToAnalyze = toAnalyze.filter((taObj) =>

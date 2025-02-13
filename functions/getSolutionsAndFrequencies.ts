@@ -53,7 +53,7 @@ export default async function getSolutionsAndFrequencies({
     const callback = () =>
       incrementProgress({
         operationKey: "routine",
-        increment: 1,
+        value: 1,
         userId: String(userId),
       });
 

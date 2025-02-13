@@ -55,8 +55,8 @@ export default async function suggestChange({
         ],
         callback: () =>
           incrementProgress({
-            operationKey: `style-${type}`,
-            increment: 15,
+            operationKey: "style",
+            value: 15,
             userId,
           }),
       },
@@ -70,8 +70,8 @@ export default async function suggestChange({
         ],
         callback: () =>
           incrementProgress({
-            operationKey: `style-${type}`,
-            increment: 20,
+            operationKey: "style",
+            value: 20,
             userId,
           }),
       },
@@ -85,8 +85,8 @@ export default async function suggestChange({
         ],
         callback: () =>
           incrementProgress({
-            operationKey: `style-${type}`,
-            increment: 15,
+            operationKey: "style",
+            value: 15,
             userId,
           }),
       },
@@ -100,8 +100,8 @@ export default async function suggestChange({
         ],
         callback: () =>
           incrementProgress({
-            operationKey: `style-${type}`,
-            increment: 25,
+            operationKey: "style",
+            value: 25,
             userId,
           }),
       },
@@ -129,8 +129,8 @@ export default async function suggestChange({
         ],
         callback: () =>
           incrementProgress({
-            operationKey: `style-${type}`,
-            increment: 25,
+            operationKey: "style",
+            value: 25,
             userId,
           }),
         model: "ft:gpt-4o-mini-2024-07-18:personal:suggest-change:AGSTdYpw",

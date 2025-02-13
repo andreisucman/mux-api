@@ -44,7 +44,7 @@ export default async function analyzeStyle({
         callback: () =>
           incrementProgress({
             operationKey: "style",
-            increment: 5,
+            value: 5,
             userId,
           }),
       },
@@ -59,7 +59,7 @@ export default async function analyzeStyle({
         callback: () =>
           incrementProgress({
             operationKey: "style",
-            increment: 10,
+            value: 10,
             userId,
           }),
       },
@@ -91,7 +91,7 @@ export default async function analyzeStyle({
         callback: () =>
           incrementProgress({
             operationKey: "style",
-            increment: 15,
+            value: 15,
             userId,
           }),
       },
@@ -107,7 +107,7 @@ export default async function analyzeStyle({
         callback: () =>
           incrementProgress({
             operationKey: "style",
-            increment: 5,
+            value: 5,
             userId,
           }),
       },
@@ -154,7 +154,7 @@ export default async function analyzeStyle({
         callback: () =>
           incrementProgress({
             operationKey: "style",
-            increment: 5,
+            value: 5,
             userId,
           }),
         model: "ft:gpt-4o-mini-2024-07-18:personal:analyze-style:ArHGsmw2",

@@ -4,18 +4,32 @@ import doWithRetries from "helpers/doWithRetries.js";
 
 type Props = {
   operationKey: string;
-  increment: number;
+  value: number;
   userId: string;
+  operation?: "set" | "increment";
 };
 
-const incrementProgress = async ({ operationKey, increment, userId }: Props) =>
+const incrementProgress = async ({
+  operationKey,
+  value,
+  operation = "increment",
+  userId,
+}: Props) => {
+  let payload = {};
+
+  if (operation === "increment") {
+    payload = { $inc: { progress: value } };
+  }
+
+  if (operation === "set") {
+    payload = { $set: { progress: value } };
+  }
+
   doWithRetries(async () =>
     db
       .collection("AnalysisStatus")
-      .updateOne(
-        { userId: new ObjectId(userId), operationKey },
-        { $inc: { progress: increment } }
-      )
+      .updateOne({ userId: new ObjectId(userId), operationKey }, payload)
   );
+};
 
 export default incrementProgress;

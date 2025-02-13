@@ -133,14 +133,14 @@ route.post(
 
       await incrementProgress({
         operationKey: taskId,
-        increment: Math.round(Math.random() * 20 + 1),
+        value: Math.round(Math.random() * 20 + 1),
         userId: req.userId,
       });
 
       const iId = setInterval(async () => {
         await incrementProgress({
           operationKey: taskId,
-          increment: Math.round(Math.random() * 5 + 1),
+          value: Math.round(Math.random() * 5 + 1),
           userId: req.userId,
         });
       }, 5000);
@@ -247,7 +247,7 @@ route.post(
 
       await incrementProgress({
         operationKey: taskId,
-        increment: Math.round(Math.random() * 30 + 15),
+        value: Math.round(Math.random() * 30 + 15),
         userId: req.userId,
       });
 

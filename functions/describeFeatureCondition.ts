@@ -3,9 +3,8 @@ import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import askRepeatedly from "functions/askRepeatedly.js";
 import criteria from "data/featureCriteria.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
-import { SexEnum, CategoryNameEnum } from "types.js";
+import { SexEnum, CategoryNameEnum, FeatureAnalysisType } from "types.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
-import { FeaturePotentialAnalysisType } from "@/types/rateFeaturePotentialTypes.js";
 import httpError from "@/helpers/httpError.js";
 import { urlToBase64 } from "@/helpers/utils.js";
 
@@ -19,7 +18,7 @@ type RateFeaturePotentialProps = {
   images: string[];
 };
 
-export default async function rateFeaturePotential({
+export default async function describeFeatureCondition({
   userId,
   sex,
   currentScore,
@@ -64,7 +63,7 @@ export default async function rateFeaturePotential({
           },
         ],
         callback: () =>
-          incrementProgress({ operationKey: "progress", userId, increment: 1 }),
+          incrementProgress({ operationKey: "progress", userId, value: 1 }),
       },
     ];
 
@@ -74,7 +73,7 @@ export default async function rateFeaturePotential({
       systemContent: initialSystemContent,
       runs: initialRuns as RunType[],
       isResultString: true,
-      functionName: "rateFeaturePotential",
+      functionName: "describeFeatureCondition",
     });
 
     const finalSystemContent = `You are given a description of the user's body part, it's current esthetic score and its highest achievable esthetics score. Your goal is to rewrite the description in the 2nd tense (you/your) with a better flow and a more cohesive context. Your response must be entirely based on the information you are given. Don't make things up. Don't recommend any solutions for improvement. Think step-by-step.`;
@@ -110,7 +109,7 @@ export default async function rateFeaturePotential({
           "rateFeaturePotentialRephraseOne"
         ),
         callback: () =>
-          incrementProgress({ operationKey: "progress", userId, increment: 1 }),
+          incrementProgress({ operationKey: "progress", userId, value: 1 }),
       },
     ];
 
@@ -121,14 +120,14 @@ export default async function rateFeaturePotential({
         systemContent: finalSystemContent,
         runs: finalRuns as RunType[],
         seed: 263009886,
-        functionName: "rateFeaturePotential",
+        functionName: "describeFeatureCondition",
       });
 
     const { rate, explanation } = finalResponse;
 
-    const updated: FeaturePotentialAnalysisType = {
+    const updated: FeatureAnalysisType = {
       score: rate,
-      explanation: explanation,
+      explanation,
       feature,
     };
 

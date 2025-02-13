@@ -7,6 +7,7 @@ import { SexEnum, PartEnum, ToAnalyzeType, CategoryNameEnum } from "types.js";
 import { FeatureAnalysisResultType } from "@/types/analyzeFeatureType.js";
 import httpError from "@/helpers/httpError.js";
 import { urlToBase64 } from "@/helpers/utils.js";
+import incrementProgress from "@/helpers/incrementProgress.js";
 
 type Props = {
   userId: string;
@@ -26,25 +27,32 @@ export default async function analyzeFeature({
   userId,
 }: Props) {
   try {
-    const systemContent = `Rate the ${feature} of the person on the provided images from 0 to 100 according to the following criteria: ### Criteria: ${
+    const systemContent = `You are an anthropologist, dermatologist and anathomist. Rate the ${feature} of the person on the provided images from 0 to 100 according to the following criteria: ### Criteria: ${
       criteria[sex as "male"][feature as "mouth"]
-    }###. DO YOUR BEST AT PRODUCING A SCORE EVEN IF THE IMAGES ARE NOT CLEAR. Think step-by-step. Use only the information provided.`;
+    }###. Explain your reasoning and decide if the condition of the ${feature} can be improved with a self-improvement routine. DO YOUR BEST AT PRODUCING A SCORE EVEN IF THE IMAGES ARE NOT CLEAR. Think step-by-step. Don't suggest any specific solutions.`;
 
-    const images = filterImagesByFeature(toAnalyze, feature);
+    const filteredToAnalyze = filterImagesByFeature(toAnalyze, feature);
 
     const FeatureResponseFormatType = z.object({
-      score: z.number(),
-      explanation: z.string(),
-      suggestion: z.string(),
+      score: z
+        .number()
+        .describe(
+          `score from 0 to 100 representing the condition of the ${feature} based on the criteria`
+        ),
+      explanation: z
+        .string()
+        .describe(
+          `3-5 sentences of your reasoning for the score and explanation in the 2nd tense (you/your) of whether the condition can be improved with a self-improvement routine and why.`
+        ),
     });
 
     const base64Images = [];
 
-    for (const url of images) {
+    for (const toAnalyzeObject of filteredToAnalyze) {
       base64Images.push({
         type: "image_url",
         image_url: {
-          url: await urlToBase64(url),
+          url: await urlToBase64(toAnalyzeObject.mainUrl.url),
           detail: "high",
         },
       });
@@ -61,7 +69,7 @@ export default async function analyzeFeature({
       },
     ];
 
-    const { score, explanation, suggestion } = await askRepeatedly({
+    const { score, explanation } = await askRepeatedly({
       runs,
       userId,
       systemContent,
@@ -69,10 +77,11 @@ export default async function analyzeFeature({
       functionName: "analyzeFeature",
     });
 
+    await incrementProgress({ value: 1, operationKey: "progress", userId });
+
     const response: FeatureAnalysisResultType = {
       score: Math.round(score),
       explanation,
-      suggestion,
       feature,
       part,
     };

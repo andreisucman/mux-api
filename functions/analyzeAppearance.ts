@@ -13,7 +13,6 @@ import {
   PartEnum,
   LatestScoresType,
   LatestProgressType,
-  PotentialType,
 } from "types.js";
 import analyzePart from "functions/analyzePart.js";
 import { defaultRequiredProgress } from "data/defaultUser.js";
@@ -23,6 +22,7 @@ import { db } from "init.js";
 import { ModerationStatusEnum } from "types.js";
 import httpError from "@/helpers/httpError.js";
 import { CookieOptions } from "express";
+import incrementProgress from "@/helpers/incrementProgress.js";
 
 type Props = {
   userId: string;
@@ -39,7 +39,6 @@ type Props = {
   newSpecialConsiderations: string;
   latestProgress: LatestProgressType;
   demographics: DemographicsType;
-  potential: PotentialType;
   nextScan: NextActionType[];
   latestScores: LatestScoresType;
   latestScoresDifference: LatestScoresType;
@@ -57,7 +56,6 @@ export default async function analyzeAppearance({
   categoryName,
   nextScan,
   latestProgress,
-  potential,
   defaultToUpdateUser,
   latestScores,
   latestScoresDifference,
@@ -78,7 +76,6 @@ export default async function analyzeAppearance({
       ...toUpdateUser.$set,
       nextScan,
       toAnalyze,
-      potential,
       latestScores,
       demographics,
       latestScoresDifference,
@@ -109,18 +106,16 @@ export default async function analyzeAppearance({
       demographics = { ...(demographics || {}), ...newDemographics };
     }
 
-    await doWithRetries(async () =>
-      db
-        .collection("AnalysisStatus")
-        .updateOne(
-          { userId: new ObjectId(userId), operationKey: "progress" },
-          { $inc: { progress: 3 } }
-        )
-    );
+    await incrementProgress({
+      value: 2,
+      operationKey: "progress",
+      userId: String(userId),
+    });
 
     toUpdateUser.$set.demographics = demographics;
 
     const hasBody = toAnalyze.some((obj) => obj.part === "body");
+
     if (hasBody) {
       const calories = await getCalorieGoal({
         userId,
@@ -133,6 +128,12 @@ export default async function analyzeAppearance({
         recommendedDailyCalorieGoal: calories,
       };
     }
+
+    await incrementProgress({
+      value: 1,
+      operationKey: "progress",
+      userId: String(userId),
+    });
 
     toUpdateUser.$set.nextScan = updateNextScan({ nextScan, toAnalyze });
 
@@ -196,27 +197,12 @@ export default async function analyzeAppearance({
       newLatestScoresDifference.overall / analysesResults.length
     );
 
-    await doWithRetries(async () =>
-      db
-        .collection("AnalysisStatus")
-        .updateOne(
-          { userId: new ObjectId(userId), operationKey: "progress" },
-          { $set: { isRunning: true, progress: 99 } }
-        )
-    );
-
-    const newPotential = analysesResults.reduce(
-      (a: { [key: string]: any }, c) => {
-        a[c.part] = c.potential;
-        a.overall += c.potential.overall;
-        return a;
-      },
-      { overall: 0 }
-    );
-
-    newPotential.overall = Math.round(
-      newPotential.overall / analysesResults.length
-    );
+    await incrementProgress({
+      value: 99,
+      operation: "set",
+      operationKey: "progress",
+      userId,
+    });
 
     const newLatestProgress = analysesResults.reduce(
       (a: { [key: string]: any }, c) => {
@@ -230,11 +216,6 @@ export default async function analyzeAppearance({
     newLatestProgress.overall = Math.round(
       newLatestProgress.overall / analysesResults.length
     );
-
-    toUpdateUser.$set.potential = {
-      ...potential,
-      ...newPotential,
-    };
 
     toUpdateUser.$set.latestScores = {
       ...latestScores,

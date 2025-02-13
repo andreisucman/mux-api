@@ -148,7 +148,7 @@ route.post(
         ],
         callback: () =>
           incrementProgress({
-            increment: 5,
+            value: 5,
             operationKey: analysisType,
             userId: req.userId,
           }),
@@ -190,7 +190,7 @@ route.post(
           ],
           callback: () =>
             incrementProgress({
-              increment: 15,
+              value: 15,
               operationKey: analysisType,
               userId: req.userId,
             }),
@@ -207,7 +207,7 @@ route.post(
         ],
         callback: () =>
           incrementProgress({
-            increment: 5,
+            value: 5,
             operationKey: analysisType,
             userId: req.userId,
           }),
@@ -232,7 +232,7 @@ route.post(
         ],
         callback: () =>
           incrementProgress({
-            increment: 5,
+            value: 5,
             operationKey: analysisType,
             userId: req.userId,
           }),
@@ -256,7 +256,7 @@ route.post(
         ],
         callback: () =>
           incrementProgress({
-            increment: 9,
+            value: 9,
             operationKey: analysisType,
             userId: req.userId,
           }),
@@ -281,7 +281,7 @@ route.post(
       });
 
       await incrementProgress({
-        increment: 15,
+        value: 15,
         operationKey: analysisType,
         userId: req.userId,
       });

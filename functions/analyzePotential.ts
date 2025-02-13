@@ -1,4 +1,4 @@
-import rateFeaturePotential from "functions/rateFeaturePotential.js";
+import describeFeatureCondition from "@/functions/describeFeatureCondition.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import filterImagesByFeature from "@/helpers/filterImagesByFeature.js";
 import formatRatings from "@/helpers/formatRatings.js";
@@ -8,7 +8,7 @@ import {
   FormattedRatingType,
   CategoryNameEnum,
 } from "types.js";
-import { FeatureAnalysisType } from "@/types/analyzePotentialTypes.js";
+import { FeatureAnalysisType } from "types.js";
 import httpError from "@/helpers/httpError.js";
 
 type Props = {
@@ -44,7 +44,7 @@ export default async function analyzePotential({
           );
 
           return doWithRetries(async () =>
-            rateFeaturePotential({
+            describeFeatureCondition({
               userId,
               sex,
               feature,
