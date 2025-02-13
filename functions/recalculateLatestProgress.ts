@@ -1,4 +1,4 @@
-import { LatestScoresType, ProgressType } from "types.js";
+import { FormattedRatingType, LatestScoresType, ProgressType } from "types.js";
 import httpError from "@/helpers/httpError.js";
 
 function updateObject(overallObject: { [key: string]: any }) {
@@ -16,7 +16,7 @@ function updateObject(overallObject: { [key: string]: any }) {
 }
 
 type Props = {
-  latestScores: LatestScoresType;
+  latestScores: FormattedRatingType;
   latestScoresDifference: LatestScoresType;
   substituteProgressRecord: ProgressType;
 };

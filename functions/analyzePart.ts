@@ -122,7 +122,7 @@ export default async function analyzePart({
 
     let appearanceAnalysisResults: FeatureAnalysisResultType[] = [];
 
-    const previousScans = await doWithRetries(
+    const previousScan = await doWithRetries(
       async () =>
         db
           .collection("Progress")
@@ -131,13 +131,13 @@ export default async function analyzePart({
             { projection: { images: 1, scores: 1 } }
           )
           .sort({ createdAt: -1 })
-          .toArray() as unknown as {
+          .next() as unknown as {
           images: ProgressImageType[];
           scores: FormattedRatingType;
-        }[]
+        }
     );
 
-    if (previousScans.length === 0) {
+    if (!previousScan) {
       // first scan case
       appearanceAnalysisResults = await doWithRetries(async () =>
         Promise.all(
@@ -156,13 +156,9 @@ export default async function analyzePart({
         )
       );
     } else {
-      const previousImages = previousScans
-        .flatMap((obj) => obj.images)
-        .map((obj) => obj.mainUrl.url);
+      const previousImages = previousScan.images.map((obj) => obj.mainUrl.url);
 
-      const allPreviousExplanations = previousScans.flatMap(
-        (obj) => obj.scores.explanations
-      );
+      const allPreviousExplanations = previousScan.scores.explanations;
 
       appearanceAnalysisResults = await doWithRetries(async () =>
         Promise.all(

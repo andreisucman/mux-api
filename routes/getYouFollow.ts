@@ -69,7 +69,8 @@ route.get(
 
       if (!userInfo) throw httpError(`User ${followingUserName} not found`);
 
-      const { _id, club, name, avatar } = userInfo as GetYouFollowUserType;
+      const { _id, club, name, avatar, latestScores, latestScoresDifference } =
+        userInfo as GetYouFollowUserType;
 
       const { bio } = club;
 
@@ -78,7 +79,13 @@ route.get(
         name,
         avatar,
         bio,
+        scores: {},
       };
+
+      result.scores.currentScore = latestScores.overall;
+      result.scores.totalProgress = latestScoresDifference.overall;
+
+      if (Object.keys(result.scores).length === 0) result.scores = null;
 
       res.status(200).json({ message: result });
     } catch (err) {

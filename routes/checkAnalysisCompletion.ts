@@ -50,6 +50,7 @@ route.post(
         res.status(200).json({
           error: job.message,
         });
+
         return;
       }
 

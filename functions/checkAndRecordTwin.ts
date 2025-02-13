@@ -33,15 +33,6 @@ export default async function checkAndRecordTwin({
   const { part, position } = registryFilter;
 
   try {
-    const { errorMessage, message: embedding } = await createHumanEmbedding(
-      image
-    );
-
-    if (errorMessage) {
-      response.errorMessage = errorMessage as string;
-      return response;
-    }
-
     let skip = false;
 
     for (const combination of skipCheckingTheseCombinations) {
@@ -57,6 +48,15 @@ export default async function checkAndRecordTwin({
     }
 
     if (skip) return response;
+
+    const { errorMessage, message: embedding } = await createHumanEmbedding(
+      image
+    );
+
+    if (errorMessage) {
+      response.errorMessage = errorMessage as string;
+      return response;
+    }
 
     response.isSuspended = await checkIfSuspended({
       embedding,

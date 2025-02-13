@@ -29,6 +29,8 @@ route.get(
               projection: {
                 name: 1,
                 avatar: 1,
+                latestScores: 1,
+                latestScoresDifference: 1,
               },
             }
           )
@@ -38,13 +40,17 @@ route.get(
       )) as unknown as FollowerType[];
 
       const results = followers.map((rec) => {
-        const { name, avatar, _id } = rec;
+        const { name, avatar, _id, latestScores, latestScoresDifference } = rec;
 
         const updated = {
           _id,
           name,
           avatar,
+          scores: {} as { [key: string]: number },
         };
+
+        updated.scores.currentScore = latestScores.overall;
+        updated.scores.totalProgress = latestScoresDifference.overall;
 
         return updated;
       });
