@@ -27,7 +27,7 @@ route.get(
       const filter: { [key: string]: any } = {
         userId: new ObjectId(req.userId),
         startsAt: {
-          $gte: setUtcMidnight({
+          $gt: setUtcMidnight({
             date: new Date(),
             timeZone: String(timeZone),
           }),
@@ -42,7 +42,7 @@ route.get(
 
       if (dateFrom)
         filter.startsAt = {
-          $gte: daysFrom({ date: dateFrom, days: -1 }),
+          $gt: daysFrom({ date: dateFrom, days: -1 }),
         };
 
       if (dateTo)
@@ -69,7 +69,7 @@ route.get(
             expiresAt: 1,
             startsAt: 1,
           })
-          .sort({ startsAt: 1 })
+          .sort({ startsAt: 1, part: -1 })
           .limit(Number(process.env.MAX_TASKS_PER_SCHEDULE))
           .toArray()
       );

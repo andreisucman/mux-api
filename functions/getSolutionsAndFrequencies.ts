@@ -79,7 +79,7 @@ export default async function getSolutionsAndFrequencies({
 
     const allSolutionsList = allSolutions.map((obj) => obj.key).join(", ");
 
-    const findSolutionsInstruction = `You are a dermatologist, dentist and fitness coach. The user gives you a list of their concerns. Your goal is to select all solutions for each of their concerns from this list of solutions: ${allSolutionsList}. DON'T MODIFY THE NAMES OF CONCERNS AND SOLUTIONS. Be concise and to the point.`;
+    const findSolutionsInstruction = `You are a dermatologist, dentist and fitness coach. The user gives you a list of their concerns. Your goal is to select the most effective combination of solutions for each of their concerns from this list of solutions: ${allSolutionsList}. DON'T MODIFY THE NAMES OF THE CONCERNS AND SOLUTIONS. Be concise and to the point.`;
 
     const allConcerns = partConcerns.map((co) => co.name);
     const concernsWithExplanations = partConcerns.map(
@@ -97,6 +97,26 @@ export default async function getSolutionsAndFrequencies({
           },
         ],
 
+        callback,
+      },
+      {
+        isMini: false,
+        content: [
+          {
+            type: "text",
+            text: `Are any of the solutions conflicting with or repeating each other? If yes, remove those from the list.`,
+          },
+        ],
+        callback,
+      },
+      {
+        isMini: false,
+        content: [
+          {
+            type: "text",
+            text: `Are there any solutions that require resting time such that the other solutions can't be used within the same week? If yes, remove the least effective conflicting solutions.`,
+          },
+        ],
         callback,
       },
     ];
@@ -190,7 +210,7 @@ export default async function getSolutionsAndFrequencies({
           },
           {
             type: "text",
-            text: "Here are the images of my concerns for your reference:",
+            text: "Here are the images for your reference:",
           },
           ...images,
         ],

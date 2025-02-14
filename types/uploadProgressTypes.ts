@@ -1,12 +1,4 @@
-import { TypeEnum, PartEnum, LatestProgressType } from "@/types.js";
-
-export type ProgressType = {
-  type: TypeEnum | null;
-  title: string;
-  instruction: string;
-  position: string;
-  part: PartEnum | null;
-};
+import { PartEnum, LatestProgressType } from "@/types.js";
 
 import {
   ToAnalyzeType,
@@ -16,6 +8,13 @@ import {
   LatestScoresType,
   NextActionType,
 } from "types.js";
+
+export type ProgressType = {
+  title: string;
+  instruction: string;
+  position: string;
+  part: PartEnum | null;
+};
 
 export type UploadProgressUserInfo = {
   name: string;

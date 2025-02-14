@@ -3,7 +3,6 @@ import doWithRetries from "helpers/doWithRetries.js";
 import { calculateDaysDifference } from "helpers/utils.js";
 import {
   UserConcernType,
-  TypeEnum,
   PartEnum,
   CategoryNameEnum,
   RoutineStatusEnum,

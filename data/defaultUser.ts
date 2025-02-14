@@ -1,5 +1,4 @@
 import {
-  TypeEnum,
   PositionEnum,
   UserType,
   PartEnum,
@@ -46,63 +45,54 @@ export const defaultTriedSubscriptions = {
 
 export const defaultRequiredProgress = [
   {
-    type: TypeEnum.HEAD,
     position: PositionEnum.FRONT,
     part: PartEnum.FACE,
     title: "Progress: Head - front",
     instruction: "Take a photo of your head from the front.",
   },
   {
-    type: TypeEnum.HEAD,
     position: PositionEnum.RIGHT,
     part: PartEnum.FACE,
     title: "Progress: Head - right",
     instruction: "Take a photo of your head from the right.",
   },
   {
-    type: TypeEnum.HEAD,
     position: PositionEnum.LEFT,
     part: PartEnum.FACE,
     title: "Progress: Head - left",
     instruction: "Take a photo of your head from the left.",
   },
   {
-    type: TypeEnum.HEAD,
     position: PositionEnum.FRONT,
     part: PartEnum.MOUTH,
     title: "Progress: Head - mouth",
     instruction: "Take a photo of your open mouth.",
   },
   {
-    type: TypeEnum.HEAD,
     position: PositionEnum.FRONT,
     part: PartEnum.SCALP,
     title: "Progress: Head - scalp & hair",
     instruction: "Take a photo of your head from the top.",
   },
   {
-    type: TypeEnum.BODY,
     position: PositionEnum.FRONT,
     part: PartEnum.BODY,
     title: "Progress: Body - front",
     instruction: "Take a full-height photo of your body from the front.",
   },
   {
-    type: TypeEnum.BODY,
     position: PositionEnum.RIGHT,
     part: PartEnum.BODY,
     title: "Progress: Body - right",
     instruction: "Take a full-height photo of your body from the right.",
   },
   {
-    type: TypeEnum.BODY,
     position: PositionEnum.LEFT,
     part: PartEnum.BODY,
     title: "Progress: Body - left",
     instruction: "Take a full-height photo of your body from the left.",
   },
   {
-    type: TypeEnum.BODY,
     position: PositionEnum.BACK,
     part: PartEnum.BODY,
     title: "Progress: Body - back",

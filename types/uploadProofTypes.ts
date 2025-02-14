@@ -4,7 +4,6 @@ import {
   DemographicsType,
   LatestScoresType,
   PartEnum,
-  TypeEnum,
 } from "types.js";
 
 export type UploadProofUserType = {
@@ -26,7 +25,6 @@ export type UploadProofTaskType = {
   key: string;
   color: string;
   part: PartEnum;
-  type: TypeEnum;
   icon: string;
   concern: string;
   requisite: string;

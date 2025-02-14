@@ -26,10 +26,10 @@ const route = Router();
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { taskKey, routineId, total, followingUserName, type } = req.body;
+    const { taskKey, routineId, total, followingUserName, part } = req.body;
 
     try {
-      if (!taskKey || !routineId || !total || !followingUserName || !type) {
+      if (!taskKey || !routineId || !total || !followingUserName || !part) {
         res.status(400).json({ error: "Bad request" });
         return;
       }
@@ -62,7 +62,7 @@ route.post(
           .collection("Routine")
           .find({
             userId: new ObjectId(req.userId),
-            type,
+            part,
             status: RoutineStatusEnum.ACTIVE,
           })
           .next()
@@ -207,7 +207,6 @@ route.post(
             userId: new ObjectId(req.userId),
             allTasks,
             finalSchedule,
-            type: taskToAdd.type,
             part: taskToAdd.part,
             concerns: [taskToAdd.concern],
             status: RoutineStatusEnum.ACTIVE,

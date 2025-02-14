@@ -75,6 +75,17 @@ export default async function analyzeConcerns({
       {
         isMini: true,
         content,
+        callback: () =>
+          incrementProgress({ userId, operationKey: "progress", value: 3 }),
+      },
+      {
+        isMini: true,
+        content: [
+          {
+            type: "text",
+            text: "Look at the concerns you have identified. Are there any that don't have sufficient proof in the data provided? If yes, remove those concerns, leaving only the concerns that are surely described in the data provided.",
+          },
+        ],
         responseFormat: zodResponseFormat(
           ConcernsResponseType,
           "ConcernsResponseType"

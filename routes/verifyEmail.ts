@@ -7,64 +7,66 @@ import doWithRetries from "helpers/doWithRetries.js";
 import sendConfirmationCode from "@/functions/sendConfirmationCode.js";
 import invalidateTheCode from "@/functions/invalidateTheCode.js";
 import { db } from "init.js";
-import { ModerationStatusEnum } from "@/types.js";
-import httpError from "@/helpers/httpError.js";
+import { CustomRequest, ModerationStatusEnum } from "@/types.js";
 
 const route = Router();
 
-route.post("/", async (req: Request, res: Response, next: NextFunction) => {
-  const { code } = req.body;
+route.post(
+  "/",
+  async (req: CustomRequest, res: Response, next: NextFunction) => {
+    const { code } = req.body;
 
-  if (!code) {
-    res.status(400).json({ error: "Bad request" });
-    return;
-  }
-
-  try {
-    const { status, userId, type } = await validateCode(code);
-
-    if (!status) {
-      if (type === "expired") {
-        const userInfo = await doWithRetries(() =>
-          db.collection("User").findOne(
-            {
-              _id: new ObjectId(userId),
-              moderationStatus: ModerationStatusEnum.ACTIVE,
-            },
-            { projection: { email: 1 } }
-          )
-        );
-
-        const { email } = userInfo;
-
-        sendConfirmationCode({ userId, email });
-
-        res.status(200).json({
-          error: `This code has expired. We've just sent a new one to ${email}.`,
-        });
-      } else {
-        res.status(200).json({
-          error: "Invalid confirmation code",
-        });
-      }
+    if (!code) {
+      res.status(400).json({ error: "Bad request" });
       return;
     }
 
-    await doWithRetries(async () =>
-      db
-        .collection("User")
-        .updateOne(
-          { _id: new ObjectId(userId) },
-          { $set: { emailVerified: status } }
-        )
-    );
+    try {
+      const { status, type } = await validateCode(code);
 
-    invalidateTheCode(code);
+      if (!status) {
+        if (type === "expired") {
+          const userInfo = await doWithRetries(() =>
+            db.collection("User").findOne(
+              {
+                _id: new ObjectId(req.userId),
+                moderationStatus: ModerationStatusEnum.ACTIVE,
+              },
+              { projection: { email: 1 } }
+            )
+          );
 
-    res.status(200).json({ message: status });
-  } catch (err) {
-    next(err);
+          const { email } = userInfo;
+
+          sendConfirmationCode({ userId: req.userId, email });
+
+          res.status(200).json({
+            error: `This code has expired. We've just sent a new one to ${email}.`,
+          });
+        } else {
+          res.status(200).json({
+            error: "Invalid confirmation code",
+          });
+        }
+        return;
+      }
+
+      await doWithRetries(async () =>
+        db
+          .collection("User")
+          .updateOne(
+            { _id: new ObjectId(req.userId) },
+            { $set: { emailVerified: status } }
+          )
+      );
+
+      invalidateTheCode(code);
+
+      res.status(200).json({ message: status });
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 export default route;

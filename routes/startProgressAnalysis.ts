@@ -9,7 +9,6 @@ import {
   CategoryNameEnum,
   CustomRequest,
   ModerationStatusEnum,
-  TypeEnum,
 } from "types.js";
 import { UploadProgressUserInfo } from "types/uploadProgressTypes.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
@@ -22,7 +21,6 @@ import { db } from "init.js";
 const route = Router();
 
 type Props = {
-  type: TypeEnum;
   userId: string;
   blurType: BlurTypeEnum;
 };

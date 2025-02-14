@@ -29,7 +29,7 @@ export default async function analyzeFeature({
   try {
     const systemContent = `You are an anthropologist, dermatologist and anathomist. Rate the ${feature} of the person on the provided images from 0 to 100 according to the following criteria: ### Criteria: ${
       criteria[sex as "male"][feature as "mouth"]
-    }###. Explain your reasoning and decide if the condition of the ${feature} can be improved with a self-improvement routine. DO YOUR BEST AT PRODUCING A SCORE EVEN IF THE IMAGES ARE NOT CLEAR. Think step-by-step. Don't suggest any specific solutions. Don't mention the criteria in your response.`;
+    }###. Explain your reasoning with the references to the images. DO YOUR BEST AT PRODUCING A SCORE EVEN IF THE IMAGES ARE NOT CLEAR. Think step-by-step. Don't suggest any specific solutions. Don't mention the criteria in your response.`;
 
     const filteredToAnalyze = filterImagesByFeature(toAnalyze, feature);
 
@@ -41,15 +41,13 @@ export default async function analyzeFeature({
         ),
       explanation: z
         .string()
-        .describe(
-          `3-5 sentences of your reasoning for the score and explanation of whether the condition can be improved with a self-improvement routine.`
-        ),
+        .describe(`3-5 sentences of your reasoning for the score.`),
     });
 
-    const base64Images = [];
+    const imageContent = [];
 
     for (const toAnalyzeObject of filteredToAnalyze) {
-      base64Images.push({
+      imageContent.push({
         type: "image_url",
         image_url: {
           url: await urlToBase64(toAnalyzeObject.mainUrl.url),
@@ -60,16 +58,31 @@ export default async function analyzeFeature({
 
     const runs = [
       {
-        isMini: true,
-        content: base64Images,
+        isMini: false,
+        content: imageContent,
       },
+    ];
+
+    const firstResponse = await askRepeatedly({
+      runs,
+      userId,
+      systemContent,
+      categoryName,
+      functionName: "analyzeFeature",
+      isResultString: true,
+    });
+
+    const formatSystemContent =
+      "You are given a description of the user's body part. Your goal is to format the description in the 2nd tense (you/your) with a casual language, better flow an readability. Your response must be entirely based on the information you are given. Don't make things up. Think step-by-step.";
+
+    const formatRuns = [
       {
         isMini: true,
-        model: "ft:gpt-4o-mini-2024-07-18:personal:analyzefeature:B0mQDiOA",
+        model: "ft:gpt-4o-mini-2024-07-18:personal:analyzefeature:B0pQR81v",
         content: [
           {
             type: "text" as "text",
-            text: "Which part of the criteria makes you think that your score is adequate? Could there be a more realistic score? Give your final verdict.",
+            text: firstResponse,
           },
         ],
         responseFormat: zodResponseFormat(
@@ -80,9 +93,9 @@ export default async function analyzeFeature({
     ];
 
     const { score, explanation } = await askRepeatedly({
-      runs,
+      runs: formatRuns,
       userId,
-      systemContent,
+      systemContent: formatSystemContent,
       categoryName,
       functionName: "analyzeFeature",
     });

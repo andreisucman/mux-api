@@ -2,14 +2,12 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import { ObjectId } from "mongodb";
-import doWithRetries from "helpers/doWithRetries.js";
 import setUtcMidnight from "helpers/setUtcMidnight.js";
 import { daysFrom } from "helpers/utils.js";
 import personalizeInstruction from "functions/personalizeInstruction.js";
 import { tasksRequirePersonalizedInstruction } from "data/tasksRequirePersonalizedInstructions.js";
 import {
   UserInfoType,
-  TypeEnum,
   TaskType,
   PartEnum,
   TaskStatusEnum,
@@ -20,7 +18,6 @@ import {
   PersonalizedInfoType,
 } from "types/createRoutineTypes.js";
 import httpError from "helpers/httpError.js";
-import { db } from "init.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
 

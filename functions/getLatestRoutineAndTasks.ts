@@ -48,7 +48,7 @@ export default async function getLatestRoutinesAndTasks({
     }
 
     const expiresAtFrom = setUtcMidnight({ date: new Date() });
-    const expiresAtTo = setUtcMidnight({ date: daysFrom({ days: 2 }) });
+    const expiresAtTo = setUtcMidnight({ date: daysFrom({ days: 1 }) });
 
     const project = {
       _id: 1,
@@ -77,7 +77,7 @@ export default async function getLatestRoutinesAndTasks({
               expiresAt: { $gte: expiresAtFrom, $lte: expiresAtTo },
             },
           },
-          { $sort: { startsAt: 1 } },
+          { $sort: { startsAt: 1, part: -1 } },
           {
             $project: project,
           },

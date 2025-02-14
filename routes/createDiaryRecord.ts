@@ -82,7 +82,6 @@ route.post(
           icon: proof.icon,
           categoryName: "proof",
           contentType: proof.contentType,
-          type: proof.type,
         });
       }
 

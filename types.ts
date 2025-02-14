@@ -26,7 +26,6 @@ export type NextActionType = { part: PartEnum; date: Date | null };
 export type RequirementType = {
   title: string;
   instruction: string;
-  type: TypeEnum;
   part: PartEnum;
   position: PositionEnum;
 };
@@ -226,18 +225,11 @@ export enum BodyTypeEnum {
   ENDOMORPH = "endomorph",
 }
 
-export enum TypeEnum {
-  HEAD = "head",
-  BODY = "body",
-  HEALTH = "health",
-}
-
 export enum PartEnum {
   FACE = "face",
   BODY = "body",
   MOUTH = "mouth",
   SCALP = "scalp",
-  HEALTH = "health",
 }
 
 export enum TaskStatusEnum {
@@ -358,7 +350,6 @@ export type TaskType = {
   requisite: string;
   icon: string;
   color: string;
-  type: TypeEnum;
   part: PartEnum;
   status: TaskStatusEnum;
   concern: string;

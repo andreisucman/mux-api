@@ -165,7 +165,7 @@ route.post(
             : returnRoutinesWithStatus;
 
         const routinesFilter = {
-          type: currentTask.type,
+          part: currentTask.part,
           status: finalRoutineStatus,
         };
 

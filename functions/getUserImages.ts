@@ -1,13 +1,12 @@
 import { ObjectId } from "mongodb";
 import doWithRetries from "@/helpers/doWithRetries.js";
-import { PartEnum, ProgressImageType, TypeEnum } from "@/types.js";
+import { PartEnum, ProgressImageType } from "@/types.js";
 import httpError from "@/helpers/httpError.js";
 import { db } from "@/init.js";
 
 type Props = {
   userId: string;
   part?: PartEnum;
-  type?: TypeEnum;
 };
 
 export default async function getUsersImages({

@@ -126,6 +126,7 @@ route.post(
 
         if (email) {
           // login
+
           if (auth === "e") {
             const loginSuccess = await bcrypt.compare(password, storedPassword);
 

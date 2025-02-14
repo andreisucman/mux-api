@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { ModerationStatusEnum, TypeEnum } from "@/types.js";
+import { ModerationStatusEnum } from "@/types.js";
 
 export type DiaryRecordType = {
   _id: ObjectId;
@@ -22,7 +22,6 @@ export type DiaryActivityType = {
   url: string;
   thumbnail?: string;
   icon?: string;
-  type?: TypeEnum;
   contentType: "image" | "video";
   categoryName: "proof" | "food";
 };

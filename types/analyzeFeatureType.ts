@@ -1,4 +1,4 @@
-import { TypeEnum, PartEnum } from "@/types.js";
+import { PartEnum } from "@/types.js";
 
 export type FeatureAnalysisResultType = {
   score: number;

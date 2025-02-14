@@ -15,7 +15,7 @@ type Props = {
 
 const route = Router();
 
-const allowedParts = ["face", "scalp", "mouth", "body", "health"];
+const allowedParts = ["face", "scalp", "mouth", "body"];
 
 route.post(
   "/",
