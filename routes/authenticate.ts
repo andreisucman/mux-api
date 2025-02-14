@@ -30,13 +30,10 @@ const route = Router();
 const allowedReferrers = [
   "scanFood",
   "scanProgress",
-  "scanStyle",
-  "analysisStyleResult",
   "analysisProgress",
   "clubRoutines",
   "clubAbout",
   "clubProgress",
-  "clubStyle",
   "clubAnswers",
   "clubProof",
   "clubDiary",
@@ -50,18 +47,20 @@ route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
-      let { code, timeZone, localUserId, state, email, password } = req.body;
+      let { code, timeZone, state, email, password } = req.body;
 
       const parsedState = state
         ? JSON.parse(decodeURIComponent(state as string))
         : {};
+
+      const { localUserId, referrer } = parsedState;
 
       if (localUserId && !ObjectId.isValid(localUserId)) {
         res.status(400).json({ error: "Bad request" });
         return;
       }
 
-      if (!allowedReferrers.includes(parsedState.referrer)) {
+      if (!allowedReferrers.includes(referrer)) {
         res.status(400).json({ error: "Bad request" });
         return;
       }
@@ -129,6 +128,7 @@ route.post(
           // login
           if (auth === "e") {
             const loginSuccess = await bcrypt.compare(password, storedPassword);
+
             if (!loginSuccess) {
               res.status(200).json({ error: "The password is incorrect." });
               return;

@@ -18,7 +18,7 @@ route.post(
     if (
       !userId ||
       !ObjectId.isValid(userId) ||
-      !["male", "female"].includes(sex)
+      !["male", "female", null].includes(sex)
     ) {
       res.status(400).json({ error: "Bad request" });
       return;
@@ -47,7 +47,7 @@ route.post(
           {
             _id: new ObjectId(userId),
             moderationStatus: ModerationStatusEnum.ACTIVE,
-            email: { $exists: false },
+            email: "",
           },
           { $set: { "demographics.sex": sex } }
         )

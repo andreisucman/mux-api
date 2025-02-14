@@ -8,8 +8,8 @@ export type CheckImageSimilarityProps = {
   userId?: string;
   hash: string;
   embedding: number[];
-  vectorIndexName: "food_image_search" | "style_image_search";
-  collection: "FoodAnalysis" | "StyleAnalysis";
+  vectorIndexName: "food_image_search";
+  collection: "FoodAnalysis";
 };
 
 export default async function checkImageSimilarity({

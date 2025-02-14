@@ -20,11 +20,6 @@ export const defaultClubPrivacy = [
     parts: [{ name: "proof", value: false }],
   },
   {
-    name: "style",
-    value: false,
-    parts: [{ name: "style", value: false }],
-  },
-  {
     name: "diary",
     value: false,
     parts: [{ name: "diary", value: false }],

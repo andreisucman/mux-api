@@ -13,7 +13,6 @@ type ExistingFiltersType = {
   ageInterval: string[];
   sex: string[];
   type: string[];
-  styleName: string[];
   taskName: string[];
 };
 
@@ -25,7 +24,6 @@ const emptyFilters: ExistingFiltersType = {
   ageInterval: [],
   sex: [],
   type: [],
-  styleName: [],
   taskName: [],
 };
 
@@ -33,7 +31,6 @@ const route = Router();
 
 const collectionMap: { [key: string]: string } = {
   progress: "BeforeAfter",
-  style: "StyleAnalysis",
   proof: "Proof",
 };
 

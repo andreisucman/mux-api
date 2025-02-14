@@ -191,7 +191,7 @@ export default async function analyzePart({
       userId,
       categoryName,
       sex: demographics.sex,
-      toAnalyze: partToAnalyze,
+      appearanceAnalysisResults,
     });
 
     if (newConcerns && newConcerns.length > 0) {

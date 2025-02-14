@@ -150,7 +150,6 @@ export const defaultUser: UserType = {
   timeZoneOffsetInMinutes: 0,
   deleteOn: null,
   stripeUserId: "",
-  latestStyleAnalysis: null,
   demographics: defaultDemographics,
   latestScores: { overall: 0, face: 0, mouth: 0, scalp: 0, body: 0 },
   latestScoresDifference: { overall: 0, face: 0, mouth: 0, scalp: 0, body: 0 },

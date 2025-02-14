@@ -15,7 +15,6 @@ const route = Router();
 
 const collectionMap: { [key: string]: string } = {
   progress: "Progress",
-  style: "StyleAnalysis",
   proof: "Proof",
   diary: "Diary",
   about: "FaqAnswer",
@@ -140,32 +139,6 @@ route.post(
               )
             );
           }
-          break;
-        case "style":
-          const substituteStyleRecord = await doWithRetries(async () =>
-            db
-              .collection("StyleAnalysis")
-              .find({
-                userId: new ObjectId(req.userId),
-              })
-              .sort({ _id: -1 })
-              .next()
-          );
-
-          let newLatestStyleAnalysis = null;
-
-          if (substituteStyleRecord) {
-            newLatestStyleAnalysis = substituteStyleRecord;
-          }
-
-          await doWithRetries(async () =>
-            db
-              .collection("User")
-              .updateOne(
-                { _id: new ObjectId(req.userId) },
-                { $set: { latestStyleAnalysis: newLatestStyleAnalysis } }
-              )
-          );
           break;
       }
 

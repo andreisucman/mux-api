@@ -8,8 +8,7 @@ const route = Router();
 
 route.get("/", async (req: CustomRequest, res, next: NextFunction) => {
   const { filter, skip } = aqp(req.query as any) as AqpQuery;
-  const { ageInterval, type, part, sex, bodyType, ethnicity, concern } =
-    filter || {};
+  const { ageInterval, part, sex, bodyType, ethnicity, concern } = filter || {};
 
   try {
     const pipeline: any = [];
@@ -18,13 +17,18 @@ route.get("/", async (req: CustomRequest, res, next: NextFunction) => {
       isPublic: true,
     };
 
-    if (sex) filter.demographics.sex = sex;
-    if (bodyType) filter.demographics.bodyType = bodyType;
-    if (ageInterval) filter.demographics.ageInterval = ageInterval;
-    if (ethnicity) filter.demographics.ethnicity = ethnicity;
     if (concern) filter.concerns.name = concern;
-    if (type) filter.type = type;
     if (part) filter.part = part;
+
+    const demographics: { [key: string]: any } = {};
+
+    if (sex) demographics.sex = sex;
+    if (bodyType) demographics.bodyType = bodyType;
+    if (ageInterval) demographics.ageInterval = ageInterval;
+    if (ethnicity) demographics.ethnicity = ethnicity;
+
+    if (Object.keys(demographics).length > 0)
+      filter.demographics = demographics;
 
     pipeline.push(
       { $match: filter },

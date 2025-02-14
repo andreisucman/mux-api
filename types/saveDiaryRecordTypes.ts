@@ -24,5 +24,5 @@ export type DiaryActivityType = {
   icon?: string;
   type?: TypeEnum;
   contentType: "image" | "video";
-  categoryName: "style" | "proof" | "food";
+  categoryName: "proof" | "food";
 };

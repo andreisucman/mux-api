@@ -17,19 +17,11 @@ export default async function generateBioContent({
   text,
 }: UpdateAboutBioProps) {
   try {
-    const finalSegment = `${
-      segment === "tips"
-        ? "the face and outfit styling tips from the user"
-        : segment === "style"
-        ? "the user's face and outfit style choices"
-        : "the user's character and life philosophy"
-    }`;
-
-    let systemContent = `You are given a part of the user's interview and a topic to write about. Create a 3-5 sentences biography style content on the topic based on the interview. Come up with additional details to make your content engaging, but don't make up new facts. Your goall is to create the given information into an engaging personality description in 3-5 sentences. Write from the name of the user in the first person style I/me. Use simple, conversational language.}`;
+    let systemContent = `You are given a part of the user's interview and a topic to write about. Create a 3-5 sentences biography style content on the topic based on the interview. Come up with additional details to make your content engaging, but don't make up new facts. Your goall is to create the given information into an engaging personality description in 3-5 sentences. Write from the name of the user in the first person style I/me. Use simple, conversational language.`;
 
     if (segment === "tips")
       systemContent +=
-        "Your response should be an advice to other people on how to achieve a outlook similar to yours. Avoid generic advice, be specific.";
+        "Your response should be an advice to other people on how to achieve a lifestyle similar to yours. Avoid generic advice, be specific.";
 
     const runs = [
       {
@@ -41,7 +33,7 @@ export default async function generateBioContent({
           },
           {
             type: "text",
-            text: `The topic is: ${finalSegment}.`,
+            text: `The topic is: the user's character, philosophy and lifestyle.`,
           },
         ],
       },

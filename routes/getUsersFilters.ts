@@ -13,7 +13,6 @@ const route = Router();
 
 const collectionMap: { [key: string]: string } = {
   progress: "Progress",
-  style: "StyleAnalysis",
   proof: "Proof",
 };
 

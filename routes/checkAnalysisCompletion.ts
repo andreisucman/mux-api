@@ -6,7 +6,6 @@ import { db } from "init.js";
 import { CustomRequest } from "types.js";
 import getUserData from "functions/getUserData.js";
 import getLatestRoutinesAndTasks from "functions/getLatestRoutineAndTasks.js";
-import getLatestStyles from "functions/getLatestStyles.js";
 
 const route = Router();
 
@@ -65,7 +64,6 @@ route.post(
 
       const userData = await getUserData({ userId });
       const { routines, tasks } = await getLatestRoutinesAndTasks({ userId });
-      const latestStyleAnalysis = await getLatestStyles({ userId });
 
       res.status(200).json({
         message: {
@@ -73,7 +71,6 @@ route.post(
           tasks,
           routines,
           jobProgress: 100,
-          latestStyleAnalysis,
           isRunning: job.isRunning,
         },
       });

@@ -13,7 +13,6 @@ type Props = {
   userId: string;
   collection:
     | "Progress"
-    | "StyleAnalysis"
     | "Proof"
     | "FaqAnswer"
     | "Diary"

@@ -86,34 +86,6 @@ route.post(
         });
       }
 
-      const styleFilters: { [key: string]: any } = {
-        userId: new ObjectId(req.userId),
-        createdAt: { $gte: usersTodayMidnight, $lt: usersTomorrowMidnight },
-        moderationStatus: ModerationStatusEnum.ACTIVE,
-      };
-
-      const todaysStyles = await doWithRetries(async () =>
-        db
-          .collection("StyleAnalysis")
-          .find(styleFilters, {
-            projection: { styleName: 1, mainUrl: 1, type: 1, styleIcon: 1 },
-          })
-          .sort({ _id: -1 })
-          .toArray()
-      );
-
-      for (const style of todaysStyles) {
-        results.push({
-          contentId: style._id,
-          name: style.styleName,
-          url: style.mainUrl.url,
-          icon: style.styleIcon,
-          categoryName: "style",
-          contentType: "image",
-          type: style.type,
-        });
-      }
-
       const foodFilters: { [key: string]: any } = {
         userId: new ObjectId(req.userId),
         createdAt: { $gte: usersTodayMidnight, $lt: usersTomorrowMidnight },

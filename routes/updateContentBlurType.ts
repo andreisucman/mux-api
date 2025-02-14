@@ -80,39 +80,6 @@ async function updateProgressRecord({
   }
 }
 
-type UpdateStyleRecord = {
-  urls: BlurredUrlType[];
-  blurType: BlurTypeEnum;
-  cookies: CookieOptions;
-};
-
-async function updateStyleRecord({
-  urls,
-  cookies,
-  blurType,
-}: UpdateStyleRecord) {
-  const existingBlurRecord = urls.find(
-    (rec: { name: string }) => rec.name === blurType
-  );
-
-  if (existingBlurRecord) {
-    return { mainUrl: existingBlurRecord };
-  } else {
-    const originalUrl = urls.find(
-      (rec: { name: string }) => rec.name === "original"
-    );
-    const blurredImage = await blurContent({
-      blurType,
-      cookies,
-      endpoint: "blurImage",
-      originalUrl: originalUrl.url,
-    });
-
-    const newUrl = { name: blurType, url: blurredImage.url };
-    return { mainUrl: newUrl, urls: [...urls, newUrl] };
-  }
-}
-
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
@@ -128,17 +95,12 @@ route.post(
       return;
     }
 
-    if (!["progress", "style", "proof"].includes(contentCategory)) {
+    if (!["progress", "proof"].includes(contentCategory)) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
 
-    const collection =
-      contentCategory === "progress"
-        ? "Progress"
-        : contentCategory === "style"
-        ? "StyleAnalysis"
-        : "Proof";
+    const collection = contentCategory === "progress" ? "Progress" : "Proof";
 
     try {
       const relevantRecord = await doWithRetries(async () =>
@@ -231,14 +193,6 @@ route.post(
             } else {
               message.hash = hash;
             }
-          } else {
-            const updateStyleResult = await updateStyleRecord({
-              blurType,
-              urls,
-              cookies: req.cookies,
-            });
-
-            message = { ...message, ...updateStyleResult };
           }
         }
       }

@@ -67,19 +67,6 @@ export default async function createClubProfile({ userId }: Props) {
 
     const defaultQuestions = [
       "What is your life philosophy? Are you outgoing or maybe love being alone? Why? ",
-      "Some aim to make a statement when they dress, others just put something on. How about you? Why?",
-      `How do you choose your ${
-        sex === "male"
-          ? "clothing and accessories"
-          : "makeup, clothing and accessories"
-      }? What are the colors, materials, size, or shapes you look for and avoid. Why?`,
-      "What are the places and brands you usually shop at and how frequently do you do that? Why do you shop there?",
-      "Imagine you became much fatter than your are now. Describe how you adapt your style to your new weight. What type of clothing, colors, or brands would you change and why?",
-      "Imagine you became much thinner than your are now. Describe how you adapt your style to your new weight. What type of clothing, colors, or brands would you change and why?",
-      "Imagine that your ethnicity changed. Would you change anything in your outlook? Why?",
-      `If you were ${
-        sex === "male" ? "female" : "male"
-      }, how would you look? Talk about height, weight, personality, facial features, etc.`,
     ];
 
     const randomName = await createRandomName();
@@ -99,11 +86,9 @@ export default async function createClubProfile({ userId }: Props) {
     const clubBio: ClubBioType = {
       intro: "I love working out and eating healthy.",
       philosophy: "",
-      style: "",
       tips: "",
       nextRegenerateBio: {
         philosophy: null,
-        style: null,
         tips: null,
       },
       socials: [],

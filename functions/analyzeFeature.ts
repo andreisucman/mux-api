@@ -29,7 +29,7 @@ export default async function analyzeFeature({
   try {
     const systemContent = `You are an anthropologist, dermatologist and anathomist. Rate the ${feature} of the person on the provided images from 0 to 100 according to the following criteria: ### Criteria: ${
       criteria[sex as "male"][feature as "mouth"]
-    }###. Explain your reasoning and decide if the condition of the ${feature} can be improved with a self-improvement routine. DO YOUR BEST AT PRODUCING A SCORE EVEN IF THE IMAGES ARE NOT CLEAR. Think step-by-step. Don't suggest any specific solutions.`;
+    }###. Explain your reasoning and decide if the condition of the ${feature} can be improved with a self-improvement routine. DO YOUR BEST AT PRODUCING A SCORE EVEN IF THE IMAGES ARE NOT CLEAR. Think step-by-step. Don't suggest any specific solutions. Don't mention the criteria in your response.`;
 
     const filteredToAnalyze = filterImagesByFeature(toAnalyze, feature);
 
@@ -42,7 +42,7 @@ export default async function analyzeFeature({
       explanation: z
         .string()
         .describe(
-          `3-5 sentences of your reasoning for the score and explanation in the 2nd tense (you/your) of whether the condition can be improved with a self-improvement routine and why.`
+          `3-5 sentences of your reasoning for the score and explanation of whether the condition can be improved with a self-improvement routine.`
         ),
     });
 
@@ -60,8 +60,18 @@ export default async function analyzeFeature({
 
     const runs = [
       {
-        isMini: false,
+        isMini: true,
         content: base64Images,
+      },
+      {
+        isMini: true,
+        model: "ft:gpt-4o-mini-2024-07-18:personal:analyzefeature:B0mQDiOA",
+        content: [
+          {
+            type: "text" as "text",
+            text: "Which part of the criteria makes you think that your score is adequate? Could there be a more realistic score? Give your final verdict.",
+          },
+        ],
         responseFormat: zodResponseFormat(
           FeatureResponseFormatType,
           "analysis"

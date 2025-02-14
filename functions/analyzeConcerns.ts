@@ -4,7 +4,6 @@ import doWithRetries from "helpers/doWithRetries.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import askRepeatedly from "functions/askRepeatedly.js";
 import {
-  ToAnalyzeType,
   SexEnum,
   PartEnum,
   ConcernType,
@@ -15,14 +14,14 @@ import { db } from "init.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import httpError from "@/helpers/httpError.js";
 import updateConcernsAnalytics from "./updateConcernsAnalytics.js";
-import { urlToBase64 } from "@/helpers/utils.js";
+import { FeatureAnalysisResultType } from "@/types/analyzeFeatureType.js";
 
 type Props = {
   userId: string;
   sex: SexEnum;
   part: PartEnum;
   categoryName: CategoryNameEnum;
-  toAnalyze: ToAnalyzeType[];
+  appearanceAnalysisResults: FeatureAnalysisResultType[];
 };
 
 export default async function analyzeConcerns({
@@ -30,7 +29,7 @@ export default async function analyzeConcerns({
   userId,
   part,
   categoryName,
-  toAnalyze,
+  appearanceAnalysisResults,
 }: Props) {
   try {
     const concernObjects = (await doWithRetries(async () =>
@@ -48,43 +47,34 @@ export default async function analyzeConcerns({
 
     const concerns = concernObjects.map((obj) => obj.name);
 
-    const systemContent = `You are an esthetician, dermatologist, dentist and fitness-coach. The user gives you their images. Your goal is to identify which of the concerns from this list: ${concerns.join(
+    const systemContent = `You are an esthetician, dermatologist, dentist and fitness-coach. The user gives you their appearance analysis. Your goal is to identify which of the concerns from this list: ${concerns.join(
       "\n-"
-    )} are clearly visible on the images. Your response is the name of the relevant concerns from the list and 1 sentence description for each in the 2nd tense (you/your) describing where it is present on the user's photos. Think step-by-step. Use only the information provided.`;
+    )} are mentioned in the analysis. Your response is the name of the relevant concerns from the list and 1 short sentence describing the location of each concern in the 2nd tense (you/your). Example: 'You have minimal signs of puffiness around the eyes'. Think step-by-step. Use only the information provided.`;
 
     const ConcernsResponseType = z.object({
-      concerns: z
-        .array(
-          z.object({
-            name: z
-              .string()
-              .describe("name of the relevant concern from the list"),
-            explanation: z
-              .string()
-              .describe(
-                "1 sentence description of the concern and the explanation of where it was identified on the user's photo, in the 2nd tense (you/your)"
-              ),
-          })
-        )
-        .describe(""),
+      concerns: z.array(
+        z.object({
+          name: z
+            .string()
+            .describe("name of the relevant concern from the list"),
+          explanation: z
+            .string()
+            .describe(
+              "1 short sentence describing the location of the concern in the 2nd tense (you/your)"
+            ),
+        })
+      ),
     });
 
-    const images = [];
-
-    for (const obj of toAnalyze) {
-      images.push({
-        type: "image_url",
-        image_url: {
-          url: await urlToBase64(obj.mainUrl.url),
-          detail: "high",
-        },
-      });
-    }
+    const content = appearanceAnalysisResults.map((obj) => ({
+      type: "text",
+      text: obj.explanation,
+    }));
 
     const userContent = [
       {
-        isMini: false,
-        content: images,
+        isMini: true,
+        content,
         responseFormat: zodResponseFormat(
           ConcernsResponseType,
           "ConcernsResponseType"

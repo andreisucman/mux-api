@@ -84,7 +84,6 @@ export type UserType = {
     peek: SubscriptionType;
     advisor: SubscriptionType;
   };
-  latestStyleAnalysis: StyleAnalysisType | null;
   toAnalyze: ToAnalyzeType[];
   coachEnergy: number;
   stripeUserId: string;
@@ -112,41 +111,6 @@ export type ToAnalyzeType = {
   suspiciousAnalysisResults?: ModerationResultType[];
 };
 
-export type StyleAnalysisType = {
-  _id: ObjectId;
-  userId: ObjectId;
-  createdAt: Date;
-  compareDate: Date;
-  mainUrl: BlurredUrlType;
-  compareMainUrl: BlurredUrlType;
-  urls: BlurredUrlType[];
-  compareUrls: BlurredUrlType[];
-  compareStyleIcon: string;
-  votes: number;
-  compareVotes: number;
-  demographics: DemographicsType;
-  goalStyle: StyleGoalsType | null;
-  hash: string;
-  styleIcon: string;
-  styleName: string;
-  compareStyleName: string;
-  currentDescription: string;
-  currentSuggestion: string;
-  matchSuggestion: string;
-  isPublic: boolean;
-  analysis: { [key: string]: number } | null;
-  compareAnalysis: { [key: string]: number } | null;
-  userName: string | null;
-  avatar: { [key: string]: any } | null;
-  moderationStatus: ModerationStatusEnum;
-};
-
-export type StyleGoalsType = {
-  name: string;
-  description: string;
-  icon: string;
-};
-
 export enum SubscriptionTypeNamesEnum {
   IMPROVEMENT = "improvement",
   PEEK = "peek",
@@ -168,12 +132,10 @@ export type PrivacyType = {
 export type ClubBioType = {
   intro: string;
   philosophy: string;
-  style: string;
   tips: string;
   socials: { value: string; label: string }[];
   nextRegenerateBio: {
     philosophy: string | null;
-    style: string | null;
     tips: string | null;
   };
 };
@@ -275,7 +237,6 @@ export enum PartEnum {
   BODY = "body",
   MOUTH = "mouth",
   SCALP = "scalp",
-  STYLE = "style",
   HEALTH = "health",
 }
 
@@ -335,7 +296,6 @@ export enum CategoryNameEnum {
   TASKS = "tasks",
   PROGRESSSCAN = "progressScan",
   FOODSCAN = "foodScan",
-  STYLESCAN = "styleScan",
   PRODUCTS = "products",
   ADVISOR = "advisor",
   FAQ = "faq",

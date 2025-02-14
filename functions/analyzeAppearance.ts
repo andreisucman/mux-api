@@ -64,6 +64,7 @@ export default async function analyzeAppearance({
   newSpecialConsiderations,
 }: Props) {
   try {
+    console.log("analyzeAppearance demographics", demographics);
     const parts = [...new Set(toAnalyze.map((obj) => obj.part))];
 
     const toUpdateUser = { $set: {} as { [key: string]: any } };

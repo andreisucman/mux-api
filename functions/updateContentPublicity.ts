@@ -92,26 +92,6 @@ export default async function updateContentPublicity({
       })
     );
 
-    const styleDifferences = difference.filter((pr) => pr.category === "style");
-
-    const toUpdateStyle = styleDifferences.map(
-      (obj: { name: string; type: string; value: boolean }) => ({
-        updateOne: {
-          filter: {
-            userId: new ObjectId(userId),
-            type: obj.type,
-          },
-          update: {
-            $set: {
-              isPublic: obj.value,
-              userName: name,
-              avatar,
-            },
-          },
-        },
-      })
-    );
-
     const answerDifference = difference.filter(
       (pr) => pr.category === "answer"
     );
@@ -151,11 +131,6 @@ export default async function updateContentPublicity({
     if (toUpdateProgressAndBA.length > 0)
       await doWithRetries(async () =>
         db.collection("BeforeAfter").bulkWrite(toUpdateProgressAndBA)
-      );
-
-    if (toUpdateStyle.length > 0)
-      await doWithRetries(async () =>
-        db.collection("StyleAnalysis").bulkWrite(toUpdateStyle)
       );
 
     if (toUpdateDiary.length > 0)
