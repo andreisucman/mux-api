@@ -4,6 +4,10 @@ dotenv.config();
 const {
   TUNED_MODELS,
 
+  O3_MINI,
+  O3_MINI_INPUT_PRICE,
+  O3_MINI_OUTPUT_PRICE,
+
   GPT_4O,
   GPT_4O_INPUT_PRICE,
   GPT_4O_OUTPUT_PRICE,
@@ -39,6 +43,10 @@ const priceMap: { [key: string]: { input: number; output: number } } = {
   [GPT_4O_MINI_TUNED]: {
     input: Number(GPT_4O_MINI_TUNED_INPUT_PRICE),
     output: Number(GPT_4O_MINI_TUNED_OUTPUT_PRICE),
+  },
+  [O3_MINI]: {
+    input: Number(O3_MINI_INPUT_PRICE),
+    output: Number(O3_MINI_OUTPUT_PRICE),
   },
 };
 

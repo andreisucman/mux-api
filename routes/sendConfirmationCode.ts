@@ -3,7 +3,6 @@ dotenv.config();
 import { Router, Response, NextFunction } from "express";
 import { CustomRequest } from "types.js";
 import sendConfirmationCode from "@/functions/sendConfirmationCode.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 

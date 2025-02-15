@@ -5,7 +5,6 @@ import { ModerationStatusEnum, CustomRequest } from "types.js";
 import checkTrackedRBAC from "functions/checkTrackedRBAC.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { db } from "init.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -14,7 +13,7 @@ route.get(
   async (req: CustomRequest, res, next: NextFunction) => {
     const { followingUserName } = req.params;
     const { filter, skip, sort } = aqp(req.query as any) as AqpQuery;
-    const { type, part, position } = filter;
+    const { part } = filter;
 
     if (!followingUserName && !req.userId) {
       res.status(400).json({ error: "Bad request" });
@@ -50,13 +49,10 @@ route.get(
         filter.userId = new ObjectId(req.userId);
       }
 
-      if (type) filter.type = type;
       if (part) filter.part = part;
-      if (position) filter.images.position = position;
 
       const projection: { [key: string]: any } = {
         _id: 1,
-        type: 1,
         part: 1,
         isPublic: 1,
         images: 1,

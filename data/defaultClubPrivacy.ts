@@ -17,7 +17,12 @@ export const defaultClubPrivacy = [
   {
     name: "proof",
     value: false,
-    parts: [{ name: "proof", value: false }],
+    parts: [
+      { name: "face", value: false },
+      { name: "mouth", value: false },
+      { name: "scalp", value: false },
+      { name: "body", value: false },
+    ],
   },
   {
     name: "diary",

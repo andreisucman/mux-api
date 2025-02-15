@@ -11,7 +11,6 @@ import getEmailContent from "@/helpers/getEmailContent.js";
 import { minutesFromNow } from "@/helpers/utils.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { ModerationStatusEnum } from "@/types.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -28,7 +27,7 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
       db
         .collection("User")
         .findOne(
-          { email, moderationStatus: ModerationStatusEnum.ACTIVE },
+          { email, auth: "e", moderationStatus: ModerationStatusEnum.ACTIVE },
           { projection: { _id: 1 } }
         )
     );

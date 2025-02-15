@@ -12,13 +12,16 @@ route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
   const { url, categoryName } = req.body;
 
   try {
+    const cookieString = Object.entries(req.cookies)
+      .map(([key, value]) => `${key}=${value}`)
+      .join("; ");
+
     const response = await doWithRetries(() =>
       fetch(`${process.env.PROCESSING_SERVER_URL}/transcribe`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: process.env.PROCESSING_SECRET,
-          UserId: req.userId,
+          Cookie: cookieString,
         },
         body: JSON.stringify({ audioFile: url, categoryName }),
       })

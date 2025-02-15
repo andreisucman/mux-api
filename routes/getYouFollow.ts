@@ -24,6 +24,8 @@ route.get(
         _id: 1,
         name: 1,
         avatar: 1,
+        latestScores: 1,
+        latestScoresDifference: 1,
         "club.privacy": 1,
         "club.bio": 1,
       };

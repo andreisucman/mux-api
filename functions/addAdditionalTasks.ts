@@ -72,7 +72,7 @@ export default async function addAdditionalTasks({
       getRawSchedule({
         solutionsAndFrequencies: filteredSolutionsAndFrequencies,
         concerns: partConcerns,
-        days: 6,
+        days: 7,
       })
     );
 

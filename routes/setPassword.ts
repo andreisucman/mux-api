@@ -8,7 +8,6 @@ import invalidateTheCode from "@/functions/invalidateTheCode.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { db } from "init.js";
 import { ModerationStatusEnum } from "@/types.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 

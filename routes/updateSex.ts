@@ -25,18 +25,18 @@ route.post(
     }
 
     try {
-      const isRegistered = await checkIfUserExists({
-        filter: { _id: new ObjectId(userId), email: { $ne: "" } },
+      const registeredUser = await checkIfUserExists({
+        filter: { _id: new ObjectId(req.userId || userId), email: { $ne: "" } },
         projection: { _id: 1 },
       });
 
-      if (isRegistered) {
+      if (registeredUser) {
         if (!req.userId) {
           res.status(400).json({ error: "Bad request" });
           return;
         }
 
-        if (req.userId !== String(isRegistered._id)) {
+        if (String(req.userId) !== String(registeredUser._id)) {
           res.status(400).json({ error: "Bad request" });
           return;
         }
@@ -45,7 +45,7 @@ route.post(
       await doWithRetries(async () =>
         db.collection("User").updateOne(
           {
-            _id: new ObjectId(userId),
+            _id: new ObjectId(req.userId || userId),
             moderationStatus: ModerationStatusEnum.ACTIVE,
             email: "",
           },

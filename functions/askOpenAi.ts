@@ -31,9 +31,9 @@ async function askOpenai({
       messages,
       seed,
       model: finalModel,
-      temperature: 0,
     };
 
+    if (!finalModel.startsWith("o3")) options.temperature = 0;
     if (isJson) options.response_format = { type: "json_object" };
     if (responseFormat) options.response_format = responseFormat;
 

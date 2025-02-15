@@ -67,7 +67,7 @@ export default async function makeANewRoutine({
       getRawSchedule({
         solutionsAndFrequencies,
         concerns: partConcerns,
-        days: 6,
+        days: 7,
       })
     );
 

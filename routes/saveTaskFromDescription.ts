@@ -266,7 +266,7 @@ route.post(
 
       const draftTasks: TaskType[] = [];
 
-      const latestDateOfWeeek = daysFrom({ days: 6 });
+      const latestDateOfWeeek = daysFrom({ days: 7 });
       const finalStartDate =
         new Date(startDate) > latestDateOfWeeek ? latestDateOfWeeek : startDate;
 

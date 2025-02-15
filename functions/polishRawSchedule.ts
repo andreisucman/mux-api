@@ -29,15 +29,20 @@ export default async function polishRawSchedule({
 
     const listOfConcerns = JSON.stringify(concerns);
 
-    const systemContent = `You are a dermatologist, dentist, and a fitness coach. The user gives you their improvement routine schedule. Your goal is to optimize the dates of the tasks in the schedule for the maximum effectiveness of the improvement of these concerns: ${listOfConcerns}. YOU CAN MOVE THE EXISTING TASKS IN THE SCHEDULE. MAINTAIN THE SCHEMA OF THE SCHEDULE. Be concise and to the point. Think step-by-step`;
+    const systemContent = `You are a dermatologist, dentist, and a fitness coach. The user gives you their improvement routine. It can contain tasks that conflict or repeat each other. Your goal is to optimize the schedule by removing, or reordering the tasks for the maximum safety and effectiveness. Be concise and to the point. MAINTAIN THE SCHEMA OF THE SCHEDULE.`;
 
     const userContent: RunType[] = [
       {
-        isMini: true,
+        isMini: false,
+        model: "o3-mini",
         content: [
           {
             type: "text",
             text: `This is my schedule: ${JSON.stringify(rawSchedule)}.`,
+          },
+          {
+            type: "text",
+            text: `It's designed to target the following concerns: ${listOfConcerns}.`,
           },
         ],
         callback,
@@ -45,22 +50,12 @@ export default async function polishRawSchedule({
     ];
 
     userContent.push({
-      isMini: true,
-      content: [
-        {
-          type: "text",
-          text: `Are there any tasks that complement or conflict with each other? If yes, move them to different dates as needed for maximum effectiveness and safety.`,
-        },
-      ],
-      callback,
-    });
-
-    userContent.push({
       isMini: false,
+      model: "o3-mini",
       content: [
         {
           type: "text",
-          text: `Should any of the tasks be moved to different dates for a more efficient and safe experience? If yes, move them, if not, leave as is.`,
+          text: `Should any of the tasks be moved to different dates for a safer or more effective experience? If yes, move them, if not, leave as is.`,
         },
       ],
       callback,
@@ -69,10 +64,11 @@ export default async function polishRawSchedule({
     if (specialConsiderations) {
       userContent.push({
         isMini: true,
+        model: "o3-mini",
         content: [
           {
             type: "text",
-            text: `Does the schedule respect the following special consideration? Special consideration: ${specialConsiderations}. If not, edit the schedule to account for it.`,
+            text: `Does the schedule conflict with the following special consideration? Special consideration: ${specialConsiderations}. If yes, edit the schedule appropriately.`,
           },
         ],
         callback,
@@ -84,7 +80,7 @@ export default async function polishRawSchedule({
       content: [
         {
           type: "text",
-          text: `Return the latest updated schedule as JSON.`,
+          text: `Return the latest updated schedule as JSON in the original format.`,
         },
       ],
       callback,
