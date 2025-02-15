@@ -71,7 +71,6 @@ export default async function addAdditionalTasks({
     const rawNewSchedule = await doWithRetries(async () =>
       getRawSchedule({
         solutionsAndFrequencies: filteredSolutionsAndFrequencies,
-        concerns: partConcerns,
         days: 7,
       })
     );

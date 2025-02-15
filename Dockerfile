@@ -19,7 +19,7 @@ COPY --from=build /usr/src/app/package*.json ./
 
 ENV NODE_ENV=production
 
-RUN npm install --include=optional --production --silent
+RUN npm install --include=optional --production
 
 EXPOSE 3001
 RUN chown -R node /usr/src/app

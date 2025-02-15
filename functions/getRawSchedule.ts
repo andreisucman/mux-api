@@ -3,26 +3,23 @@ dotenv.config();
 
 import { daysFrom } from "helpers/utils.js";
 import turnTasksIntoSchedule from "helpers/turnTasksIntoSchedule.js";
-import trimSchedule from "helpers/trimSchedule.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import { AllTaskType, UserConcernType } from "types.js";
+import { AllTaskType } from "types.js";
 import httpError from "helpers/httpError.js";
 import { db } from "init.js";
 
 type Props = {
   solutionsAndFrequencies: AllTaskType[];
-  concerns: UserConcernType[];
   days: number;
 };
 
 export default async function getRawSchedule({
   solutionsAndFrequencies,
-  concerns,
   days,
 }: Props) {
   try {
     const dateOne = new Date();
-    const dateTwo = daysFrom({ days: days > 0 ? days : 6 });
+    const dateTwo = daysFrom({ days: days > 0 ? days : 7 });
     const lastMonth = daysFrom({ days: -30 });
 
     const pastTasks = await doWithRetries(async () =>
@@ -52,30 +49,12 @@ export default async function getRawSchedule({
       {}
     );
 
-    let sortedSchedule = turnTasksIntoSchedule({
+    const sortedSchedule = turnTasksIntoSchedule({
       dateOne,
       dateTwo,
       earliestStartMap,
       solutionsAndFrequencies,
     });
-
-    const tasksList = Object.values(sortedSchedule).flat().filter(Boolean);
-
-    let toDeleteCount =
-      tasksList.length - Number(process.env.MAX_TASKS_PER_SCHEDULE);
-
-    toDeleteCount = toDeleteCount > 0 ? toDeleteCount : 0;
-
-    if (toDeleteCount > 0) {
-      concerns.sort((a, b) => a.importance - b.importance);
-
-      sortedSchedule = trimSchedule({
-        days,
-        toDeleteCount,
-        schedule: sortedSchedule,
-        concernsNamesDescending: concerns.map((c) => c.name),
-      });
-    }
 
     return sortedSchedule;
   } catch (error) {

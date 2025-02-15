@@ -58,7 +58,7 @@ export default async function makeANewRoutine({
     );
 
     await incrementProgress({
-      value: 10,
+      value: 1,
       operationKey: "routine",
       userId: String(userId),
     });
@@ -66,13 +66,12 @@ export default async function makeANewRoutine({
     const rawSchedule = await doWithRetries(async () =>
       getRawSchedule({
         solutionsAndFrequencies,
-        concerns: partConcerns,
         days: 7,
       })
     );
 
     await incrementProgress({
-      value: 5,
+      value: 2,
       operationKey: "routine",
       userId: String(userId),
     });
@@ -88,7 +87,7 @@ export default async function makeANewRoutine({
     );
 
     await incrementProgress({
-      value: 5,
+      value: 2,
       operationKey: "routine",
       userId: String(userId),
     });

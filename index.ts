@@ -131,8 +131,8 @@ app.use("/stripeWebhook", stripeWebhook);
 app.use("/connectWebhook", connectWebhook);
 
 app.use(cookieParser());
-app.use(express.json({ limit: "35mb" }));
-app.use(express.urlencoded({ limit: "35mb", extended: true }));
+app.use(express.json({ limit: "50m" }));
+app.use(express.urlencoded({ limit: "50m", extended: true }));
 
 app.use("*", setHeaders);
 

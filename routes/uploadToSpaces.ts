@@ -3,7 +3,6 @@ dotenv.config();
 import { Router, Request, Response, NextFunction } from "express";
 import multer from "multer";
 import uploadFilesToS3 from "functions/uploadFilesToS3.js";
-import httpError from "@/helpers/httpError.js";
 
 const upload = multer({ storage: multer.memoryStorage() });
 const route = Router();

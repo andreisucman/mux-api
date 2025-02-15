@@ -90,6 +90,7 @@ export default async function getSolutionsAndFrequencies({
     const findSolutionsContentArray: RunType[] = [
       {
         isMini: false,
+        model: "o3-mini",
         content: [
           {
             type: "text",
@@ -101,16 +102,7 @@ export default async function getSolutionsAndFrequencies({
       },
       {
         isMini: false,
-        content: [
-          {
-            type: "text",
-            text: `Are any of the solutions conflicting with or repeating each other? If yes, remove those from the list.`,
-          },
-        ],
-        callback,
-      },
-      {
-        isMini: false,
+        model: "o3-mini",
         content: [
           {
             type: "text",

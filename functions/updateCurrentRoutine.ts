@@ -85,7 +85,6 @@ export default async function updateCurrentRoutine({
     const rawSchedule = await doWithRetries(async () =>
       getRawSchedule({
         solutionsAndFrequencies,
-        concerns: partConcerns,
         days: daysDifference,
       })
     );
