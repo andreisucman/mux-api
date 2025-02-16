@@ -26,7 +26,6 @@ route.get(
 
     try {
       const match: { [key: string]: any } = {
-        isPublic: true,
         moderationStatus: ModerationStatusEnum.ACTIVE,
       };
 
@@ -37,13 +36,13 @@ route.get(
             followingUserName,
           });
 
-        if (!inClub || !isFollowing || !subscriptionActive) {
+        if ((!inClub || !isFollowing || !subscriptionActive) && !isSelf) {
           res.status(200).json({ message: [] });
           return;
         }
 
-        if (isSelf) {
-          delete match.isPublic;
+        if (!isSelf) {
+          match.isPublic = true;
         }
       }
 

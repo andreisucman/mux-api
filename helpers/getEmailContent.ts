@@ -2,8 +2,10 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import path from "path";
-import { __dirname } from "init.js";
 import httpError from "helpers/httpError.js";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 type Props = {
   accessToken: string | null;

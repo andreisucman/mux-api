@@ -66,7 +66,7 @@ export default async function makeANewRoutine({
     const rawSchedule = await doWithRetries(async () =>
       getRawSchedule({
         solutionsAndFrequencies,
-        days: 7,
+        days: 6,
       })
     );
 

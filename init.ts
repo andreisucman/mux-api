@@ -3,20 +3,16 @@ dotenv.config();
 import Replicate from "replicate";
 import Together from "together-ai";
 import OpenAI from "openai";
-import path from "path";
 import { MongoClient } from "mongodb";
 import { SESClient } from "@aws-sdk/client-ses";
 import Stripe from "stripe";
 import { S3Client } from "@aws-sdk/client-s3";
 import * as promClient from "prom-client";
-import { fileURLToPath } from "url";
 
 const client = new MongoClient(process.env.DATABASE_URI);
 const db = client.db(process.env.DATABASE_NAME);
 const adminDb = client.db(process.env.ADMIN_DATABASE_NAME);
 const promClientRegister = new promClient.Registry();
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const s3Client = new S3Client({
   region: process.env.DO_SPACES_REGION,
@@ -55,7 +51,6 @@ export {
   sesClient,
   together,
   openai,
-  __dirname,
   replicate,
   stripe,
   promClientRegister,

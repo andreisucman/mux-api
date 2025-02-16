@@ -1,4 +1,5 @@
 import z from "zod";
+import * as dotenv from "dotenv";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import criteria from "data/featureCriteria.js";
 import askRepeatedly from "./askRepeatedly.js";
@@ -8,6 +9,8 @@ import { FeatureAnalysisResultType } from "@/types/analyzeFeatureType.js";
 import httpError from "@/helpers/httpError.js";
 import { urlToBase64 } from "@/helpers/utils.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
+
+dotenv.config();
 
 type Props = {
   userId: string;
@@ -73,7 +76,7 @@ export default async function analyzeFeature({
     });
 
     const formatSystemContent =
-      "You are given a description of the user's body part. Your goal is to format the description in the 2nd tense (you/your) with a casual language, better flow an readability. Your response must be entirely based on the information you are given. Don't make things up. Think step-by-step.";
+      "You are given a description of the user's body part. Your goal is to paraphrase it in the 2nd tense (you/your) in a casual language, better flow an readability. Your response must be entirely based on the information you are given. Don't make things up. Only say what is present in the description. Think step-by-step.";
 
     const formatRuns = [
       {

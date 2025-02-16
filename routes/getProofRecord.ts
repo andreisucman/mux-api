@@ -7,7 +7,6 @@ import { CustomRequest } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { ModerationStatusEnum } from "types.js";
 import { db } from "init.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 

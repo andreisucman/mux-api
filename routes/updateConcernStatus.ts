@@ -5,7 +5,7 @@ import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import { CustomRequest } from "@/types.js";
 import updateConcernsAnalytics from "../functions/updateConcernsAnalytics.js";
-import httpError from "@/helpers/httpError.js";
+import getUserInfo from "@/functions/getUserInfo.js";
 
 type Props = {
   name: string;
@@ -28,16 +28,12 @@ route.post(
     }
 
     try {
-      const currentConcerns = await doWithRetries(async () =>
-        db
-          .collection("User")
-          .findOne(
-            { _id: new ObjectId(req.userId) },
-            { projection: { concerns: 1 } }
-          )
-      );
+      const userInfo = await getUserInfo({
+        userId: req.userId,
+        projection: { concerns: 1 },
+      });
 
-      const updatedConcerns = currentConcerns.map((cobj: UserConcernType) =>
+      const updatedConcerns = userInfo.concerns.map((cobj: UserConcernType) =>
         cobj.name === name ? { ...cobj, isDisabled } : cobj
       );
 
