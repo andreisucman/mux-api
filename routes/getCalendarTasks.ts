@@ -3,12 +3,12 @@ dotenv.config();
 
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
-import doWithRetries from "helpers/doWithRetries.js";
-import setUtcMidnight from "helpers/setUtcMidnight.js";
-import { CustomRequest } from "types.js";
-import aqp, { AqpQuery } from "api-query-params";
-import { db } from "init.js";
 import { daysFrom } from "@/helpers/utils.js";
+import setToMidnight from "@/helpers/setToMidnight.js";
+import doWithRetries from "helpers/doWithRetries.js";
+import aqp, { AqpQuery } from "api-query-params";
+import { CustomRequest } from "types.js";
+import { db } from "init.js";
 
 const route = Router();
 
@@ -24,36 +24,22 @@ route.get(
     }
 
     try {
+      let startsAtFrom = setToMidnight({ date: new Date(), timeZone });
+      let startsAtTo = setToMidnight({ date: daysFrom({ days: 7 }), timeZone });
+
+      if (dateFrom) startsAtFrom = setToMidnight({ date: dateFrom, timeZone });
+      if (dateTo) startsAtTo = setToMidnight({ date: dateTo, timeZone });
+
       const filter: { [key: string]: any } = {
         userId: new ObjectId(req.userId),
         startsAt: {
-          $gt: setUtcMidnight({
-            date: new Date(),
-            timeZone: String(timeZone),
-          }),
-          $lte: setUtcMidnight({
-            date: daysFrom({ days: 7 }),
-            timeZone: String(timeZone),
-          }),
+          $gte: startsAtFrom,
+          $lte: startsAtTo,
         },
       };
 
       if (status) filter.status = status;
-
-      if (dateFrom)
-        filter.startsAt = {
-          $gt: daysFrom({ date: dateFrom, days: -1 }),
-        };
-
-      if (dateTo)
-        filter.startsAt = {
-          ...filter.startsAt,
-          $lte: dateTo,
-        };
-
-      if (key) {
-        filter.key = key;
-      }
+      if (key) filter.key = key;
 
       const tasks = await doWithRetries(async () =>
         db

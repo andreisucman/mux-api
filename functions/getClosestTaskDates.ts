@@ -2,7 +2,7 @@ import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
-import setUtcMidnight from "@/helpers/setUtcMidnight.js";
+import setToMidnight from "@/helpers/setToMidnight.js";
 import { daysFrom } from "@/helpers/utils.js";
 
 type Props = {
@@ -11,8 +11,8 @@ type Props = {
 
 export default async function getClosestTaskDates({ routineIds }: Props) {
   try {
-    const expiresAtFrom = setUtcMidnight({ date: new Date() });
-    const expiresAtTo = setUtcMidnight({ date: daysFrom({ days: 2 }) });
+    const expiresAtFrom = setToMidnight({ date: new Date() });
+    const expiresAtTo = setToMidnight({ date: daysFrom({ days: 2 }) });
 
     const closestTasks = await doWithRetries(async () =>
       db

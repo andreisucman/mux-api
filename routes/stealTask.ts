@@ -4,7 +4,7 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "../helpers/doWithRetries.js";
-import setUtcMidnight from "helpers/setUtcMidnight.js";
+import setToMidnight from "@/helpers/setToMidnight.js";
 import { daysFrom } from "helpers/utils.js";
 import sortTasksInScheduleByDate from "helpers/sortTasksInScheduleByDate.js";
 import {
@@ -89,7 +89,7 @@ route.post(
 
       for (let j = 0; j < Math.min(total, 7); j++) {
         const starts = daysFrom({
-          date: setUtcMidnight({
+          date: setToMidnight({
             date: new Date(),
             timeZone,
           }),

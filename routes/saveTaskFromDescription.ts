@@ -19,7 +19,7 @@ import { db } from "init.js";
 import askRepeatedly from "functions/askRepeatedly.js";
 import isActivityHarmful from "@/functions/isActivityHarmful.js";
 import findRelevantSolutions from "functions/findRelevantSolutions.js";
-import setUtcMidnight from "@/helpers/setUtcMidnight.js";
+import setToMidnight from "@/helpers/setToMidnight.js";
 import sortTasksInScheduleByDate from "@/helpers/sortTasksInScheduleByDate.js";
 import { daysFrom, toSentenceCase, toSnakeCase } from "helpers/utils.js";
 import doWithRetries from "helpers/doWithRetries.js";
@@ -276,7 +276,7 @@ route.post(
 
       for (let i = 0; i < Math.min(moderatedFrequency, 7); i++) {
         const starts = daysFrom({
-          date: setUtcMidnight({
+          date: setToMidnight({
             date: new Date(finalStartDate),
             timeZone,
           }),

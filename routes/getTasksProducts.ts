@@ -4,24 +4,21 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
-import { CustomRequest, TaskStatusEnum } from "types.js";
+import { CustomRequest } from "types.js";
 import { db } from "init.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
 route.get(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { type } = req.query;
+    const { part } = req.query;
     try {
       const filter: { [key: string]: any } = {
         userId: new ObjectId(req.userId),
-        expiresAt: { $gt: new Date() },
-        status: TaskStatusEnum.ACTIVE,
       };
 
-      if (type) filter.type = type;
+      if (part) filter.part = part;
 
       const distinctTasks = await doWithRetries(async () =>
         db

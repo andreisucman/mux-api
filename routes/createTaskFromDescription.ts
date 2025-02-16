@@ -12,7 +12,7 @@ import isActivityHarmful from "@/functions/isActivityHarmful.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import checkIfTaskIsRelated from "@/functions/checkIfTaskIsRelated.js";
 import { daysFrom, toSentenceCase } from "helpers/utils.js";
-import setUtcMidnight from "@/helpers/setUtcMidnight.js";
+import setToMidnight from "@/helpers/setToMidnight.js";
 import { db } from "init.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 
@@ -53,7 +53,7 @@ route.post(
 
       /* count created tasks */
       const lastWeekStart = daysFrom({
-        date: setUtcMidnight({
+        date: setToMidnight({
           date: new Date(),
           timeZone,
         }),

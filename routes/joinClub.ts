@@ -57,14 +57,20 @@ route.post(
       });
 
       let clubData = userInfo.club;
+      let name = "";
+      let avatar = null;
 
       if (!clubData) {
-        clubData = await createClubProfile({
+        const response = await createClubProfile({
           userId: req.userId,
         });
+
+        clubData = response.clubData;
+        avatar = response.avatar;
+        name = response.name;
       }
 
-      res.status(200).json({ message: { club: clubData } });
+      res.status(200).json({ message: { club: clubData, name, avatar } });
     } catch (err) {
       next(err);
     }

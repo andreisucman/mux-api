@@ -1,14 +1,14 @@
 import { DateTime } from "luxon";
 
-type SetUtcMidnightProps = {
+type SetToMidnight = {
   date: Date;
   timeZone?: string;
 };
 
-export default function setUtcMidnight({
+export default function setToMidnight({
   date,
   timeZone,
-}: SetUtcMidnightProps) {
+}: SetToMidnight) {
   let midnightDate = DateTime.fromJSDate(date, { zone: timeZone });
 
   midnightDate = midnightDate.set({

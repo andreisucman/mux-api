@@ -13,7 +13,7 @@ import {
   UserConcernType,
 } from "types.js";
 import sortTasksInScheduleByDate from "helpers/sortTasksInScheduleByDate.js";
-import setUtcMidnight from "helpers/setUtcMidnight.js";
+import setToMidnight from "@/helpers/setToMidnight.js";
 import { calculateDaysDifference, daysFrom } from "helpers/utils.js";
 import httpError from "@/helpers/httpError.js";
 import getUserInfo from "@/functions/getUserInfo.js";
@@ -129,13 +129,13 @@ route.post(
           const previousNewDate =
             replacementTaskWithDates[replacementTaskWithDates.length - 1]
               ?.startsAt ||
-            setUtcMidnight({
+            setToMidnight({
               date: new Date(),
               timeZone,
             });
 
           const starts = daysFrom({
-            date: setUtcMidnight({
+            date: setToMidnight({
               date: previousNewDate,
               timeZone,
             }),

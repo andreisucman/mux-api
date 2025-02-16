@@ -2,7 +2,6 @@ import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
-import setUtcMidnight from "@/helpers/setUtcMidnight.js";
 import { daysFrom } from "@/helpers/utils.js";
 
 type Props = {
@@ -47,8 +46,10 @@ export default async function getLatestRoutinesAndTasks({
       return { routines, tasks: [] };
     }
 
-    const expiresAtFrom = setUtcMidnight({ date: new Date() });
-    const expiresAtTo = setUtcMidnight({ date: daysFrom({ days: 1 }) });
+    
+
+    const expiresAtFrom = new Date(new Date().setUTCHours(0, 0, 0, 0));
+    const expiresAtTo = new Date(daysFrom({ days: 1 }).setUTCHours(0, 0, 0, 0));
 
     const project = {
       _id: 1,
@@ -74,7 +75,7 @@ export default async function getLatestRoutinesAndTasks({
           {
             $match: {
               routineId: { $in: routines.map((r) => r._id) },
-              expiresAt: { $gte: expiresAtFrom, $lte: expiresAtTo },
+              expiresAt: { $gte: expiresAtFrom, $lt: expiresAtTo },
             },
           },
           { $sort: { startsAt: 1, part: -1 } },

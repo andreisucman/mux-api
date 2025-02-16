@@ -1,5 +1,5 @@
 import { PartEnum, PrivacyType } from "types.js";
-import setUtcMidnight from "helpers/setUtcMidnight.js";
+import setToMidnight from "@/helpers/setToMidnight.js";
 import httpError from "./httpError.js";
 import { daysFrom } from "./utils.js";
 
@@ -34,7 +34,7 @@ export default function getStreaksToIncrement({
     let canIncrementDefault = getCanIncrement(streakDates.default, part);
     let canIncrementClub = getCanIncrement(streakDates.club, part);
 
-    const midnightUTCofTomorrow = setUtcMidnight({
+    const midnightUTCofTomorrow = setToMidnight({
       date: daysFrom({ days: 1 }),
       timeZone,
     });

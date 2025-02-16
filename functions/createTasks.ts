@@ -2,7 +2,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import { ObjectId } from "mongodb";
-import setUtcMidnight from "helpers/setUtcMidnight.js";
+import setToMidnight from "@/helpers/setToMidnight.js";
 import { daysFrom } from "helpers/utils.js";
 import personalizeInstruction from "functions/personalizeInstruction.js";
 import { tasksRequirePersonalizedInstruction } from "data/tasksRequirePersonalizedInstructions.js";
@@ -124,7 +124,7 @@ export default async function createTasks({
           (record) => record.key === scheduleTask.key
         );
 
-        const startsAt = setUtcMidnight({
+        const startsAt = setToMidnight({
           date: new Date(dates[j]),
           timeZone: userInfo.timeZone,
         });

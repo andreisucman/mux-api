@@ -5,7 +5,7 @@ import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import { CustomRequest } from "types.js";
-import setUtcMidnight from "@/helpers/setUtcMidnight.js";
+import setToMidnight from "@/helpers/setToMidnight.js";
 import { DiaryActivityType } from "@/types/saveDiaryRecordTypes.js";
 import { ModerationStatusEnum } from "types.js";
 import { daysFrom } from "@/helpers/utils.js";
@@ -24,7 +24,7 @@ route.post(
     }
 
     try {
-      const usersTodayMidnight = setUtcMidnight({ date: new Date(), timeZone });
+      const usersTodayMidnight = setToMidnight({ date: new Date(), timeZone });
 
       const todaysDiaryRecords = await doWithRetries(async () =>
         db.collection("Diary").findOne({
@@ -41,7 +41,7 @@ route.post(
         return;
       }
 
-      const usersTomorrowMidnight = setUtcMidnight({
+      const usersTomorrowMidnight = setToMidnight({
         date: daysFrom({ days: 1 }),
         timeZone,
       });

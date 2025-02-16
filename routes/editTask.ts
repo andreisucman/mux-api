@@ -12,7 +12,7 @@ import {
   TaskType,
 } from "types.js";
 import isActivityHarmful from "@/functions/isActivityHarmful.js";
-import setUtcMidnight from "@/helpers/setUtcMidnight.js";
+import setToMidnight from "@/helpers/setToMidnight.js";
 import formatDate from "@/helpers/formatDate.js";
 import sortTasksInScheduleByDate from "@/helpers/sortTasksInScheduleByDate.js";
 import { daysFrom } from "helpers/utils.js";
@@ -115,7 +115,7 @@ route.post(
         }
       }
 
-      const newStartsAt = setUtcMidnight({
+      const newStartsAt = setToMidnight({
         date: new Date(startDate),
         timeZone,
       });

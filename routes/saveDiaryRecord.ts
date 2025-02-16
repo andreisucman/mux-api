@@ -5,7 +5,7 @@ import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
-import setUtcMidnight from "@/helpers/setUtcMidnight.js";
+import setToMidnight from "@/helpers/setToMidnight.js";
 import moderateContent from "@/functions/moderateContent.js";
 import {
   ModerationStatusEnum,
@@ -37,7 +37,7 @@ route.post(
     }
 
     try {
-      const usersTodayMidnight = setUtcMidnight({ date: new Date(), timeZone });
+      const usersTodayMidnight = setToMidnight({ date: new Date(), timeZone });
 
       const todaysDiaryRecords = await doWithRetries(async () =>
         db
@@ -147,7 +147,7 @@ route.post(
         db.collection("Diary").insertOne(newDiaryRecord)
       );
 
-      const nextDiaryRecordAfter = setUtcMidnight({
+      const nextDiaryRecordAfter = setToMidnight({
         date: daysFrom({ days: 1 }),
       });
 

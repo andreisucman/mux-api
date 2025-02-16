@@ -143,7 +143,11 @@ export default async function createClubProfile({ userId }: Props) {
         )
     );
 
-    return defaultClubData;
+    return {
+      clubData: defaultClubData,
+      avatar: avatarConfig,
+      name: randomName,
+    };
   } catch (err) {
     throw httpError(err);
   }

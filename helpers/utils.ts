@@ -160,3 +160,7 @@ export async function urlToBase64(url: string): Promise<string> {
   const contentType = response.headers.get("content-type");
   return `data:${contentType};base64,${Buffer.from(buffer).toString("base64")}`;
 }
+
+export function setToUtcMidnight(date: Date) {
+  return new Date(date.setUTCHours(0, 0, 0, 0));
+}
