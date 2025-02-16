@@ -164,3 +164,5 @@ export async function urlToBase64(url: string): Promise<string> {
 export function setToUtcMidnight(date: Date) {
   return new Date(date.setUTCHours(0, 0, 0, 0));
 }
+
+

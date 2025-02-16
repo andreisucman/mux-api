@@ -1,7 +1,7 @@
 import doWithRetries from "@/helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 import { adminDb } from "@/init.js";
-import setToMidnight from "@/helpers/setToMidnight.js";
+import { setToUtcMidnight } from "@/helpers/utils.js";
 import { ObjectId } from "mongodb";
 
 type UpdateAnalyticsProps = {
@@ -15,7 +15,7 @@ export default async function updateAnalytics({
   userId,
   incrementPayload,
 }: UpdateAnalyticsProps) {
-  const createdAt = setToMidnight({ date: new Date() });
+  const createdAt = setToUtcMidnight(new Date());
 
   try {
     if (userId) {

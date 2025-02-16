@@ -1,9 +1,9 @@
 import doWithRetries from "@/helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 import { adminDb, db } from "@/init.js";
-import setToMidnight from "@/helpers/setToMidnight.js";
 import { CategoryNameEnum } from "@/types.js";
 import { ObjectId } from "mongodb";
+import { setToUtcMidnight } from "@/helpers/utils.js";
 
 type Props = {
   userId?: string;
@@ -22,7 +22,7 @@ export default async function updateSpend({
   units,
   unitCost,
 }: Props) {
-  const createdAt = setToMidnight({ date: new Date() });
+  const createdAt = setToUtcMidnight(new Date());
 
   const totalCost = units * unitCost;
 
