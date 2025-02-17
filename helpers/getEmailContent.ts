@@ -23,21 +23,23 @@ export default async function getEmailContent({
   let bodyPath = "";
 
   try {
+    const baseEmailPath = path.join(__dirname, "..", "data", "emails");
+
     switch (emailType) {
       case "passwordReset":
         title = "Muxout - Reset password";
-        bodyPath = path.join(__dirname, "../data/emails/passwordReset.html");
+        bodyPath = path.join(baseEmailPath, "passwordReset.html");
         signedUrl = `${
           process.env.CLIENT_URL
         }/set-password?accessToken=${encodeURIComponent(accessToken)}`;
         break;
       case "confirmationCode":
         title = "Muxout - Confirmation code";
-        bodyPath = path.join(__dirname, "../data/emails/confirmationCode.html");
+        bodyPath = path.join(baseEmailPath, "confirmationCode.html");
         break;
       case "payoutsDisabled":
         title = "Muxout - Payouts disabled";
-        bodyPath = path.join(__dirname, "../data/emails/payoutsDisabled.html");
+        bodyPath = path.join(baseEmailPath, "payoutsDisabled.html");
         break;
     }
 

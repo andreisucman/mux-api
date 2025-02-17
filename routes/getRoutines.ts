@@ -16,13 +16,7 @@ route.get(
   "/:followingUserName?",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { followingUserName } = req.params;
-    const { skip, filter, sort = {} } = aqp(req.query as any) as AqpQuery;
-    const { status } = filter;
-
-    if (!["active", "inactive"].includes(status)) {
-      res.status(400).json({ error: "Bad request" });
-      return;
-    }
+    const { skip, sort = {} } = aqp(req.query as any) as AqpQuery;
 
     try {
       if (followingUserName) {
@@ -50,12 +44,7 @@ route.get(
         }
       }
 
-      const finalStatus =
-        status === "active" ? { $in: ["active", "replaced"] } : status;
-
-      const filter: { [key: string]: any } = {
-        status: finalStatus,
-      };
+      const filter: { [key: string]: any } = {};
 
       if (followingUserName) {
         filter.userName = followingUserName;
@@ -74,7 +63,7 @@ route.get(
 
       const finalSort = sort
         ? { ...sort, status: -1 }
-        : { createdAt: 1, status: -1 };
+        : { createdAt: -1, status: -1 };
 
       const routines = await doWithRetries(async () =>
         db

@@ -23,6 +23,8 @@ import formatDate from "@/helpers/formatDate.js";
 import httpError from "@/helpers/httpError.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
 import checkAndRecordTwin from "@/functions/checkAndRecordTwin.js";
+import checkImagePosition from "@/functions/checkImagePosition.js";
+import checkImageRequirements from "@/functions/checkImageRequirements.js";
 
 const route = Router();
 
@@ -93,33 +95,49 @@ route.post(
         return;
       }
 
-      // const isClearlyVisible = await checkImageVisibility({
-      //   categoryName: CategoryNameEnum.PROGRESSSCAN,
-      //   image,
-      //   userId,
-      // });
+      const { isClearlyVisible, numberOfPeople } = await checkImageRequirements(
+        {
+          categoryName: CategoryNameEnum.PROGRESSSCAN,
+          image,
+          userId,
+        }
+      );
 
-      // if (isClearlyVisible) {
-      //   res.status(200).json({
-      //     error:
-      //       "The image is not clear. Try taking photos in daylight with no shadows obscuring your features.",
-      //   });
-      //   return;
-      // }
+      if (!isClearlyVisible) {
+        res.status(200).json({
+          error:
+            "The image is not clear. Try taking photos in daylight with no shadows obscuring your features.",
+        });
+        return;
+      }
 
-      // const { verdict: isPositionValid, message: changePositionMessage } =
-      //   await checkImagePosition({
-      //     image,
-      //     part,
-      //     position,
-      //     userId: finalUserId,
-      //     categoryName: CategoryNameEnum.PROGRESSSCAN,
-      //   });
+      if (numberOfPeople === 0) {
+        res.status(200).json({
+          error: "Can't see anyone on the photo.",
+        });
+        return;
+      }
 
-      // if (!isPositionValid) {
-      //   res.status(200).json({ error: changePositionMessage });
-      //   return;
-      // }
+      if (numberOfPeople > 1) {
+        res.status(200).json({
+          error: "There can only be one person on the photo.",
+        });
+        return;
+      }
+
+      const { verdict: isPositionValid, message: changePositionMessage } =
+        await checkImagePosition({
+          image,
+          part,
+          position,
+          userId: finalUserId,
+          categoryName: CategoryNameEnum.PROGRESSSCAN,
+        });
+
+      if (!isPositionValid) {
+        res.status(200).json({ error: changePositionMessage });
+        return;
+      }
 
       const userInfo = (await doWithRetries(async () =>
         db.collection("User").findOne(

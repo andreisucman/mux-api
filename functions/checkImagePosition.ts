@@ -2,10 +2,13 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import { CategoryNameEnum, PartEnum } from "@/types.js";
-import askTogether from "./askTogether.js";
 import httpError from "@/helpers/httpError.js";
 import { imagePositionRequirements } from "@/data/imagePositionRequirements.js";
-import { cleanString, urlToBase64 } from "@/helpers/utils.js";
+import { urlToBase64 } from "@/helpers/utils.js";
+import askRepeatedly from "./askRepeatedly.js";
+import { zodResponseFormat } from "openai/helpers/zod.mjs";
+import { RunType } from "@/types/askOpenaiTypes.js";
+import { z } from "zod";
 
 type Props = {
   userId: string;
@@ -37,38 +40,38 @@ export default async function checkImagePosition({
       return { verdict: false, message: "Bad request" };
     }
 
-    const messages = [
+    const systemContent = requirement.requirement;
+
+    const CheckImagePositionResponseType = z.object({
+      isPositionValid: z.boolean().describe("true if yes, false if not"),
+    });
+
+    const runs: RunType[] = [
       {
-        role: "system",
-        content: `${requirement?.requirement}. SAY ONLY YES OR NO.`,
-      },
-      {
-        role: "user",
+        isMini: true,
         content: [
           {
             type: "image_url",
-            image_url: {
-              url: await urlToBase64(image),
-            },
+            image_url: { url: await urlToBase64(image), detail: "low" },
           },
         ],
-      },
-      {
-        role: "system",
-        content: `ANSWER WITH A "YES" OR "NO" AND NOTHING ELSE.`,
+        responseFormat: zodResponseFormat(
+          CheckImagePositionResponseType,
+          "CheckImagePositionResponseType"
+        ),
       },
     ];
 
-    const verdict = await askTogether({
-      messages,
+    const analysisResponse = await askRepeatedly({
+      runs,
       userId,
+      systemContent,
       categoryName,
-      model: process.env.LLAMA_11B_VISION,
       functionName: "checkImagePosition",
     });
 
     return {
-      verdict: cleanString(verdict) === "yes",
+      verdict: analysisResponse.isPositionValid,
       message: requirement.message,
     };
   } catch (err) {

@@ -106,13 +106,9 @@ route.post(
         filter.$or.push({ _id: new ObjectId(localUserId) });
       }
 
-      console.log("filter", filter);
-
       const userInfo = await checkIfUserExists({
         filter,
       });
-
-      console.log("userInfo", userInfo);
 
       if (userInfo) {
         if (
@@ -126,10 +122,16 @@ route.post(
         }
         userData = userInfo;
 
-        const { _id: userId, email, password: storedPassword } = userInfo;
+        let { _id: userId, email, password: storedPassword } = userInfo;
 
         if (email) {
           // login
+          const timeZoneOffsetInMinutes = getTimezoneOffset(timeZone);
+
+          const updateObject: { [key: string]: any } = {
+            timeZone,
+            timeZoneOffsetInMinutes,
+          };
 
           if (auth === "e") {
             const loginSuccess = await bcrypt.compare(password, storedPassword);
@@ -139,7 +141,6 @@ route.post(
               return;
             }
           }
-          const timeZoneOffsetInMinutes = getTimezoneOffset(timeZone);
 
           await doWithRetries(() =>
             db.collection("User").updateOne(
@@ -147,7 +148,7 @@ route.post(
                 email,
                 auth,
               },
-              { $set: { timeZone, timeZoneOffsetInMinutes } }
+              { $set: updateObject }
             )
           );
 
@@ -161,6 +162,13 @@ route.post(
             email: finalEmail,
             emailVerified: auth === "g",
           };
+
+          if (auth === "e") {
+            if (!storedPassword) {
+              storedPassword = await getHashedPassword(password);
+              updatePayload.password = storedPassword;
+            }
+          }
 
           if (!stripeUserId) {
             const stripeUser = await stripe.customers.create({
