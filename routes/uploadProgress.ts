@@ -103,13 +103,13 @@ route.post(
         }
       );
 
-      if (!isClearlyVisible) {
-        res.status(200).json({
-          error:
-            "The image is not clear. Try taking photos in daylight with no shadows obscuring your features.",
-        });
-        return;
-      }
+      // if (!isClearlyVisible) {
+      //   res.status(200).json({
+      //     error:
+      //       "The image is not clear. Try taking photos in daylight with no shadows obscuring your features.",
+      //   });
+      //   return;
+      // }
 
       if (numberOfPeople === 0) {
         res.status(200).json({

@@ -9,6 +9,7 @@ import {
   ConcernType,
   UserConcernType,
   CategoryNameEnum,
+  ToAnalyzeType,
 } from "types.js";
 import { db } from "init.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
@@ -20,6 +21,7 @@ type Props = {
   userId: string;
   sex: SexEnum;
   part: PartEnum;
+  toAnalyze: ToAnalyzeType[];
   categoryName: CategoryNameEnum;
   appearanceAnalysisResults: FeatureAnalysisResultType[];
 };
@@ -28,6 +30,7 @@ export default async function analyzeConcerns({
   sex,
   userId,
   part,
+  toAnalyze,
   categoryName,
   appearanceAnalysisResults,
 }: Props) {
@@ -47,9 +50,9 @@ export default async function analyzeConcerns({
 
     const concerns = concernObjects.map((obj) => obj.name);
 
-    const systemContent = `You are an esthetician, dermatologist, dentist and fitness-coach. The user gives you their appearance analysis. Your goal is to identify which of the concerns from this list: ${concerns.join(
+    const systemContent = `You are an esthetician, dermatologist, dentist and fitness-coach. The user gives you their appearance analysis and images. Your goal is to identify which of the concerns from this list: ${concerns.join(
       "\n-"
-    )} are mentioned in the analysis. Your response is the name of the relevant concerns from the list and 1 short sentence describing the location of each concern in the 2nd tense (you/your). Example: 'You have minimal signs of puffiness around the eyes'. Think step-by-step. Use only the information provided.`;
+    )} are present on the user. Your response is the name of the relevant concerns from the list and 1 short sentence describing the location of each concern in the 2nd tense (you/your). Example: 'You have minimal signs of puffiness around the eyes'. Think step-by-step. Use only the information provided.`;
 
     const ConcernsResponseType = z.object({
       concerns: z.array(
@@ -67,11 +70,11 @@ export default async function analyzeConcerns({
     });
 
     const content = appearanceAnalysisResults.map((obj) => ({
-      type: "text",
+      type: "text" as "text",
       text: obj.explanation,
     }));
 
-    const userContent = [
+    const userContent: RunType[] = [
       {
         isMini: true,
         content,
@@ -86,14 +89,32 @@ export default async function analyzeConcerns({
             text: "Look at the concerns you have identified. Are there any that don't have sufficient proof in the data provided? If yes, remove those concerns, leaving only the concerns that are surely described in the data provided.",
           },
         ],
-        responseFormat: zodResponseFormat(
-          ConcernsResponseType,
-          "ConcernsResponseType"
-        ),
         callback: () =>
           incrementProgress({ userId, operationKey: "progress", value: 3 }),
       },
     ];
+
+    const images = toAnalyze.map((obj) => ({
+      type: "image_url" as "image_url",
+      image_url: { url: obj.mainUrl.url, detail: "low" as "low" },
+    }));
+
+    userContent.push({
+      isMini: false,
+      content: [
+        {
+          type: "text",
+          text: "Look at the images below. Are there any additional concerns from the list that are clearly visible on the images? If yes add them and return the chosen concerns of the user.",
+        },
+        ...images,
+      ],
+      responseFormat: zodResponseFormat(
+        ConcernsResponseType,
+        "ConcernsResponseType"
+      ),
+      callback: () =>
+        incrementProgress({ userId, operationKey: "progress", value: 3 }),
+    });
 
     const response: { concerns: { name: string; explanation: string }[] } =
       await askRepeatedly({
