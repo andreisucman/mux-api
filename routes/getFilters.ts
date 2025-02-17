@@ -14,6 +14,7 @@ const route = Router();
 const collectionMap: { [key: string]: string } = {
   progress: "Progress",
   proof: "Proof",
+  task: "Task",
 };
 
 route.get(
@@ -21,7 +22,7 @@ route.get(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { followingUserName } = req.params;
     const { filter, projection } = aqp(req.query as any) as AqpQuery;
-    const { collection, type } = filter;
+    const { collection } = filter;
 
     if (!collection || (!followingUserName && !req.userId)) {
       res.status(400).json({ error: "Bad request" });
@@ -58,8 +59,6 @@ route.get(
       } else {
         match.userId = new ObjectId(req.userId);
       }
-
-      if (type) match.type = type;
 
       const filters = await doWithRetries(async () =>
         db

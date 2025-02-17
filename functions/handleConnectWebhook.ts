@@ -58,17 +58,15 @@ export default async function handleConnectWebhook(event: any) {
         updatePayload["club.privacy"] = defaultClubPrivacy;
 
         if (!payoutsDisabledUserNotifiedOn) {
-          const { title, path } = getEmailContent({
+          const { title, body } = await getEmailContent({
             accessToken: null,
             emailType: "payoutsDisabled",
           });
 
-          const emailBody = await fs.readFile(path, "utf8");
-
           await sendEmail({
             to: email,
             subject: title,
-            html: emailBody,
+            html: body,
           });
         }
       }

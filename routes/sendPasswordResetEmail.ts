@@ -59,12 +59,12 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
         )
     );
 
-    const { signedUrl, title, path } = getEmailContent({
+    const { signedUrl, title, body } = await getEmailContent({
       accessToken,
       emailType: "passwordReset",
     });
 
-    let emailBody = await fs.readFile(path, "utf8");
+    let emailBody = body;
     if (signedUrl) emailBody = emailBody.replace("{{link}}", signedUrl);
 
     await sendEmail({
