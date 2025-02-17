@@ -211,6 +211,7 @@ route.post(
           dailyCalorieGoal - nutrition.dailyCalorieGoal;
         const newRemainingCalories =
           nutrition.remainingDailyCalories + additionalCalories;
+
         updatePayload["nutrition.dailyCalorieGoal"] = dailyCalorieGoal;
         updatePayload["nutrition.remainingDailyCalories"] = Math.max(
           newRemainingCalories,
@@ -239,7 +240,11 @@ route.post(
         });
       }
 
-      res.status(200).end();
+      const updatedUserInfo = await getUserInfo({
+        userId: req.userId,
+      });
+
+      res.status(200).json({ message: updatedUserInfo });
     } catch (err) {
       next(err);
     }

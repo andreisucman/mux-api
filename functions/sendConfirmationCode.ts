@@ -1,5 +1,4 @@
 import { ObjectId } from "mongodb";
-import fs from "fs/promises";
 import { customAlphabet } from "nanoid";
 import httpError from "@/helpers/httpError.js";
 import doWithRetries from "@/helpers/doWithRetries.js";
@@ -46,13 +45,12 @@ export default async function sendConfirmationCode({ userId, email }: Props) {
         )
     );
 
-    const { title, path } = getEmailContent({
+    const { title, body } = await getEmailContent({
       accessToken: null,
       emailType: "confirmationCode",
     });
 
-    let emailBody = await fs.readFile(path, "utf8");
-    emailBody = emailBody.replace("{{code}}", code);
+    const emailBody = body.replace("{{code}}", code);
 
     await sendEmail({
       to: email,

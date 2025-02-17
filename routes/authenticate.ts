@@ -106,9 +106,13 @@ route.post(
         filter.$or.push({ _id: new ObjectId(localUserId) });
       }
 
+      console.log("filter", filter);
+
       const userInfo = await checkIfUserExists({
         filter,
       });
+
+      console.log("userInfo", userInfo);
 
       if (userInfo) {
         if (
