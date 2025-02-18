@@ -17,7 +17,6 @@ import {
 import analyzePart from "functions/analyzePart.js";
 import { defaultRequiredProgress } from "data/defaultUser.js";
 import updateNextScan from "helpers/updateNextScan.js";
-import getCalorieGoal from "functions/getCalorieGoal.js";
 import { db } from "init.js";
 import { ModerationStatusEnum } from "types.js";
 import httpError from "@/helpers/httpError.js";
@@ -113,21 +112,6 @@ export default async function analyzeAppearance({
     });
 
     toUpdateUser.$set.demographics = demographics;
-
-    const hasBody = toAnalyze.some((obj) => obj.part === "body");
-
-    if (hasBody) {
-      const kcal = await getCalorieGoal({
-        userId,
-        toAnalyze,
-        categoryName,
-      });
-
-      toUpdateUser.$set.nutrition = {
-        ...nutrition,
-        recommendedDailyCalorieGoal: kcal,
-      };
-    }
 
     await incrementProgress({
       value: 1,

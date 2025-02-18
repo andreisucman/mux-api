@@ -17,7 +17,7 @@ const route = Router();
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { taskId, startingDate, returnTask } = req.body;
+    const { taskId, startingDate, resetNewTask, returnTask } = req.body;
 
     try {
       const currentTask = (await doWithRetries(async () =>
@@ -80,6 +80,10 @@ route.post(
         revisionDate: newRevisionDate,
         status: TaskStatusEnum.ACTIVE,
       };
+
+      if (resetNewTask) resetTask.recipe = null;
+
+      console.log("resetNewTask", resetNewTask, "resetTask", resetTask);
 
       await doWithRetries(async () =>
         db.collection("Task").insertOne(resetTask)

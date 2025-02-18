@@ -94,7 +94,6 @@ export type UserType = {
   moderationStatus: ModerationStatusEnum;
   nutrition: {
     dailyCalorieGoal: number;
-    recommendedDailyCalorieGoal: number;
     remainingDailyCalories: number;
   };
   lastActiveOn: Date | null;
@@ -335,7 +334,6 @@ export type RecipeType = {
   description: string;
   instruction: string;
   image: string;
-  kcal: number;
 };
 
 export type TaskType = {

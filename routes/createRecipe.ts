@@ -239,30 +239,13 @@ route.post(
           .describe(
             "an array strings of product type names used in the recipe (e.g. potato, olive oil, etc...)"
           ),
-        kcal: z
-          .number()
-          .describe("estimated total energy in kcal of this dish"),
       });
 
-      runs.push({
-        isMini: false,
-        content: [
-          {
-            type: "text",
-            text: `What's the estimated number of calories in kcal this dish has in total? Reply with one number.`,
-          },
-        ],
-        responseFormat: zodResponseFormat(
-          RecipeResponseFormat,
-          "RecipeResponseFormat"
-        ),
-        callback: () =>
-          incrementProgress({
-            value: 5,
-            operationKey: analysisType,
-            userId: req.userId,
-          }),
-      });
+      const lastMessage = runs[runs.length - 1];
+      lastMessage.responseFormat = zodResponseFormat(
+        RecipeResponseFormat,
+        "RecipeResponseFormat"
+      );
 
       const response = await askRepeatedly({
         runs,
@@ -319,7 +302,6 @@ route.post(
                 name: response.name,
                 description: response.description,
                 instruction: response.instruction,
-                kcal: response.kcal,
               },
               productTypes: response.productTypes,
               suggestions,

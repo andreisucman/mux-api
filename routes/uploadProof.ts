@@ -75,10 +75,10 @@ route.post(
               club: 1,
               name: 1,
               avatar: 1,
+              nutrition: 1,
               streakDates: 1,
               demographics: 1,
               latestScoresDifference: 1,
-              dailyCalorieGoal: 1,
             },
           }
         )
@@ -421,7 +421,8 @@ route.post(
 
       /* decrement the daily calories for food submissions */
       if (taskInfo.isRecipe) {
-        const { dailyCalorieGoal } = userInfo;
+        const { nutrition } = userInfo;
+        const { remainingDailyCalories } = nutrition;
 
         const foodAnalysis = await analyzeCalories({
           userId: req.userId,
@@ -431,11 +432,14 @@ route.post(
         });
 
         const { energy } = foodAnalysis;
-        const newDailyCalorieGoal = Math.max(0, dailyCalorieGoal - energy);
+        const newRemainingCalories = Math.max(0, remainingDailyCalories - energy);
 
         userUpdatePayload.$set = {
           ...userUpdatePayload.$set,
-          dailyCalorieGoal: newDailyCalorieGoal,
+          nutrition: {
+            ...nutrition,
+            remainingDailyCalories: newRemainingCalories,
+          },
         };
       }
 

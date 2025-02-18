@@ -121,7 +121,6 @@ route.post(
           concerns: activeConcerns,
           specialConsiderations,
           categoryName: CategoryNameEnum.TASKS,
-          routineStartDate,
         });
 
         updatedNextRoutine = updateNextRoutine({
@@ -159,7 +158,6 @@ route.post(
                 concerns: activeConcerns,
                 specialConsiderations,
                 categoryName: CategoryNameEnum.TASKS,
-                routineStartDate,
               })
           )
         );

@@ -22,7 +22,6 @@ export type UploadProgressUserInfo = {
   requiredProgress: ProgressType[];
   nutrition: {
     dailyCalorieGoal: number | null;
-    recommendedDailyCalorieGoal: number | null;
     remainingDailyCalories: number | null;
   };
   toAnalyze: ToAnalyzeType[];

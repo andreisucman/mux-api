@@ -18,7 +18,10 @@ export type UploadProofUserType = {
     club: { [key: string]: Date };
   };
   timeZone: string;
-  dailyCalorieGoal: number | null;
+  nutrition: {
+    dailyCalorieGoal: number;
+    remainingDailyCalories: number;
+  };
 };
 
 export type UploadProofTaskType = {
