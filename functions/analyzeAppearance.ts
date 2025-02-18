@@ -117,7 +117,7 @@ export default async function analyzeAppearance({
     const hasBody = toAnalyze.some((obj) => obj.part === "body");
 
     if (hasBody) {
-      const calories = await getCalorieGoal({
+      const kcal = await getCalorieGoal({
         userId,
         toAnalyze,
         categoryName,
@@ -125,7 +125,7 @@ export default async function analyzeAppearance({
 
       toUpdateUser.$set.nutrition = {
         ...nutrition,
-        recommendedDailyCalorieGoal: calories,
+        recommendedDailyCalorieGoal: kcal,
       };
     }
 

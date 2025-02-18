@@ -9,16 +9,22 @@ import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 import combineAllTasks from "@/helpers/combineAllTasks.js";
 import getLatestRoutinesAndTasks from "@/functions/getLatestRoutineAndTasks.js";
-import { db } from "init.js";
 import sortTasksInScheduleByDate from "@/helpers/sortTasksInScheduleByDate.js";
+import { db } from "init.js";
+import setToMidnight from "@/helpers/setToMidnight.js";
 
 const route = Router();
 
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { taskId, startingDate, returnRoutinesWithStatus, returnTask } =
-      req.body;
+    const {
+      taskId,
+      startingDate,
+      timeZone = "America/New_York",
+      returnRoutinesWithStatus,
+      returnTask,
+    } = req.body;
 
     try {
       const currentTask = (await doWithRetries(async () =>
@@ -53,22 +59,7 @@ route.post(
         return;
       }
 
-      const relevantAllTask = allTasks.find((r) => r.key === currentTask.key);
-
-      const interval = Math.floor(7 / relevantAllTask.ids.length);
-
-      const sanitizedStartingDate = startingDate
-        ? new Date(startingDate) >= new Date()
-          ? new Date(startingDate)
-          : null
-        : null;
-
-      const newStartsAt = sanitizedStartingDate
-        ? sanitizedStartingDate
-        : daysFrom({
-            date: new Date(currentTask.startsAt),
-            days: Math.max(1, interval),
-          });
+      const newStartsAt = setToMidnight({ date: startingDate, timeZone });
 
       const newExpiresAt = daysFrom({
         date: new Date(newStartsAt),
@@ -80,7 +71,10 @@ route.post(
           ? currentTask.revisionDate
           : daysFrom({ days: 7 });
 
-      const newNextCanStartDate = daysFrom({ days: currentTask.restDays });
+      const newNextCanStartDate = daysFrom({
+        date: newExpiresAt,
+        days: currentTask.restDays,
+      });
 
       const resetTask: TaskType = {
         ...currentTask,

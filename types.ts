@@ -335,7 +335,7 @@ export type RecipeType = {
   description: string;
   instruction: string;
   image: string;
-  calories: number;
+  kcal: number;
 };
 
 export type TaskType = {

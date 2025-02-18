@@ -1,8 +1,9 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import { CategoryNameEnum } from "@/types.js";
+import { CategoryNameEnum, PartEnum } from "@/types.js";
 import httpError from "@/helpers/httpError.js";
+import { imagePositionRequirements } from "@/data/imagePositionRequirements.js";
 import { urlToBase64 } from "@/helpers/utils.js";
 import askRepeatedly from "./askRepeatedly.js";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
@@ -12,19 +13,46 @@ import { z } from "zod";
 type Props = {
   userId: string;
   image: string;
+  position: string;
+  part: PartEnum;
   categoryName: CategoryNameEnum;
 };
 
 export default async function checkImageRequirements({
   userId,
   image,
+  part,
   categoryName,
+  position,
 }: Props) {
   try {
-    const systemContent =
-      "1. Is the human on the image clearly visible with no shadows or glitter obscuring their features? 2. How many people are on the image?";
+    let positionRequirement;
 
-    const CheckImageRequirementsResponseFormat = z.object({
+    if (position) {
+      positionRequirement = imagePositionRequirements.find(
+        (obj) => obj.part === part && obj.position === position
+      );
+    } else {
+      positionRequirement = imagePositionRequirements.find(
+        (obj) => obj.part === part
+      );
+    }
+
+    if (!positionRequirement) {
+      return {
+        isPositionValid: false,
+        isClearlyVisible: false,
+        numberOfPeople: 0,
+        message: "Bad request",
+      };
+    }
+
+    const systemContent = `1.${positionRequirement.requirement}? 2. Is the human on the image clearly visible with no shadows or glitter obscuring their features? 3. How many people are on the image?`;
+
+    const CheckImagePositionResponseType = z.object({
+      isPositionValid: z
+        .boolean()
+        .describe(`true if ${positionRequirement.requirement}, false if not`),
       isClearlyVisible: z
         .boolean()
         .describe("true if clearly visible, false if not"),
@@ -41,21 +69,27 @@ export default async function checkImageRequirements({
           },
         ],
         responseFormat: zodResponseFormat(
-          CheckImageRequirementsResponseFormat,
-          "CheckImageRequirementsResponseFormat"
+          CheckImagePositionResponseType,
+          "CheckImagePositionResponseType"
         ),
       },
     ];
 
-    const { isClearlyVisible, numberOfPeople } = await askRepeatedly({
-      runs,
-      userId,
-      systemContent,
-      categoryName,
-      functionName: "checkImageVisibility",
-    });
+    const { isPositionValid, isClearlyVisible, numberOfPeople } =
+      await askRepeatedly({
+        runs,
+        userId,
+        systemContent,
+        categoryName,
+        functionName: "checkImageRequirements",
+      });
 
-    return { isClearlyVisible, numberOfPeople };
+    return {
+      isPositionValid,
+      isClearlyVisible,
+      numberOfPeople,
+      message: positionRequirement.message,
+    };
   } catch (err) {
     throw httpError(err);
   }

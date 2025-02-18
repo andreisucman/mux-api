@@ -1,3 +1,6 @@
+import * as dotenv from "dotenv";
+dotenv.config();
+
 import { z } from "zod";
 import askRepeatedly from "functions/askRepeatedly.js";
 import {
@@ -113,13 +116,10 @@ export default async function getSolutionsAndFrequencies({
       },
     ];
 
-    if (checkFacialHair) {
-      findSolutionsContentArray.push(facialHairCheck);
-    }
-
     if (specialConsiderations) {
       findSolutionsContentArray.push({
         isMini: false,
+        model: "o3-mini",
         content: [
           {
             type: "text",
@@ -129,6 +129,10 @@ export default async function getSolutionsAndFrequencies({
 
         callback,
       });
+    }
+
+    if (checkFacialHair) {
+      findSolutionsContentArray.push(facialHairCheck);
     }
 
     const findSolutionsResponseMap = allConcerns.reduce(
@@ -176,12 +180,12 @@ export default async function getSolutionsAndFrequencies({
       });
 
     /* come up with frequencies for the solutions */
-    const findFrequenciesInstruction = `You are a dermatologist, dentist and fitness coach. The user tells you their concerns and solutions that they are going to use to improve them. Your goal is to tell how many times each solution should be used in a month to most effectively improve their concern based on their image. YOUR RESPONSE IS A TOTAL NUMBER OF APPLICATIONS IN A MONTH, NOT DAY OR WEEK. DON'T MODIFY THE NAMES OF CONCERNS AND SOLUTIONS.`;
+    const findFrequenciesInstruction = `You are a dermatologist, dentist and fitness coach. You are given the concerns of the user and solutions that they are going to use to improve them. Your goal is to tell how many times each solution should be used in a month to most effectively improve their concern based on their image. YOUR RESPONSE IS A TOTAL NUMBER OF APPLICATIONS IN A MONTH, NOT DAY OR WEEK. DON'T MODIFY THE NAMES OF CONCERNS AND SOLUTIONS. Think step-by-step.`;
 
-    const images = [];
+    const userImages = [];
 
     for (const partImo of partImages) {
-      images.push({
+      userImages.push({
         type: "image_url" as "image_url",
         image_url: {
           url: await urlToBase64(partImo.mainUrl.url),
@@ -196,7 +200,7 @@ export default async function getSolutionsAndFrequencies({
         content: [
           {
             type: "text",
-            text: `I want to combat these concerns and plan to use the solutions in square brackets to do that: ${JSON.stringify(
+            text: `The user has these concerns and plans to use the solutions in square brackets to improve them: ${JSON.stringify(
               findSolutionsResponse
             )}. What would be the best usage frequency for each solution?`,
           },
@@ -204,7 +208,7 @@ export default async function getSolutionsAndFrequencies({
             type: "text",
             text: "Here are the images for your reference:",
           },
-          ...images,
+          ...userImages,
         ],
         callback,
       },
@@ -212,11 +216,11 @@ export default async function getSolutionsAndFrequencies({
 
     if (specialConsiderations) {
       findFrequenciesContentArray.push({
-        isMini: true,
+        isMini: false,
         content: [
           {
             type: "text",
-            text: `I have the following condition: ${specialConsiderations}. Does it change the frequencies? If yes change the frequencies, if not leave as is.`,
+            text: `The user has the following condition: ${specialConsiderations}. Does it change the frequencies? If yes change the frequencies, if not leave as is.`,
           },
         ],
         callback,
@@ -239,20 +243,42 @@ export default async function getSolutionsAndFrequencies({
       .object(findFrequenciesInstructionMap)
       .describe("solution:monthlyFrequency map");
 
-    findFrequenciesContentArray.push({
-      isMini: false,
-      content: [
-        {
-          type: "text" as "text",
-          text: `Do you think the frequencies should be modified for better effectiveness? If yes, modify them, if not leave as is.`,
-        },
-      ],
-      responseFormat: zodResponseFormat(
-        FindFrequenciesInstructionResponse,
-        "FindFrequenciesInstructionResponse"
-      ),
-      callback,
-    });
+    if (part === "body") {
+      const isOverweight = concernsNames.includes("excess_weight");
+      const isUnderweight = concernsNames.includes("low_body_mass");
+
+      const condition = isOverweight
+        ? "overweight"
+        : isUnderweight
+        ? "underweight"
+        : undefined;
+
+      const wish = isOverweight
+        ? "lose weight"
+        : isUnderweight
+        ? "gain mass"
+        : undefined;
+
+      if (condition && wish)
+        findFrequenciesContentArray.push({
+          isMini: false,
+          content: [
+            {
+              type: "text" as "text",
+              text: `The user is ${condition} and they want to ${wish} as fast as possible. Should the frequencies of the solutions be changed to account for that? If yes, change them, if not leave as is. Check each solution.`,
+            },
+          ],
+          callback,
+        });
+    }
+
+    const lastMessage =
+      findFrequenciesContentArray[findFrequenciesContentArray.length - 1];
+
+    lastMessage.responseFormat = zodResponseFormat(
+      FindFrequenciesInstructionResponse,
+      "FindFrequenciesInstructionResponse"
+    );
 
     let findFrequencyResponse: { [key: string]: ScheduleTaskType[] } =
       await askRepeatedly({

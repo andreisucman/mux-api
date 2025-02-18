@@ -222,48 +222,46 @@ route.post(
 
       runs.push(checkMessage);
 
+      const RecipeResponseFormat = z.object({
+        name: z.string().describe("the name of the recipe"),
+        description: z
+          .string()
+          .describe(
+            `a 2-sentence explanation of the benefits of this recipe for addressing this concern: ${concern}`
+          ),
+        instruction: z
+          .string()
+          .describe(
+            "a step-by-step instruction on how to prepare it where each step on a new line (is separated by \n)"
+          ),
+        productTypes: z
+          .array(z.string())
+          .describe(
+            "an array strings of product type names used in the recipe (e.g. potato, olive oil, etc...)"
+          ),
+        kcal: z
+          .number()
+          .describe("estimated total energy in kcal of this dish"),
+      });
+
       runs.push({
         isMini: false,
         content: [
           {
             type: "text",
-            text: `What's the estimated number of calories this dish has in total? Reply with one number.`,
+            text: `What's the estimated number of calories in kcal this dish has in total? Reply with one number.`,
           },
         ],
+        responseFormat: zodResponseFormat(
+          RecipeResponseFormat,
+          "RecipeResponseFormat"
+        ),
         callback: () =>
           incrementProgress({
             value: 5,
             operationKey: analysisType,
             userId: req.userId,
           }),
-      });
-
-      const RecipeResponseFormat = z.object({
-        name: z.string(),
-        description: z.string(),
-        instruction: z.string(),
-        productTypes: z.array(z.string()),
-        calories: z.number(),
-      });
-
-      runs.push({
-        isMini: true,
-        content: [
-          {
-            type: "text",
-            text: `Format your recipe as a json object with this structure: {name: the name of the recipe, description: a 2-sentence explanation of the benefits of this recipe for addressing this concern: ${concern}, instruction: a step-by-step instruction on how to prepare it where each step on a new line (is separated by \n), productTypes: an array strings of product type names used in the recipe (e.g. potato, olive oil, etc...), calories: estimated number representing total calories of this dish`,
-          },
-        ],
-        callback: () =>
-          incrementProgress({
-            value: 9,
-            operationKey: analysisType,
-            userId: req.userId,
-          }),
-        responseFormat: zodResponseFormat(
-          RecipeResponseFormat,
-          "RecipeResponseFormat"
-        ),
       });
 
       const response = await askRepeatedly({
@@ -321,7 +319,7 @@ route.post(
                 name: response.name,
                 description: response.description,
                 instruction: response.instruction,
-                calories: response.calories,
+                kcal: response.kcal,
               },
               productTypes: response.productTypes,
               suggestions,

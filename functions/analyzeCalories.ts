@@ -11,6 +11,7 @@ type Props = {
   url: string;
   userAbout?: string;
   calorieGoal?: number;
+  onlyCalories?: boolean;
   categoryName: CategoryNameEnum;
 };
 
@@ -20,6 +21,7 @@ export default async function analyzeCalories({
   userAbout,
   calorieGoal,
   categoryName,
+  onlyCalories,
 }: Props) {
   try {
     const systemContent = `You are a food composition analysis expert. The user gives you an image of food. Your goal is to determine its name, amount, and how much energy, protein, carbohydrates and fats it has. Consider:  1. whether the ingredients are cooked or raw, 2. the size of the plate and and the proportion of the products in it. If you can't say for sure make your best guess. Your response must be less than 20 words.`;
@@ -66,6 +68,8 @@ export default async function analyzeCalories({
       categoryName,
       functionName: "analyzeCalories",
     });
+
+    if (onlyCalories) return analysisResponse;
 
     let shouldEatResponse = { shouldEat: true, explanation: "" };
 

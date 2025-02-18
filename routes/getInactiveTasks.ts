@@ -1,9 +1,10 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import { ObjectId } from "mongodb";
+import { ObjectId, Sort } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import { db } from "init.js";
+import aqp, { AqpQuery } from "api-query-params";
 import { CustomRequest } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 
@@ -12,14 +13,20 @@ const route = Router();
 route.get(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { skip, part, status } = req.query;
+    const { skip, filter, sort } = aqp(req.query as any) as AqpQuery;
+    const { part, status } = filter;
 
     try {
       const payload: { [key: string]: any } = {
         userId: new ObjectId(req.userId),
       };
 
-      if (status) payload.status = status;
+      if (status) {
+        payload.status = status;
+      } else {
+        payload.status = { $in: ["canceled", "expired", "completed"] };
+      }
+
       if (part) payload.part = part;
 
       const inactiveTasks = await doWithRetries(async () =>
@@ -39,6 +46,7 @@ route.get(
             },
           })
           .skip(Number(skip) || 0)
+          .sort((sort as Sort) || { startsAt: -1 })
           .toArray()
       );
 

@@ -29,7 +29,8 @@ export default async function polishRawSchedule({
 
     const listOfConcerns = JSON.stringify(concerns);
 
-    const systemContent = `You are a dermatologist, dentist, and a fitness coach. The user gives you their improvement routine. It can contain tasks that conflict or repeat each other. Your goal is to optimize the schedule by removing, or reordering the tasks for the maximum safety and effectiveness. Be concise and to the point. MAINTAIN THE SCHEMA OF THE SCHEDULE.`;
+    const systemContent =
+      "You are a dermatologist, dentist, and a fitness coach. The user gives you their improvement routine. Your goal is to optimize the order of the tasks for their maximum safety and effectiveness. DON'T REMOVE OR MODIFY THE NAMES OF THE TASKS. MAINTAIN THE SCHEMA FORMAT OF THE SCHEDULE. Be concise and to the point.";
 
     const userContent: RunType[] = [
       {
@@ -49,18 +50,6 @@ export default async function polishRawSchedule({
       },
     ];
 
-    userContent.push({
-      isMini: false,
-      model: "o3-mini",
-      content: [
-        {
-          type: "text",
-          text: `Should any of the tasks be moved to different dates for a safer or more effective experience? If yes, move them, if not, leave as is.`,
-        },
-      ],
-      callback,
-    });
-
     if (specialConsiderations) {
       userContent.push({
         isMini: true,
@@ -68,12 +57,23 @@ export default async function polishRawSchedule({
         content: [
           {
             type: "text",
-            text: `Does the schedule conflict with the following special consideration? Special consideration: ${specialConsiderations}. If yes, edit the schedule appropriately.`,
+            text: `The user has the following special consideration: ${specialConsiderations}. Does the order of the tasks need to be changed to account for it? If yes, reorder, if not leave as is.`,
           },
         ],
         callback,
       });
     }
+
+    userContent.push({
+      isMini: true,
+      content: [
+        {
+          type: "text",
+          text: `Have you modified the names of the tasks? The names of the tasks must not change.`,
+        },
+      ],
+      callback,
+    });
 
     userContent.push({
       isMini: true,

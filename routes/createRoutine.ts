@@ -34,6 +34,10 @@ route.post(
     }
 
     try {
+      const activeConcerns = concerns.filter(
+        (c: UserConcernType) => !c.isDisabled
+      );
+
       const subscriptionIsValid: boolean = await checkSubscriptionStatus({
         userId: req.userId,
         subscriptionType: SubscriptionTypeNamesEnum.IMPROVEMENT,
@@ -63,7 +67,9 @@ route.post(
         return;
       }
 
-      const selectedConcernKeys = concerns.map((c: UserConcernType) => c.name);
+      const selectedConcernKeys = activeConcerns.map(
+        (c: UserConcernType) => c.name
+      );
 
       const restOfConcerns = existingConcerns.filter(
         (c: UserConcernType) => !selectedConcernKeys.includes(c.name)
@@ -106,7 +112,7 @@ route.post(
         await createRoutine({
           part,
           userId: req.userId,
-          concerns,
+          concerns: activeConcerns,
           specialConsiderations,
           categoryName: CategoryNameEnum.TASKS,
         });
@@ -143,7 +149,7 @@ route.post(
               await createRoutine({
                 userId: req.userId,
                 part: partKey,
-                concerns,
+                concerns: activeConcerns,
                 specialConsiderations,
                 categoryName: CategoryNameEnum.TASKS,
               })

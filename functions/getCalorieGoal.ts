@@ -18,9 +18,9 @@ export default async function getCalorieGoal({
   categoryName,
 }: Props) {
   try {
-    const systemContent = `You are a dietician. You are given an image of a person and a set of their physical concerns. Your goal is to determine how much calories this person should consume to address their physical concerns best. Assume that the person is going to exercise for improving their concerns. Respond with a number representing the total kcal for a day. Think step-by-step`;
+    const systemContent = `You are a dietician. You are given an image of a person and a set of their physical concerns. Your goal is to determine how much kcal this person should consume to address their physical concerns best. Assume that the person is going to exercise for improving their concerns. Respond with a number representing the total kcal for a day. Think step-by-step`;
 
-    const CalorieGoalResponseType = z.object({ calories: z.number() });
+    const CalorieGoalResponseType = z.object({ kcal: z.number() });
 
     const frontalBody = toAnalyze.find(
       (obj) => obj.part === "body" && obj.position === "front"
@@ -59,7 +59,7 @@ export default async function getCalorieGoal({
       categoryName,
       functionName: "getCalorieGoal",
     });
-    return response.calories;
+    return response.kcal;
   } catch (err) {
     throw httpError(err);
   }

@@ -23,7 +23,6 @@ import formatDate from "@/helpers/formatDate.js";
 import httpError from "@/helpers/httpError.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
 import checkAndRecordTwin from "@/functions/checkAndRecordTwin.js";
-import checkImagePosition from "@/functions/checkImagePosition.js";
 import checkImageRequirements from "@/functions/checkImageRequirements.js";
 
 const route = Router();
@@ -95,21 +94,26 @@ route.post(
         return;
       }
 
-      const { isClearlyVisible, numberOfPeople } = await checkImageRequirements(
-        {
-          categoryName: CategoryNameEnum.PROGRESSSCAN,
-          image,
-          userId,
-        }
-      );
+      const {
+        isPositionValid,
+        isClearlyVisible,
+        numberOfPeople,
+        message: changePositionMessage,
+      } = await checkImageRequirements({
+        image,
+        part,
+        position,
+        userId: finalUserId,
+        categoryName: CategoryNameEnum.PROGRESSSCAN,
+      });
 
-      // if (!isClearlyVisible) {
-      //   res.status(200).json({
-      //     error:
-      //       "The image is not clear. Try taking photos in daylight with no shadows obscuring your features.",
-      //   });
-      //   return;
-      // }
+      if (!isClearlyVisible) {
+        res.status(200).json({
+          error:
+            "The image is not clear. Try taking photos in daylight with no shadows obscuring your features.",
+        });
+        return;
+      }
 
       if (numberOfPeople === 0) {
         res.status(200).json({
@@ -124,15 +128,6 @@ route.post(
         });
         return;
       }
-
-      const { verdict: isPositionValid, message: changePositionMessage } =
-        await checkImagePosition({
-          image,
-          part,
-          position,
-          userId: finalUserId,
-          categoryName: CategoryNameEnum.PROGRESSSCAN,
-        });
 
       if (!isPositionValid) {
         res.status(200).json({ error: changePositionMessage });

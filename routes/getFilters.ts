@@ -50,9 +50,10 @@ route.get(
         return a;
       }, {});
 
-      const match: { [key: string]: any } = {
-        moderationStatus: ModerationStatusEnum.ACTIVE,
-      };
+      const match: { [key: string]: any } = {};
+
+      if (collection !== "task")
+        match.moderationStatus = ModerationStatusEnum.ACTIVE;
 
       if (followingUserName) {
         match.userName = followingUserName;

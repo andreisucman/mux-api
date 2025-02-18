@@ -14,7 +14,7 @@ export default function checkCanRoutine({ nextScan, nextRoutine }: Props) {
   );
 
   const availableRoutines = relevantRoutines
-    .filter((scan) => !scan.date || scan.date > new Date())
+    .filter((routine) => !routine.date || new Date(routine.date) < new Date())
     .map((obj) => obj.part);
 
   let canRoutineDate = new Date().getTime();

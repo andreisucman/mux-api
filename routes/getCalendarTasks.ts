@@ -56,7 +56,6 @@ route.get(
             startsAt: 1,
           })
           .sort({ startsAt: 1, part: -1 })
-          .limit(Number(process.env.MAX_TASKS_PER_SCHEDULE))
           .toArray()
       );
 

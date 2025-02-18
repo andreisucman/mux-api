@@ -9,7 +9,7 @@ export default function setToMidnight({
   date,
   timeZone,
 }: SetToMidnight) {
-  let midnightDate = DateTime.fromJSDate(date, { zone: timeZone });
+  let midnightDate = DateTime.fromJSDate(new Date(date), { zone: timeZone });
 
   midnightDate = midnightDate.set({
     hour: 0,

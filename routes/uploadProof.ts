@@ -259,7 +259,7 @@ route.post(
       if (!validSubmission) {
         await addAnalysisStatusError({
           message:
-            "This appears to be a copy of a previous content. Please upload another one.",
+            "This appears to be a copy of the previous content. Please upload a new proof.",
           userId: req.userId,
           operationKey: taskId,
         });
@@ -423,6 +423,7 @@ route.post(
           userId: req.userId,
           url: selectedProofImages[0],
           categoryName: CategoryNameEnum.PROOF,
+          onlyCalories: true,
         });
 
         const { energy } = foodAnalysis;

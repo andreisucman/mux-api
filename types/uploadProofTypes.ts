@@ -4,6 +4,7 @@ import {
   DemographicsType,
   LatestScoresType,
   PartEnum,
+  RecipeType,
 } from "types.js";
 
 export type UploadProofUserType = {
@@ -32,4 +33,5 @@ export type UploadProofTaskType = {
   isRecipe: boolean;
   restDays: number;
   isCreated: boolean;
+  recipe: RecipeType;
 };

@@ -5,7 +5,6 @@ type GenerateTaskIntervalsProps = {
   total: number;
   earliestStartMap: { [key: string]: string };
 };
-
 export default function generateTaskIntervals({
   key,
   dateOne,
@@ -15,16 +14,16 @@ export default function generateTaskIntervals({
 }: GenerateTaskIntervalsProps) {
   try {
     let startDate = new Date(dateOne);
-    if (isNaN(startDate as any)) {
+    if (isNaN(startDate.getTime())) {
       throw new Error(`Invalid dateOne value: ${dateOne}`);
     }
     const endDate = new Date(dateTwo);
-    if (isNaN(endDate as any)) {
+    if (isNaN(endDate.getTime())) {
       throw new Error(`Invalid dateTwo value: ${dateTwo}`);
     }
 
     const earliestStart = new Date(earliestStartMap[key]);
-    if (earliestStartMap[key] && isNaN(earliestStart as any)) {
+    if (earliestStartMap[key] && isNaN(earliestStart.getTime())) {
       throw new Error(`Invalid date in earliestStartMap for key: ${key}`);
     }
 
@@ -36,14 +35,21 @@ export default function generateTaskIntervals({
       return null;
     }
 
-    const dates = [];
+    if (typeof total !== "number" || total <= 0 || !Number.isInteger(total)) {
+      throw new Error("total must be a positive integer");
+    }
 
+    if (total === 1) {
+      return [startDate.toDateString()];
+    }
+
+    const dates: Date[] = [];
     const diffTime = endDate.getTime() - startDate.getTime();
-    const interval = diffTime / Number(total);
+    const interval = Math.round(diffTime / (total - 1));
 
-    for (let i = 0; i < Number(total); i++) {
+    for (let i = 0; i < total; i++) {
       const newDate = new Date(startDate.getTime() + interval * i);
-      if (isNaN(newDate as any)) {
+      if (isNaN(newDate.getTime())) {
         throw new Error(`Generated invalid date at interval ${i}`);
       }
       dates.push(newDate);
@@ -51,7 +57,7 @@ export default function generateTaskIntervals({
 
     return dates.map((date) => date.toDateString());
   } catch (error) {
-    console.error("generateIntervals", error.message);
+    console.error("generateTaskIntervals", error.message);
     throw error;
   }
 }

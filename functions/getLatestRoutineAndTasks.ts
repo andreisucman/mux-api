@@ -2,7 +2,7 @@ import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
-import { daysFrom } from "@/helpers/utils.js";
+import { daysFrom, setToUtcMidnight } from "@/helpers/utils.js";
 
 type Props = {
   userId: string;
@@ -20,6 +20,7 @@ export default async function getLatestRoutinesAndTasks({
       userId: new ObjectId(userId),
       ...filter,
     };
+
     const routines = await doWithRetries(
       async () =>
         await db
@@ -46,10 +47,8 @@ export default async function getLatestRoutinesAndTasks({
       return { routines, tasks: [] };
     }
 
-    
-
-    const expiresAtFrom = new Date(new Date().setUTCHours(0, 0, 0, 0));
-    const expiresAtTo = new Date(daysFrom({ days: 1 }).setUTCHours(0, 0, 0, 0));
+    const expiresAtFrom = setToUtcMidnight(new Date());
+    const expiresAtTo = setToUtcMidnight(daysFrom({ days: 1 }));
 
     const project = {
       _id: 1,
@@ -76,6 +75,7 @@ export default async function getLatestRoutinesAndTasks({
             $match: {
               routineId: { $in: routines.map((r) => r._id) },
               expiresAt: { $gte: expiresAtFrom, $lt: expiresAtTo },
+              status: { $in: ["active", "completed"] },
             },
           },
           { $sort: { startsAt: 1, part: -1 } },
