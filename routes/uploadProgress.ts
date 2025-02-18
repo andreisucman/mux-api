@@ -110,7 +110,7 @@ route.post(
       if (!isClearlyVisible) {
         res.status(200).json({
           error:
-            "The image is not clear. Try taking photos in daylight with no shadows obscuring your features.",
+            "The image is not clear. Try taking photos in daylight with no shadows or glitter obscuring your features.",
         });
         return;
       }

@@ -17,16 +17,21 @@ import updateNextRoutine from "helpers/updateNextRoutine.js";
 import formatDate from "helpers/formatDate.js";
 import httpError from "@/helpers/httpError.js";
 import getUserInfo from "@/functions/getUserInfo.js";
-import { db } from "init.js";
 import checkCanRoutine from "@/helpers/checkCanRoutine.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
+import { db } from "init.js";
 
 const route = Router();
 
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { concerns, part, specialConsiderations } = req.body;
+    const {
+      concerns,
+      part,
+      routineStartDate = new Date(),
+      specialConsiderations,
+    } = req.body;
 
     if (!concerns) {
       res.status(400).json({ error: "Bad request" });
@@ -72,7 +77,8 @@ route.post(
       );
 
       const restOfConcerns = existingConcerns.filter(
-        (c: UserConcernType) => !selectedConcernKeys.includes(c.name)
+        (c: UserConcernType) =>
+          !selectedConcernKeys.includes(c.name) && !c.isDisabled
       );
 
       const allUniqueConcerns = [...restOfConcerns, ...concerns].filter(
@@ -115,6 +121,7 @@ route.post(
           concerns: activeConcerns,
           specialConsiderations,
           categoryName: CategoryNameEnum.TASKS,
+          routineStartDate,
         });
 
         updatedNextRoutine = updateNextRoutine({
@@ -152,6 +159,7 @@ route.post(
                 concerns: activeConcerns,
                 specialConsiderations,
                 categoryName: CategoryNameEnum.TASKS,
+                routineStartDate,
               })
           )
         );

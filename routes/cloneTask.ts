@@ -11,20 +11,13 @@ import combineAllTasks from "@/helpers/combineAllTasks.js";
 import getLatestRoutinesAndTasks from "@/functions/getLatestRoutineAndTasks.js";
 import sortTasksInScheduleByDate from "@/helpers/sortTasksInScheduleByDate.js";
 import { db } from "init.js";
-import setToMidnight from "@/helpers/setToMidnight.js";
 
 const route = Router();
 
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const {
-      taskId,
-      startingDate,
-      timeZone = "America/New_York",
-      returnRoutinesWithStatus,
-      returnTask,
-    } = req.body;
+    const { taskId, startingDate, returnTask } = req.body;
 
     try {
       const currentTask = (await doWithRetries(async () =>
@@ -59,10 +52,10 @@ route.post(
         return;
       }
 
-      const newStartsAt = setToMidnight({ date: startingDate, timeZone });
+      const newStartsAt = new Date(startingDate);
 
       const newExpiresAt = daysFrom({
-        date: new Date(newStartsAt),
+        date: new Date(startingDate),
         days: 1,
       });
 
@@ -152,31 +145,19 @@ route.post(
 
       let result: { [key: string]: any } = {};
 
-      if (returnRoutinesWithStatus) {
-        const finalRoutineStatus =
-          returnRoutinesWithStatus === "replaced"
-            ? { $in: ["active", "replaced"] }
-            : returnRoutinesWithStatus;
+      const routinesFilter = {
+        part: currentTask.part,
+        status: { $in: ["active", "replaced"] },
+      };
 
-        const routinesFilter = {
-          part: currentTask.part,
-          status: finalRoutineStatus,
-        };
+      const { routines } = await getLatestRoutinesAndTasks({
+        userId: req.userId,
+        filter: routinesFilter,
+        returnOnlyRoutines: true,
+      });
 
-        if (finalRoutineStatus) routinesFilter.status = finalRoutineStatus;
-
-        const response = await getLatestRoutinesAndTasks({
-          userId: req.userId,
-          filter: routinesFilter,
-          returnOnlyRoutines: true,
-        });
-
-        result = { ...response };
-      }
-
-      if (returnTask) {
-        result.newTask = resetTask;
-      }
+      if (routines.length > 0) result.routine = routines[0];
+      if (returnTask) result.newTask = resetTask;
 
       res.status(200).json({
         message: result,
