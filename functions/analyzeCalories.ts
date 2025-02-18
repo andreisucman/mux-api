@@ -80,7 +80,7 @@ export default async function analyzeCalories({
         shouldEat: z
           .boolean()
           .describe(
-            "true if the user can safely eat this food, false if this food is very likely to be contraindicated for the user"
+            "true if the user can safely eat this food, false if this food is prohibited for the user"
           ),
         explanation: z.string(),
       });
@@ -96,6 +96,15 @@ export default async function analyzeCalories({
             {
               type: "text",
               text: `User information. ${userAbout}`,
+            },
+          ],
+        },
+        {
+          isMini: true,
+          content: [
+            {
+              type: "text",
+              text: `Make sure that your verdict is grounded. If it's not change it.`,
             },
           ],
           responseFormat: zodResponseFormat(

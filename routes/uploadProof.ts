@@ -268,8 +268,9 @@ route.post(
 
       const verdicts = [];
       const explanations = [];
+      console.log("proofImages", proofImages);
       const selectedProofImages = selectItemsAtEqualDistances(proofImages, 4);
-
+      console.log("selectedProofImages", selectedProofImages);
       for (const image of selectedProofImages) {
         const { verdict: proofAccepted, message: verdictExplanation } =
           await checkProofImage({
@@ -282,6 +283,9 @@ route.post(
         verdicts.push(proofAccepted);
         explanations.push(verdictExplanation);
       }
+
+      console.log("verdicts", verdicts);
+      console.log("explanations", explanations);
 
       const checkFailed =
         verdicts.filter((i) => i).length <
@@ -428,7 +432,11 @@ route.post(
 
         const { energy } = foodAnalysis;
         const newDailyCalorieGoal = Math.max(0, dailyCalorieGoal - energy);
-        userUpdatePayload.$set.dailyCalorieGoal = newDailyCalorieGoal;
+
+        userUpdatePayload.$set = {
+          ...userUpdatePayload.$set,
+          dailyCalorieGoal: newDailyCalorieGoal,
+        };
       }
 
       if (Object.keys(userUpdatePayload).length > 0)
