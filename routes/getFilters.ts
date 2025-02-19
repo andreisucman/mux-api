@@ -50,7 +50,9 @@ route.get(
         return a;
       }, {});
 
-      const match: { [key: string]: any } = {};
+      let match: { [key: string]: any } = {};
+
+      if (filter) match = { ...filter };
 
       if (collection !== "task")
         match.moderationStatus = ModerationStatusEnum.ACTIVE;

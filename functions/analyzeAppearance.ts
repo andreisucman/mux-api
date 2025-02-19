@@ -113,12 +113,6 @@ export default async function analyzeAppearance({
 
     toUpdateUser.$set.demographics = demographics;
 
-    await incrementProgress({
-      value: 1,
-      operationKey: "progress",
-      userId: String(userId),
-    });
-
     toUpdateUser.$set.nextScan = updateNextScan({ nextScan, toAnalyze });
 
     const analyzePartPromises = parts.map((part) => {

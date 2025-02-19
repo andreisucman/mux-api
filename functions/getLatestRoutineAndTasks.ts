@@ -39,7 +39,7 @@ export default async function getLatestRoutinesAndTasks({
           .toArray()
     );
 
-    if (!routines?.length) {
+    if (routines.length === 0) {
       return { routines: [], tasks: [] };
     }
 
@@ -47,8 +47,12 @@ export default async function getLatestRoutinesAndTasks({
       return { routines, tasks: [] };
     }
 
-    const expiresAtFrom = setToUtcMidnight(new Date());
-    const expiresAtTo = setToUtcMidnight(daysFrom({ days: 1 }));
+    const theEarliestRoutine = routines[0];
+
+    const startsAtFrom = setToUtcMidnight(theEarliestRoutine.startsAt);
+    const startsAtTo = setToUtcMidnight(
+      daysFrom({ date: startsAtFrom, days: 1 })
+    );
 
     const project = {
       _id: 1,
@@ -74,7 +78,7 @@ export default async function getLatestRoutinesAndTasks({
           {
             $match: {
               routineId: { $in: routines.map((r) => r._id) },
-              expiresAt: { $gte: expiresAtFrom, $lt: expiresAtTo },
+              startsAt: { $gte: startsAtFrom, $lt: startsAtTo },
               status: { $in: ["active", "completed"] },
             },
           },

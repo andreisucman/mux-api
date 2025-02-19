@@ -11,6 +11,7 @@ import combineAllTasks from "@/helpers/combineAllTasks.js";
 import getLatestRoutinesAndTasks from "@/functions/getLatestRoutineAndTasks.js";
 import sortTasksInScheduleByDate from "@/helpers/sortTasksInScheduleByDate.js";
 import { db } from "init.js";
+import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 
 const route = Router();
 
@@ -83,8 +84,6 @@ route.post(
 
       if (resetNewTask) resetTask.recipe = null;
 
-      console.log("resetNewTask", resetNewTask, "resetTask", resetTask);
-
       await doWithRetries(async () =>
         db.collection("Task").insertOne(resetTask)
       );
@@ -134,6 +133,9 @@ route.post(
         newAllTasks: [newAllTaskRecord],
       });
 
+      const { minDate, maxDate } =
+        getMinAndMaxRoutineDates(finalRoutineAllTasks);
+
       await doWithRetries(async () =>
         db.collection("Routine").updateOne(
           { _id: routineId },
@@ -141,7 +143,8 @@ route.post(
             $set: {
               finalSchedule: updatedSchedule,
               allTasks: finalRoutineAllTasks,
-              lastDate: newStartsAt > lastDate ? newStartsAt : lastDate,
+              lastDate: new Date(maxDate),
+              startsAt: new Date(minDate),
             },
           }
         )

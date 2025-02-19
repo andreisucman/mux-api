@@ -12,7 +12,7 @@ const route = Router();
 
 route.get("/", async (req: CustomRequest, res: Response) => {
   const { filter, skip } = aqp(req.query as any) as AqpQuery;
-  const { query, concern } = filter;
+  const { query } = filter;
 
   try {
     const pipeline: any = [];
@@ -26,8 +26,6 @@ route.get("/", async (req: CustomRequest, res: Response) => {
         $diacriticSensitive: false,
       };
     }
-
-    if (concern) match.nearestConcerns = { $in: [concern] };
 
     pipeline.push({ $match: match });
 

@@ -379,6 +379,7 @@ export type RoutineType = {
   finalSchedule: { [key: string]: any };
   status: RoutineStatusEnum;
   createdAt: Date;
+  startsAt: Date;
   allTasks: AllTaskTypeWithIds[];
   lastDate: Date;
   stolenFrom: string;

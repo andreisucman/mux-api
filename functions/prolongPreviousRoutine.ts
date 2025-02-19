@@ -21,9 +21,11 @@ import { db } from "init.js";
 import updateTasksAnalytics from "./updateTasksAnalytics.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import combineAllTasks from "@/helpers/combineAllTasks.js";
+import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 
 type Props = {
   part: PartEnum;
+  routineStartDate: string;
   partImages: ProgressImageType[];
   categoryName: CategoryNameEnum;
   partConcerns: UserConcernType[];
@@ -39,6 +41,7 @@ export default async function prolongPreviousRoutine({
   categoryName,
   allSolutions,
   userInfo,
+  routineStartDate,
   tasksToProlong,
 }: Props) {
   const { _id: userId, name: userName } = userInfo;
@@ -155,6 +158,7 @@ export default async function prolongPreviousRoutine({
       await addAdditionalTasks({
         part,
         userInfo,
+        routineStartDate,
         partImages,
         categoryName,
         allSolutions,
@@ -171,9 +175,7 @@ export default async function prolongPreviousRoutine({
     const finalTasksToInsert = [...resetTasks, ...additionalTasksToInsert];
     const finalSchedule = mergedSchedule;
 
-    /* add the new routine object */
-    const dates = Object.keys(finalSchedule);
-    const lastDate = dates[dates.length - 1];
+    const { minDate, maxDate } = getMinAndMaxRoutineDates(finalRoutineAllTasks);
 
     const newRoutineObject = await doWithRetries(async () =>
       db.collection("Routine").insertOne({
@@ -183,7 +185,8 @@ export default async function prolongPreviousRoutine({
         concerns: partConcerns,
         status: RoutineStatusEnum.ACTIVE,
         createdAt: new Date(),
-        lastDate: new Date(lastDate),
+        startsAt: new Date(minDate),
+        lastDate: new Date(maxDate),
         allTasks: finalRoutineAllTasks,
         part,
       })

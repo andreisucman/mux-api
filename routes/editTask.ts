@@ -13,7 +13,6 @@ import {
 } from "types.js";
 import isActivityHarmful from "@/functions/isActivityHarmful.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
-import formatDate from "@/helpers/formatDate.js";
 import sortTasksInScheduleByDate from "@/helpers/sortTasksInScheduleByDate.js";
 import { daysFrom } from "helpers/utils.js";
 import doWithRetries from "helpers/doWithRetries.js";
@@ -22,6 +21,7 @@ import moderateContent from "@/functions/moderateContent.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import httpError from "@/helpers/httpError.js";
 import { db } from "init.js";
+import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 
 const route = Router();
 
@@ -34,6 +34,7 @@ route.post(
       updatedInstruction,
       startDate,
       timeZone,
+      applyToAll,
     } = req.body;
 
     if (!updatedDescription && !updatedInstruction && !startDate && !timeZone) {
@@ -109,7 +110,7 @@ route.post(
 
         if (!isSimilar) {
           const reply =
-            "Task can't be changed entirely. If you need to make a new task use the plus button.";
+            "You can't change the task entirely. If you need to make a new task use the plus button.";
           res.status(200).json({ error: reply });
           return;
         }
@@ -141,7 +142,7 @@ route.post(
           .collection("Routine")
           .findOne(
             { _id: new ObjectId(relevantTask.routineId) },
-            { projection: { finalSchedule: 1, allTasks: 1 } }
+            { projection: { finalSchedule: 1, allTasks: 1, startsAt: 1 } }
           )
       )) as unknown as RoutineType;
 
@@ -157,9 +158,6 @@ route.post(
       }
 
       finalSchedule = sortTasksInScheduleByDate(finalSchedule);
-
-      const dates = Object.keys(finalSchedule);
-      const lastRoutineDate = dates[dates.length - 1];
 
       const relevantAllTask: AllTaskTypeWithIds = relevantRoutine.allTasks.find(
         (t: AllTaskTypeWithIds) => t.key === relevantTask.key
@@ -186,21 +184,47 @@ route.post(
         atObj.key === newAllTaskRecord.key ? newAllTaskRecord : atObj
       );
 
-      await doWithRetries(async () =>
-        db
-          .collection("Task")
-          .updateOne({ _id: new ObjectId(taskId) }, { $set: updateTaskPayload })
-      );
+      if (applyToAll) {
+        await doWithRetries(async () =>
+          db.collection("Task").updateMany(
+            {
+              key: relevantTask.key,
+              status: TaskStatusEnum.ACTIVE,
+            },
+            {
+              $set: {
+                description: updatedDescription || relevantTask.description,
+                instruction: updatedInstruction || relevantTask.instruction,
+              },
+            }
+          )
+        );
+      } else {
+        await doWithRetries(async () =>
+          db
+            .collection("Task")
+            .updateOne(
+              { _id: new ObjectId(taskId) },
+              { $set: updateTaskPayload }
+            )
+        );
+      }
+
+      /* recalculate the routines startsAt date */
+      const { minDate, maxDate } = getMinAndMaxRoutineDates(newAllTasks);
+
+      const routineUpdatePayload: { [key: string]: any } = {
+        finalSchedule,
+        allTasks: newAllTasks,
+        lastDate: new Date(maxDate),
+        startsAt: new Date(minDate),
+      };
 
       await doWithRetries(async () =>
         db.collection("Routine").updateOne(
           { _id: new ObjectId(relevantTask.routineId) },
           {
-            $set: {
-              finalSchedule,
-              allTasks: newAllTasks,
-              lastDate: new Date(lastRoutineDate),
-            },
+            $set: routineUpdatePayload,
           }
         )
       );

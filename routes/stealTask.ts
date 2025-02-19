@@ -8,7 +8,7 @@ import setToMidnight from "@/helpers/setToMidnight.js";
 import { daysFrom } from "helpers/utils.js";
 import sortTasksInScheduleByDate from "helpers/sortTasksInScheduleByDate.js";
 import {
-  AllTaskType,
+  AllTaskTypeWithIds,
   CustomRequest,
   RoutineStatusEnum,
   RoutineType,
@@ -20,16 +20,25 @@ import httpError from "@/helpers/httpError.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
+import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 
 const route = Router();
 
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { taskKey, routineId, total, followingUserName, part } = req.body;
+    const { taskKey, routineId, startDate, total, followingUserName, part } =
+      req.body;
 
     try {
-      if (!taskKey || !routineId || !total || !followingUserName || !part) {
+      if (
+        !taskKey ||
+        !routineId ||
+        !startDate ||
+        !total ||
+        !followingUserName ||
+        !part
+      ) {
         res.status(400).json({ error: "Bad request" });
         return;
       }
@@ -82,7 +91,7 @@ route.post(
         taskToAdd.routineId = new ObjectId(currentRoutine._id);
       }
 
-      const draftTasks: TaskType[] = [];
+      let draftTasks: TaskType[] = [];
 
       /* get the updated start and expiry dates */
       const distanceInDays = Math.round(Math.max(7 / total, 1));
@@ -90,7 +99,7 @@ route.post(
       for (let j = 0; j < Math.min(total, 7); j++) {
         const starts = daysFrom({
           date: setToMidnight({
-            date: new Date(),
+            date: new Date(startDate),
             timeZone,
           }),
           days: distanceInDays * j,
@@ -117,7 +126,7 @@ route.post(
 
       let finalSchedule: { [key: string]: ScheduleTaskType[] } =
         currentFinalSchedule || {};
-      let allTasks: AllTaskType[] = currentAllTasks || [];
+      let allTasks: AllTaskTypeWithIds[] = currentAllTasks || [];
 
       /* update final schedule */
       for (let i = 0; i < draftTasks.length; i++) {
@@ -184,8 +193,7 @@ route.post(
 
       allTasks.push(...newAllTasks);
 
-      const dates = Object.keys(finalSchedule);
-      const lastRoutineDate = dates[dates.length - 1];
+      const { minDate, maxDate } = getMinAndMaxRoutineDates(allTasks);
 
       if (currentRoutine) {
         await doWithRetries(async () =>
@@ -196,21 +204,28 @@ route.post(
                 finalSchedule,
                 allTasks,
                 concerns,
-                lastDate: new Date(lastRoutineDate),
+                startsAt: new Date(minDate),
+                lastDate: new Date(maxDate),
               },
             }
           )
         );
       } else {
+        const routineId = new ObjectId();
+
+        draftTasks = draftTasks.map((t) => ({ ...t, routineId }));
+
         await doWithRetries(async () =>
           db.collection("Routine").insertOne({
+            _id: routineId,
             userId: new ObjectId(req.userId),
             allTasks,
             finalSchedule,
             part: taskToAdd.part,
             concerns: [taskToAdd.concern],
             status: RoutineStatusEnum.ACTIVE,
-            lastDate: new Date(lastRoutineDate),
+            startsAt: new Date(minDate),
+            lastDate: new Date(maxDate),
             createdAt: new Date(),
             userName: userInfo.name,
           })
@@ -241,7 +256,8 @@ route.post(
             finalSchedule,
             allTasks,
             concerns,
-            lastDate: new Date(lastRoutineDate),
+            startsAt: new Date(minDate),
+            lastDate: new Date(maxDate),
           },
           tasks: draftTasks,
         },

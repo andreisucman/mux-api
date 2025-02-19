@@ -200,11 +200,14 @@ route.post(
       const contentUrlTypes = [];
 
       if (blurType) {
-        contentUrlTypes.push({
-          // for the is added to appear in the preview on the client
-          name: blurType,
-          url: blurredImage,
-        });
+        contentUrlTypes.push(
+          { name: "original", url: image },
+          {
+            // for the is added to appear in the preview on the client
+            name: blurType,
+            url: blurredImage,
+          }
+        );
       }
 
       /* add the current uploaded info to the info to analyze */
@@ -273,6 +276,7 @@ route.post(
             toUpdate
           )
         );
+
         res.status(200).json({
           message: {
             requiredProgress: remainingRequirements,

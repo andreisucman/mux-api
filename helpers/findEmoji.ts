@@ -18,6 +18,5 @@ export default async function findEmoji(key: string) {
   }
 
   if (current.startsWith(":")) current = null;
-
   return current || null;
 }

@@ -18,13 +18,11 @@ import {
 import { db } from "init.js";
 import askRepeatedly from "functions/askRepeatedly.js";
 import isActivityHarmful from "@/functions/isActivityHarmful.js";
-import findRelevantSolutions from "functions/findRelevantSolutions.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
 import sortTasksInScheduleByDate from "@/helpers/sortTasksInScheduleByDate.js";
-import { daysFrom, toSentenceCase, toSnakeCase } from "helpers/utils.js";
+import { daysFrom, toSnakeCase } from "helpers/utils.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import createTextEmbedding from "functions/createTextEmbedding.js";
-import checkIfTaskIsRelated from "functions/checkIfTaskIsRelated.js";
 import findEmoji from "helpers/findEmoji.js";
 import generateImage from "functions/generateImage.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
@@ -34,6 +32,8 @@ import moderateContent from "@/functions/moderateContent.js";
 import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import getUserInfo from "@/functions/getUserInfo.js";
+import findEmbeddings from "@/functions/findEmbeddings.js";
+import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 
 const route = Router();
 
@@ -97,21 +97,6 @@ route.post(
         return;
       }
 
-      const normalizedConcern = concern.split("_").join(" ");
-      const condition = `The activity must be related to ${part} and ${normalizedConcern}.`;
-
-      const satisfies = await checkIfTaskIsRelated({
-        userId: req.userId,
-        text,
-        condition,
-        categoryName: CategoryNameEnum.TASKS,
-      });
-
-      if (!satisfies) {
-        res.status(200).json({ error: condition });
-        return;
-      }
-
       await doWithRetries(async () =>
         db.collection("AnalysisStatus").updateOne(
           { userId: new ObjectId(req.userId), operationKey: "routine" },
@@ -125,17 +110,17 @@ route.post(
 
       res.status(200).end();
 
-      const latestRelevantRoutine = (await doWithRetries(async () =>
+      const latestRelevantRoutine = await doWithRetries(async () =>
         db.collection("Routine").findOne({
           userId: new ObjectId(req.userId),
           status: RoutineStatusEnum.ACTIVE,
           part,
         })
-      )) || { _id: new ObjectId() };
+      );
 
       const systemContent = `The user gives you the description and instruction of an activity and a list of concerns. Your goal is to create a task based on this info.`;
 
-      const TaskType = z.object({
+      const TaskResponseType = z.object({
         name: z.string().describe("The name of the task in an imperative form"),
         word: z
           .string()
@@ -152,6 +137,11 @@ route.post(
           .describe(
             "Number of days the user should rest before repeating this activity"
           ),
+        productTypes: z
+          .array(z.string())
+          .describe(
+            'An array of product types needed to complete this activity (example: ["olive oil","tomato"] )'
+          ),
       });
 
       const runs = [
@@ -165,7 +155,10 @@ route.post(
           ],
           model:
             "ft:gpt-4o-mini-2024-07-18:personal:save-task-from-description:AIx7makF",
-          responseFormat: zodResponseFormat(TaskType, "task"),
+          responseFormat: zodResponseFormat(
+            TaskResponseType,
+            "TaskResponseType"
+          ),
         },
       ];
 
@@ -200,7 +193,6 @@ route.post(
       const generalTaskInfo: TaskType = {
         ...otherResponse,
         userId: new ObjectId(req.userId),
-        routineId: new ObjectId(latestRelevantRoutine._id),
         example: { type: "image", url: image },
         proofEnabled: true,
         status: TaskStatusEnum.ACTIVE,
@@ -230,7 +222,13 @@ route.post(
         value: 25,
       });
 
-      const relevantSolutions = await findRelevantSolutions(embedding);
+      const relevantSolutions = await findEmbeddings({
+        index: "solution_search",
+        projection: { productTypes: 1, icon: 1, suggestions: 1 },
+        embedding,
+        collection: "Solution",
+        relatednessScore: 0.85,
+      });
 
       if (relevantSolutions.length > 0) {
         const filteredProductTypes = await filterRelevantProductTypes({
@@ -264,13 +262,14 @@ route.post(
 
       const distanceInDays = Math.round(Math.max(7 / moderatedFrequency, 1));
 
-      const draftTasks: TaskType[] = [];
+      let draftTasks: TaskType[] = [];
 
       const latestDateOfWeeek = daysFrom({ days: 7 });
       const finalStartDate =
         new Date(startDate) > latestDateOfWeeek ? latestDateOfWeeek : startDate;
 
-      const icon = relevantSolutions?.[0]?.icon || findEmoji(word) || "🚩";
+      const icon =
+        relevantSolutions?.[0]?.icon || (await findEmoji(word)) || "🚩";
 
       generalTaskInfo.icon = icon;
 
@@ -330,7 +329,6 @@ route.post(
       }
 
       /* update all tasks */
-
       const ids = draftTasks.map((t) => ({
         _id: t._id,
         startsAt: new Date(t.startsAt),
@@ -351,31 +349,31 @@ route.post(
         unknown: 0,
       });
 
-      const dates = Object.keys(finalSchedule);
-      const lastRoutineDate = dates[dates.length - 1];
-
       await incrementProgress({
         operationKey: "routine",
         userId: req.userId,
         value: 20,
       });
 
-      const payload: Partial<RoutineType> = {
+      const { minDate, maxDate } = getMinAndMaxRoutineDates(allTasks);
+
+      const routinePayload: Partial<RoutineType> = {
         ...latestRelevantRoutine,
         userId: new ObjectId(req.userId),
         concerns,
         allTasks,
         finalSchedule,
+        startsAt: new Date(minDate),
+        lastDate: new Date(maxDate),
         status: RoutineStatusEnum.ACTIVE,
-        lastDate: new Date(lastRoutineDate),
       };
 
       if (userInfo.name) {
-        payload.userName = userInfo.name;
+        routinePayload.userName = userInfo.name;
       }
 
       if (!createdAt) {
-        payload.createdAt = new Date();
+        routinePayload.createdAt = new Date();
       }
 
       await incrementProgress({
@@ -384,15 +382,34 @@ route.post(
         value: 15,
       });
 
-      await doWithRetries(async () =>
-        db.collection("Routine").updateOne(
-          { _id: new ObjectId(latestRelevantRoutine._id), part },
-          {
-            $set: payload,
-          },
-          { upsert: true }
-        )
-      );
+      if (latestRelevantRoutine) {
+        draftTasks = draftTasks.map((t) => ({
+          ...t,
+          routineId: new ObjectId(latestRelevantRoutine._id),
+        }));
+
+        await doWithRetries(async () =>
+          db.collection("Routine").updateOne(
+            { _id: new ObjectId(latestRelevantRoutine._id), part },
+            {
+              $set: routinePayload,
+            }
+          )
+        );
+      } else {
+        const newRoutineId = new ObjectId();
+
+        draftTasks = draftTasks.map((t) => ({
+          ...t,
+          routineId: newRoutineId,
+        }));
+
+        routinePayload._id = newRoutineId;
+
+        await doWithRetries(async () =>
+          db.collection("Routine").insertOne(routinePayload)
+        );
+      }
 
       if (draftTasks.length > 0)
         await doWithRetries(async () =>

@@ -268,9 +268,8 @@ route.post(
 
       const verdicts = [];
       const explanations = [];
-      console.log("proofImages", proofImages);
       const selectedProofImages = selectItemsAtEqualDistances(proofImages, 4);
-      console.log("selectedProofImages", selectedProofImages);
+
       for (const image of selectedProofImages) {
         const { verdict: proofAccepted, message: verdictExplanation } =
           await checkProofImage({
@@ -283,9 +282,6 @@ route.post(
         verdicts.push(proofAccepted);
         explanations.push(verdictExplanation);
       }
-
-      console.log("verdicts", verdicts);
-      console.log("explanations", explanations);
 
       const checkFailed =
         verdicts.filter((i) => i).length <
@@ -432,7 +428,10 @@ route.post(
         });
 
         const { energy } = foodAnalysis;
-        const newRemainingCalories = Math.max(0, remainingDailyCalories - energy);
+        const newRemainingCalories = Math.max(
+          0,
+          remainingDailyCalories - energy
+        );
 
         userUpdatePayload.$set = {
           ...userUpdatePayload.$set,

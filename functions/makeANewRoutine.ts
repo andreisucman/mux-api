@@ -21,10 +21,12 @@ import httpError from "helpers/httpError.js";
 import updateTasksAnalytics from "./updateTasksAnalytics.js";
 import addDateAndIdsToAllTasks from "@/helpers/addDateAndIdsToAllTasks.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
+import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 
 type Props = {
   userId: string;
   part: PartEnum;
+  routineStartDate: string;
   partImages: ProgressImageType[];
   userInfo: CreateRoutineUserInfoType;
   partConcerns: UserConcernType[];
@@ -36,6 +38,7 @@ type Props = {
 export default async function makeANewRoutine({
   userId,
   part,
+  routineStartDate,
   partImages,
   userInfo,
   partConcerns,
@@ -66,6 +69,7 @@ export default async function makeANewRoutine({
     const rawSchedule = await doWithRetries(async () =>
       getRawSchedule({
         solutionsAndFrequencies,
+        routineStartDate,
         days: 6,
       })
     );
@@ -122,15 +126,16 @@ export default async function makeANewRoutine({
       })
     );
 
-    const dates = Object.keys(finalSchedule);
-    const lastDate = dates[dates.length - 1];
-
     const { name: userName } = userInfo;
 
     const allTasksWithDateAndIds = addDateAndIdsToAllTasks({
       allTasksWithoutDates: solutionsAndFrequencies,
       tasksToInsert,
     });
+
+    const { minDate, maxDate } = getMinAndMaxRoutineDates(
+      allTasksWithDateAndIds
+    );
 
     const newRoutineObject = await doWithRetries(async () =>
       db.collection("Routine").insertOne({
@@ -141,7 +146,8 @@ export default async function makeANewRoutine({
         status: RoutineStatusEnum.ACTIVE,
         createdAt: new Date(),
         allTasks: allTasksWithDateAndIds,
-        lastDate: new Date(lastDate),
+        startsAt: new Date(minDate),
+        lastDate: new Date(maxDate),
         part,
       })
     );

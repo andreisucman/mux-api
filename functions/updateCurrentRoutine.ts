@@ -21,6 +21,7 @@ import updateTasksAnalytics from "./updateTasksAnalytics.js";
 import { db } from "init.js";
 import addDateAndIdsToAllTasks from "@/helpers/addDateAndIdsToAllTasks.js";
 import combineAllTasks from "@/helpers/combineAllTasks.js";
+import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 
 type Props = {
   part: PartEnum;
@@ -30,6 +31,7 @@ type Props = {
   allSolutions: CreateRoutineAllSolutionsType[];
   userInfo: CreateRoutineUserInfoType;
   specialConsiderations: string;
+  routineStartDate: string;
   categoryName: CategoryNameEnum;
 };
 
@@ -41,6 +43,7 @@ export default async function updateCurrentRoutine({
   allSolutions,
   userInfo,
   categoryName,
+  routineStartDate,
   specialConsiderations,
 }: Props) {
   const { _id: userId, name: userName } = userInfo;
@@ -86,6 +89,7 @@ export default async function updateCurrentRoutine({
       getRawSchedule({
         solutionsAndFrequencies,
         days: daysDifference,
+        routineStartDate,
       })
     );
 
@@ -127,6 +131,8 @@ export default async function updateCurrentRoutine({
       ...partConcerns,
     ].filter((obj, i, arr) => arr.findIndex((o) => o.name === obj.name) === i);
 
+    const { minDate, maxDate } = getMinAndMaxRoutineDates(newAllTasks);
+
     await doWithRetries(async () =>
       db.collection("Routine").updateOne(
         {
@@ -134,11 +140,13 @@ export default async function updateCurrentRoutine({
         },
         {
           $set: {
+            userName,
             finalSchedule: mergedSchedule,
             status: RoutineStatusEnum.ACTIVE,
             concerns: allUniqueConcerns,
             allTasks: newAllTasks,
-            userName,
+            startsAt: new Date(minDate),
+            lastDate: new Date(maxDate),
           },
         }
       )

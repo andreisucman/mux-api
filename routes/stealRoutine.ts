@@ -20,15 +20,16 @@ import getUserInfo from "@/functions/getUserInfo.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
 import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
+import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 
 const route = Router();
 
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { routineId, userName, type } = req.body;
+    const { routineId, startDate, userName, type } = req.body;
 
-    if (!routineId || !type) {
+    if (!routineId || !startDate || !type) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
@@ -126,17 +127,14 @@ route.post(
             nextHostDate
           );
 
-          const previousNewDate =
-            replacementTaskWithDates[replacementTaskWithDates.length - 1]
-              ?.startsAt ||
-            setToMidnight({
-              date: new Date(),
-              timeZone,
-            });
+          const newDate = setToMidnight({
+            date: new Date(startDate),
+            timeZone,
+          });
 
           const starts = daysFrom({
             date: setToMidnight({
-              date: previousNewDate,
+              date: newDate,
               timeZone,
             }),
             days: hostDayDifference,
@@ -230,9 +228,6 @@ route.post(
         };
       });
 
-      const dates = Object.keys(finalSchedule);
-      const lastRoutineDate = dates[dates.length - 1];
-
       if (currentRoutine) {
         await doWithRetries(async () =>
           db.collection("Routine").updateOne(
@@ -255,6 +250,8 @@ route.post(
         );
       }
 
+      const { minDate, maxDate } = getMinAndMaxRoutineDates(allTasks);
+
       const newRoutine = {
         ...replacementRoutine,
         _id: newRoutineId,
@@ -263,7 +260,8 @@ route.post(
         finalSchedule,
         allTasks,
         concerns: [...new Set(concerns)],
-        lastDate: new Date(lastRoutineDate),
+        startsAt: new Date(minDate),
+        lastDate: new Date(maxDate),
         status: RoutineStatusEnum.ACTIVE,
         userName: userInfo.name,
         stolenFrom: userName,

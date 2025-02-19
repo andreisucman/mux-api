@@ -26,14 +26,10 @@ const route = Router();
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const {
-      concerns,
-      part,
-      routineStartDate = new Date(),
-      specialConsiderations,
-    } = req.body;
+    const { concerns, part, routineStartDate, specialConsiderations } =
+      req.body;
 
-    if (!concerns) {
+    if (!concerns || !routineStartDate) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
@@ -121,6 +117,7 @@ route.post(
           concerns: activeConcerns,
           specialConsiderations,
           categoryName: CategoryNameEnum.TASKS,
+          routineStartDate,
         });
 
         updatedNextRoutine = updateNextRoutine({
@@ -158,6 +155,7 @@ route.post(
                 concerns: activeConcerns,
                 specialConsiderations,
                 categoryName: CategoryNameEnum.TASKS,
+                routineStartDate,
               })
           )
         );

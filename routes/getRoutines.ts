@@ -54,7 +54,7 @@ route.get(
 
       const projection = {
         _id: 1,
-        createdAt: 1,
+        startsAt: 1,
         part: 1,
         allTasks: 1,
         status: 1,

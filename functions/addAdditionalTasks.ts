@@ -28,6 +28,7 @@ type Props = {
   currentTasks: TaskType[];
   currentSchedule: { [key: string]: ScheduleTaskType[] };
   userInfo: CreateRoutineUserInfoType;
+  routineStartDate: string;
   allSolutions: CreateRoutineAllSolutionsType[];
 };
 
@@ -39,6 +40,7 @@ export default async function addAdditionalTasks({
   currentTasks,
   currentSchedule,
   allSolutions,
+  routineStartDate,
   categoryName,
 }: Props) {
   const { _id: userId, specialConsiderations, demographics } = userInfo;
@@ -71,7 +73,8 @@ export default async function addAdditionalTasks({
     const rawNewSchedule = await doWithRetries(async () =>
       getRawSchedule({
         solutionsAndFrequencies: filteredSolutionsAndFrequencies,
-        days: 7,
+        routineStartDate,
+        days: 6,
       })
     );
 

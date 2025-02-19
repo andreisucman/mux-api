@@ -28,6 +28,7 @@ type Props = {
   categoryName: CategoryNameEnum;
   concerns: UserConcernType[];
   specialConsiderations: string;
+  routineStartDate: string;
 };
 
 export default async function createRoutine({
@@ -35,6 +36,7 @@ export default async function createRoutine({
   userId,
   categoryName,
   concerns,
+  routineStartDate,
   specialConsiderations,
 }: Props) {
   try {
@@ -152,6 +154,7 @@ export default async function createRoutine({
         userInfo,
         allSolutions,
         categoryName,
+        routineStartDate,
         specialConsiderations,
       });
     } else if (draftTasksToProlong.length > 0) {
@@ -161,6 +164,7 @@ export default async function createRoutine({
         partConcerns,
         userInfo,
         allSolutions,
+        routineStartDate,
         tasksToProlong: draftTasksToProlong,
         categoryName,
       });
@@ -172,6 +176,7 @@ export default async function createRoutine({
         userInfo,
         partConcerns,
         allSolutions,
+        routineStartDate,
         specialConsiderations,
         categoryName,
       });

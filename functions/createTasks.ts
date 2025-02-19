@@ -84,13 +84,14 @@ export default async function createTasks({
 
     for (const draftTask of draftTasks) {
       if (tasksRequirePersonalizedInstruction.includes(draftTask.key)) {
-        const personalInstruction = await personalizeInstruction({
-          userInfo,
-          categoryName,
-          name: draftTask.name,
-          instruction: draftTask.instruction,
-          description: draftTask.description,
-        });
+        const { instruction: personalInstruction, productTypes } =
+          await personalizeInstruction({
+            userInfo,
+            categoryName,
+            name: draftTask.name,
+            instruction: draftTask.instruction,
+            description: draftTask.description,
+          });
 
         await incrementProgress({
           value: 2,
@@ -102,6 +103,7 @@ export default async function createTasks({
           instruction: personalInstruction,
           name: draftTask.name,
           key: draftTask.key,
+          productTypes,
         });
       }
     }

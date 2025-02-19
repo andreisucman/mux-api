@@ -45,4 +45,5 @@ export type PersonalizedInfoType = {
   name: string;
   key: string;
   instruction?: string;
+  productTypes: string[];
 };

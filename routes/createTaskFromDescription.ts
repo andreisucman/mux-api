@@ -10,8 +10,7 @@ import { RunType } from "@/types/askOpenaiTypes.js";
 import askRepeatedly from "functions/askRepeatedly.js";
 import isActivityHarmful from "@/functions/isActivityHarmful.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import checkIfTaskIsRelated from "@/functions/checkIfTaskIsRelated.js";
-import { daysFrom, toSentenceCase } from "helpers/utils.js";
+import { daysFrom } from "helpers/utils.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
 import { db } from "init.js";
 import getUserInfo from "@/functions/getUserInfo.js";
@@ -92,21 +91,6 @@ route.post(
         res.status(200).json({
           error: `This task violates our ToS.`,
         });
-        return;
-      }
-
-      const normalizedConcern = concern.split("_").join(" ");
-      const condition = `The activity must be related to ${part} and ${normalizedConcern}.`;
-
-      const satisfies = await checkIfTaskIsRelated({
-        userId: req.userId,
-        text: description,
-        categoryName: CategoryNameEnum.TASKS,
-        condition,
-      });
-
-      if (!satisfies) {
-        res.status(200).json({ error: condition });
         return;
       }
 

@@ -3,6 +3,8 @@ import incrementProgress from "helpers/incrementProgress.js";
 import { RunType } from "types/askOpenaiTypes.js";
 import { CategoryNameEnum } from "types.js";
 import httpError from "helpers/httpError.js";
+import { z } from "zod";
+import { zodResponseFormat } from "openai/helpers/zod.mjs";
 
 type Props = {
   description: string;
@@ -27,7 +29,7 @@ export default async function personalizeInstruction({
   try {
     const systemContent = `The user gives you a name, description, and instruction of a task. Your goal is to modify the instruction such that it closely aligns with the description, user's location, and current date. Be concise and to the point. Think step-by-step.`;
 
-    const userContentArray = [
+    const userContentArray: RunType[] = [
       {
         isMini: true,
         content: [
@@ -61,45 +63,39 @@ export default async function personalizeInstruction({
       });
     }
 
-    userContentArray.push(
-      {
-        isMini: true,
-        content: [
-          {
-            type: "text",
-            text: "While editing the instruction have you considered each detail from the description, such as the type of the product or seasonality, etc...? If not, make your response account for them",
-          },
-        ],
-        callback,
-      },
-      {
-        isMini: true,
-        content: [
-          {
-            type: "text",
-            text: "Does your instruction include any extra words other than the numbered sentences? If yes remove them.",
-          },
-        ],
-        callback,
-      },
-      {
-        isMini: true,
-        content: [
-          {
-            type: "text",
-            text: "Format your response as a string of numbered steps where each step is separated by \n. Example of your response: 1. Buy one of the following fruits: peaches, plums, or apples.\n2. Eat the fruit.",
-          },
-        ],
-        callback,
-      }
-    );
+    const PersonalizeResponseType = z.object({
+      instruction: z
+        .array(z.string())
+        .describe(
+          'array of steps for completing the activity where each step is a numbered sentence. Example: ["1. Buy one of the following fruits: peaches, plums, or apples.","2. Eat the fruit."])'
+        ),
+      productTypes: z
+        .array(z.string())
+        .describe(
+          'array of product types required for completing the activity. Example: ["dumbbell","yoga mat"])'
+        ),
+    });
 
-    const response: string = await askRepeatedly({
+    userContentArray.push({
+      isMini: true,
+      content: [
+        {
+          type: "text",
+          text: "While editing the instruction have you considered each detail from the description, such as the type of the product or seasonality, etc...? If not, make your response account for them",
+        },
+      ],
+      responseFormat: zodResponseFormat(
+        PersonalizeResponseType,
+        "PersonalizeResponseType"
+      ),
+      callback,
+    });
+
+    const response = await askRepeatedly({
       userId,
       systemContent,
       categoryName,
       runs: userContentArray as RunType[],
-      isResultString: true,
       functionName: "personalizeInstruction",
     });
 
