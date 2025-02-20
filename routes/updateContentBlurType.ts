@@ -85,17 +85,11 @@ route.post(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { blurType, contentCategory, contentId } = req.body;
 
-    if (!ObjectId.isValid(contentId)) {
-      res.status(400).json({ error: "Bad request" });
-      return;
-    }
-
-    if (!["face", "eyes", "original"].includes(blurType)) {
-      res.status(400).json({ error: "Bad request" });
-      return;
-    }
-
-    if (!["progress", "proof"].includes(contentCategory)) {
+    if (
+      !ObjectId.isValid(contentId) ||
+      !["face", "eyes", "original"].includes(blurType) ||
+      !["progress", "proof"].includes(contentCategory)
+    ) {
       res.status(400).json({ error: "Bad request" });
       return;
     }

@@ -20,6 +20,12 @@ route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { rewardId } = req.body;
+
+    if (!ObjectId.isValid(rewardId)) {
+      res.status(400).json({ error: "Bad request" });
+      return;
+    }
+
     try {
       const cooldownObject = await doWithRetries(async () =>
         db.collection("RewardCooldown").findOne(

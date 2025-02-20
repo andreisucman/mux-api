@@ -14,22 +14,34 @@ import {
 } from "types.js";
 import sortTasksInScheduleByDate from "helpers/sortTasksInScheduleByDate.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
-import { calculateDaysDifference, daysFrom } from "helpers/utils.js";
+import {
+  calculateDaysDifference,
+  checkDateValidity,
+  daysFrom,
+} from "helpers/utils.js";
 import httpError from "@/helpers/httpError.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
 import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
+import { validParts } from "@/data/other.js";
 
 const route = Router();
 
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { routineId, startDate, userName, type } = req.body;
+    const { routineId, startDate, part, userName } = req.body;
 
-    if (!routineId || !startDate || !type) {
+    const { isValidDate, isFutureDate } = checkDateValidity(startDate);
+
+    if (
+      !routineId ||
+      !isValidDate ||
+      !isFutureDate ||
+      !validParts.includes(part)
+    ) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
@@ -57,8 +69,8 @@ route.post(
           .find(
             {
               userId: new ObjectId(req.userId),
-              type,
               status: RoutineStatusEnum.ACTIVE,
+              part,
             },
             { projection: { _id: 1 } }
           )
@@ -292,7 +304,7 @@ route.post(
         userId: req.userId,
         incrementPayload: {
           "overview.usage.routinesStolen": 1,
-          [`overview.tasks.part.routinesStolen.${type}`]: 1,
+          [`overview.tasks.part.routinesStolen.${part}`]: 1,
         },
       });
 

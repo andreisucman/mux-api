@@ -5,7 +5,7 @@ import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "../helpers/doWithRetries.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
-import { daysFrom } from "helpers/utils.js";
+import { checkDateValidity, daysFrom } from "helpers/utils.js";
 import sortTasksInScheduleByDate from "helpers/sortTasksInScheduleByDate.js";
 import {
   AllTaskTypeWithIds,
@@ -21,6 +21,7 @@ import getUserInfo from "@/functions/getUserInfo.js";
 import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
+import { validParts } from "@/data/other.js";
 
 const route = Router();
 
@@ -30,19 +31,22 @@ route.post(
     const { taskKey, routineId, startDate, total, followingUserName, part } =
       req.body;
 
-    try {
-      if (
-        !taskKey ||
-        !routineId ||
-        !startDate ||
-        !total ||
-        !followingUserName ||
-        !part
-      ) {
-        res.status(400).json({ error: "Bad request" });
-        return;
-      }
+    const { isValidDate, isFutureDate } = checkDateValidity(startDate);
 
+    if (
+      !taskKey ||
+      !routineId ||
+      !total ||
+      !followingUserName ||
+      !isValidDate ||
+      !isFutureDate ||
+      !validParts.includes(part)
+    ) {
+      res.status(400).json({ error: "Bad request" });
+      return;
+    }
+
+    try {
       const userInfo = await getUserInfo({
         userId: req.userId,
         projection: { timeZone: 1, name: 1 },

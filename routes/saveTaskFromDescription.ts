@@ -20,7 +20,7 @@ import askRepeatedly from "functions/askRepeatedly.js";
 import isActivityHarmful from "@/functions/isActivityHarmful.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
 import sortTasksInScheduleByDate from "@/helpers/sortTasksInScheduleByDate.js";
-import { daysFrom, toSnakeCase } from "helpers/utils.js";
+import { checkDateValidity, daysFrom, toSnakeCase } from "helpers/utils.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import createTextEmbedding from "functions/createTextEmbedding.js";
 import findEmoji from "helpers/findEmoji.js";
@@ -34,6 +34,7 @@ import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import findEmbeddings from "@/functions/findEmbeddings.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
+import { validParts } from "@/data/other.js";
 
 const route = Router();
 
@@ -50,13 +51,17 @@ route.post(
       timeZone = "America/New_York",
     } = req.body;
 
+    const { isValidDate, isFutureDate } = checkDateValidity(startDate);
+
     if (
       !description ||
       !instruction ||
-      !startDate ||
       !frequency ||
       !concern ||
-      !part
+      !part ||
+      !validParts.includes(part) ||
+      !isValidDate ||
+      !isFutureDate
     ) {
       res.status(400).json({ error: "Bad request" });
       return;

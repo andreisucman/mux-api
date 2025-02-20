@@ -3,7 +3,6 @@ dotenv.config();
 
 import { ObjectId } from "mongodb";
 import { Router, Request, Response, NextFunction } from "express";
-import fs from "fs/promises";
 import crypto from "crypto";
 import { db } from "init.js";
 import sendEmail from "@/functions/sendEmail.js";

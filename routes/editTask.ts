@@ -14,7 +14,7 @@ import {
 import isActivityHarmful from "@/functions/isActivityHarmful.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
 import sortTasksInScheduleByDate from "@/helpers/sortTasksInScheduleByDate.js";
-import { daysFrom } from "helpers/utils.js";
+import { checkDateValidity, daysFrom } from "helpers/utils.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import checkIfTaskIsSimilar from "@/functions/checkIfTaskIsSimilar.js";
 import moderateContent from "@/functions/moderateContent.js";
@@ -37,7 +37,19 @@ route.post(
       applyToAll,
     } = req.body;
 
+    const { isValidDate, isFutureDate } = checkDateValidity(startDate);
+
     if (!updatedDescription && !updatedInstruction && !startDate && !timeZone) {
+      res.status(400).json({ error: "Bad request" });
+      return;
+    }
+
+    if (startDate && (!isValidDate || !isFutureDate)) {
+      res.status(400).json({ error: "Bad request" });
+      return;
+    }
+
+    if (!ObjectId.isValid(taskId)) {
       res.status(400).json({ error: "Bad request" });
       return;
     }

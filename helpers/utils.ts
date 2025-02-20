@@ -165,3 +165,14 @@ export async function urlToBase64(url: string): Promise<string> {
 export function setToUtcMidnight(date: Date) {
   return new Date(date.setUTCHours(0, 0, 0, 0));
 }
+
+export function checkDateValidity(date: Date | string): {
+  isValidDate: boolean;
+  isFutureDate: boolean;
+} {
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+  const isValidDate = !isNaN(dateObj.getTime());
+  const isFutureDate = isValidDate && dateObj > new Date();
+
+  return { isValidDate, isFutureDate };
+}

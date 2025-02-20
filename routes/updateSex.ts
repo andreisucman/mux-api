@@ -15,11 +15,7 @@ route.post(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { userId, sex } = req.body;
 
-    if (
-      !userId ||
-      !ObjectId.isValid(userId) ||
-      !["male", "female", null].includes(sex)
-    ) {
+    if (!ObjectId.isValid(userId) || !["male", "female", null].includes(sex)) {
       res.status(400).json({ error: "Bad request" });
       return;
     }

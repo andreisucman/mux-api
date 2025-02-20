@@ -14,6 +14,7 @@ import { daysFrom } from "helpers/utils.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
 import { db } from "init.js";
 import getUserInfo from "@/functions/getUserInfo.js";
+import { validParts } from "@/data/other.js";
 
 const route = Router();
 
@@ -27,7 +28,7 @@ route.post(
       timeZone = "America/New_York",
     } = req.body;
 
-    if (!description) {
+    if (!description || !validParts.includes(part)) {
       res.status(400).json({ error: "Bad request" });
       return;
     }

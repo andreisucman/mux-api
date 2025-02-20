@@ -4,7 +4,7 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import { CustomRequest, RoutineType, TaskStatusEnum, TaskType } from "types.js";
-import { daysFrom } from "helpers/utils.js";
+import { checkDateValidity, daysFrom } from "helpers/utils.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 import combineAllTasks from "@/helpers/combineAllTasks.js";
@@ -18,7 +18,14 @@ const route = Router();
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { taskId, startingDate, resetNewTask, returnTask } = req.body;
+    const { taskId, startDate, resetNewTask, returnTask } = req.body;
+
+    const { isValidDate, isFutureDate } = checkDateValidity(startDate);
+
+    if (!isValidDate || !isFutureDate || !ObjectId.isValid(taskId)) {
+      res.status(400).json({ error: "Bad request" });
+      return;
+    }
 
     try {
       const currentTask = (await doWithRetries(async () =>
@@ -53,10 +60,10 @@ route.post(
         return;
       }
 
-      const newStartsAt = new Date(startingDate);
+      const newStartsAt = new Date(startDate);
 
       const newExpiresAt = daysFrom({
-        date: new Date(startingDate),
+        date: new Date(startDate),
         days: 1,
       });
 

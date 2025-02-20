@@ -35,15 +35,20 @@ import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 
 const route = Router();
 
+const validExtensions = ["jpg", "webm", "mp4"];
+
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { taskId, url, blurType } = req.body;
 
     const urlExtension = url.includes(".") ? url.split(".").pop() : "";
-    const correctExtension = ["jpg", "webm", "mp4"].includes(urlExtension);
 
-    if (!taskId || !url || !correctExtension) {
+    if (
+      !url ||
+      !ObjectId.isValid(taskId) ||
+      !validExtensions.includes(urlExtension)
+    ) {
       res.status(400).json({
         error: "Bad request",
       });

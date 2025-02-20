@@ -24,6 +24,7 @@ import httpError from "@/helpers/httpError.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
 import checkAndRecordTwin from "@/functions/checkAndRecordTwin.js";
 import checkImageRequirements from "@/functions/checkImageRequirements.js";
+import { validParts, validPositions } from "@/data/other.js";
 
 const route = Router();
 
@@ -53,7 +54,13 @@ route.post(
 
     const finalUserId = req.userId || userId;
 
-    if (!image || !position || !finalUserId) {
+    if (
+      !image ||
+      !position ||
+      !ObjectId.isValid(finalUserId) ||
+      !validParts.includes(part) ||
+      !validPositions.includes(position)
+    ) {
       res.status(400).json({
         message: "Bad request",
       });

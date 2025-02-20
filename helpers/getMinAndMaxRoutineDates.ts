@@ -7,9 +7,9 @@ export default function getMinAndMaxRoutineDates(
     .flatMap((t) => t.ids)
     .map((idObjs) => new Date(idObjs.startsAt).getTime());
 
-  const minDate = Math.min(...allTaskTimes);
+  const minDate = Math.round(Math.min(...allTaskTimes));
 
-  const maxDate = Math.max(...allTaskTimes);
+  const maxDate = Math.round(Math.max(...allTaskTimes));
 
   return { minDate, maxDate };
 }

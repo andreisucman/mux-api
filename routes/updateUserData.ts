@@ -58,6 +58,11 @@ route.post(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { name, avatar, intro, bio, socials, dailyCalorieGoal } = req.body;
 
+    if (Object.keys(req.body).length === 0) {
+      res.status(400).json({ error: "Bad request" });
+      return;
+    }
+
     try {
       const userInfo = await getUserInfo({
         userId: req.userId,

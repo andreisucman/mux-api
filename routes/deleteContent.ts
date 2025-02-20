@@ -27,12 +27,7 @@ route.post(
 
     const allowedKeys = Object.keys(collectionMap);
 
-    if (!allowedKeys.includes(collectionKey)) {
-      res.status(400).json({ error: "Bad request" });
-      return;
-    }
-
-    if (!ObjectId.isValid(contentId)) {
+    if (!allowedKeys.includes(collectionKey) || !ObjectId.isValid(contentId)) {
       res.status(400).json({ error: "Bad request" });
       return;
     }

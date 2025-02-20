@@ -15,6 +15,11 @@ route.post(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { taskId, status } = req.body;
 
+    if (!ObjectId.isValid(taskId)) {
+      res.status(400).json({ error: "Bad request" });
+      return;
+    }
+
     try {
       const taskInfo = (await doWithRetries(async () =>
         db.collection("Task").findOne(

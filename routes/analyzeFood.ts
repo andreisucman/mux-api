@@ -33,7 +33,7 @@ route.post(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { url, calorieGoal } = req.body;
 
-    if (!url) {
+    if (!url || isNaN(Number(calorieGoal))) {
       res.status(400).json({ error: "Bad request" });
       return;
     }

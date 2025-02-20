@@ -19,8 +19,8 @@ type Props = {
   routineStatus?: string;
 };
 
-const allowedTaskStatuses = ["active", "canceled", "deleted"];
-const allowedRoutineStatuses = ["active", "inactive", "replaced"];
+const validTaskStatuses = ["active", "canceled", "deleted", "failed"];
+const validRoutineStatuses = ["active", "inactive", "replaced"];
 
 route.post(
   "/",
@@ -34,8 +34,8 @@ route.post(
     }: Props = req.body;
 
     if (
-      (newStatus && !allowedTaskStatuses.includes(newStatus)) ||
-      (routineStatus && !allowedRoutineStatuses.includes(routineStatus))
+      (newStatus && !validTaskStatuses.includes(newStatus)) ||
+      (routineStatus && !validRoutineStatuses.includes(routineStatus))
     ) {
       res.status(400).json({ error: "Bad request" });
       return;

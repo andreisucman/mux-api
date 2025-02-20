@@ -5,6 +5,7 @@ import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import { CustomRequest } from "@/types.js";
 import updateConcernsAnalytics from "../functions/updateConcernsAnalytics.js";
+import { validParts } from "@/data/other.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 
 type Props = {
@@ -15,14 +16,12 @@ type Props = {
 
 const route = Router();
 
-const allowedParts = ["face", "scalp", "mouth", "body"];
-
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { name, part, isDisabled }: Props = req.body;
 
-    if (!allowedParts.includes(part)) {
+    if (!validParts.includes(part)) {
       res.status(400).json({ error: "Bad request" });
       return;
     }

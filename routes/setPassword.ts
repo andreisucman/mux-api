@@ -14,13 +14,13 @@ const route = Router();
 route.post("/", async (req: Request, res: Response, next: NextFunction) => {
   const { accessToken, password } = req.body;
 
-  if (!password) {
-    res.status(200).json({ error: "Please provide a password" });
+  if (!accessToken) {
+    res.status(400).json({ message: "Bad request" });
     return;
   }
 
-  if (!accessToken) {
-    res.status(400).json({ message: "Bad request" });
+  if (!password) {
+    res.status(200).json({ error: "Please provide a password" });
     return;
   }
 

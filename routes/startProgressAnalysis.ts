@@ -32,7 +32,7 @@ route.post(
 
     const finalUserId = req.userId || userId;
 
-    if (!finalUserId) {
+    if (!ObjectId.isValid(finalUserId)) {
       res.status(400).json({
         message: `userId: ${finalUserId} is missing`,
       });

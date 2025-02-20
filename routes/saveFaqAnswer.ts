@@ -18,7 +18,7 @@ route.post(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { questionId, answer } = req.body;
 
-    if (!questionId || !ObjectId.isValid(questionId) || !answer) {
+    if (!ObjectId.isValid(questionId) || !answer) {
       res.status(400).json({ error: "Bad request" });
       return;
     }

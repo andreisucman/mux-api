@@ -6,7 +6,6 @@ import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import { CustomRequest } from "types.js";
 import { db } from "init.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -15,7 +14,7 @@ route.post(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { questionId, isSkipped } = req.body;
 
-    if (!questionId) {
+    if (!ObjectId.isValid(questionId)) {
       res.status(400).json({ error: "Bad request" });
       return;
     }

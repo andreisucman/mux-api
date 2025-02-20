@@ -20,6 +20,8 @@ import getUserInfo from "@/functions/getUserInfo.js";
 import checkCanRoutine from "@/helpers/checkCanRoutine.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import { db } from "init.js";
+import { validParts } from "@/data/other.js";
+import { checkDateValidity } from "@/helpers/utils.js";
 
 const route = Router();
 
@@ -29,7 +31,14 @@ route.post(
     const { concerns, part, routineStartDate, specialConsiderations } =
       req.body;
 
-    if (!concerns || !routineStartDate) {
+    const { isValidDate, isFutureDate } = checkDateValidity(routineStartDate);
+
+    if (
+      !concerns ||
+      !isValidDate ||
+      !isFutureDate ||
+      !validParts.includes(part)
+    ) {
       res.status(400).json({ error: "Bad request" });
       return;
     }

@@ -12,18 +12,17 @@ import {
 import { daysFrom } from "helpers/utils.js";
 import { db } from "init.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
-const allowedSubscriptionNames = ["improvement", "advisor"];
+const valiSubscriptions = ["improvement", "advisor"];
 
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { subscriptionName } = req.body;
 
-    if (!allowedSubscriptionNames.includes(subscriptionName)) {
+    if (!valiSubscriptions.includes(subscriptionName)) {
       res.status(400).json({
         message: `Bad request`,
       });
