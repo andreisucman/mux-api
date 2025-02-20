@@ -49,6 +49,8 @@ export default async function getLatestRoutinesAndTasks({
 
     const theEarliestRoutine = routines[0];
 
+    const todayUtcMidnight = setToUtcMidnight(daysFrom({ days: -1 }));
+    const tomorrowUtcMidnight = setToUtcMidnight(new Date());
     const startsAtFrom = setToUtcMidnight(theEarliestRoutine.startsAt);
     const startsAtTo = setToUtcMidnight(
       daysFrom({ date: startsAtFrom, days: 1 })
@@ -71,24 +73,44 @@ export default async function getLatestRoutinesAndTasks({
       expiresAt: 1,
     };
 
-    const tasks = await doWithRetries(async () =>
-      db
+    const tasks = await doWithRetries(async () => {
+      const sort = { startsAt: 1, part: -1 };
+
+      const primaryResult = await db
         .collection("Task")
         .aggregate([
           {
             $match: {
-              routineId: { $in: routines.map((r) => r._id) },
-              startsAt: { $gte: startsAtFrom, $lt: startsAtTo },
+              startsAt: { $gte: todayUtcMidnight, $lt: tomorrowUtcMidnight },
               status: { $in: ["active", "completed"] },
             },
           },
-          { $sort: { startsAt: 1, part: -1 } },
-          {
-            $project: project,
-          },
+          { $sort: sort },
+          { $project: project },
         ])
-        .toArray()
-    );
+        .toArray();
+
+      if (primaryResult.length > 0) {
+        return primaryResult;
+      }
+
+      return db
+        .collection("Task")
+        .aggregate([
+          {
+            $match: {
+              $and: [
+                { startsAt: { $gte: startsAtFrom, $lt: startsAtTo } },
+                { startsAt: { $gte: todayUtcMidnight } },
+              ],
+              status: { $in: ["active", "completed"] },
+            },
+          },
+          { $sort: sort },
+          { $project: project },
+        ])
+        .toArray();
+    });
 
     return { routines, tasks };
   } catch (err) {

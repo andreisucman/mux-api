@@ -155,7 +155,6 @@ export default async function createRoutine({
         allSolutions,
         categoryName,
         routineStartDate,
-        specialConsiderations,
       });
     } else if (draftTasksToProlong.length > 0) {
       await prolongPreviousRoutine({
@@ -166,6 +165,7 @@ export default async function createRoutine({
         allSolutions,
         routineStartDate,
         tasksToProlong: draftTasksToProlong,
+        canceledTaskKeys: latestMonthCanceledKeys,
         categoryName,
       });
     } else {

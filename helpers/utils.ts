@@ -1,7 +1,6 @@
 import mime from "mime-types";
 import { DateTime } from "luxon";
 import bcrypt from "bcrypt";
-import { AllTaskTypeWithIds } from "@/types.js";
 
 export function delayExecution(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -29,12 +28,6 @@ export function daysFrom({ date = new Date(), days }: DaysFromProps) {
 export const getMimeType = (filePath: string) => {
   return mime.lookup(filePath) || "application/octet-stream";
 };
-
-export function upperFirst(string: string) {
-  if (!string) return "";
-
-  return string[0].toUpperCase() + string.slice(1);
-}
 
 export function toSnakeCase(value: any): string {
   if (typeof value !== "string") {
@@ -172,7 +165,10 @@ export function checkDateValidity(date: Date | string): {
 } {
   const dateObj = typeof date === "string" ? new Date(date) : date;
   const isValidDate = !isNaN(dateObj.getTime());
-  const isFutureDate = isValidDate && dateObj > new Date();
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+
+  const isFutureDate = isValidDate && dateObj >= setToUtcMidnight(now);
 
   return { isValidDate, isFutureDate };
 }

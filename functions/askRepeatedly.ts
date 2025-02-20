@@ -12,7 +12,6 @@ import httpError from "@/helpers/httpError.js";
 
 type Props = {
   runs: RunType[];
-  meta?: string;
   seed?: number;
   userId: string;
   categoryName: CategoryNameEnum;

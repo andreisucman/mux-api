@@ -67,11 +67,6 @@ route.post(
         days: 1,
       });
 
-      const newRevisionDate =
-        currentTask.revisionDate > new Date()
-          ? currentTask.revisionDate
-          : daysFrom({ days: 7 });
-
       const newNextCanStartDate = daysFrom({
         date: newExpiresAt,
         days: currentTask.restDays,
@@ -85,7 +80,6 @@ route.post(
         proofId: null,
         completedAt: null,
         nextCanStartDate: newNextCanStartDate,
-        revisionDate: newRevisionDate,
         status: TaskStatusEnum.ACTIVE,
       };
 

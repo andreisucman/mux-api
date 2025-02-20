@@ -26,6 +26,7 @@ import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 type Props = {
   part: PartEnum;
   routineStartDate: string;
+  canceledTaskKeys: string[];
   partImages: ProgressImageType[];
   categoryName: CategoryNameEnum;
   partConcerns: UserConcernType[];
@@ -41,10 +42,22 @@ export default async function prolongPreviousRoutine({
   categoryName,
   allSolutions,
   userInfo,
+  canceledTaskKeys,
   routineStartDate,
   tasksToProlong,
 }: Props) {
   const { _id: userId, name: userName } = userInfo;
+
+  console.log("prolongPreviousRoutine inputs", {
+    part,
+    partImages,
+    partConcerns,
+    categoryName,
+    allSolutions,
+    userInfo,
+    routineStartDate,
+    tasksToProlong,
+  });
 
   try {
     if (!tasksToProlong || tasksToProlong.length === 0)
@@ -66,10 +79,7 @@ export default async function prolongPreviousRoutine({
     for (const draft of tasksToProlong) {
       const { _id, ...rest } = draft;
 
-      const revisionRequired = new Date() > new Date(rest.revisionDate);
-      if (revisionRequired) {
-        if (!concernsList.includes(rest.concern)) continue; // if the task is not required based on the latest concerns skip it
-      }
+      if (!concernsList.includes(rest.concern)) continue; // if the task is not required based on the latest concerns skip prolonging it
 
       const startsAt = daysFrom({
         date: rest.startsAt,
@@ -88,10 +98,8 @@ export default async function prolongPreviousRoutine({
         isSubmitted: false,
       };
 
-      const recipe = rest.recipe;
-
-      if (recipe) {
-        updatedTask.recipe = { ...recipe, canPersonalize: true };
+      if (rest.recipe) {
+        updatedTask.recipe = { ...rest.recipe, canPersonalize: true };
       }
 
       resetTasks.push(updatedTask);
@@ -163,6 +171,7 @@ export default async function prolongPreviousRoutine({
         categoryName,
         allSolutions,
         partConcerns,
+        canceledTaskKeys,
         currentTasks: resetTasks,
         currentSchedule: schedule,
       });

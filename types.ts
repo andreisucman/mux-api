@@ -1,7 +1,20 @@
 import { ObjectId } from "mongodb";
 import { Request } from "express";
 import { ModerationResultType } from "./functions/moderateContent.js";
-import { SuggestionType } from "./types/findTheBestVariant.js";
+
+export type SuggestionType = {
+  _id: string;
+  type: string;
+  suggestion: "product" | "place";
+  asin: string;
+  name: string;
+  image: string;
+  url: string;
+  rating: number;
+  description: string;
+  priceAndUnit: string;
+  vectorizedOn: Date;
+};
 
 export interface CustomRequest extends Request {
   userId?: string;
@@ -163,16 +176,30 @@ export type DemographicsType = {
   bodyType: BodyTypeEnum | null;
 };
 
-export enum SexEnum {
-  MALE = "male",
-  FEMALE = "female",
-  ALL = "all",
-}
-
 export enum BlurTypeEnum {
   FACE = "face",
   EYES = "eyes",
   ORIGINAL = "original",
+}
+
+export enum PartEnum {
+  FACE = "face",
+  BODY = "body",
+  MOUTH = "mouth",
+  SCALP = "scalp",
+}
+
+export enum PositionEnum {
+  FRONT = "front",
+  BACK = "back",
+  RIGHT = "right",
+  LEFT = "left",
+}
+
+export enum SexEnum {
+  MALE = "male",
+  FEMALE = "female",
+  ALL = "all",
 }
 
 export enum SkinColorEnum {
@@ -182,13 +209,6 @@ export enum SkinColorEnum {
   TYPE4 = "fitzpatrick-4",
   TYPE5 = "fitzpatrick-5",
   TYPE6 = "fitzpatrick-6",
-}
-
-export enum PositionEnum {
-  FRONT = "front",
-  BACK = "back",
-  RIGHT = "right",
-  LEFT = "left",
 }
 
 export enum EthnicityEnum {
@@ -222,13 +242,6 @@ export enum BodyTypeEnum {
   ECTOMORPH = "ectomorph",
   MESOMORPH = "mesomorph",
   ENDOMORPH = "endomorph",
-}
-
-export enum PartEnum {
-  FACE = "face",
-  BODY = "body",
-  MOUTH = "mouth",
-  SCALP = "scalp",
 }
 
 export enum TaskStatusEnum {
@@ -366,7 +379,6 @@ export type TaskType = {
   completedAt: Date | null;
   nextCanStartDate: Date | null;
   restDays: number;
-  revisionDate: Date | null;
   embedding: number[];
   stolenFrom?: string;
 };

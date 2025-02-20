@@ -210,7 +210,6 @@ route.post(
         part,
         concern,
         nearestConcerns: [concern],
-        revisionDate: daysFrom({ date: otherResponse.startsAt, days: 30 }),
       };
 
       const info = `${description}.${instruction}`;

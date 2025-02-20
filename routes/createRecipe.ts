@@ -16,7 +16,6 @@ import {
   UserInfoType,
 } from "types.js";
 import askRepeatedly from "functions/askRepeatedly.js";
-import findProducts from "functions/findProducts.js";
 import generateImage from "functions/generateImage.js";
 import checkSubscriptionStatus from "functions/checkSubscription.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
@@ -267,19 +266,14 @@ route.post(
         userId: req.userId,
       });
 
-      /* find products */
-      const suggestions = await findProducts({
-        userInfo,
-        criteria:
-          "The quality of the product is the most important, then goes price.",
-        taskData: {
-          key: taskInfo.key,
-          description: response.description,
-          productTypes: response.productTypes,
-        },
-        categoryName: CategoryNameEnum.TASKS,
-        analysisType,
-      });
+      const suggestions = await doWithRetries(async () =>
+        db
+          .collection("Suggestion")
+          .find({
+            suggestion: { $in: response.productTypes },
+          })
+          .toArray()
+      );
 
       await doWithRetries(async () =>
         db.collection("AnalysisStatus").updateOne(

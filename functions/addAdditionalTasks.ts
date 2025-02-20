@@ -16,8 +16,10 @@ import {
   CreateRoutineAllSolutionsType,
 } from "types/createRoutineTypes.js";
 import httpError from "@/helpers/httpError.js";
+import getAdditionalSolutionsAndFrequencies from "./getAdditionalSolutionsAndFrequencies.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import addDateAndIdsToAllTasks from "@/helpers/addDateAndIdsToAllTasks.js";
+import getAreCurrentTasksEnough from "./getAreCurrentTasksEnough.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
 
 type Props = {
@@ -29,6 +31,7 @@ type Props = {
   currentSchedule: { [key: string]: ScheduleTaskType[] };
   userInfo: CreateRoutineUserInfoType;
   routineStartDate: string;
+  canceledTaskKeys: string[];
   allSolutions: CreateRoutineAllSolutionsType[];
 };
 
@@ -40,16 +43,53 @@ export default async function addAdditionalTasks({
   currentTasks,
   currentSchedule,
   allSolutions,
+  canceledTaskKeys,
   routineStartDate,
   categoryName,
 }: Props) {
   const { _id: userId, specialConsiderations, demographics } = userInfo;
 
   try {
+    let taskFrequencyMap = currentTasks.reduce(
+      (a: { [key: string]: number }, c: TaskType) => {
+        if (a[c.key]) {
+          a[c.key] += 1;
+        } else {
+          a[c.key] = 1;
+        }
+        return a;
+      },
+      {}
+    );
+
+    // make the frequencies monthly
+    taskFrequencyMap = Object.fromEntries(
+      Object.entries(taskFrequencyMap).map(([key, value]) => [key, value * 4])
+    );
+
+    const areEnough = await getAreCurrentTasksEnough({
+      allSolutions,
+      canceledTaskKeys,
+      categoryName,
+      partConcerns,
+      taskFrequencyMap,
+      userId: String(userId),
+    });
+
+    if (areEnough) {
+      return {
+        mergedSchedule: currentSchedule,
+        additionalAllTasks: [],
+        additionalTasksToInsert: [],
+      };
+    }
+
     const solutionsAndFrequencies = await doWithRetries(async () =>
-      getSolutionsAndFrequencies({
+      getAdditionalSolutionsAndFrequencies({
         userId: String(userId),
         part,
+        taskFrequencyMap,
+        canceledTaskKeys,
         partImages,
         partConcerns,
         specialConsiderations,
@@ -66,6 +106,7 @@ export default async function addAdditionalTasks({
     });
 
     const existingAllTasksKeys = currentTasks.map((t) => t.key);
+
     let filteredSolutionsAndFrequencies = solutionsAndFrequencies.filter(
       (r) => !existingAllTasksKeys.includes(r.key)
     );
@@ -83,6 +124,7 @@ export default async function addAdditionalTasks({
         rawNewSchedule,
         currentSchedule,
         userId: String(userId),
+        specialConsiderations,
         categoryName,
       })
     );

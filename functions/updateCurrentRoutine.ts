@@ -30,7 +30,6 @@ type Props = {
   partConcerns: UserConcernType[];
   allSolutions: CreateRoutineAllSolutionsType[];
   userInfo: CreateRoutineUserInfoType;
-  specialConsiderations: string;
   routineStartDate: string;
   categoryName: CategoryNameEnum;
 };
@@ -44,9 +43,8 @@ export default async function updateCurrentRoutine({
   userInfo,
   categoryName,
   routineStartDate,
-  specialConsiderations,
 }: Props) {
-  const { _id: userId, name: userName } = userInfo;
+  const { _id: userId, name: userName, specialConsiderations } = userInfo;
 
   try {
     if (!routineId) throw httpError("No routineId");
@@ -98,6 +96,7 @@ export default async function updateCurrentRoutine({
         rawNewSchedule: rawSchedule,
         currentSchedule: currentRoutine.finalSchedule,
         userId: String(userId),
+        specialConsiderations,
         categoryName,
       })
     );

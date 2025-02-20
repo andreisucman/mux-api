@@ -44,18 +44,6 @@ async function checkAccess(
     }
   }
 
-  const validAuthorizationHeader =
-    authorizationHeader === process.env.API_SECRET;
-
-  if (
-    rejectUnauthorized &&
-    validAuthorizationHeader &&
-    req.path === "/findProductsForGeneralTasks"
-  ) {
-    next();
-    return;
-  }
-
   try {
     const session = await doWithRetries(async () =>
       db

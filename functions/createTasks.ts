@@ -146,7 +146,6 @@ export default async function createTasks({
           startsAt,
           completedAt: null,
           expiresAt,
-          revisionDate: daysFrom({ date: startsAt, days: 30 }),
         };
 
         if (userName) {
