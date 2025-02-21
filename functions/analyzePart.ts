@@ -220,8 +220,8 @@ export default async function analyzePart({
       db
         .collection("Progress")
         .find({
-          userId: new ObjectId(userId),
           part,
+          userId: new ObjectId(userId),
           moderationStatus: ModerationStatusEnum.ACTIVE,
         })
         .project({ scores: 1, images: 1, createdAt: 1 })
@@ -276,7 +276,7 @@ export default async function analyzePart({
     };
 
     const beforeAfterUpdate: BeforeAfterType = {
-      images,
+      images: updatedImages,
       part,
       scores,
       demographics,

@@ -11,7 +11,7 @@ export enum RoleEnum {
 }
 
 export type RunType = {
-  isMini: boolean;
+  isMini?: boolean;
   content: ChatCompletionContentPart[];
   model?: string;
   responseFormat?: any;

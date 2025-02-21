@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb";
 import doWithRetries from "helpers/doWithRetries.js";
-import { daysFrom } from "helpers/utils.js";
+import { daysFrom, DaysFromProps } from "helpers/utils.js";
 import {
   UserConcernType,
   TaskStatusEnum,
@@ -8,6 +8,7 @@ import {
   PartEnum,
   ModerationStatusEnum,
   CategoryNameEnum,
+  RoutineStatusEnum,
 } from "@/types.js";
 import {
   CreateRoutineUserInfoType,
@@ -21,6 +22,7 @@ import updateCurrentRoutine from "functions/updateCurrentRoutine.js";
 import httpError from "@/helpers/httpError.js";
 import getUsersImages from "./getUserImages.js";
 import { db } from "init.js";
+import getLatestCompletedTasks from "./getLatestCompletedTasks.js";
 
 type Props = {
   userId: string;
@@ -105,18 +107,44 @@ export default async function createRoutine({
       statuses: ["canceled"] as TaskStatusEnum[],
     });
 
-    const daysToProlong = 7;
-    const oneWeekAgo = daysFrom({ days: daysToProlong * -1 });
+    const latestRelevantTask = await doWithRetries(async () =>
+      db
+        .collection("Task")
+        .find(
+          {
+            userId: new ObjectId(userId),
+            part,
+          },
+          { projection: { startsAt: 1 } }
+        )
+        .sort({ startsAt: -1 })
+        .next()
+    );
+
+    const daysFromPayload: DaysFromProps = {
+      days: -8,
+    };
+
+    if (latestRelevantTask) daysFromPayload.date = latestRelevantTask.startsAt;
+
+    const oneWeekAgo = daysFrom(daysFromPayload);
 
     const existingActiveTask = await doWithRetries(async () =>
       db.collection("Task").findOne(
         {
           userId: new ObjectId(userId),
-          part,
           status: TaskStatusEnum.ACTIVE,
+          part,
         },
         { projection: { routineId: 1 } }
       )
+    );
+
+    const latestCompletedTasks = await doWithRetries(async () =>
+      getLatestCompletedTasks({
+        userId,
+        from: daysFrom({ date: new Date(routineStartDate), days: -14 }),
+      })
     );
 
     const draftTasksToProlong = (await doWithRetries(async () =>
@@ -132,7 +160,7 @@ export default async function createRoutine({
                 nextCanStartDate: { $exists: false },
               },
               {
-                nextCanStartDate: { $lte: new Date() },
+                nextCanStartDate: { $lte: new Date(routineStartDate) },
               },
             ],
             part,
@@ -167,6 +195,7 @@ export default async function createRoutine({
         tasksToProlong: draftTasksToProlong,
         canceledTaskKeys: latestMonthCanceledKeys,
         categoryName,
+        latestCompletedTasks,
       });
     } else {
       await makeANewRoutine({

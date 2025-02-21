@@ -12,6 +12,7 @@ import {
   CustomRequest,
   RoutineStatusEnum,
   RoutineType,
+  SuggestionType,
   TaskStatusEnum,
   TaskType,
 } from "types.js";
@@ -26,13 +27,11 @@ import createTextEmbedding from "functions/createTextEmbedding.js";
 import findEmoji from "helpers/findEmoji.js";
 import generateImage from "functions/generateImage.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
-import filterRelevantProductTypes from "@/functions/filterRelevantTypes.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import moderateContent from "@/functions/moderateContent.js";
 import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import getUserInfo from "@/functions/getUserInfo.js";
-import findEmbeddings from "@/functions/findEmbeddings.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 import { validParts } from "@/data/other.js";
 
@@ -149,7 +148,7 @@ route.post(
           ),
       });
 
-      const runs = [
+      const runs: RunType[] = [
         {
           isMini: false,
           content: [
@@ -212,6 +211,18 @@ route.post(
         nearestConcerns: [concern],
       };
 
+      const suggestions = (await doWithRetries(async () =>
+        db
+          .collection("Suggestion")
+          .find({
+            suggestion: { $in: generalTaskInfo.productTypes },
+            analysisResult: { $exist: true },
+          })
+          .toArray()
+      )) as unknown as SuggestionType[];
+
+      generalTaskInfo.suggestions = suggestions;
+
       const info = `${description}.${instruction}`;
       const embedding = await createTextEmbedding({
         userId: req.userId,
@@ -226,42 +237,6 @@ route.post(
         value: 25,
       });
 
-      const relevantSolutions = await findEmbeddings({
-        index: "solution_search",
-        projection: { productTypes: 1, icon: 1, suggestions: 1 },
-        embedding,
-        collection: "Solution",
-        relatednessScore: 0.85,
-      });
-
-      if (relevantSolutions.length > 0) {
-        const filteredProductTypes = await filterRelevantProductTypes({
-          userId: req.userId,
-          info,
-          categoryName: CategoryNameEnum.TASKS,
-          productTypes: relevantSolutions.map((s) => s.prouductTypes),
-        });
-
-        generalTaskInfo.productTypes = filteredProductTypes;
-
-        if (filteredProductTypes.length > 0) {
-          const relevantSuggestionObjects = relevantSolutions.filter(
-            (solution) =>
-              solution.productTypes.some((productType: string) =>
-                filteredProductTypes.includes(productType)
-              )
-          );
-
-          const relevantSuggestions = relevantSuggestionObjects
-            .flatMap((obj) => obj.suggestions)
-            .filter((suggestionObject) =>
-              filteredProductTypes.includes(suggestionObject?.suggestion)
-            );
-
-          generalTaskInfo.suggestions = relevantSuggestions;
-        }
-      }
-
       const moderatedFrequency = Math.min(frequency, 70);
 
       const distanceInDays = Math.round(Math.max(7 / moderatedFrequency, 1));
@@ -272,8 +247,7 @@ route.post(
       const finalStartDate =
         new Date(startDate) > latestDateOfWeeek ? latestDateOfWeeek : startDate;
 
-      const icon =
-        relevantSolutions?.[0]?.icon || (await findEmoji(word)) || "🚩";
+      const icon = (await findEmoji(word)) || "🚩";
 
       generalTaskInfo.icon = icon;
 

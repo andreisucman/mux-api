@@ -20,7 +20,7 @@ type Props = {
 };
 
 const validTaskStatuses = ["active", "canceled", "deleted", "failed"];
-const validRoutineStatuses = ["active", "inactive", "replaced"];
+const validRoutineStatuses = ["active", "inactive"];
 
 route.post(
   "/",

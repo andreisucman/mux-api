@@ -61,17 +61,16 @@ route.get(
         lastDate: 1,
       };
 
-      const finalSort = sort
-        ? { ...sort, status: -1 }
-        : { createdAt: -1, status: -1 };
-
       const routines = await doWithRetries(async () =>
         db
           .collection("Routine")
-          .find(filter, { projection })
-          .sort(finalSort as Sort)
-          .skip(Number(skip) || 0)
-          .limit(21)
+          .aggregate([
+            { $match: filter },
+            { $project: projection },
+            { $sort: { status: 1, ...(sort || { createdAt: -1 }) } },
+            { $skip: Number(skip) || 0 },
+            { $limit: 21 },
+          ])
           .toArray()
       );
 

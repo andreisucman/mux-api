@@ -33,6 +33,7 @@ type Props = {
   tasksToProlong: TaskType[];
   allSolutions: CreateRoutineAllSolutionsType[];
   userInfo: CreateRoutineUserInfoType;
+  latestCompletedTasks: { [key: string]: any };
 };
 
 export default async function prolongPreviousRoutine({
@@ -45,19 +46,9 @@ export default async function prolongPreviousRoutine({
   canceledTaskKeys,
   routineStartDate,
   tasksToProlong,
+  latestCompletedTasks,
 }: Props) {
   const { _id: userId, name: userName } = userInfo;
-
-  console.log("prolongPreviousRoutine inputs", {
-    part,
-    partImages,
-    partConcerns,
-    categoryName,
-    allSolutions,
-    userInfo,
-    routineStartDate,
-    tasksToProlong,
-  });
 
   try {
     if (!tasksToProlong || tasksToProlong.length === 0)
@@ -68,7 +59,7 @@ export default async function prolongPreviousRoutine({
 
     const daysDifference = calculateDaysDifference(
       firstTask.startsAt,
-      new Date()
+      new Date(routineStartDate)
     );
 
     const resetTasks: TaskType[] = [];
@@ -83,7 +74,7 @@ export default async function prolongPreviousRoutine({
 
       const startsAt = daysFrom({
         date: rest.startsAt,
-        days: daysDifference - 1,
+        days: daysDifference,
       });
 
       const expiresAt = daysFrom({ date: startsAt, days: 1 });
@@ -162,7 +153,7 @@ export default async function prolongPreviousRoutine({
 
     await deactivatePreviousRoutineAndTasks(String(previousRoutineId));
 
-    const { additionalAllTasks, additionalTasksToInsert, mergedSchedule } =
+    const { additionalAllTasks, tasksToInsert, mergedSchedule } =
       await addAdditionalTasks({
         part,
         userInfo,
@@ -174,6 +165,7 @@ export default async function prolongPreviousRoutine({
         canceledTaskKeys,
         currentTasks: resetTasks,
         currentSchedule: schedule,
+        latestCompletedTasks,
       });
 
     const finalRoutineAllTasks = combineAllTasks({
@@ -181,7 +173,6 @@ export default async function prolongPreviousRoutine({
       newAllTasks: additionalAllTasks,
     });
 
-    const finalTasksToInsert = [...resetTasks, ...additionalTasksToInsert];
     const finalSchedule = mergedSchedule;
 
     const { minDate, maxDate } = getMinAndMaxRoutineDates(finalRoutineAllTasks);
@@ -202,7 +193,7 @@ export default async function prolongPreviousRoutine({
     );
 
     /* update final tasks */
-    const finalTasks = finalTasksToInsert.map((rt, i) => ({
+    const finalTasks = tasksToInsert.map((rt, i) => ({
       ...rt,
       routineId: newRoutineObject.insertedId,
     }));

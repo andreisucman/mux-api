@@ -91,6 +91,7 @@ import changeCountry from "routes/changeCountry.js";
 import cloneTask from "routes/cloneTask.js";
 import updateSubmissionStatus from "routes/updateSubmissionStatus.js";
 import signOut from "routes/signOut.js";
+import activateRoutine from "routes/activateRoutine.js";
 
 import { client } from "init.js";
 
@@ -174,6 +175,7 @@ app.use("/getAllProofRecords", getAllProofRecords);
 
 // protected routes
 app.use((req, res, next) => checkAccess(req, res, next, true));
+app.use("/activateRoutine", activateRoutine);
 app.use("/deleteContent", deleteContent);
 app.use("/cloneTask", cloneTask);
 app.use("/updateSubmissionStatus", updateSubmissionStatus);

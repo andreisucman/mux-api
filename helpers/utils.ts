@@ -16,7 +16,7 @@ export function getExponentialBackoffDelay(
   return Math.min(rawDelay + jitter, maxDelay);
 }
 
-type DaysFromProps = {
+export type DaysFromProps = {
   date?: Date;
   days: number;
 };
@@ -62,7 +62,7 @@ export const getHashedPassword = async (
 };
 
 export function minutesFromNow(minutes: number) {
-  return new Date(new Date().getTime() + minutes * 60000);
+  return new Date(Math.round(new Date().getTime() + minutes * 60000));
 }
 
 export function calculateDaysDifference(dateFrom: Date, dateTo: Date) {

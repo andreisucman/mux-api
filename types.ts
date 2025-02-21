@@ -256,7 +256,6 @@ export enum TaskStatusEnum {
 export enum RoutineStatusEnum {
   ACTIVE = "active",
   INACTIVE = "inactive",
-  REPLACED = "replaced",
   DELETED = "deleted",
 }
 

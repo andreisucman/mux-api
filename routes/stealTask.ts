@@ -21,14 +21,13 @@ import getUserInfo from "@/functions/getUserInfo.js";
 import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
-import { validParts } from "@/data/other.js";
 
 const route = Router();
 
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { taskKey, routineId, startDate, total, followingUserName, part } =
+    const { taskKey, routineId, startDate, total, followingUserName } =
       req.body;
 
     const { isValidDate, isFutureDate } = checkDateValidity(startDate);
@@ -39,8 +38,7 @@ route.post(
       !total ||
       !followingUserName ||
       !isValidDate ||
-      !isFutureDate ||
-      !validParts.includes(part)
+      !isFutureDate
     ) {
       res.status(400).json({ error: "Bad request" });
       return;
@@ -75,7 +73,7 @@ route.post(
           .collection("Routine")
           .find({
             userId: new ObjectId(req.userId),
-            part,
+            part: taskToAdd.part,
             status: RoutineStatusEnum.ACTIVE,
           })
           .next()
@@ -84,7 +82,6 @@ route.post(
       /* reset personalized fields */
       taskToAdd = {
         ...taskToAdd,
-        _id: new ObjectId(),
         proofEnabled: true,
         isSubmitted: false,
         userName: userInfo.name,
@@ -116,6 +113,7 @@ route.post(
 
         draftTasks.push({
           ...(taskToAdd as TaskType),
+          _id: new ObjectId(),
           startsAt: starts,
           expiresAt: expires,
           completedAt: null,

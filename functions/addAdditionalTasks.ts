@@ -9,7 +9,6 @@ import {
   CategoryNameEnum,
   ProgressImageType,
 } from "@/types.js";
-import getSolutionsAndFrequencies from "./getSolutionsAndFrequencies.js";
 import addAnalysisStatusError from "functions/addAnalysisStatusError.js";
 import {
   CreateRoutineUserInfoType,
@@ -33,6 +32,7 @@ type Props = {
   routineStartDate: string;
   canceledTaskKeys: string[];
   allSolutions: CreateRoutineAllSolutionsType[];
+  latestCompletedTasks: { [key: string]: any };
 };
 
 export default async function addAdditionalTasks({
@@ -46,6 +46,7 @@ export default async function addAdditionalTasks({
   canceledTaskKeys,
   routineStartDate,
   categoryName,
+  latestCompletedTasks,
 }: Props) {
   const { _id: userId, specialConsiderations, demographics } = userInfo;
 
@@ -84,16 +85,21 @@ export default async function addAdditionalTasks({
       };
     }
 
+    const currentSolutions = Object.keys(taskFrequencyMap);
+
+    const solutionsWithoutCanceled = allSolutions.filter(
+      (s) => !canceledTaskKeys.includes(s.key)
+    );
+
     const solutionsAndFrequencies = await doWithRetries(async () =>
       getAdditionalSolutionsAndFrequencies({
         userId: String(userId),
         part,
-        taskFrequencyMap,
-        canceledTaskKeys,
+        currentSolutions,
         partImages,
         partConcerns,
         specialConsiderations,
-        allSolutions,
+        allSolutions: solutionsWithoutCanceled,
         demographics,
         categoryName,
       })
@@ -107,6 +113,7 @@ export default async function addAdditionalTasks({
 
     const existingAllTasksKeys = currentTasks.map((t) => t.key);
 
+    // to ensure no existing tasks in the new solutions
     let filteredSolutionsAndFrequencies = solutionsAndFrequencies.filter(
       (r) => !existingAllTasksKeys.includes(r.key)
     );
@@ -115,7 +122,7 @@ export default async function addAdditionalTasks({
       getRawSchedule({
         solutionsAndFrequencies: filteredSolutionsAndFrequencies,
         routineStartDate,
-        days: 6,
+        days: 7,
       })
     );
 
@@ -126,6 +133,7 @@ export default async function addAdditionalTasks({
         userId: String(userId),
         specialConsiderations,
         categoryName,
+        latestCompletedTasks,
       })
     );
 
@@ -153,7 +161,7 @@ export default async function addAdditionalTasks({
     return {
       mergedSchedule,
       additionalAllTasks: allTasksWithDates,
-      additionalTasksToInsert: tasksToInsert,
+      tasksToInsert,
     };
   } catch (error) {
     await addAnalysisStatusError({

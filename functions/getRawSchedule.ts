@@ -21,7 +21,7 @@ export default async function getRawSchedule({
 }: Props) {
   try {
     const dateOne = new Date(routineStartDate);
-    const dateTwo = daysFrom({ date: dateOne, days: days > 0 ? days : 6 });
+    const dateTwo = daysFrom({ date: dateOne, days: days > 0 ? days : 7 });
     const lastMonth = daysFrom({ days: -30 });
 
     const pastTasks = await doWithRetries(async () =>

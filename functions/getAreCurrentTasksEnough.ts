@@ -36,24 +36,24 @@ export default async function getAreCurrentTasksEnough({
 
   try {
     const concernsNames = partConcerns.map((c) => c.name);
-    const filteredSolutionsList = allSolutions
+    const filteredSolutionsKeys = allSolutions
       .filter((s) => !canceledTaskKeys.includes(s.key))
-      .map((obj) => obj.key)
-      .join(", ");
+      .map((obj) => obj.key);
 
-    const isEnoughResponseType = z.object({
+    const IsEnoughResponseType = z.object({
       areEnough: z
         .boolean()
         .describe(
-          "true if the current tasks and their frequencies are enough to effectively address the concerns, or if there is no relevant tasks in the list. False otherwise."
+          "True if there is no relevant solutions in the list, or if the current routine is enough to effectively address the concerns. False otherwise."
         ),
     });
 
-    const checkIfEnoughSystem = `You are a dermatologist, dentist and fitness coach. The user tells you their concerns and the solutions with their monthly frequencies that they are going to use to address the concerns. Your goal is to tell if the number of solutions and their frequency is optimal, or if more solutions should be added from this list ${filteredSolutionsList}. Be concise and to the point.`;
+    const filteredSolutionsList = filteredSolutionsKeys.join(", ");
+
+    const checkIfEnoughSystem = `You are a dermatologist, dentist and fitness coach. The user tells you their concerns and gives their improvement routine with monthly frequencies for addressing the concerns. Your goal is to check if the number of solutions in their routine and their frequency is optimal for addressing their concerns, or if more solutions should be added from this list ${filteredSolutionsList}. Consider the solutions from the list ONLY.`;
 
     const checkIfEnoughRuns: RunType[] = [
       {
-        isMini: false,
         model: "o3-mini",
         content: [
           {
@@ -62,18 +62,14 @@ export default async function getAreCurrentTasksEnough({
           },
           {
             type: "text",
-            text: `My solutions and their monthly frequencies are: ${JSON.stringify(
+            text: `My current routine with the monthly frequencies for each solution: ${JSON.stringify(
               taskFrequencyMap
             )}`,
           },
-          {
-            type: "text",
-            text: `Are my solutions and frequencies enough for addressing my concerns effectively?`,
-          },
         ],
         responseFormat: zodResponseFormat(
-          isEnoughResponseType,
-          "isEnoughResponseType"
+          IsEnoughResponseType,
+          "IsEnoughResponseType"
         ),
         callback,
       },

@@ -3,7 +3,13 @@ dotenv.config();
 
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
-import { CustomRequest, RoutineType, TaskStatusEnum, TaskType } from "types.js";
+import {
+  CustomRequest,
+  RoutineStatusEnum,
+  RoutineType,
+  TaskStatusEnum,
+  TaskType,
+} from "types.js";
 import { checkDateValidity, daysFrom } from "helpers/utils.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
@@ -55,7 +61,7 @@ route.post(
       const { allTasks, finalSchedule, lastDate, status } =
         currentRoutine || {};
 
-      if (!["active", "replaced"].includes(status)) {
+      if (status !== RoutineStatusEnum.ACTIVE) {
         res.status(200).json({ error: `Can't edit an inactive routine` });
         return;
       }
@@ -155,7 +161,7 @@ route.post(
 
       const routinesFilter = {
         part: currentTask.part,
-        status: { $in: ["active", "replaced"] },
+        status: RoutineStatusEnum.ACTIVE,
       };
 
       const { routines } = await getLatestRoutinesAndTasks({

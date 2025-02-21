@@ -25,23 +25,17 @@ import updateAnalytics from "@/functions/updateAnalytics.js";
 import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
-import { validParts } from "@/data/other.js";
 
 const route = Router();
 
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { routineId, startDate, part, userName } = req.body;
+    const { routineId, startDate, userName } = req.body;
 
     const { isValidDate, isFutureDate } = checkDateValidity(startDate);
 
-    if (
-      !routineId ||
-      !isValidDate ||
-      !isFutureDate ||
-      !validParts.includes(part)
-    ) {
+    if (!routineId || !isValidDate || !isFutureDate) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
@@ -62,6 +56,9 @@ route.post(
           .findOne({ _id: new ObjectId(routineId) }, { projection: { _id: 0 } })
       );
 
+      if (!replacementRoutine)
+        throw httpError(`Routine ${routineId} not found`);
+
       /* get the user's current routine */
       const currentRoutine = await doWithRetries(async () =>
         db
@@ -70,7 +67,7 @@ route.post(
             {
               userId: new ObjectId(req.userId),
               status: RoutineStatusEnum.ACTIVE,
-              part,
+              part: replacementRoutine.part,
             },
             { projection: { _id: 1 } }
           )
@@ -246,7 +243,7 @@ route.post(
             { _id: new ObjectId(currentRoutine._id) },
             {
               $set: {
-                status: RoutineStatusEnum.REPLACED,
+                status: RoutineStatusEnum.INACTIVE,
               },
             }
           )
@@ -304,7 +301,7 @@ route.post(
         userId: req.userId,
         incrementPayload: {
           "overview.usage.routinesStolen": 1,
-          [`overview.tasks.part.routinesStolen.${part}`]: 1,
+          [`overview.tasks.part.routinesStolen.${replacementRoutine.part}`]: 1,
         },
       });
 

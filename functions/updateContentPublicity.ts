@@ -26,21 +26,26 @@ export default async function updateContentPublicity({
     const { club, name, avatar } = userInfo;
     const { privacy: currentPrivacy } = club;
 
+    console.log("currentPrivacy", currentPrivacy);
+    console.log("newPrivacy", newPrivacy);
+
     const difference = calculateDifferenceInPrivacies(
       currentPrivacy,
       newPrivacy
     );
+
+    console.log("difference", difference);
 
     const progressDifferences = difference.filter(
       (pr) => pr.category === "progress"
     );
 
     const toUpdateProgressAndBA = progressDifferences.map(
-      (obj: { name: string; type: string; value: boolean }) => ({
+      (obj: { name: string; value: boolean }) => ({
         updateOne: {
           filter: {
             userId: new ObjectId(userId),
-            type: obj.name,
+            part: obj.name,
           },
           update: {
             $set: {
@@ -56,11 +61,11 @@ export default async function updateContentPublicity({
     const proofDifferences = difference.filter((pr) => pr.category === "proof");
 
     const toUpdateProof = proofDifferences.map(
-      (obj: { name: string; type: string; value: boolean }) => ({
+      (obj: { name: string; value: boolean }) => ({
         updateOne: {
           filter: {
             userId: new ObjectId(userId),
-            type: obj.name,
+            part: obj.name,
           },
           update: {
             $set: {
@@ -76,7 +81,7 @@ export default async function updateContentPublicity({
     const diaryDifferences = difference.filter((pr) => pr.category === "diary");
 
     const toUpdateDiary = diaryDifferences.map(
-      (obj: { name: string; type: string; value: boolean }) => ({
+      (obj: { name: string; value: boolean }) => ({
         updateOne: {
           filter: {
             userId: new ObjectId(userId),
@@ -97,7 +102,7 @@ export default async function updateContentPublicity({
     );
 
     const toUpdateAnswers = answerDifference.map(
-      (obj: { name: string; type: string; value: boolean }) => ({
+      (obj: { name: string; value: boolean }) => ({
         updateOne: {
           filter: {
             userId: new ObjectId(userId),

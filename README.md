@@ -30,13 +30,14 @@ chmod +x ./script.sh
 
 docker system prune -a --volumes -f
 
-
 db["Task"].updateMany(
-  {},
-  [{ $set: { startsAt: { $dateSubtract: { startDate: { $toDate: "$startsAt" }, unit: "day", amount: 2 } } } }]
+{},
+[{ $set: { status: "expired", startsAt: { $dateSubtract: { startDate: { $toDate: "$startsAt" }, unit: "day", amount: 7 } } } }]
 )
 
 db["Task"].updateMany(
-  {},
-  [{ $set: { expiresAt: { $dateSubtract: { startDate: { $toDate: "$expiresAt" }, unit: "day", amount: 2 } } } }]
+{},
+[{ $set: {status: "expired", expiresAt: { $dateSubtract: { startDate: { $toDate: "$expiresAt" }, unit: "day", amount: 7 } } } }]
 )
+
+db["Task"].deleteMany({routineId:ObjectId("67b895bee243b84ed3b0178d")})

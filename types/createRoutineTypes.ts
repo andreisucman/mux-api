@@ -4,8 +4,8 @@ import {
   RecipeType,
   DemographicsType,
   NextActionType,
+  SuggestionType,
 } from "@/types.js";
-import { SuggestionType } from "./findTheBestVariant.js";
 
 export type CreateRoutineUserInfoType = {
   _id: ObjectId;

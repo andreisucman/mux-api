@@ -25,8 +25,7 @@ import { zodResponseFormat } from "openai/helpers/zod.mjs";
 type Props = {
   part: PartEnum;
   userId: string;
-  taskFrequencyMap: { [key: string]: number };
-  canceledTaskKeys: string[];
+  currentSolutions: string[];
   specialConsiderations: string;
   allSolutions: CreateRoutineAllSolutionsType[];
   partConcerns: UserConcernType[];
@@ -42,19 +41,11 @@ export default async function getAdditionalSolutionsAndFrequencies({
   categoryName,
   partImages,
   demographics,
-  taskFrequencyMap,
-  canceledTaskKeys,
+  currentSolutions,
   userId,
   part,
 }: Props) {
   const { sex } = demographics;
-
-  const callback = () =>
-    incrementProgress({
-      operationKey: "routine",
-      value: 1,
-      userId: String(userId),
-    });
 
   const concernsNames = partConcerns.map((c) => c.name);
 
@@ -64,12 +55,12 @@ export default async function getAdditionalSolutionsAndFrequencies({
     concernsNames.includes("ungroomed_facial_hair");
 
   try {
-    const allConcerns = partConcerns.map((co) => co.name);
-    const filteredSolutionsList = allSolutions
-      .filter((s) => !canceledTaskKeys.includes(s.key))
-      .map((obj) => obj.key)
-      .join(", ");
-
+    const callback = () =>
+      incrementProgress({
+        operationKey: "routine",
+        value: 1,
+        userId: String(userId),
+      });
 
     const relevantImage = partImages.find((imo) => imo.position === "front");
 
@@ -91,33 +82,33 @@ export default async function getAdditionalSolutionsAndFrequencies({
       callback,
     };
 
-    const findSolutionsInstruction = `You are a dermatologist, dentist and fitness coach. The user gives you a list of their concerns. Your goal is to select the most effective combination of solutions for each of their concerns from this list of solutions: ${allSolutionsList}. DON'T MODIFY THE NAMES OF THE CONCERNS AND SOLUTIONS. Be concise and to the point.`;
+    const allSolutionsList = allSolutions.map((obj) => obj.key).join(", ");
 
-    const concernsWithExplanations = partConcerns.map(
-      (concern, index) =>
-        `${index + 1}: ${concern.name}. Details: ${concern.explanation} ##`
-    );
+    const findSolutionsInstruction = `You are a dermatologist, dentist and fitness coach. The user gives you a list of their concerns and the current solutions they use to address them. Your goal is to find additional solutions from the list of solutions below that could be added to the user's current solutions to better address their concerns. Respond with the additional solutions only. DON'T MODIFY THE NAMES OF THE CONCERNS AND SOLUTIONS. Be concise and to the point. ### List of solutions: ${allSolutionsList}.`;
+
+    const allConcerns = partConcerns.map((co) => co.name);
 
     const findSolutionsContentArray: RunType[] = [
       {
-        isMini: false,
         model: "o3-mini",
         content: [
           {
             type: "text",
-            text: `My concerns are: ${concernsWithExplanations.join(", ")}`,
+            text: `My concerns: ${allConcerns.join(", ")}`,
+          },
+          {
+            type: "text",
+            text: `My current solutions: ${currentSolutions.join(", ")}`,
           },
         ],
-
         callback,
       },
       {
-        isMini: false,
         model: "o3-mini",
         content: [
           {
             type: "text",
-            text: `Are there any solutions that require resting time such that the other solutions can't be used within the same week? If yes, remove the least effective conflicting solutions.`,
+            text: "Among the solutions you have suggested and my current solutions, are there any that shouldn't be used together within the same week? If yes, remove the least effective conflicting solutions.",
           },
         ],
         callback,
@@ -126,7 +117,6 @@ export default async function getAdditionalSolutionsAndFrequencies({
 
     if (specialConsiderations) {
       findSolutionsContentArray.push({
-        isMini: false,
         model: "o3-mini",
         content: [
           {
@@ -134,7 +124,6 @@ export default async function getAdditionalSolutionsAndFrequencies({
             text: `The user has this special consideration: ${specialConsiderations}. Is it contraindicated for any of the solutions? If yes, remove those solutions.`,
           },
         ],
-
         callback,
       });
     }
@@ -150,10 +139,10 @@ export default async function getAdditionalSolutionsAndFrequencies({
             z
               .string()
               .describe(
-                `name of a solution for concern ${c} from the list of solution`
+                `name of an additional solution for concern ${c} from the list of solution`
               )
           )
-          .describe(`list of solutions for concern ${c}`);
+          .describe(`additional solutions for concern ${c}`);
         return a;
       },
       {}
@@ -168,7 +157,7 @@ export default async function getAdditionalSolutionsAndFrequencies({
       content: [
         {
           type: "text",
-          text: `Are all solution names written exactly as in the list? Ensure that all are written exactly as in the list.`,
+          text: "Are all solution names written exactly as in the list? Ensure that all are written exactly as in the list.",
         },
       ],
       responseFormat: zodResponseFormat(

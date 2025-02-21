@@ -70,7 +70,7 @@ export default async function makeANewRoutine({
       getRawSchedule({
         solutionsAndFrequencies,
         routineStartDate,
-        days: 6,
+        days: 7,
       })
     );
 

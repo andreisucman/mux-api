@@ -25,7 +25,7 @@ export default async function generateImage({
     const messages = [
       {
         role: "system" as RoleEnum,
-        content: `Generate a 2 sentence image prompt from description describing a person engaging in the activity with a neutral background. Your response is the prompt only.`,
+        content: `Generate a 2 sentence image prompt for the description with a neutral background. Your response is the prompt only.`,
       },
       {
         role: "user" as RoleEnum,
