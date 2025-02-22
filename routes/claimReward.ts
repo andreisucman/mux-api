@@ -133,7 +133,7 @@ route.post(
       const rewards = await findLatestRewards({ userId: req.userId });
 
       res.status(200).json({
-        message: rewards,
+        message: { rewards, rewardValue },
       });
     } catch (err) {
       next(err);

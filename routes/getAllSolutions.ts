@@ -46,7 +46,7 @@ route.get("/", async (req: CustomRequest, res: Response) => {
     };
 
     pipeline.push(
-      { $sort: { createdAt: -1 } },
+      { $sort: { _id: -1 } },
       {
         $project: project,
       },

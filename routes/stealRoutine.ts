@@ -75,6 +75,28 @@ route.post(
           .next()
       );
 
+      if (currentRoutine) {
+        await doWithRetries(async () =>
+          db.collection("Routine").updateOne(
+            { _id: new ObjectId(currentRoutine._id) },
+            {
+              $set: {
+                status: RoutineStatusEnum.INACTIVE,
+              },
+            }
+          )
+        );
+
+        const status = await doWithRetries(async () =>
+          db
+            .collection("Task")
+            .updateMany(
+              { routineId: new ObjectId(currentRoutine._id) },
+              { $set: { status: TaskStatusEnum.INACTIVE } }
+            )
+        );
+      }
+
       let replacementTasks = (await doWithRetries(async () =>
         db
           .collection("Task")
@@ -118,6 +140,7 @@ route.post(
       /* get the updated start and expiry dates for each task */
       for (let i = 0; i < taskKeys.length; i++) {
         const frequency = taskFrequencyMap[taskKeys[i]];
+
         const relevantTaskInfo = replacementTasks.find(
           (task: TaskType) => task.key === taskKeys[i]
         );
@@ -127,26 +150,19 @@ route.post(
         );
 
         for (let j = 0; j < frequency; j++) {
-          const currentHostDate =
-            j === 0 ? relevantTasks[j].startsAt : relevantTasks[j - 1].startsAt;
-          let nextHostDate = relevantTasks[j]?.startsAt;
-
-          const hostDayDifference = calculateDaysDifference(
-            currentHostDate,
-            nextHostDate
+          const initialDate = relevantTasks[0].startsAt;
+          const currentDate = relevantTasks[j].startsAt;
+          const daysDifference = calculateDaysDifference(
+            initialDate,
+            currentDate
           );
-
-          const newDate = setToMidnight({
-            date: new Date(startDate),
-            timeZone,
-          });
 
           const starts = daysFrom({
             date: setToMidnight({
-              date: newDate,
+              date: new Date(startDate),
               timeZone,
             }),
-            days: hostDayDifference,
+            days: daysDifference,
           });
 
           const expires = daysFrom({
@@ -236,28 +252,6 @@ route.post(
           instruction,
         };
       });
-
-      if (currentRoutine) {
-        await doWithRetries(async () =>
-          db.collection("Routine").updateOne(
-            { _id: new ObjectId(currentRoutine._id) },
-            {
-              $set: {
-                status: RoutineStatusEnum.INACTIVE,
-              },
-            }
-          )
-        );
-
-        await doWithRetries(async () =>
-          db
-            .collection("Task")
-            .updateMany(
-              { routineId: new ObjectId(currentRoutine._id) },
-              { $set: { status: TaskStatusEnum.CANCELED } }
-            )
-        );
-      }
 
       const { minDate, maxDate } = getMinAndMaxRoutineDates(allTasks);
 

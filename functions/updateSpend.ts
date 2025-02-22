@@ -52,6 +52,8 @@ export default async function updateSpend({
         )
       );
 
+      if (isNaN(totalCost)) throw new Error("totalCost is NaN");
+
       await doWithRetries(async () =>
         db.collection("User").updateOne(
           { _id: new ObjectId(userId) },

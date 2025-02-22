@@ -78,7 +78,7 @@ route.get(
         {
           $match: match,
         },
-        { $sort: (sort as Sort) || { createdAt: -1 } }
+        { $sort: (sort as Sort) || { _id: -1 } }
       );
 
       if (skip) {

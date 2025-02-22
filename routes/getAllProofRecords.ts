@@ -47,7 +47,7 @@ route.get("/", async (req: CustomRequest, res: Response) => {
       pipeline.push({ $skip: skip });
     }
 
-    pipeline.push({ $sort: { createdAt: -1 } }, { $limit: 21 });
+    pipeline.push({ $sort: { _id: -1 } }, { $limit: 21 });
 
     const proof = await doWithRetries(async () =>
       db.collection("Proof").aggregate(pipeline).toArray()

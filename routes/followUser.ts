@@ -124,6 +124,7 @@ route.post(
               userName: userInfo.name,
               avatar,
               updatedAt: new Date(),
+              userId: new ObjectId(req.userId),
             },
           },
           { upsert: true }

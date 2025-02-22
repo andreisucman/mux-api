@@ -22,13 +22,13 @@ export default async function findLatestRewards({ userId }: Props) {
               userId: new ObjectId(userId),
               availableFrom: { $gt: new Date() },
             },
-            { projection: { _id: 1 } }
+            { projection: { rewardId: 1 } }
           )
           .toArray()
       );
 
       if (cooldownRecords.length > 0) {
-        match._id = { $in: cooldownRecords.map((rec) => rec._id) };
+        match._id = { $nin: cooldownRecords.map((rec) => rec.rewardId) };
       }
     }
 
@@ -43,6 +43,7 @@ export default async function findLatestRewards({ userId }: Props) {
       },
       { $replaceRoot: { newRoot: "$doc" } }
     );
+    pipeline.push({ $sort: { key: 1, value: 1 } });
 
     const rewards = await doWithRetries(async () =>
       db.collection("Reward").aggregate(pipeline).toArray()

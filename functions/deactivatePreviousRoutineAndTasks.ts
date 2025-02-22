@@ -24,7 +24,7 @@ export default async function deactivatePreviousRoutineAndTasks(
           routineId: new ObjectId(routineId),
           status: TaskStatusEnum.ACTIVE,
         },
-        { $set: { status: TaskStatusEnum.CANCELED } }
+        { $set: { status: TaskStatusEnum.INACTIVE } }
       )
     );
   } catch (err) {

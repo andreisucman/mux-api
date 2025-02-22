@@ -250,7 +250,7 @@ export enum TaskStatusEnum {
   EXPIRED = "expired",
   CANCELED = "canceled",
   DELETED = "deleted",
-  FAILED = "failed",
+  INACTIVE = "inactive",
 }
 
 export enum RoutineStatusEnum {

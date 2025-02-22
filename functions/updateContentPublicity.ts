@@ -26,15 +26,10 @@ export default async function updateContentPublicity({
     const { club, name, avatar } = userInfo;
     const { privacy: currentPrivacy } = club;
 
-    console.log("currentPrivacy", currentPrivacy);
-    console.log("newPrivacy", newPrivacy);
-
     const difference = calculateDifferenceInPrivacies(
       currentPrivacy,
       newPrivacy
     );
-
-    console.log("difference", difference);
 
     const progressDifferences = difference.filter(
       (pr) => pr.category === "progress"

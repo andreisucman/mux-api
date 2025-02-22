@@ -117,7 +117,7 @@ route.get("/:followingUserName?", async (req: CustomRequest, res: Response) => {
 
     if (followingUserName) match.userName = followingUserName;
 
-    pipeline.push({ $match: match }, { $sort: sort || { createdAt: -1 } });
+    pipeline.push({ $match: match }, { $sort: sort || { _id: -1 } });
 
     if (skip) {
       pipeline.push({ $skip: skip });

@@ -1,7 +1,7 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import { ObjectId, Sort } from "mongodb";
+import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import checkTrackedRBAC from "functions/checkTrackedRBAC.js";
@@ -61,13 +61,15 @@ route.get(
         lastDate: 1,
       };
 
+      const finalSort = { ...(sort || { _id: -1 }), status: 1 };
+
       const routines = await doWithRetries(async () =>
         db
           .collection("Routine")
           .aggregate([
             { $match: filter },
             { $project: projection },
-            { $sort: { status: 1, ...(sort || { createdAt: -1 }) } },
+            { $sort: finalSort },
             { $skip: Number(skip) || 0 },
             { $limit: 21 },
           ])

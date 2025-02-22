@@ -3,6 +3,7 @@ import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 import { daysFrom, setToUtcMidnight } from "@/helpers/utils.js";
+import { RoutineStatusEnum } from "@/types.js";
 
 type Props = {
   userId: string;
@@ -18,6 +19,7 @@ export default async function getLatestRoutinesAndTasks({
   try {
     const match = {
       userId: new ObjectId(userId),
+      status: RoutineStatusEnum.ACTIVE,
       ...filter,
     };
 
@@ -81,6 +83,7 @@ export default async function getLatestRoutinesAndTasks({
         .aggregate([
           {
             $match: {
+              userId: new ObjectId(userId),
               startsAt: { $gte: todayUtcMidnight, $lt: tomorrowUtcMidnight },
               status: { $in: ["active", "completed"] },
             },
@@ -99,6 +102,7 @@ export default async function getLatestRoutinesAndTasks({
         .aggregate([
           {
             $match: {
+              userId: new ObjectId(userId),
               $and: [
                 { startsAt: { $gte: startsAtFrom, $lt: startsAtTo } },
                 { startsAt: { $gte: todayUtcMidnight } },

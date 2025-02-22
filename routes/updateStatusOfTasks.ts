@@ -13,14 +13,24 @@ const route = Router();
 
 type Props = {
   taskIds: string[];
-  newStatus: TaskStatusEnum;
-  returnOnlyRoutines?: boolean;
   isVoid?: boolean;
-  routineStatus?: string;
+  returnOnlyRoutines?: boolean;
+  newStatus: TaskStatusEnum;
+  routineStatus?: RoutineStatusEnum;
 };
 
-const validTaskStatuses = ["active", "canceled", "deleted", "failed"];
-const validRoutineStatuses = ["active", "inactive"];
+const validTaskStatuses = [
+  TaskStatusEnum.ACTIVE,
+  TaskStatusEnum.CANCELED,
+  TaskStatusEnum.DELETED,
+  TaskStatusEnum.COMPLETED,
+  TaskStatusEnum.INACTIVE,
+];
+const validRoutineStatuses = [
+  RoutineStatusEnum.ACTIVE,
+  RoutineStatusEnum.INACTIVE,
+  RoutineStatusEnum.DELETED,
+];
 
 route.post(
   "/",
