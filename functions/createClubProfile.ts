@@ -66,7 +66,7 @@ export default async function createClubProfile({ userId }: Props) {
     });
 
     const defaultQuestions = [
-      "What is your life philosophy? Are you outgoing or maybe love being alone? Why? ",
+      "Tell about your life style. Speak about your wake up time, school, work, leisure preferences etc.",
     ];
 
     const randomName = await createRandomName();
@@ -85,12 +85,8 @@ export default async function createClubProfile({ userId }: Props) {
 
     const clubBio: ClubBioType = {
       intro: "I love working out and eating healthy.",
-      philosophy: "",
-      tips: "",
-      nextRegenerateBio: {
-        philosophy: null,
-        tips: null,
-      },
+      about: "",
+      nextRegenerateBio: "",
       socials: [],
     };
 

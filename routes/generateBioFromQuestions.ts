@@ -15,25 +15,17 @@ const route = Router();
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { segment } = req.body;
-
-    if (!segment) {
-      res.status(400).json({ error: "Bad request" });
-      return;
-    }
-
     try {
       const userInfo = await getUserInfo({
         userId: req.userId,
-        projection: { [`club.bio.nextRegenerateBio.${segment}`]: 1 },
+        projection: { [`club.bio.nextRegenerateBio`]: 1 },
       });
 
       const { club } = userInfo || {};
       const { bio } = club || {};
       const { nextRegenerateBio } = bio || {};
-      const nextCanGenerateDate = nextRegenerateBio[segment as "philosophy"];
 
-      if (new Date() < new Date(nextCanGenerateDate)) {
+      if (new Date() < new Date(nextRegenerateBio)) {
         res.status(400).json({ error: "Bad request" });
         return;
       }
@@ -92,7 +84,6 @@ route.post(
       const generatedContent = await generateBioContent({
         userId: req.userId,
         categoryName: CategoryNameEnum.FAQ,
-        segment,
         text,
       });
 
@@ -105,7 +96,7 @@ route.post(
           { _id: new ObjectId(req.userId) },
           {
             $set: {
-              [`club.bio.nextRegenerateBio.${segment}`]: nextDate,
+              [`club.bio.nextRegenerateBio`]: nextDate,
             },
           }
         )
@@ -114,7 +105,7 @@ route.post(
       res.status(200).json({
         message: {
           content: generatedContent,
-          nextRegenerateBio: { [segment]: nextDate },
+          nextRegenerateBio: nextDate,
         },
       });
     } catch (err) {

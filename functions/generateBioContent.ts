@@ -6,22 +6,16 @@ import httpError from "@/helpers/httpError.js";
 type UpdateAboutBioProps = {
   userId: string;
   text: string;
-  segment: string;
   categoryName: CategoryNameEnum;
 };
 
 export default async function generateBioContent({
   userId,
-  segment,
   categoryName,
   text,
 }: UpdateAboutBioProps) {
   try {
     let systemContent = `You are given a part of the user's interview and a topic to write about. Create a 3-5 sentences biography style content on the topic based on the interview. Come up with additional details to make your content engaging, but don't make up new facts. Your goall is to create the given information into an engaging personality description in 3-5 sentences. Write from the name of the user in the first person style I/me. Use simple, conversational language.`;
-
-    if (segment === "tips")
-      systemContent +=
-        "Your response should be an advice to other people on how to achieve a lifestyle similar to yours. Avoid generic advice, be specific.";
 
     const runs = [
       {
