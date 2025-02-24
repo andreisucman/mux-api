@@ -207,7 +207,7 @@ export default async function prolongPreviousRoutine({
       userId: String(userId),
       tasksToInsert: finalTasks,
       keyOne: "tasksCreated",
-      keyTwo: "manuallyTasksCreated",
+      keyTwo: "manualTasksCreated",
     });
   } catch (err) {
     throw httpError(err);

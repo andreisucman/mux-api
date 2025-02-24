@@ -64,6 +64,7 @@ route.post(
         updateAnalytics({
           userId: req.userId,
           incrementPayload: { [`overview.club.country.${newCountry}`]: 1 },
+          decrementPayload: { [`overview.club.country.${existingCountry}`]: -1 },
         });
       }
 

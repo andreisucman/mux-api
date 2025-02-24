@@ -22,13 +22,13 @@ import { ModerationStatusEnum } from "types.js";
 import httpError from "@/helpers/httpError.js";
 import { CookieOptions } from "express";
 import incrementProgress from "@/helpers/incrementProgress.js";
+import updateAnalytics from "./updateAnalytics.js";
 
 type Props = {
   userId: string;
   name: string;
   cookies: CookieOptions;
   avatar: { [key: string]: any } | null;
-  nutrition: { [key: string]: number };
   categoryName: CategoryNameEnum;
   blurType: BlurTypeEnum;
   defaultToUpdateUser?: { $set: { [key: string]: unknown } };
@@ -50,7 +50,6 @@ export default async function analyzeAppearance({
   club,
   cookies,
   blurType,
-  nutrition,
   concerns = [],
   categoryName,
   nextScan,
@@ -99,7 +98,7 @@ export default async function analyzeAppearance({
         userId,
         toAnalyze,
         categoryName,
-        demographicsKeys: nullValueGroups.map((g) => g[0]),
+        demographicsKeys: Object.keys(demographics),
       });
 
       demographics = { ...(demographics || {}), ...newDemographics };
@@ -230,6 +229,23 @@ export default async function analyzeAppearance({
           { $set: { isRunning: false, progress: 0 } }
         )
     );
+
+    const partScansIncrementPayload = partsAnalyzed.map(
+      (p) => `overview.usage.scans.progressScanParts.${p}`
+    );
+
+    const partScansIncrementMap = partScansIncrementPayload.reduce((a, c) => {
+      a[c] = 1;
+      return a;
+    }, {});
+
+    updateAnalytics({
+      userId,
+      incrementPayload: {
+        ...partScansIncrementMap,
+        "overview.usage.scans.totalProgressScans": 1,
+      },
+    });
 
     console.timeEnd("analyzeAppearance - finalization");
   } catch (err) {

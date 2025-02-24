@@ -41,9 +41,7 @@ route.post(
         return;
       }
 
-      let incrementPayload: { [key: string]: number } = {
-        "overview.club.rejoined": 1,
-      };
+      let incrementPayload: { [key: string]: number } = {};
 
       if (canRejoinClubAfter) {
         incrementPayload = { "overview.club.rejoined": 1 };

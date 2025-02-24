@@ -130,10 +130,14 @@ async function handleStripeWebhook(event: Stripe.Event) {
     String(payment_intent)
   );
 
+  const totalPayable = (totalRevenue - totalProcessingFee) / 2;
+
   const incrementPayload: { [key: string]: number } = {
     "overview.accounting.totalRevenue": totalRevenue,
+    "overview.accounting.totalPayable": totalPayable,
     "overview.accounting.totalProcessingFee": totalProcessingFee,
     "accounting.totalRevenue": totalRevenue,
+    "accounting.totalPayable": totalPayable,
     "accounting.totalProcessingFee": totalProcessingFee,
   };
 

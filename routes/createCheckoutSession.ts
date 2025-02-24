@@ -73,15 +73,6 @@ route.post(
 
         const relatedPlan = plans.find((plan) => plan.priceId === priceId);
 
-        if (relatedPlan) {
-          updateAnalytics({
-            userId: req.userId,
-            incrementPayload: {
-              [`overview.subscription.added.${relatedPlan.name}`]: 1,
-            },
-          });
-        }
-
         const session = await stripe.checkout.sessions.create({
           billing_address_collection: "auto",
           payment_method_types: ["card"],
@@ -91,6 +82,15 @@ route.post(
           cancel_url: cancelUrl,
           customer: stripeUserId,
         });
+
+        if (session.url) {
+          updateAnalytics({
+            userId: req.userId,
+            incrementPayload: {
+              [`overview.subscription.added.${relatedPlan.name}`]: 1,
+            },
+          });
+        }
 
         res.status(200).json({ message: { redirectUrl: session.url } });
       }

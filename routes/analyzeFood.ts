@@ -131,7 +131,9 @@ route.post(
 
         updateAnalytics({
           userId: req.userId,
-          incrementPayload: { "overview.usage.foodScans": 1 },
+          incrementPayload: {
+            "overview.usage.scans.totalFoodScans": 1,
+          },
         });
       }
 

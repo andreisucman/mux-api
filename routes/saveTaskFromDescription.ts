@@ -398,7 +398,7 @@ route.post(
         userId: req.userId,
         tasksToInsert: draftTasks,
         keyOne: "tasksCreated",
-        keyTwo: "manuallyTasksCreated",
+        keyTwo: "manualTasksCreated",
       });
 
       await doWithRetries(async () =>

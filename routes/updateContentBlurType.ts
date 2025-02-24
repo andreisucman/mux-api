@@ -17,12 +17,14 @@ import { db } from "init.js";
 const route = Router();
 
 type UpdateProgressRecordProps = {
+  userId: string;
   images: ProgressImageType[];
   blurType: BlurTypeEnum;
   cookies: CookieOptions;
 };
 
 async function updateProgressRecord({
+  userId,
   images,
   cookies,
   blurType,
@@ -119,12 +121,14 @@ route.post(
         const { images, initialImages, part } = relevantRecord as ProgressType;
 
         const { images: updatedImages } = await updateProgressRecord({
+          userId: req.userId,
           images,
           blurType,
           cookies: req.cookies,
         });
 
         const { images: updatedInitialImages } = await updateProgressRecord({
+          userId: req.userId,
           images: initialImages,
           blurType,
           cookies: req.cookies,

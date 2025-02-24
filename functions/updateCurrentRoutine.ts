@@ -155,7 +155,7 @@ export default async function updateCurrentRoutine({
       userId: String(userId),
       tasksToInsert,
       keyOne: "tasksCreated",
-      keyTwo: "manuallyTasksCreated",
+      keyTwo: "manualTasksCreated",
     });
   } catch (err) {
     throw httpError(err);

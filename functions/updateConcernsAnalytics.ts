@@ -27,9 +27,7 @@ export default async function updateConcernsAnalytics({
     const keyConcerns = concerns.reduce(
       (a: { [key: string]: number }, c: ConcernInputType) => {
         const key = `overview.usage.concerns.key.${c.name}`;
-
         a[key] = 1;
-
         return a;
       },
       {}
@@ -37,12 +35,10 @@ export default async function updateConcernsAnalytics({
 
     const statusConcern = concerns.reduce(
       (a: { [key: string]: number }, c: ConcernInputType) => {
-        const key = `overview.usage.concerns.[${
+        const key = `overview.usage.concerns.status.${
           c.isDisabled ? "disabled" : "active"
-        }].${c.name}`;
-
+        }.${c.name}`;
         a[key] = 1;
-
         return a;
       },
       {}

@@ -20,10 +20,6 @@ export type UploadProgressUserInfo = {
   name: string;
   avatar: { [key: string]: any } | null;
   requiredProgress: ProgressType[];
-  nutrition: {
-    dailyCalorieGoal: number | null;
-    remainingDailyCalories: number | null;
-  };
   toAnalyze: ToAnalyzeType[];
   concerns: UserConcernType[];
   demographics: DemographicsType;

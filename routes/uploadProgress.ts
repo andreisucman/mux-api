@@ -154,7 +154,6 @@ route.post(
               demographics: 1,
               concerns: 1,
               city: 1,
-              nutrition: 1,
               country: 1,
               timeZone: 1,
               nextScan: 1,
@@ -178,7 +177,6 @@ route.post(
         requiredProgress,
         toAnalyze,
         club,
-        nutrition,
         nextScan,
         concerns,
         demographics,
@@ -259,7 +257,6 @@ route.post(
           avatar,
           club,
           cookies: req.cookies,
-          nutrition,
           userId: finalUserId,
           blurType,
           defaultToUpdateUser: toUpdate,
@@ -294,7 +291,9 @@ route.post(
 
       updateAnalytics({
         userId: req.userId,
-        incrementPayload: { "overview.usage.progressScans": 1 },
+        incrementPayload: {
+          [`overview.usage.scans.progressImageUploads.${part}`]: 1,
+        },
       });
     } catch (err) {
       await addAnalysisStatusError({

@@ -166,7 +166,7 @@ export default async function makeANewRoutine({
       userId,
       tasksToInsert,
       keyOne: "tasksCreated",
-      keyTwo: "manuallyTasksCreated",
+      keyTwo: "manualTasksCreated",
     });
   } catch (err) {
     throw httpError(err);

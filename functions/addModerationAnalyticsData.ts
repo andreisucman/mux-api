@@ -34,6 +34,7 @@ export default async function addModerationAnalyticsData({
     ] = 1;
 
     if (!isSafe) {
+      analyticIncrementPayload["overview.moderation.totalBlocked"] = 1;
       analyticIncrementPayload[
         `overview.moderation.blocked.${categoryName}`
       ] = 1;
@@ -47,6 +48,7 @@ export default async function addModerationAnalyticsData({
       analyticIncrementPayload = { ...blockedReasons };
     } else {
       if (isSuspicious) {
+        analyticIncrementPayload["overview.moderation.totalSuspicious"] = 1;
         analyticIncrementPayload[
           `overview.moderation.suspicious.${categoryName}`
         ] = 1;

@@ -9,40 +9,61 @@ type UpdateAnalyticsProps = {
   incrementPayload: {
     [key: string]: number;
   };
+  decrementPayload?: {
+    [key: string]: number;
+  };
 };
+
+const updateCollection = async (
+  collection: string,
+  filter: { [key: string]: any },
+  payload: { [key: string]: number }
+) =>
+  await doWithRetries(async () =>
+    adminDb.collection(collection).updateOne(
+      filter,
+      {
+        $inc: payload,
+      },
+      {
+        upsert: true,
+      }
+    )
+  );
 
 export default async function updateAnalytics({
   userId,
   incrementPayload,
+  decrementPayload,
 }: UpdateAnalyticsProps) {
   const createdAt = setToUtcMidnight(new Date());
 
   try {
     if (userId) {
-      await doWithRetries(async () =>
-        adminDb.collection("UserAnalytics").updateOne(
-          { createdAt, userId: new ObjectId(userId) },
-          {
-            $inc: incrementPayload,
-          },
-          {
-            upsert: true,
-          }
-        )
+      const response = await updateCollection(
+        "UserAnalytics",
+        { createdAt, userId: new ObjectId(userId) },
+        incrementPayload
       );
     }
 
-    await doWithRetries(async () =>
-      adminDb.collection("TotalAnalytics").updateOne(
-        { createdAt },
-        {
-          $inc: incrementPayload,
-        },
-        {
-          upsert: true,
-        }
-      )
+    const response = await updateCollection(
+      "TotalAnalytics",
+      { createdAt },
+      incrementPayload
     );
+
+    if (decrementPayload) {
+      if (userId) {
+        await updateCollection(
+          "UserAnalytics",
+          { createdAt, userId: new ObjectId(userId) },
+          decrementPayload
+        );
+      }
+
+      await updateCollection("TotalAnalytics", { createdAt }, decrementPayload);
+    }
   } catch (err) {
     throw httpError(err);
   }

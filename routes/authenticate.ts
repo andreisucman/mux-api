@@ -152,6 +152,15 @@ route.post(
             )
           );
 
+          updateAnalytics({
+            userId: req.userId,
+            incrementPayload: {
+              [`overview.acquisition.signIn.${parsedState.referrer}`]: 1,
+            },
+          });
+
+          console.log("userId", userId);
+
           userData = await getUserData({ userId: String(userId) });
         } else {
           // registration after the analysis
@@ -200,7 +209,7 @@ route.post(
         updateAnalytics({
           userId: req.userId,
           incrementPayload: {
-            [`overview.acquisition.signins.${parsedState.referrer}`]: 1,
+            [`overview.acquisition.signUps.${parsedState.referrer}`]: 1,
           },
         });
       } else {
@@ -238,7 +247,7 @@ route.post(
           userId: req.userId,
           incrementPayload: {
             "overview.user.count.registeredUsers": 1,
-            [`overview.acquisition.signups.${parsedState.referrer}`]: 1,
+            [`overview.acquisition.signUps.${parsedState.referrer}`]: 1,
           },
         });
       }
