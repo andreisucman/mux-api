@@ -39,15 +39,18 @@ route.get("/", async (req: CustomRequest, res: Response) => {
     if (bodyType) match.demographics.bodyType = bodyType;
     if (ageInterval) match.demographics.ageInterval = ageInterval;
 
-    pipeline.push({
-      $match: match,
-    });
+    pipeline.push(
+      {
+        $match: match,
+      },
+      { $sort: { _id: -1 } }
+    );
 
     if (skip) {
       pipeline.push({ $skip: skip });
     }
 
-    pipeline.push({ $sort: { _id: -1 } }, { $limit: 21 });
+    pipeline.push({ $limit: 21 });
 
     const proof = await doWithRetries(async () =>
       db.collection("Proof").aggregate(pipeline).toArray()

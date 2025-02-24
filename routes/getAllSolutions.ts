@@ -27,7 +27,7 @@ route.get("/", async (req: CustomRequest, res: Response) => {
       };
     }
 
-    pipeline.push({ $match: match });
+    pipeline.push({ $match: match }, { $sort: { _id: -1 } });
 
     if (skip) {
       pipeline.push({ $skip: skip });
@@ -46,7 +46,6 @@ route.get("/", async (req: CustomRequest, res: Response) => {
     };
 
     pipeline.push(
-      { $sort: { _id: -1 } },
       {
         $project: project,
       },

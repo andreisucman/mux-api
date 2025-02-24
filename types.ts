@@ -14,6 +14,7 @@ export type SuggestionType = {
   description: string;
   priceAndUnit: string;
   vectorizedOn: Date;
+  productFeatures?: string[]
 };
 
 export interface CustomRequest extends Request {
