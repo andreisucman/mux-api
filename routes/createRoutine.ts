@@ -37,7 +37,7 @@ route.post(
       !concerns ||
       !isValidDate ||
       !isFutureDate ||
-      !validParts.includes(part)
+      (part && !validParts.includes(part))
     ) {
       res.status(400).json({ error: "Bad request" });
       return;

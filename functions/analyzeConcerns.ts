@@ -88,6 +88,10 @@ export default async function analyzeConcerns({
             type: "text",
             text: "Look at the concerns you have identified. Are there any that don't have sufficient proof in the data provided? If yes, remove those concerns, leaving only the concerns that are surely described in the data provided.",
           },
+          {
+            type: "text",
+            text: "Check your selected concerns. They should be the closest aligning concerns with the description. For example: if the description speaks about dry lips, your selected concern should be chapped lips and not dry skin.",
+          },
         ],
         callback: () =>
           incrementProgress({ userId, operationKey: "progress", value: 3 }),

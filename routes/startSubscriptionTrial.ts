@@ -58,8 +58,7 @@ route.post(
 
       if (!faceProgressRecord) {
         res.status(200).json({
-          error:
-            "You need to scan your face first. Go to the scan page and complete your face analysis.",
+          error: "scan",
         });
         return;
       }

@@ -75,7 +75,6 @@ route.post(
         avatar,
         toAnalyze,
         club,
-        nutrition,
         nextScan,
         concerns,
         demographics,
@@ -124,7 +123,6 @@ route.post(
         latestProgress,
         latestScoresDifference,
         newSpecialConsiderations: specialConsiderations,
-        nutrition,
       });
     } catch (err) {
       await addAnalysisStatusError({
