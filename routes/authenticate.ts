@@ -159,8 +159,6 @@ route.post(
             },
           });
 
-          console.log("userId", userId);
-
           userData = await getUserData({ userId: String(userId) });
         } else {
           // registration after the analysis

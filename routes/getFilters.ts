@@ -15,14 +15,17 @@ const collectionMap: { [key: string]: string } = {
   progress: "Progress",
   proof: "Proof",
   task: "Task",
+  routine: "Routine",
 };
+
+const addModerationStatusCollections = ["progress", "proof"];
 
 route.get(
   "/:followingUserName?",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { followingUserName } = req.params;
     const { filter, projection } = aqp(req.query as any) as AqpQuery;
-    const { collection } = filter;
+    const { collection, ...rest } = filter;
 
     if (!collection || (!followingUserName && !req.userId)) {
       res.status(400).json({ error: "Bad request" });
@@ -52,9 +55,9 @@ route.get(
 
       let match: { [key: string]: any } = {};
 
-      if (filter) match = { ...filter };
+      if (filter) match = { ...rest };
 
-      if (collection !== "task")
+      if (addModerationStatusCollections.includes(collection))
         match.moderationStatus = ModerationStatusEnum.ACTIVE;
 
       if (followingUserName) {

@@ -16,7 +16,7 @@ route.get(
   "/:followingUserName?",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { followingUserName } = req.params;
-    const { skip, sort = {} } = aqp(req.query as any) as AqpQuery;
+    const { filter, skip, sort = {} } = aqp(req.query as any) as AqpQuery;
 
     try {
       if (followingUserName) {
@@ -44,12 +44,12 @@ route.get(
         }
       }
 
-      const filter: { [key: string]: any } = {};
+      const finalFilter: { [key: string]: any } = { ...filter };
 
       if (followingUserName) {
-        filter.userName = followingUserName;
+        finalFilter.userName = followingUserName;
       } else {
-        filter.userId = new ObjectId(req.userId);
+        finalFilter.userId = new ObjectId(req.userId);
       }
 
       const projection = {
@@ -67,7 +67,7 @@ route.get(
         db
           .collection("Routine")
           .aggregate([
-            { $match: filter },
+            { $match: finalFilter },
             { $project: projection },
             { $sort: finalSort },
             { $skip: Number(skip) || 0 },
