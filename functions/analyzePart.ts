@@ -240,7 +240,8 @@ export default async function analyzePart({
 
     const newScoresDifference = Object.keys(initialScores).reduce(
       (a: { [key: string]: number }, key) => {
-        a[key] = Number(scores[key]) - Number(initialScores[key]);
+        if (typeof Number(scores[key]) === "number")
+          a[key] = Number(scores[key]) - Number(initialScores[key]);
         return a;
       },
       {}

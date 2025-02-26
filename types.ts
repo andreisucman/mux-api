@@ -4,8 +4,8 @@ import { ModerationResultType } from "./functions/moderateContent.js";
 
 export type SuggestionType = {
   _id: string;
-  type: string;
-  suggestion: "product" | "place";
+  type: "product" | "place";
+  suggestion: string;
   asin: string;
   name: string;
   image: string;
@@ -14,7 +14,7 @@ export type SuggestionType = {
   description: string;
   priceAndUnit: string;
   vectorizedOn: Date;
-  productFeatures?: string[]
+  productFeatures?: string[];
 };
 
 export interface CustomRequest extends Request {

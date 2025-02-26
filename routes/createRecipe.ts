@@ -19,9 +19,10 @@ import askRepeatedly from "functions/askRepeatedly.js";
 import generateImage from "functions/generateImage.js";
 import checkSubscriptionStatus from "functions/checkSubscription.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
-import { db } from "init.js";
+import { adminDb, db } from "init.js";
 import httpError from "@/helpers/httpError.js";
 import { urlToBase64 } from "@/helpers/utils.js";
+import findRelevantSuggestions from "@/functions/findRelevantSuggestions.js";
 
 const route = Router();
 
@@ -236,7 +237,7 @@ route.post(
         productTypes: z
           .array(z.string())
           .describe(
-            "an array strings of product type names used in the recipe (e.g. potato, olive oil, etc...)"
+            "an array strings of product type names used in the recipe in singular form (e.g. potato, olive oil, chicken breast, etc...)"
           ),
       });
 
@@ -266,14 +267,7 @@ route.post(
         userId: req.userId,
       });
 
-      const suggestions = await doWithRetries(async () =>
-        db
-          .collection("Suggestion")
-          .find({
-            suggestion: { $in: response.productTypes },
-          })
-          .toArray()
-      );
+      const suggestions = await findRelevantSuggestions(response.productTypes);
 
       await doWithRetries(async () =>
         db.collection("AnalysisStatus").updateOne(

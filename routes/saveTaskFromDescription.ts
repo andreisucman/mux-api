@@ -16,7 +16,7 @@ import {
   TaskStatusEnum,
   TaskType,
 } from "types.js";
-import { db } from "init.js";
+import { adminDb, db } from "init.js";
 import askRepeatedly from "functions/askRepeatedly.js";
 import isActivityHarmful from "@/functions/isActivityHarmful.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
@@ -34,6 +34,7 @@ import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 import { validParts } from "@/data/other.js";
+import findRelevantSuggestions from "@/functions/findRelevantSuggestions.js";
 
 const route = Router();
 
@@ -144,7 +145,7 @@ route.post(
         productTypes: z
           .array(z.string())
           .describe(
-            'An array of product types needed to complete this activity (example: ["olive oil","tomato"] )'
+            'An array of unique in their purpose product types in singular form (example: ["olive oil","tomato","onion"]). If multiple similar product types can be used, pick one - the most relevant.'
           ),
       });
 
@@ -211,15 +212,9 @@ route.post(
         nearestConcerns: [concern],
       };
 
-      const suggestions = (await doWithRetries(async () =>
-        db
-          .collection("Suggestion")
-          .find({
-            suggestion: { $in: generalTaskInfo.productTypes },
-            analysisResult: { $exist: true },
-          })
-          .toArray()
-      )) as unknown as SuggestionType[];
+      const suggestions = await findRelevantSuggestions(
+        generalTaskInfo.productTypes
+      );
 
       generalTaskInfo.suggestions = suggestions;
 
