@@ -1,3 +1,4 @@
+import * as dotenv from "dotenv";
 import {
   PositionEnum,
   UserType,
@@ -6,6 +7,8 @@ import {
   NextActionType,
   ModerationStatusEnum,
 } from "types.js";
+
+dotenv.config();
 
 export const defaultSubscriptions = {
   improvement: {
@@ -167,7 +170,7 @@ export const defaultUser: UserType = {
   requiredProgress: defaultRequiredProgress,
   subscriptions: defaultSubscriptions,
   toAnalyze: [],
-  coachEnergy: 150000,
+  coachEnergy: Number(process.env.COACH_ENERGY),
   nutrition: {
     dailyCalorieGoal: 2000,
     remainingDailyCalories: 2000,

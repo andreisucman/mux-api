@@ -11,7 +11,6 @@ export default async function createHumanEmbedding(image: string) {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          authorization: process.env.PROCESSING_SECRET,
         },
         body: JSON.stringify({ image }),
       })

@@ -53,13 +53,16 @@ route.post(
         return;
       }
 
+      const cookieString = Object.entries(req.cookies)
+        .map(([name, value]) => `${name}=${value}`)
+        .join("; ");
+
       const response = await doWithRetries(async () =>
         fetch(`${process.env.PROCESSING_SERVER_URL}/transcribe`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: process.env.PROCESSING_SECRET,
-            UserId: req.userId,
+            Cookie: cookieString,
           },
           body: JSON.stringify({
             audioFile: audio,

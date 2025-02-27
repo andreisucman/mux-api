@@ -25,7 +25,6 @@ export default async function createImageCollage({
         }),
         headers: {
           "content-type": "application/json",
-          authorization: `${process.env.PROCESSING_SECRET}`,
         },
       })
     );
