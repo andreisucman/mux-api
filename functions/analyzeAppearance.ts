@@ -105,7 +105,7 @@ export default async function analyzeAppearance({
     }
 
     await incrementProgress({
-      value: 2,
+      value: 5,
       operationKey: "progress",
       userId: String(userId),
     });

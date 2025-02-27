@@ -10,6 +10,7 @@ import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 
 type Props = {
   userId: string;
+  incrementMultiplier?: number;
   categoryName: CategoryNameEnum;
   specialConsiderations: string;
   rawNewSchedule: { [key: string]: ScheduleTaskType[] };
@@ -24,6 +25,7 @@ type Props = {
 export default async function mergeSchedules({
   userId,
   categoryName,
+  incrementMultiplier = 1,
   specialConsiderations,
   rawNewSchedule,
   currentSchedule,
@@ -31,6 +33,12 @@ export default async function mergeSchedules({
 }: Props) {
   try {
     let systemContent = `You are a dermatologist, dentist and a fitness coach. The user gives you two schedules - 1 and 2. Your goal is to merge schedule 2 into schedule 1 without moving the dates of the schedule 1. Your response is the merged schedule in the original JSON object format.`;
+    const callback = () =>
+      incrementProgress({
+        operationKey: "routine",
+        userId,
+        value: 1 * incrementMultiplier,
+      });
 
     const userContent: RunType[] = [
       {
@@ -45,12 +53,7 @@ export default async function mergeSchedules({
             text: `Schedule 2: ${JSON.stringify(rawNewSchedule)}.`,
           },
         ],
-        callback: () =>
-          incrementProgress({
-            operationKey: "routine",
-            userId,
-            value: 2,
-          }),
+        callback,
       },
       {
         isMini: true,
@@ -60,12 +63,7 @@ export default async function mergeSchedules({
             text: "Can you confirm that the dates of the original tasks in schedule 1 haven't changed? They must not change.",
           },
         ],
-        callback: () =>
-          incrementProgress({
-            operationKey: "routine",
-            userId,
-            value: 2,
-          }),
+        callback,
       },
       {
         isMini: true,
@@ -75,12 +73,7 @@ export default async function mergeSchedules({
             text: "Can you confirm that you've transferred all of the tasks from the schedule 2 into the schedule 1?",
           },
         ],
-        callback: () =>
-          incrementProgress({
-            operationKey: "routine",
-            userId,
-            value: 2,
-          }),
+        callback,
       },
     ];
 
@@ -99,12 +92,7 @@ export default async function mergeSchedules({
             )}`,
           },
         ],
-        callback: () =>
-          incrementProgress({
-            operationKey: "routine",
-            userId,
-            value: 2,
-          }),
+        callback,
       });
     }
 
@@ -130,12 +118,7 @@ export default async function mergeSchedules({
             text: "Can you confirm that the newly added tasks are ordered optimally? If not, reorder them for the maximum efficiency.",
           },
         ],
-        callback: () =>
-          incrementProgress({
-            operationKey: "routine",
-            userId,
-            value: 2,
-          }),
+        callback,
       },
       {
         isMini: true,
@@ -145,12 +128,7 @@ export default async function mergeSchedules({
             text: `Return the latest updated schedule in the original JSON format.`,
           },
         ],
-        callback: () =>
-          incrementProgress({
-            operationKey: "routine",
-            userId,
-            value: 2,
-          }),
+        callback,
       }
     );
 

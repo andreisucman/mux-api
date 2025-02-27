@@ -111,7 +111,7 @@ export default async function analyzePart({
       }
     }
 
-    await incrementProgress({ value: 1, operationKey: "progress", userId });
+    await incrementProgress({ value: 5, operationKey: "progress", userId });
 
     const partResult = { part, concerns: [] } as PartResultType;
 
@@ -184,7 +184,7 @@ export default async function analyzePart({
       );
     }
 
-    await incrementProgress({ value: 1, operationKey: "progress", userId });
+    await incrementProgress({ value: 4, operationKey: "progress", userId });
 
     const newConcerns = await analyzeConcerns({
       part,

@@ -31,6 +31,7 @@ type Props = {
   partImages: ProgressImageType[];
   categoryName: CategoryNameEnum;
   demographics: DemographicsType;
+  incrementMultiplier?:number;
 };
 
 export default async function getSolutionsAndFrequencies({
@@ -39,6 +40,7 @@ export default async function getSolutionsAndFrequencies({
   partConcerns,
   categoryName,
   partImages,
+  incrementMultiplier = 1,
   demographics,
   userId,
   part,
@@ -56,7 +58,7 @@ export default async function getSolutionsAndFrequencies({
     const callback = () =>
       incrementProgress({
         operationKey: "routine",
-        value: 1,
+        value: 1 * incrementMultiplier,
         userId: String(userId),
       });
 

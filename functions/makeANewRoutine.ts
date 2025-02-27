@@ -26,6 +26,7 @@ import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 type Props = {
   userId: string;
   part: PartEnum;
+  incrementMultiplier?: number;
   routineStartDate: string;
   partImages: ProgressImageType[];
   userInfo: CreateRoutineUserInfoType;
@@ -38,6 +39,7 @@ type Props = {
 export default async function makeANewRoutine({
   userId,
   part,
+  incrementMultiplier,
   routineStartDate,
   partImages,
   userInfo,
@@ -51,6 +53,7 @@ export default async function makeANewRoutine({
       getSolutionsAndFrequencies({
         specialConsiderations,
         demographics: userInfo.demographics,
+        incrementMultiplier,
         partConcerns,
         allSolutions,
         categoryName,
@@ -59,12 +62,6 @@ export default async function makeANewRoutine({
         part,
       })
     );
-
-    await incrementProgress({
-      value: 1,
-      operationKey: "routine",
-      userId: String(userId),
-    });
 
     const rawSchedule = await doWithRetries(async () =>
       getRawSchedule({
@@ -75,7 +72,7 @@ export default async function makeANewRoutine({
     );
 
     await incrementProgress({
-      value: 2,
+      value: 1 * incrementMultiplier,
       operationKey: "routine",
       userId: String(userId),
     });
@@ -86,12 +83,13 @@ export default async function makeANewRoutine({
         concerns: partConcerns,
         categoryName,
         rawSchedule,
+        incrementMultiplier,
         specialConsiderations,
       })
     );
 
     await incrementProgress({
-      value: 2,
+      value: 2 * incrementMultiplier,
       operationKey: "routine",
       userId: String(userId),
     });

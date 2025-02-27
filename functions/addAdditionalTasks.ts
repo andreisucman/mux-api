@@ -26,6 +26,7 @@ type Props = {
   partImages: ProgressImageType[];
   categoryName: CategoryNameEnum;
   partConcerns: UserConcernType[];
+  incrementMultiplier?: number;
   currentTasks: TaskType[];
   currentSchedule: { [key: string]: ScheduleTaskType[] };
   userInfo: CreateRoutineUserInfoType;
@@ -41,6 +42,7 @@ export default async function addAdditionalTasks({
   partImages,
   partConcerns,
   currentTasks,
+  incrementMultiplier = 1,
   currentSchedule,
   allSolutions,
   canceledTaskKeys,
@@ -99,6 +101,7 @@ export default async function addAdditionalTasks({
         partImages,
         partConcerns,
         specialConsiderations,
+        incrementMultiplier,
         allSolutions: solutionsWithoutCanceled,
         demographics,
         categoryName,
@@ -106,7 +109,7 @@ export default async function addAdditionalTasks({
     );
 
     await incrementProgress({
-      value: 2,
+      value: 2 * incrementMultiplier,
       operationKey: "routine",
       userId: String(userId),
     });
@@ -133,12 +136,13 @@ export default async function addAdditionalTasks({
         userId: String(userId),
         specialConsiderations,
         categoryName,
+        incrementMultiplier,
         latestCompletedTasks,
       })
     );
 
     await incrementProgress({
-      value: 3,
+      value: 3 * incrementMultiplier,
       operationKey: "routine",
       userId: String(userId),
     });

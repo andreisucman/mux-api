@@ -26,6 +26,7 @@ import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 type Props = {
   part: PartEnum;
   routineId: string;
+  incrementMultiplier?: number;
   partImages: ProgressImageType[];
   partConcerns: UserConcernType[];
   allSolutions: CreateRoutineAllSolutionsType[];
@@ -43,6 +44,7 @@ export default async function updateCurrentRoutine({
   userInfo,
   categoryName,
   routineStartDate,
+  incrementMultiplier = 1,
 }: Props) {
   const { _id: userId, name: userName, specialConsiderations } = userInfo;
 
@@ -76,6 +78,7 @@ export default async function updateCurrentRoutine({
         allSolutions,
         categoryName,
         partConcerns,
+        incrementMultiplier,
         demographics: userInfo.demographics,
         userId: String(userId),
         partImages,
@@ -98,6 +101,7 @@ export default async function updateCurrentRoutine({
         userId: String(userId),
         specialConsiderations,
         categoryName,
+        incrementMultiplier,
       })
     );
 

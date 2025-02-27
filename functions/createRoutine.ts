@@ -27,6 +27,7 @@ import getLatestCompletedTasks from "./getLatestCompletedTasks.js";
 type Props = {
   userId: string;
   part: PartEnum;
+  incrementMultiplier?: number;
   categoryName: CategoryNameEnum;
   concerns: UserConcernType[];
   specialConsiderations: string;
@@ -36,6 +37,7 @@ type Props = {
 export default async function createRoutine({
   part,
   userId,
+  incrementMultiplier = 1,
   categoryName,
   concerns,
   routineStartDate,
@@ -183,6 +185,7 @@ export default async function createRoutine({
         allSolutions,
         categoryName,
         routineStartDate,
+        incrementMultiplier,
       });
     } else if (draftTasksToProlong.length > 0) {
       await prolongPreviousRoutine({
@@ -196,6 +199,7 @@ export default async function createRoutine({
         canceledTaskKeys: latestMonthCanceledKeys,
         categoryName,
         latestCompletedTasks,
+        incrementMultiplier,
       });
     } else {
       await makeANewRoutine({
@@ -208,6 +212,7 @@ export default async function createRoutine({
         routineStartDate,
         specialConsiderations,
         categoryName,
+        incrementMultiplier,
       });
     }
   } catch (error) {

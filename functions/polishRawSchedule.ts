@@ -14,6 +14,7 @@ type Props = {
   userId: string;
   categoryName: CategoryNameEnum;
   specialConsiderations: string;
+  incrementMultiplier?: number;
 };
 
 export default async function polishRawSchedule({
@@ -21,11 +22,12 @@ export default async function polishRawSchedule({
   concerns,
   userId,
   categoryName,
+  incrementMultiplier = 1,
   specialConsiderations,
 }: Props) {
   try {
     const callback = () =>
-      incrementProgress({ operationKey: "routine", value: 1, userId });
+      incrementProgress({ operationKey: "routine", value: 1 * incrementMultiplier, userId });
 
     const listOfConcerns = JSON.stringify(concerns);
 

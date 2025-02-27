@@ -25,6 +25,7 @@ import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 
 type Props = {
   part: PartEnum;
+  incrementMultiplier?: number;
   routineStartDate: string;
   canceledTaskKeys: string[];
   partImages: ProgressImageType[];
@@ -43,6 +44,7 @@ export default async function prolongPreviousRoutine({
   categoryName,
   allSolutions,
   userInfo,
+  incrementMultiplier = 1,
   canceledTaskKeys,
   routineStartDate,
   tasksToProlong,
@@ -166,6 +168,7 @@ export default async function prolongPreviousRoutine({
         currentTasks: resetTasks,
         currentSchedule: schedule,
         latestCompletedTasks,
+        incrementMultiplier,
       });
 
     const finalRoutineAllTasks = combineAllTasks({

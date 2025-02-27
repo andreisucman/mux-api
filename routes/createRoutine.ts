@@ -125,6 +125,7 @@ route.post(
           userId: req.userId,
           concerns: activeConcerns,
           specialConsiderations,
+          incrementMultiplier: 4,
           categoryName: CategoryNameEnum.TASKS,
           routineStartDate,
         });

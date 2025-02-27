@@ -25,6 +25,7 @@ import { zodResponseFormat } from "openai/helpers/zod.mjs";
 type Props = {
   part: PartEnum;
   userId: string;
+  incrementMultiplier?: number;
   currentSolutions: string[];
   specialConsiderations: string;
   allSolutions: CreateRoutineAllSolutionsType[];
@@ -41,6 +42,7 @@ export default async function getAdditionalSolutionsAndFrequencies({
   categoryName,
   partImages,
   demographics,
+  incrementMultiplier = 1,
   currentSolutions,
   userId,
   part,
@@ -58,7 +60,7 @@ export default async function getAdditionalSolutionsAndFrequencies({
     const callback = () =>
       incrementProgress({
         operationKey: "routine",
-        value: 1,
+        value: 1 * incrementMultiplier,
         userId: String(userId),
       });
 
