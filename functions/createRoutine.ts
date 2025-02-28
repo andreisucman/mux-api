@@ -8,14 +8,12 @@ import {
   PartEnum,
   ModerationStatusEnum,
   CategoryNameEnum,
-  RoutineStatusEnum,
 } from "@/types.js";
 import {
   CreateRoutineUserInfoType,
   CreateRoutineAllSolutionsType,
 } from "@/types/createRoutineTypes.js";
 import makeANewRoutine from "functions/makeANewRoutine.js";
-import getLatestTaskStatus from "functions/getLatestTaskStatus.js";
 import addAnalysisStatusError from "functions/addAnalysisStatusError.js";
 import prolongPreviousRoutine from "functions/prolongPreviousRoutine.js";
 import updateCurrentRoutine from "functions/updateCurrentRoutine.js";
@@ -102,13 +100,6 @@ export default async function createRoutine({
         .toArray()
     )) as unknown as CreateRoutineAllSolutionsType[];
 
-    /* get previously completed */
-    const latestMonthCanceledKeys: string[] = await getLatestTaskStatus({
-      userId,
-      days: 30,
-      statuses: ["canceled"] as TaskStatusEnum[],
-    });
-
     const latestRelevantTask = await doWithRetries(async () =>
       db
         .collection("Task")
@@ -155,7 +146,13 @@ export default async function createRoutine({
         .find(
           {
             userId: new ObjectId(userId),
-            key: { $nin: latestMonthCanceledKeys },
+            status: {
+              $in: [
+                TaskStatusEnum.EXPIRED,
+                TaskStatusEnum.COMPLETED,
+                TaskStatusEnum.INACTIVE,
+              ],
+            },
             startsAt: { $gte: new Date(oneWeekAgo) },
             $or: [
               {
@@ -196,7 +193,6 @@ export default async function createRoutine({
         allSolutions,
         routineStartDate,
         tasksToProlong: draftTasksToProlong,
-        canceledTaskKeys: latestMonthCanceledKeys,
         categoryName,
         latestCompletedTasks,
         incrementMultiplier,

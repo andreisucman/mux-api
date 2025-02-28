@@ -31,7 +31,6 @@ type Props = {
   currentSchedule: { [key: string]: ScheduleTaskType[] };
   userInfo: CreateRoutineUserInfoType;
   routineStartDate: string;
-  canceledTaskKeys: string[];
   allSolutions: CreateRoutineAllSolutionsType[];
   latestCompletedTasks: { [key: string]: any };
 };
@@ -45,7 +44,6 @@ export default async function addAdditionalTasks({
   incrementMultiplier = 1,
   currentSchedule,
   allSolutions,
-  canceledTaskKeys,
   routineStartDate,
   categoryName,
   latestCompletedTasks,
@@ -72,7 +70,6 @@ export default async function addAdditionalTasks({
 
     const areEnough = await getAreCurrentTasksEnough({
       allSolutions,
-      canceledTaskKeys,
       categoryName,
       partConcerns,
       taskFrequencyMap,
@@ -89,10 +86,6 @@ export default async function addAdditionalTasks({
 
     const currentSolutions = Object.keys(taskFrequencyMap);
 
-    const solutionsWithoutCanceled = allSolutions.filter(
-      (s) => !canceledTaskKeys.includes(s.key)
-    );
-
     const solutionsAndFrequencies = await doWithRetries(async () =>
       getAdditionalSolutionsAndFrequencies({
         userId: String(userId),
@@ -102,7 +95,7 @@ export default async function addAdditionalTasks({
         partConcerns,
         specialConsiderations,
         incrementMultiplier,
-        allSolutions: solutionsWithoutCanceled,
+        allSolutions,
         demographics,
         categoryName,
       })

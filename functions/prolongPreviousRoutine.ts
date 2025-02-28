@@ -27,7 +27,6 @@ type Props = {
   part: PartEnum;
   incrementMultiplier?: number;
   routineStartDate: string;
-  canceledTaskKeys: string[];
   partImages: ProgressImageType[];
   categoryName: CategoryNameEnum;
   partConcerns: UserConcernType[];
@@ -45,7 +44,6 @@ export default async function prolongPreviousRoutine({
   allSolutions,
   userInfo,
   incrementMultiplier = 1,
-  canceledTaskKeys,
   routineStartDate,
   tasksToProlong,
   latestCompletedTasks,
@@ -164,7 +162,6 @@ export default async function prolongPreviousRoutine({
         categoryName,
         allSolutions,
         partConcerns,
-        canceledTaskKeys,
         currentTasks: resetTasks,
         currentSchedule: schedule,
         latestCompletedTasks,

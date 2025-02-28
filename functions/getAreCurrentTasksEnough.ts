@@ -13,7 +13,6 @@ import { zodResponseFormat } from "openai/helpers/zod.mjs";
 type Props = {
   userId: string;
   taskFrequencyMap: { [key: string]: number };
-  canceledTaskKeys: string[];
   allSolutions: CreateRoutineAllSolutionsType[];
   partConcerns: UserConcernType[];
   categoryName: CategoryNameEnum;
@@ -24,7 +23,6 @@ export default async function getAreCurrentTasksEnough({
   partConcerns,
   categoryName,
   taskFrequencyMap,
-  canceledTaskKeys,
   userId,
 }: Props) {
   const callback = () =>
@@ -36,9 +34,6 @@ export default async function getAreCurrentTasksEnough({
 
   try {
     const concernsNames = partConcerns.map((c) => c.name);
-    const filteredSolutionsKeys = allSolutions
-      .filter((s) => !canceledTaskKeys.includes(s.key))
-      .map((obj) => obj.key);
 
     const IsEnoughResponseType = z.object({
       areEnough: z
@@ -48,9 +43,9 @@ export default async function getAreCurrentTasksEnough({
         ),
     });
 
-    const filteredSolutionsList = filteredSolutionsKeys.join(", ");
+    const solutionsList = allSolutions.map((obj) => obj.key).join(", ");
 
-    const checkIfEnoughSystem = `You are a dermatologist, dentist and fitness coach. The user tells you their concerns and gives their improvement routine with monthly frequencies for addressing the concerns. Your goal is to check if the number of solutions in their routine and their frequency is optimal for addressing their concerns, or if more solutions should be added from this list ${filteredSolutionsList}. Consider the solutions from the list ONLY.`;
+    const checkIfEnoughSystem = `You are a dermatologist, dentist and fitness coach. The user tells you their concerns and gives their improvement routine with monthly frequencies for addressing the concerns. Your goal is to check if the number of solutions in their routine and their frequency is optimal for addressing their concerns, or if more solutions should be added from this list ${solutionsList}. Consider the solutions from the list ONLY.`;
 
     const checkIfEnoughRuns: RunType[] = [
       {

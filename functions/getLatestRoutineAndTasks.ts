@@ -76,7 +76,7 @@ export default async function getLatestRoutinesAndTasks({
     };
 
     const tasks = await doWithRetries(async () => {
-      const sort = { startsAt: 1, part: -1 };
+      const sort = { startsAt: 1, status: 1, part: -1, name: 1 };
 
       const primaryResult = await db
         .collection("Task")
