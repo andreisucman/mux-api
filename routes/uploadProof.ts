@@ -32,6 +32,7 @@ import httpError from "@/helpers/httpError.js";
 import extractImagesAndTextFromVideo from "@/functions/extractImagesAndTextFromVideo.js";
 import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.js";
 import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
+import checkIfTaskIsAboutFood from "@/functions/checkIfTaskIsRelated.js";
 
 const route = Router();
 
@@ -102,10 +103,10 @@ route.post(
               part: 1,
               icon: 1,
               concern: 1,
+              instruction: 1,
               requisite: 1,
               routineId: 1,
               restDays: 1,
-              isRecipe: 1,
               isCreated: 1,
             },
           }
@@ -292,20 +293,16 @@ route.post(
         verdicts.filter((i) => i).length <
         Math.round(selectedProofImages.length / 2);
 
-      console.log("checkFailed", checkFailed);
-      console.log("verdicts", verdicts);
-      console.log("explanations", explanations);
-
-      // if (checkFailed) {
-      //   await addAnalysisStatusError({
-      //     originalMessage: explanations.join("\n"),
-      //     message:
-      //       "This submission doesn't satisfy the requirements from the instructions.",
-      //     userId: req.userId,
-      //     operationKey: taskId,
-      //   });
-      //   return;
-      // }
+      if (checkFailed) {
+        await addAnalysisStatusError({
+          originalMessage: explanations.join("\n"),
+          message:
+            "This submission doesn't satisfy the requirements from the instructions.",
+          userId: req.userId,
+          operationKey: taskId,
+        });
+        return;
+      }
 
       let mainThumbnail = { name: blurType, url: proofImages[0] };
       let mainUrl = { name: blurType, url };
@@ -392,10 +389,6 @@ route.post(
         userUpdatePayload.$set = { streakDates: newStreakDates };
       }
 
-      await doWithRetries(async () =>
-        db.collection("Proof").insertOne(newProof)
-      );
-
       const taskUpdate = {
         $set: {
           proofId: newProof._id,
@@ -426,8 +419,14 @@ route.post(
         )
       );
 
+      const isTaskAboutFood = await checkIfTaskIsAboutFood({
+        categoryName: CategoryNameEnum.PROOF,
+        instruction: taskInfo.instruction,
+        userId: req.userId,
+      });
+
       /* decrement the daily calories for food submissions */
-      if (taskInfo.isRecipe) {
+      if (isTaskAboutFood) {
         const { nutrition } = userInfo;
         const { remainingDailyCalories } = nutrition;
 
@@ -498,6 +497,10 @@ route.post(
           });
         }
       }
+
+      await doWithRetries(async () =>
+        db.collection("Proof").insertOne(newProof)
+      );
     } catch (err) {
       await addAnalysisStatusError({
         userId: String(req.userId),

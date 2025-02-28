@@ -6,22 +6,22 @@ import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import httpError from "@/helpers/httpError.js";
 
 type Props = {
-  text: string;
   userId: string;
-  condition: string;
+  instruction: string;
   categoryName: CategoryNameEnum;
 };
 
-export default async function checkIfTaskIsRelated({
+export default async function checkIfTaskIsAboutFood({
   userId,
-  text,
-  condition,
+  instruction,
   categoryName,
 }: Props) {
   try {
-    const systemContent = `The user gives you a description of an activity. Your goal is to check if it satisfies this condition: ${condition}. Your response is true if yes, and false if not.`;
+    const systemContent = `Is the user's task about cooking or eating a food? `;
 
-    const CheckTaskType = z.object({ satisfies: z.boolean() });
+    const CheckTaskType = z.object({
+      verdict: z.boolean().describe("true if yes, false if not"),
+    });
 
     const runs = [
       {
@@ -29,7 +29,7 @@ export default async function checkIfTaskIsRelated({
         content: [
           {
             type: "text",
-            text: `Activity description: ${text}.`,
+            text: `Task: ${instruction}.`,
           },
         ],
         responseFormat: zodResponseFormat(CheckTaskType, "CheckTaskType"),
@@ -41,10 +41,10 @@ export default async function checkIfTaskIsRelated({
       categoryName,
       systemContent: systemContent,
       runs: runs as RunType[],
-      functionName: "checkIfTaskIsRelated",
+      functionName: "checkIfTaskIsAboutFood",
     });
 
-    return response.satisfies;
+    return response.verdict;
   } catch (err) {
     throw httpError(err);
   }

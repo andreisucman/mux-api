@@ -15,14 +15,17 @@ export default async function createImageCollage({
 }: Props) {
   try {
     const endpoint = isGrid ? "createGridCollage" : "createGroupCollage";
+    const url = `${process.env.PROCESSING_SERVER_URL}/${endpoint}`;
+
+    const payload = JSON.stringify({
+      images,
+      collageSize,
+    });
 
     const collageResponse = await doWithRetries(async () =>
-      fetch(`${process.env.PROCESSING_SERVER_URL}/${endpoint}`, {
+      fetch(url, {
         method: "POST",
-        body: JSON.stringify({
-          images,
-          collageSize,
-        }),
+        body: payload,
         headers: {
           "content-type": "application/json",
         },

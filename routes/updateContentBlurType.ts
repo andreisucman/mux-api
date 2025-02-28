@@ -17,14 +17,12 @@ import { db } from "init.js";
 const route = Router();
 
 type UpdateProgressRecordProps = {
-  userId: string;
   images: ProgressImageType[];
   blurType: BlurTypeEnum;
   cookies: CookieOptions;
 };
 
 async function updateProgressRecord({
-  userId,
   images,
   cookies,
   blurType,
@@ -82,6 +80,41 @@ async function updateProgressRecord({
   }
 }
 
+type UpdateDiaryRecordProps = {
+  contentId: string;
+  newUrl: string;
+};
+
+async function updateDiaryRecord({
+  contentId,
+  newUrl,
+}: UpdateDiaryRecordProps) {
+  /* update diary activities */
+  const relevantDiaryRecord = await doWithRetries(async () =>
+    db
+      .collection("Diary")
+      .findOne(
+        { "activity.contentId": contentId },
+        { projection: { activity: 1 } }
+      )
+  );
+
+  if (relevantDiaryRecord) {
+    const activity = relevantDiaryRecord.activity.map((a) =>
+      a.contentId === contentId ? { ...a, url: newUrl } : a
+    );
+
+    await doWithRetries(async () =>
+      db
+        .collection("Diary")
+        .updateOne(
+          { _id: new ObjectId(relevantDiaryRecord._id) },
+          { $set: { activity } }
+        )
+    );
+  }
+}
+
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
@@ -121,14 +154,12 @@ route.post(
         const { images, initialImages, part } = relevantRecord as ProgressType;
 
         const { images: updatedImages } = await updateProgressRecord({
-          userId: req.userId,
           images,
           blurType,
           cookies: req.cookies,
         });
 
         const { images: updatedInitialImages } = await updateProgressRecord({
-          userId: req.userId,
           images: initialImages,
           blurType,
           cookies: req.cookies,
@@ -151,55 +182,66 @@ route.post(
         const { urls, thumbnails } = relevantRecord;
 
         const existingBlurRecord = urls.find(
-          (rec: { name: string }) => rec.name === blurType
+          (rec: { name: string; url: string }) => rec.name === blurType
         );
 
         const existingThumbnailRecord = thumbnails.find(
-          (rec: { name: string }) => rec.name === blurType
+          (rec: { name: string; url: string }) => rec.name === blurType
         );
 
         if (existingBlurRecord) {
           message.mainUrl = existingBlurRecord;
           message.mainThumbnail = existingThumbnailRecord;
+
+          await doWithRetries(async () =>
+            db
+              .collection(collection)
+              .updateOne({ _id: new ObjectId(contentId) }, { $set: message })
+          );
+
+          await updateDiaryRecord({
+            contentId,
+            newUrl: existingBlurRecord.url,
+          });
         } else {
-          if (contentCategory === "proof") {
-            const originalUrl = urls.find(
-              (r: BlurredUrlType) => r.name === "original"
+          const originalUrl = urls.find(
+            (r: BlurredUrlType) => r.name === "original"
+          );
+          const extension = originalUrl.url.split(".").pop();
+          const isVideo = extension === "webm" || extension === "mp4";
+
+          const blurredVideoResponse = await blurContent({
+            blurType,
+            endpoint: isVideo ? "blurVideo" : "blurImage",
+            originalUrl: originalUrl.url,
+            cookies: req.cookies,
+          });
+
+          const { hash, url, thumbnail } = blurredVideoResponse || {};
+
+          if (url) {
+            const newMainUrl = { name: blurType, url };
+            const newUrls = [...urls, newMainUrl];
+            const newMainThumbnail = { name: blurType, url: thumbnail };
+            const newThumbnails = [...thumbnails, newMainThumbnail];
+
+            message.mainUrl = newMainUrl;
+            message.urls = newUrls;
+            message.mainThumbnail = newMainThumbnail;
+            message.thumbnails = newThumbnails;
+
+            await doWithRetries(async () =>
+              db
+                .collection(collection)
+                .updateOne({ _id: new ObjectId(contentId) }, { $set: message })
             );
-            const extension = originalUrl.url.split(".").pop();
-            const isVideo = extension === "webm" || extension === "mp4";
 
-            const blurredVideoResponse = await blurContent({
-              blurType,
-              endpoint: isVideo ? "blurVideo" : "blurImage",
-              originalUrl: originalUrl.url,
-              cookies: req.cookies,
-            });
-
-            const { hash, url, thumbnail } = blurredVideoResponse || {};
-
-            if (url) {
-              const newMainUrl = { name: blurType, url };
-              const newUrls = [...urls, newMainUrl];
-              const newMainThumbnail = { name: blurType, url: thumbnail };
-              const newThumbnails = [...thumbnails, newMainThumbnail];
-
-              message.mainUrl = newMainUrl;
-              message.urls = newUrls;
-              message.mainThumbnail = newMainThumbnail;
-              message.thumbnails = newThumbnails;
-            } else {
-              message.hash = hash;
-            }
+            await updateDiaryRecord({ contentId, newUrl: newMainUrl.url });
+          } else {
+            message.hash = hash;
           }
         }
       }
-
-      await doWithRetries(async () =>
-        db
-          .collection(collection)
-          .updateOne({ _id: new ObjectId(contentId) }, { $set: message })
-      );
 
       res.status(200).json({ message });
     } catch (err) {
