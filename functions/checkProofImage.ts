@@ -20,7 +20,7 @@ export default async function checkProofImage({
   categoryName,
 }: Props) {
   try {
-    const systemContent = `You are given a frame from the video. Does it meet the following requisite: ${requisite}? Format your response as a JSON object with the following structure: {verdict: false if not, true if yes, explanation: explain to the user what is wrong with the video in the 2nd tense (you/your) and ask to retry}.`;
+    const systemContent = `You are given a frame from the video. Does it appear like the user did what is requested in the following requisite: ${requisite}? Don't be strict, decline only if the process on the image is entirely irrelevant. Format your response as a JSON object with the following structure: {verdict: false if not, true if yes, explanation: explain to the user what is wrong with the video in the 2nd tense (you/your) and ask to retry}.`;
 
     const CheckProofImageResponseType = z.object({
       verdict: z

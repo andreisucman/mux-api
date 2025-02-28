@@ -86,7 +86,7 @@ export default async function prolongPreviousRoutine({
         startsAt,
         expiresAt,
         part,
-        isSubmitted: false,
+        completedAt: null,
       };
 
       if (rest.recipe) {

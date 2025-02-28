@@ -361,7 +361,6 @@ export type TaskType = {
   part: PartEnum;
   status: TaskStatusEnum;
   concern: string;
-  isSubmitted: boolean;
   proofEnabled: boolean;
   proofId: string;
   isCreated: boolean;

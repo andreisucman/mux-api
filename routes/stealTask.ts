@@ -83,7 +83,7 @@ route.post(
       taskToAdd = {
         ...taskToAdd,
         proofEnabled: true,
-        isSubmitted: false,
+        completedAt: null,
         userName: userInfo.name,
         stolenFrom: followingUserName,
       };

@@ -116,7 +116,7 @@ route.post(
         routineId: newRoutineId,
         proofEnabled: true,
         status: TaskStatusEnum.ACTIVE,
-        isSubmitted: false,
+        completedAt: null,
         userName: userInfo.name,
         stolenFrom: userName,
       }));

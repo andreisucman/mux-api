@@ -82,7 +82,6 @@ route.post(
         ...currentTask,
         startsAt: newStartsAt,
         expiresAt: newExpiresAt,
-        isSubmitted: false,
         proofId: null,
         completedAt: null,
         nextCanStartDate: newNextCanStartDate,
