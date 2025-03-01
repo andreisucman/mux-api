@@ -1,6 +1,5 @@
 import * as dotenv from "dotenv";
 dotenv.config();
-import fs from "fs/promises";
 import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import updateContentPublicity from "functions/updateContentPublicity.js";
@@ -10,10 +9,14 @@ import { ModerationStatusEnum } from "@/types.js";
 import getEmailContent from "@/helpers/getEmailContent.js";
 import sendEmail from "./sendEmail.js";
 import updateAnalytics from "./updateAnalytics.js";
+import Stripe from "stripe";
 
 /* Stripe requires the raw body to construct the event */
-export default async function handleConnectWebhook(event: any) {
-  const object = event.data.object;
+export default async function handleConnectWebhook(event: Stripe.Event) {
+  const data = event.data as
+    | Stripe.AccountUpdatedEvent.Data
+    | Stripe.TransferUpdatedEvent.Data;
+  const object = data.object;
 
   if (event.type !== "account.updated" && event.type !== "transfer.updated")
     return;
@@ -42,10 +45,11 @@ export default async function handleConnectWebhook(event: any) {
         payoutsEnabled: currentPayoutsEnabled,
         detailsSubmitted: currentDetailsSubmitted,
         payoutsDisabledUserNotifiedOn,
-        email,
       } = userInfo.club.payouts;
 
-      const { payouts_enabled, requirements, details_submitted } = object || {};
+      const { object } = data as Stripe.AccountUpdatedEvent.Data;
+      const { payouts_enabled, requirements, details_submitted, email } =
+        object;
       const { disabled_reason } = requirements || {};
 
       const updatePayload: { [key: string]: any } = {
@@ -54,7 +58,7 @@ export default async function handleConnectWebhook(event: any) {
         "club.payouts.disabledReason": disabled_reason,
       };
 
-      if (!payouts_enabled) {
+      if (!payouts_enabled && details_submitted) {
         updatePayload["club.privacy"] = defaultClubPrivacy;
 
         if (!payoutsDisabledUserNotifiedOn) {
@@ -114,10 +118,10 @@ export default async function handleConnectWebhook(event: any) {
 
   if (event.type === "transfer.updated") {
     try {
-      const { amount, status } = object || {};
+      const { object } = data as Stripe.TransferUpdatedEvent.Data;
+      const { amount } = object || {};
 
-      if (status !== "paid" || typeof amount !== "number" || amount <= 0)
-        return;
+      if (typeof amount !== "number" || amount <= 0) return;
 
       await doWithRetries(async () =>
         db.collection("User").updateOne(

@@ -337,7 +337,7 @@ export default async function getAdditionalSolutionsAndFrequencies({
       valuesWithConcerns.push(record);
     }
 
-    return valuesWithConcerns;
+    return valuesWithConcerns.sort((a, b) => a.name.localeCompare(b.name));
   } catch (error) {
     throw httpError(error);
   }

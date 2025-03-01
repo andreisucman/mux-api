@@ -383,8 +383,6 @@ route.post(
           timeZone,
         });
 
-        console.log("streaksToIncrement", streaksToIncrement);
-
         userUpdatePayload.$inc = streaksToIncrement;
         userUpdatePayload.$set = { streakDates: newStreakDates };
       }
@@ -435,6 +433,7 @@ route.post(
           url: selectedProofImages[0],
           categoryName: CategoryNameEnum.PROOF,
           onlyCalories: true,
+          taskDescription: taskInfo.description,
         });
 
         const { energy } = foodAnalysis;

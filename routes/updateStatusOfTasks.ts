@@ -52,17 +52,18 @@ route.post(
     }
 
     try {
+      const tasksToUpdateFilter = {
+        _id: { $in: taskIds.map((id: string) => new ObjectId(id)) },
+        userId: new ObjectId(req.userId),
+        expiresAt: { $gt: new Date() },
+      };
+
       const tasksToUpdate = await doWithRetries(async () =>
         db
           .collection("Task")
-          .find(
-            {
-              _id: { $in: taskIds.map((id: string) => new ObjectId(id)) },
-              userId: new ObjectId(req.userId),
-              expiresAt: { $gt: new Date() },
-            },
-            { projection: { part: 1, isCreated: 1, routineId: 1, type: 1 } }
-          )
+          .find(tasksToUpdateFilter, {
+            projection: { part: 1, isCreated: 1, routineId: 1, type: 1 },
+          })
           .toArray()
       );
 
@@ -95,7 +96,7 @@ route.post(
             _id: { $in: relevantTaskIds },
             userId: new ObjectId(req.userId),
           },
-          { $set: { status: newStatus } }
+          { $set: { status: newStatus,  } }
         )
       );
 
@@ -159,12 +160,15 @@ route.post(
 
       const typesUpdated = [...new Set(tasksToUpdate.map((t) => t.type))];
 
+      const filter: { [key: string]: any } = {
+        type: { $in: typesUpdated },
+      };
+
+      if (routineStatus) filter.status = routineStatus;
+
       const response = await getLatestRoutineAndTasks({
         userId: req.userId,
-        filter: {
-          type: { $in: typesUpdated },
-          status: routineStatus,
-        },
+        filter,
         returnOnlyRoutines,
       });
 

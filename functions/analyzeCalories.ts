@@ -5,10 +5,13 @@ import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import httpError from "@/helpers/httpError.js";
 import { CategoryNameEnum } from "@/types.js";
 import { urlToBase64 } from "@/helpers/utils.js";
+import { MessageContentPartParam } from "openai/resources/beta/threads/messages.mjs";
+import { ChatCompletionContentPart } from "openai/resources/index.mjs";
 
 type Props = {
   userId: string;
   url: string;
+  taskDescription?: string;
   userAbout?: string;
   calorieGoal?: number;
   onlyCalories?: boolean;
@@ -18,13 +21,14 @@ type Props = {
 export default async function analyzeCalories({
   url,
   userId,
+  taskDescription,
   userAbout,
   calorieGoal,
   categoryName,
   onlyCalories,
 }: Props) {
   try {
-    const systemContent = `You are a food composition analysis expert. The user gives you an image of food. Your goal is to determine its name, amount, and how much energy, protein, carbohydrates and fats it has. Consider:  1. whether the ingredients are cooked or raw, 2. the size of the plate and and the proportion of the products in it. If you can't say for sure make your best guess. Your response must be less than 20 words.`;
+    let systemContent = `You are a food composition analysis expert. The user gives you an image of food. Your goal is to determine its name, amount, and how much energy, protein, carbohydrates and fats it has. Consider:  1. whether the ingredients are cooked or raw, 2. the size of the plate and and the proportion of the products in it. If you can't say for sure make your best guess. Your response must be less than 20 words.`;
 
     const AnalyzeCaloriesResponseFormat = z.object({
       foodName: z.string().describe("name of the dish"),
@@ -36,15 +40,24 @@ export default async function analyzeCalories({
       fiber: z.number().describe("number of fibers"),
     });
 
+    const content: ChatCompletionContentPart[] = [
+      {
+        type: "image_url",
+        image_url: { url: await urlToBase64(url), detail: "low" },
+      },
+    ];
+
+    if (taskDescription) {
+      content.push({
+        type: "text",
+        text: `The image is related to this task: ${taskDescription}`,
+      });
+    }
+
     const runs: RunType[] = [
       {
         isMini: true,
-        content: [
-          {
-            type: "image_url",
-            image_url: { url: await urlToBase64(url), detail: "low" },
-          },
-        ],
+        content,
       },
       {
         isMini: true,

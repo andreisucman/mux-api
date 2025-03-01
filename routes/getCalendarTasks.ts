@@ -55,7 +55,7 @@ route.get(
             expiresAt: 1,
             startsAt: 1,
           })
-          .sort({ startsAt: 1, part: -1 })
+          .sort({ startsAt: 1, part: -1, name: 1 })
           .toArray()
       );
 

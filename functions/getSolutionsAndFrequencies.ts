@@ -31,7 +31,7 @@ type Props = {
   partImages: ProgressImageType[];
   categoryName: CategoryNameEnum;
   demographics: DemographicsType;
-  incrementMultiplier?:number;
+  incrementMultiplier?: number;
 };
 
 export default async function getSolutionsAndFrequencies({
@@ -333,7 +333,7 @@ export default async function getSolutionsAndFrequencies({
       valuesWithConcerns.push(record);
     }
 
-    return valuesWithConcerns;
+    return valuesWithConcerns.sort((a, b) => a.name.localeCompare(b.name));
   } catch (error) {
     throw httpError(error);
   }
