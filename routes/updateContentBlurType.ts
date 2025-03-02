@@ -22,7 +22,7 @@ type UpdateProgressRecordProps = {
   cookies: CookieOptions;
 };
 
-async function updateProgressRecord({
+async function getUpdatedProgressRecord({
   images,
   cookies,
   blurType,
@@ -51,14 +51,16 @@ async function updateProgressRecord({
 
     return { images: newImages };
   } else {
-    const promises = images.map((obj: { mainUrl: BlurredUrlType }) =>
-      blurContent({
+    const promises = images.map((obj: ProgressImageType) => {
+      const original = obj.urls.find((urlObj) => urlObj.name === "original");
+
+      return blurContent({
         blurType,
         cookies,
         endpoint: "blurImage",
-        originalUrl: obj.mainUrl.url,
-      })
-    );
+        originalUrl: original.url,
+      });
+    });
 
     const blurredImages = await Promise.all(promises);
 
@@ -119,6 +121,7 @@ route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { blurType, contentCategory, contentId } = req.body;
+    console.log("req.body", req.body);
 
     if (
       !ObjectId.isValid(contentId) ||
@@ -153,22 +156,33 @@ route.post(
       if (contentCategory === "progress") {
         const { images, initialImages, part } = relevantRecord as ProgressType;
 
-        const { images: updatedImages } = await updateProgressRecord({
+        const { images: updatedImages } = await getUpdatedProgressRecord({
           images,
           blurType,
           cookies: req.cookies,
         });
 
-        const { images: updatedInitialImages } = await updateProgressRecord({
-          images: initialImages,
-          blurType,
-          cookies: req.cookies,
-        });
+        const { images: updatedInitialImages } = await getUpdatedProgressRecord(
+          {
+            images: initialImages,
+            blurType,
+            cookies: req.cookies,
+          }
+        );
 
         message = {
           images: updatedImages,
           initialImages: updatedInitialImages,
         };
+
+        await doWithRetries(() =>
+          db
+            .collection("Progress")
+            .updateOne(
+              { _id: new ObjectId(relevantRecord._id) },
+              { $set: message }
+            )
+        );
 
         await doWithRetries(() =>
           db

@@ -33,7 +33,8 @@ export default async function createImageCollage({
     );
 
     if (!collageResponse.ok) {
-      throw httpError("Server error");
+      const data = await collageResponse.json();
+      throw httpError(JSON.stringify(data));
     }
 
     const { message: collageImage } = (await collageResponse.json()) || {};
