@@ -19,6 +19,7 @@ COPY --from=build /usr/src/app/package*.json ./
 
 ENV NODE_ENV=production
 
+RUN apk add --no-cache libc6-compat
 RUN npm install --include=optional --production
 
 EXPOSE 3001
