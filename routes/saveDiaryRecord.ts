@@ -103,24 +103,6 @@ route.post(
         projection: { name: 1, avatar: 1, "club.privacy": 1 },
       });
 
-      const imagesOfActivities = activity.map((a: DiaryActivityType) =>
-        a.contentType === "image" ? a.url : a.thumbnail
-      );
-
-      const imagesForCollage = imagesOfActivities.slice(0, 25);
-
-      const collageSize = Math.round(
-        Math.max(
-          Math.min(Math.sqrt(imagesForCollage.length * 256 * 250), 2048),
-          768
-        )
-      );
-      const collageImage = await createImageCollage({
-        images: imagesForCollage,
-        collageSize,
-        isGrid: true,
-      });
-
       const embedding = await createMultimodalEmbedding({
         categoryName: CategoryNameEnum.DIARY,
         text: body.message,
