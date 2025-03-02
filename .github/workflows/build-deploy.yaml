@@ -32,7 +32,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_REPO_NAME }}:${{ github.sha }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_REPO_NAME }}:${{ github.sha }}
 
       - name: Set up Kubernetes context
         uses: azure/k8s-set-context@v3
@@ -42,5 +42,5 @@ jobs:
 
       - name: Update Kubernetes deployment
         run: |
-          kubectl set image deployment/${{ env.DEPLOYMENT_NAME }} ${{ env.CONTAINER_NAME }}=${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_REPO_NAME }}:${{ github.sha }} -n ${{ env.K8S_NAMESPACE }}
+          kubectl set image deployment/${{ env.DEPLOYMENT_NAME }} ${{ env.CONTAINER_NAME }}=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_REPO_NAME }}:${{ github.sha }} -n ${{ env.K8S_NAMESPACE }}
           kubectl rollout status deployment/${{ env.DEPLOYMENT_NAME }} -n ${{ env.K8S_NAMESPACE }}
