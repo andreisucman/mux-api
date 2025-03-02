@@ -5,7 +5,7 @@ import { ObjectId } from "mongodb";
 import doWithRetries from "@/helpers/doWithRetries.js";
 import { AskOpenaiProps, RunType } from "types/askOpenaiTypes.js";
 import { CategoryNameEnum } from "@/types.js";
-import askOpenai from "@/functions/askOpenai.js";
+import askOpenai from "functions/askOpenai.js";
 import generateSeed from "@/helpers/generateSeed.js";
 import { ChatCompletionMessageParam } from "openai/resources/index.mjs";
 import httpError from "@/helpers/httpError.js";
