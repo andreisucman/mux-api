@@ -1,7 +1,9 @@
 import { PartEnum, PrivacyType } from "types.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
 import httpError from "./httpError.js";
-import { daysFrom } from "./utils.js";
+import { daysFrom, setToUtcMidnight } from "./utils.js";
+import doWithRetries from "./doWithRetries.js";
+import { db } from "@/init.js";
 
 type StreakDatesType = {
   default: { [key: string]: Date };
@@ -21,23 +23,33 @@ function getCanIncrement(
 ) {
   if (!typeStreakDates[part]) return true;
 
-  return new Date() > new Date(typeStreakDates[part]);
+  const todayMidnight = setToUtcMidnight(new Date());
+  const streakDate = setToUtcMidnight(new Date(typeStreakDates[part]));
+
+  return todayMidnight > streakDate;
 }
 
-export default function getStreaksToIncrement({
+export default async function getStreaksToIncrement({
   part,
   timeZone,
   privacy,
   streakDates,
 }: Props) {
   try {
+    const todayMidnight = setToMidnight({ date: new Date(), timeZone });
+
+    const remainingActiveTasksForPart = await doWithRetries(async () =>
+      db.collection("Task").countDocuments({
+        startsAt: { $gte: todayMidnight },
+        expiresAt: { $lt: daysFrom({ days: 1, date: todayMidnight }) },
+        status: "active",
+        part,
+      })
+    );
+    if (remainingActiveTasksForPart > 0) return;
+    
     let canIncrementDefault = getCanIncrement(streakDates.default, part);
     let canIncrementClub = getCanIncrement(streakDates.club, part);
-
-    const midnightUTCofTomorrow = setToMidnight({
-      date: daysFrom({ days: 1 }),
-      timeZone,
-    });
 
     const streaksToIncrement: { [key: string]: number } = {};
     let newStreakDates = { ...streakDates };
@@ -63,7 +75,7 @@ export default function getStreaksToIncrement({
         ...newStreakDates,
         default: {
           ...newStreakDates.default,
-          [part]: midnightUTCofTomorrow,
+          [part]: todayMidnight,
         },
       };
     }
@@ -95,7 +107,7 @@ export default function getStreaksToIncrement({
           ...newStreakDates,
           club: {
             ...newStreakDates.club,
-            [part]: midnightUTCofTomorrow,
+            [part]: todayMidnight,
           },
         };
       }

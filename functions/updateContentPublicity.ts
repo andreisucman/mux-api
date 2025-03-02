@@ -37,7 +37,7 @@ export default async function updateContentPublicity({
 
     const toUpdateProgressAndBA = progressDifferences.map(
       (obj: { name: string; value: boolean }) => ({
-        updateOne: {
+        updateMany: {
           filter: {
             userId: new ObjectId(userId),
             part: obj.name,
@@ -57,7 +57,7 @@ export default async function updateContentPublicity({
 
     const toUpdateProof = proofDifferences.map(
       (obj: { name: string; value: boolean }) => ({
-        updateOne: {
+        updateMany: {
           filter: {
             userId: new ObjectId(userId),
             part: obj.name,
@@ -77,7 +77,7 @@ export default async function updateContentPublicity({
 
     const toUpdateDiary = diaryDifferences.map(
       (obj: { name: string; value: boolean }) => ({
-        updateOne: {
+        updateMany: {
           filter: {
             userId: new ObjectId(userId),
           },
@@ -98,7 +98,7 @@ export default async function updateContentPublicity({
 
     const toUpdateAnswers = answerDifference.map(
       (obj: { name: string; value: boolean }) => ({
-        updateOne: {
+        updateMany: {
           filter: {
             userId: new ObjectId(userId),
           },

@@ -8,8 +8,7 @@
     "build": "tsc && tsc-alias && cpx data/emails/**/* dist/data/emails",
     "start": "node dist/index.js",
     "dev": "npx tsx index.js",
-    "lint": "eslint .",
-    "build:post": "find dist -type f -name '*.js' -exec sed -i 's/from \\(.*\\)/from \\1.js/g' {} +"
+    "lint": "eslint ."
   },
   "type": "module",
   "keywords": [],

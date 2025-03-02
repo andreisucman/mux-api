@@ -121,7 +121,6 @@ route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { blurType, contentCategory, contentId } = req.body;
-    console.log("req.body", req.body);
 
     if (
       !ObjectId.isValid(contentId) ||

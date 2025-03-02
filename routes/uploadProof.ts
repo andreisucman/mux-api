@@ -365,6 +365,19 @@ route.post(
 
       const userUpdatePayload: { [key: string]: any } = {};
 
+      const { streakDates, timeZone } = userInfo;
+      const { newStreakDates, streaksToIncrement } =
+        await getStreaksToIncrement({
+          privacy,
+          part,
+          timeZone,
+          streakDates,
+        });
+
+      if (streaksToIncrement) userUpdatePayload.$inc = streaksToIncrement;
+      if (newStreakDates)
+        userUpdatePayload.$set = { streakDates: newStreakDates };
+
       if (privacy) {
         const proofPrivacy = privacy.find((pr) => pr.name === "proof");
 
@@ -374,17 +387,6 @@ route.post(
           );
           newProof.isPublic = relevantPartPrivacy.value;
         }
-
-        const { streakDates, timeZone } = userInfo;
-        const { newStreakDates, streaksToIncrement } = getStreaksToIncrement({
-          privacy,
-          part,
-          streakDates,
-          timeZone,
-        });
-
-        userUpdatePayload.$inc = streaksToIncrement;
-        userUpdatePayload.$set = { streakDates: newStreakDates };
       }
 
       const taskUpdate = {
