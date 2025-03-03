@@ -2,17 +2,20 @@ import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
-import { daysFrom, setToUtcMidnight } from "@/helpers/utils.js";
+import { daysFrom } from "@/helpers/utils.js";
 import { RoutineStatusEnum } from "@/types.js";
+import setToMidnight from "@/helpers/setToMidnight.js";
 
 type Props = {
   userId: string;
+  timeZone: string;
   filter?: { [key: string]: any };
   returnOnlyRoutines?: boolean;
 };
 
 export default async function getLatestRoutinesAndTasks({
   userId,
+  timeZone,
   filter = {},
   returnOnlyRoutines,
 }: Props) {
@@ -51,12 +54,22 @@ export default async function getLatestRoutinesAndTasks({
 
     const theEarliestRoutine = routines[0];
 
-    const todayUtcMidnight = setToUtcMidnight(daysFrom({ days: -1 }));
-    const tomorrowUtcMidnight = setToUtcMidnight(new Date());
-    const startsAtFrom = setToUtcMidnight(theEarliestRoutine.startsAt);
-    const startsAtTo = setToUtcMidnight(
-      daysFrom({ date: startsAtFrom, days: 1 })
-    );
+    const todayMidnight = setToMidnight({
+      date: new Date(),
+      timeZone,
+    });
+    const tomorrowMidnight = setToMidnight({
+      date: daysFrom({ days: 1 }),
+      timeZone,
+    });
+    const startsAtFrom = setToMidnight({
+      date: theEarliestRoutine.startsAt,
+      timeZone,
+    });
+    const startsAtTo = setToMidnight({
+      date: daysFrom({ date: startsAtFrom, days: 1 }),
+      timeZone,
+    });
 
     const project = {
       _id: 1,
@@ -84,7 +97,7 @@ export default async function getLatestRoutinesAndTasks({
           {
             $match: {
               userId: new ObjectId(userId),
-              startsAt: { $gte: todayUtcMidnight, $lt: tomorrowUtcMidnight },
+              startsAt: { $gte: todayMidnight, $lt: tomorrowMidnight },
               status: { $in: ["active", "completed"] },
             },
           },
@@ -105,7 +118,7 @@ export default async function getLatestRoutinesAndTasks({
               userId: new ObjectId(userId),
               $and: [
                 { startsAt: { $gte: startsAtFrom, $lt: startsAtTo } },
-                { startsAt: { $gte: todayUtcMidnight } },
+                { startsAt: { $gte: todayMidnight } },
               ],
               status: { $in: ["active", "completed"] },
             },

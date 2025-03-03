@@ -9,7 +9,6 @@ export type DiaryRecordType = {
   userId: ObjectId;
   transcription: string;
   createdAt: Date;
-  collageImage: string;
   userName: string | null;
   avatar: { [key: string]: any } | null;
   moderationStatus: ModerationStatusEnum;

@@ -14,6 +14,7 @@ const route = Router();
 type Props = {
   taskIds: string[];
   isVoid?: boolean;
+  timeZone?: string;
   returnOnlyRoutines?: boolean;
   newStatus: TaskStatusEnum;
   routineStatus?: RoutineStatusEnum;
@@ -41,6 +42,7 @@ route.post(
       routineStatus,
       returnOnlyRoutines,
       isVoid,
+      timeZone,
     }: Props = req.body;
 
     if (
@@ -96,7 +98,7 @@ route.post(
             _id: { $in: relevantTaskIds },
             userId: new ObjectId(req.userId),
           },
-          { $set: { status: newStatus,  } }
+          { $set: { status: newStatus } }
         )
       );
 
@@ -170,6 +172,7 @@ route.post(
         userId: req.userId,
         filter,
         returnOnlyRoutines,
+        timeZone,
       });
 
       res.status(200).json({ message: response });

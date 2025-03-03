@@ -4,7 +4,7 @@ import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import checkProofImage from "functions/checkProofImage.js";
-import { daysFrom, urlToBase64 } from "helpers/utils.js";
+import { daysFrom, delayExecution, urlToBase64 } from "helpers/utils.js";
 import isMajorityOfImagesIdentical from "functions/isMajorityOfImagesIdentical.js";
 import { extensionTypeMap } from "data/extensionTypeMap.js";
 import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
@@ -67,6 +67,8 @@ route.post(
           { upsert: true }
         )
       );
+
+      await delayExecution(2000);
 
       res.status(200).end();
 

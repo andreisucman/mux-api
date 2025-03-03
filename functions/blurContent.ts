@@ -1,8 +1,8 @@
-import httpError from "@/helpers/httpError.js";
 import * as dotenv from "dotenv";
-import { CookieOptions } from "express";
 dotenv.config();
 
+import { CookieOptions } from "express";
+import httpError from "@/helpers/httpError.js";
 import { BlurTypeEnum } from "types.js";
 
 type Props = {

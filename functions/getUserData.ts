@@ -25,7 +25,7 @@ async function getUserData({ userId }: Props) {
 
     if (!userInfo) return null;
 
-    const { routines, tasks } = await getLatestRoutinesAndTasks({ userId });
+    const { routines, tasks } = await getLatestRoutinesAndTasks({ userId, timeZone: userInfo.timeZone });
 
     const payload: any = {
       ...userInfo,

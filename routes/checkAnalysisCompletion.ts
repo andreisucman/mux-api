@@ -63,7 +63,10 @@ route.post(
       }
 
       const userData = await getUserData({ userId });
-      const { routines, tasks } = await getLatestRoutinesAndTasks({ userId });
+      const { routines, tasks } = await getLatestRoutinesAndTasks({
+        userId,
+        timeZone: userData.timeZone,
+      });
 
       res.status(200).json({
         message: {

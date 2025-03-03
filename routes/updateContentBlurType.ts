@@ -78,6 +78,7 @@ async function getUpdatedProgressRecord({
         urls: updatedUrls,
       });
     }
+
     return { images: newImages };
   }
 }

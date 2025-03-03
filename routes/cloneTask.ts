@@ -24,7 +24,7 @@ const route = Router();
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { taskId, startDate, resetNewTask, returnTask } = req.body;
+    const { taskId, startDate, timeZone, resetNewTask, returnTask } = req.body;
 
     const { isValidDate, isFutureDate } = checkDateValidity(startDate);
 
@@ -58,8 +58,7 @@ route.post(
 
       if (!currentRoutine) throw httpError(`Routine ${routineId} not found`);
 
-      const { allTasks, finalSchedule, lastDate, status } =
-        currentRoutine || {};
+      const { allTasks, finalSchedule, status } = currentRoutine || {};
 
       if (status !== RoutineStatusEnum.ACTIVE) {
         res.status(200).json({ error: `Can't edit an inactive routine` });
@@ -167,6 +166,7 @@ route.post(
         userId: req.userId,
         filter: routinesFilter,
         returnOnlyRoutines: true,
+        timeZone,
       });
 
       if (routines.length > 0) result.routine = routines[0];

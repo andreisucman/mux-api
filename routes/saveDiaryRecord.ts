@@ -15,14 +15,10 @@ import {
 import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 import { daysFrom } from "@/helpers/utils.js";
 import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.js";
-import {
-  DiaryActivityType,
-  DiaryRecordType,
-} from "@/types/saveDiaryRecordTypes.js";
+import { DiaryRecordType } from "@/types/saveDiaryRecordTypes.js";
 import getUserInfo from "@/functions/getUserInfo.js";
-import createMultimodalEmbedding from "@/functions/createMultiModalEmbedding.js";
-import createImageCollage from "@/functions/createImageCollage.js";
 import { db } from "init.js";
+import createTextEmbedding from "@/functions/createTextEmbedding.js";
 
 const route = Router();
 
@@ -103,29 +99,11 @@ route.post(
         projection: { name: 1, avatar: 1, "club.privacy": 1 },
       });
 
-      const imagesOfActivities = activity.map((a: DiaryActivityType) =>
-        a.contentType === "image" ? a.url : a.thumbnail
-      );
-
-      const imagesForCollage = imagesOfActivities.slice(0, 25);
-
-      const collageSize = Math.round(
-        Math.max(
-          Math.min(Math.sqrt(imagesForCollage.length * 256 * 250), 2048),
-          768
-        )
-      );
-      const collageImage = await createImageCollage({
-        images: imagesForCollage,
-        collageSize,
-        isGrid: true,
-      });
-
-      const embedding = await createMultimodalEmbedding({
+      const embedding = await createTextEmbedding({
         categoryName: CategoryNameEnum.DIARY,
         text: body.message,
         userId: req.userId,
-        imageUrl: collageImage,
+        dimensions: 1536,
       });
 
       const newDiaryRecord: DiaryRecordType = {
@@ -135,7 +113,6 @@ route.post(
         embedding,
         userName: null,
         avatar: null,
-        collageImage,
         userId: new ObjectId(req.userId),
         transcription: body.message,
         createdAt: new Date(),
