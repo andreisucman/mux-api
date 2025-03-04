@@ -33,6 +33,7 @@ type Props = {
   blurType: BlurTypeEnum;
   defaultToUpdateUser?: { $set: { [key: string]: unknown } };
   club: ClubDataType;
+  enableScanAnalysis: boolean;
   concerns: UserConcernType[] | null;
   toAnalyze: ToAnalyzeType[];
   newSpecialConsiderations: string;
@@ -57,6 +58,7 @@ export default async function analyzeAppearance({
   defaultToUpdateUser,
   latestScores,
   latestScoresDifference,
+  enableScanAnalysis,
   toAnalyze,
   demographics,
   newSpecialConsiderations,
@@ -64,7 +66,11 @@ export default async function analyzeAppearance({
   try {
     const parts = [...new Set(toAnalyze.map((obj) => obj.part))];
 
-    const toUpdateUser = { $set: {} as { [key: string]: any } };
+    const toUpdateUser: { [key: string]: any } = { $set: {}, $inc: {} };
+
+    if (enableScanAnalysis) {
+      toUpdateUser.$inc.scanAnalysisQuota = -1;
+    }
 
     if (defaultToUpdateUser) {
       toUpdateUser.$set = { ...(defaultToUpdateUser.$set || {}) };
@@ -128,6 +134,7 @@ export default async function analyzeAppearance({
           categoryName,
           demographics,
           toAnalyze,
+          enableScanAnalysis,
           specialConsiderations: rephrasedSpecialConsiderations,
         })
       );

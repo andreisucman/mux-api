@@ -41,6 +41,7 @@ export default async function createRoutine({
   routineStartDate,
   specialConsiderations,
 }: Props) {
+  
   try {
     if (concerns.length === 0) throw new Error("No concerns");
 
@@ -136,7 +137,7 @@ export default async function createRoutine({
     const latestCompletedTasks = await doWithRetries(async () =>
       getLatestCompletedTasks({
         userId,
-        from: daysFrom({ date: new Date(routineStartDate), days: -14 }),
+        from: daysFrom({ date: new Date(), days: -14 }),
       })
     );
 

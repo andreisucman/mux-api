@@ -23,18 +23,19 @@ const route = Router();
 type Props = {
   userId: string;
   blurType: BlurTypeEnum;
+  enableScanAnalysis: boolean;
 };
 
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { userId, blurType }: Props = req.body;
+    const { userId, blurType, enableScanAnalysis }: Props = req.body;
 
     const finalUserId = req.userId || userId;
 
     if (!ObjectId.isValid(finalUserId)) {
       res.status(400).json({
-        message: `userId: ${finalUserId} is missing`,
+        message: `userId: ${finalUserId} is missing.`,
       });
       return;
     }
@@ -50,6 +51,8 @@ route.post(
             projection: {
               name: 1,
               avatar: 1,
+              scanAnalysisQuota: 1,
+              requiredProgress: 1,
               toAnalyze: 1,
               demographics: 1,
               concerns: 1,
@@ -80,6 +83,8 @@ route.post(
         demographics,
         latestProgress,
         latestScores,
+        requiredProgress,
+        scanAnalysisQuota,
         latestScoresDifference,
         specialConsiderations,
       } = userInfo;
@@ -95,6 +100,15 @@ route.post(
         return;
       }
 
+      if (enableScanAnalysis) {
+        if (scanAnalysisQuota < 1) {
+          res.status(200).json({
+            error: "buy scan analysis",
+          });
+          return;
+        }
+      }
+
       await doWithRetries(async () =>
         db
           .collection("AnalysisStatus")
@@ -105,7 +119,10 @@ route.post(
           )
       );
 
-      res.status(200).end();
+      res.status(200).json({
+        requiredProgress,
+        toAnalyze,
+      });
 
       await analyzeAppearance({
         club,
@@ -116,6 +133,7 @@ route.post(
         concerns: concerns || [],
         nextScan,
         blurType,
+        enableScanAnalysis,
         categoryName: CategoryNameEnum.PROGRESSSCAN,
         demographics,
         toAnalyze: filteredToAnalyze,

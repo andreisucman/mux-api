@@ -11,6 +11,7 @@ route.post(
   "/",
   upload.array("files", 20),
   async (req: Request, res: Response, next: NextFunction) => {
+
     if (!req.files || req.files.length === 0) {
       res.status(400).json({ error: "No files uploaded." });
       return;

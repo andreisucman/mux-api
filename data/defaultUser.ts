@@ -147,6 +147,7 @@ export const defaultUser: UserType = {
   latestScores: { overall: 0, face: 0, mouth: 0, scalp: 0, body: 0 },
   latestScoresDifference: { overall: 0, face: 0, mouth: 0, scalp: 0, body: 0 },
   club: null,
+  scanAnalysisQuota: 1,
   latestProgress: {
     overall: 0,
     face: null,

@@ -18,7 +18,6 @@ import {
 } from "@/types/uploadProgressTypes.js";
 import checkCanScan from "@/helpers/checkCanScan.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
-import analyzeAppearance from "functions/analyzeAppearance.js";
 import formatDate from "@/helpers/formatDate.js";
 import httpError from "@/helpers/httpError.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
@@ -114,13 +113,13 @@ route.post(
         categoryName: CategoryNameEnum.PROGRESSSCAN,
       });
 
-      if (!isClearlyVisible) {
-        res.status(200).json({
-          error:
-            "The image is not clear. Try taking photos in daylight with no shadows or glitter obscuring your features.",
-        });
-        return;
-      }
+      // if (!isClearlyVisible) {
+      //   res.status(200).json({
+      //     error:
+      //       "The image is not clear. Try taking photos in daylight with no shadows or glitter obscuring your features.",
+      //   });
+      //   return;
+      // }
 
       if (numberOfPeople === 0) {
         res.status(200).json({
@@ -151,19 +150,7 @@ route.post(
             projection: {
               requiredProgress: 1,
               toAnalyze: 1,
-              demographics: 1,
-              concerns: 1,
-              city: 1,
-              country: 1,
-              timeZone: 1,
               nextScan: 1,
-              latestProgress: 1,
-              specialConsiderations: 1,
-              latestScoresDifference: 1,
-              latestScores: 1,
-              club: 1,
-              name: 1,
-              avatar: 1,
             },
           }
         )
@@ -171,19 +158,7 @@ route.post(
 
       if (!userInfo) throw httpError(`User ${finalUserId} not found`);
 
-      let {
-        name,
-        avatar,
-        requiredProgress,
-        toAnalyze,
-        club,
-        nextScan,
-        concerns,
-        demographics,
-        latestProgress,
-        latestScores,
-        latestScoresDifference,
-      } = userInfo;
+      let { requiredProgress, toAnalyze, nextScan } = userInfo;
 
       const { canScan, filteredToAnalyze, canScanDate } =
         checkCanScan({ nextScan, toAnalyze }) || {};
@@ -205,14 +180,14 @@ route.post(
       const contentUrlTypes = [];
 
       if (blurType) {
-        contentUrlTypes.push(
-          { name: "original", url: image },
-          {
+        contentUrlTypes.push({ name: "original", url: image });
+        if (blurType !== "original") {
+          contentUrlTypes.push({
             // for the is added to appear in the preview on the client
             name: blurType,
             url: blurredImage,
-          }
-        );
+          });
+        }
       }
 
       /* add the current uploaded info to the info to analyze */
@@ -228,66 +203,29 @@ route.post(
 
       let toUpdate: { $set: { [key: string]: any } } = {
         $set: {
+          specialConsiderations: newSpecialConsiderations,
           requiredProgress: remainingRequirements,
           toAnalyze: newToAnalyze,
         },
       };
 
       /* when all required info is uploaded start the analysis */
-      if (requiredProgress.length === 1) {
-        await doWithRetries(async () =>
-          db
-            .collection("AnalysisStatus")
-            .updateOne(
-              { userId: new ObjectId(finalUserId), operationKey: "progress" },
-              { $set: { isRunning: true, progress: 1, isError: null } },
-              { upsert: true }
-            )
-        );
-
-        res.status(200).json({
-          message: {
-            requiredProgress: remainingRequirements,
-            toAnalyze: newToAnalyze,
+      await doWithRetries(async () =>
+        db.collection("User").updateOne(
+          {
+            _id: new ObjectId(finalUserId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
           },
-        });
+          toUpdate
+        )
+      );
 
-        await analyzeAppearance({
-          name,
-          avatar,
-          club,
-          cookies: req.cookies,
-          userId: finalUserId,
-          blurType,
-          defaultToUpdateUser: toUpdate,
-          concerns: concerns || [],
-          nextScan,
-          demographics,
+      res.status(200).json({
+        message: {
+          requiredProgress: remainingRequirements,
           toAnalyze: newToAnalyze,
-          latestScores,
-          latestProgress,
-          categoryName: CategoryNameEnum.PROGRESSSCAN,
-          latestScoresDifference,
-          newSpecialConsiderations,
-        });
-      } else {
-        await doWithRetries(async () =>
-          db.collection("User").updateOne(
-            {
-              _id: new ObjectId(finalUserId),
-              moderationStatus: ModerationStatusEnum.ACTIVE,
-            },
-            toUpdate
-          )
-        );
-
-        res.status(200).json({
-          message: {
-            requiredProgress: remainingRequirements,
-            toAnalyze: newToAnalyze,
-          },
-        });
-      }
+        },
+      });
 
       updateAnalytics({
         userId: req.userId,

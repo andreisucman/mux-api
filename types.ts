@@ -91,6 +91,7 @@ export type UserType = {
   latestScores: FormattedRatingType;
   latestScoresDifference: LatestScoresType;
   club: ClubDataType;
+  scanAnalysisQuota: number;
   deleteOn: Date;
   subscriptions: {
     improvement: SubscriptionType;
@@ -312,11 +313,11 @@ export type ProgressType = {
   initialDate: Date;
   createdAt: Date;
   demographics: DemographicsType;
-  concerns: UserConcernType[];
+  concerns?: UserConcernType[];
   images: ProgressImageType[];
   initialImages: ProgressImageType[];
-  scores: FormattedRatingType;
-  scoresDifference: { [key: string]: any };
+  scores?: FormattedRatingType;
+  scoresDifference?: { [key: string]: any };
   specialConsiderations: string;
   isPublic: boolean;
   avatar?: { [key: string]: any };
@@ -423,11 +424,11 @@ export type BeforeAfterType = {
   initialDate: Date;
   updatedAt: Date;
   demographics: DemographicsType;
-  concerns: UserConcernType[];
+  concerns?: UserConcernType[];
   images: ProgressImageType[];
   initialImages: ProgressImageType[];
-  scores: { [key: string]: any };
-  scoresDifference: { [key: string]: any };
+  scores?: { [key: string]: any };
+  scoresDifference?: { [key: string]: any };
   latestBodyScoreDifference?: number;
   latestHeadScoreDifference?: number;
   isPublic: boolean;

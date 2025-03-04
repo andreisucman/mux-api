@@ -14,10 +14,15 @@ const route = Router();
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { priceId, redirectUrl, cancelUrl } = req.body;
+    const { priceId, redirectUrl, cancelUrl, mode } = req.body;
 
-    if (!priceId || !redirectUrl || !cancelUrl) {
+    if (!priceId || !redirectUrl || !cancelUrl || !mode) {
       res.status(400).json("Bad request");
+      return;
+    }
+
+    if (!["subscription", "payment"].includes(mode)) {
+      res.status(400).json("Invalid payment mode");
       return;
     }
 
@@ -29,65 +34,88 @@ route.post(
 
       const { stripeUserId } = userInfo;
 
-      const subscriptions = await stripe.subscriptions.list({
-        customer: stripeUserId,
-        status: "active",
-        limit: 1,
-      });
+      const plans = await doWithRetries(async () =>
+        db.collection("Plan").find().toArray()
+      );
 
-      if (subscriptions.data.length > 0) {
-        const subscription = await stripe.subscriptions.create({
+      const relatedPlan = plans.find((plan) => plan.priceId === priceId);
+
+      if (mode === "subscription") {
+        const subscriptions = await stripe.subscriptions.list({
           customer: stripeUserId,
-          items: [{ price: priceId }],
-          expand: ["latest_invoice.payment_intent"],
-          payment_behavior: "default_incomplete",
+          status: "active",
+          limit: 1,
         });
 
-        if (subscription.status === "active") {
-          res.status(200).json({
-            message: { subscriptionId: subscription.id, subscriptions },
-          });
-        } else if (subscription.status === "incomplete") {
-          await cancelSubscription({
-            userId: req.userId,
-            subscriptionName: null,
-            subscriptionId: subscription.id,
+        if (subscriptions.data.length > 0) {
+          const subscription = await stripe.subscriptions.create({
+            customer: stripeUserId,
+            items: [{ price: priceId }],
+            expand: ["latest_invoice.payment_intent"],
+            payment_behavior: "default_incomplete",
           });
 
+          if (subscription.status === "active") {
+            res.status(200).json({
+              message: { subscriptionId: subscription.id },
+            });
+          } else if (subscription.status === "incomplete") {
+            await cancelSubscription({
+              userId: req.userId,
+              subscriptionName: null,
+              subscriptionId: subscription.id,
+            });
+
+            const session = await stripe.checkout.sessions.create({
+              customer: stripeUserId,
+              payment_method_types: ["card"],
+              mode: "subscription",
+              line_items: [{ price: priceId, quantity: 1 }],
+              success_url: redirectUrl,
+              cancel_url: cancelUrl,
+              billing_address_collection: "auto",
+            });
+
+            res.status(200).json({ message: { redirectUrl: session.url } });
+          }
+        } else {
           const session = await stripe.checkout.sessions.create({
-            customer: stripeUserId,
+            billing_address_collection: "auto",
             payment_method_types: ["card"],
             mode: "subscription",
             line_items: [{ price: priceId, quantity: 1 }],
             success_url: redirectUrl,
             cancel_url: cancelUrl,
-            billing_address_collection: "auto",
+            customer: stripeUserId,
           });
+
+          if (session.url) {
+            updateAnalytics({
+              userId: req.userId,
+              incrementPayload: {
+                [`overview.subscription.added.${relatedPlan.name}`]: 1,
+              },
+            });
+          }
 
           res.status(200).json({ message: { redirectUrl: session.url } });
         }
-      } else {
-        const plans = await doWithRetries(async () =>
-          db.collection("Plan").find().toArray()
-        );
-
-        const relatedPlan = plans.find((plan) => plan.priceId === priceId);
-
+      } else if (mode === "payment") {
         const session = await stripe.checkout.sessions.create({
-          billing_address_collection: "auto",
+          customer: stripeUserId,
           payment_method_types: ["card"],
-          mode: "subscription",
+          mode: "payment",
           line_items: [{ price: priceId, quantity: 1 }],
           success_url: redirectUrl,
           cancel_url: cancelUrl,
-          customer: stripeUserId,
+          billing_address_collection: "auto",
         });
 
-        if (session.url) {
+        if (session.url && relatedPlan) {
           updateAnalytics({
             userId: req.userId,
             incrementPayload: {
-              [`overview.subscription.added.${relatedPlan.name}`]: 1,
+              [`overview.payment.added.${relatedPlan.name}`]: 1,
             },
           });
         }

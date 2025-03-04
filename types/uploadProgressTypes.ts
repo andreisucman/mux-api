@@ -27,6 +27,7 @@ export type UploadProgressUserInfo = {
   country: string;
   timeZone: string;
   nextScan: NextActionType[];
+  scanAnalysisQuota: number;
   specialConsiderations?: string;
   latestProgress: LatestProgressType;
   latestScores: LatestScoresType;
