@@ -2,7 +2,7 @@ import z from "zod";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import askRepeatedly from "./askRepeatedly.js";
 import criteria from "data/featureCriteria.js";
-import { PartEnum, ToAnalyzeType, CategoryNameEnum, SexEnum } from "types.js";
+import { PartEnum, CategoryNameEnum, SexEnum } from "types.js";
 import { FeatureAnalysisResultType } from "@/types/analyzeFeatureType.js";
 import httpError from "@/helpers/httpError.js";
 import { urlToBase64 } from "@/helpers/utils.js";
@@ -16,7 +16,7 @@ type Props = {
   sex: SexEnum;
   part: PartEnum;
   categoryName: CategoryNameEnum;
-  toAnalyze: ToAnalyzeType[];
+  currentImages: string[];
   previousImages: string[];
   previousExplanation: string;
 };
@@ -24,8 +24,8 @@ type Props = {
 export default async function compareFeatureProgress({
   userId,
   feature,
-  toAnalyze,
   categoryName,
+  currentImages,
   previousImages,
   previousExplanation,
   part,
@@ -74,11 +74,11 @@ export default async function compareFeatureProgress({
       }
     );
 
-    for (const toAnalyzeObject of toAnalyze) {
+    for (const image of currentImages) {
       content.push({
         type: "image_url",
         image_url: {
-          url: await urlToBase64(toAnalyzeObject.mainUrl.url),
+          url: await urlToBase64(image),
           detail: "high",
         },
       });

@@ -9,19 +9,19 @@ import {
   ConcernType,
   UserConcernType,
   CategoryNameEnum,
-  ToAnalyzeType,
 } from "types.js";
 import { db } from "init.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import httpError from "@/helpers/httpError.js";
 import updateConcernsAnalytics from "./updateConcernsAnalytics.js";
 import { FeatureAnalysisResultType } from "@/types/analyzeFeatureType.js";
+import { urlToBase64 } from "@/helpers/utils.js";
 
 type Props = {
   userId: string;
   sex: SexEnum;
   part: PartEnum;
-  toAnalyze: ToAnalyzeType[];
+  currentImages: string[];
   categoryName: CategoryNameEnum;
   appearanceAnalysisResults: FeatureAnalysisResultType[];
 };
@@ -30,7 +30,7 @@ export default async function analyzeConcerns({
   sex,
   userId,
   part,
-  toAnalyze,
+  currentImages,
   categoryName,
   appearanceAnalysisResults,
 }: Props) {
@@ -98,10 +98,12 @@ export default async function analyzeConcerns({
       },
     ];
 
-    const images = toAnalyze.map((obj) => ({
-      type: "image_url" as "image_url",
-      image_url: { url: obj.mainUrl.url, detail: "low" as "low" },
-    }));
+    const images = await Promise.all(
+      currentImages.map(async (image) => ({
+        type: "image_url" as "image_url",
+        image_url: { url: await urlToBase64(image), detail: "low" as "low" },
+      }))
+    );
 
     userContent.push({
       isMini: false,

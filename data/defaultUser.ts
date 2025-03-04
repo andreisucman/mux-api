@@ -129,6 +129,14 @@ const defaultStreaks = {
   clubBodyStreak: 0,
 };
 
+export const defaultLatestScores = {
+  overall: 0,
+  face: 0,
+  mouth: 0,
+  scalp: 0,
+  body: 0,
+};
+
 export const defaultUser: UserType = {
   name: "",
   avatar: null,
@@ -144,8 +152,8 @@ export const defaultUser: UserType = {
   deleteOn: null,
   stripeUserId: "",
   demographics: defaultDemographics,
-  latestScores: { overall: 0, face: 0, mouth: 0, scalp: 0, body: 0 },
-  latestScoresDifference: { overall: 0, face: 0, mouth: 0, scalp: 0, body: 0 },
+  latestScores: defaultLatestScores,
+  latestScoresDifference: defaultLatestScores,
   club: null,
   scanAnalysisQuota: 1,
   latestProgress: {

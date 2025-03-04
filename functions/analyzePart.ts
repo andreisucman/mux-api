@@ -1,9 +1,5 @@
 import { ObjectId } from "mongodb";
 import doWithRetries from "helpers/doWithRetries.js";
-import getFeaturesToAnalyze from "helpers/getFeaturesToAnalyze.js";
-import analyzeFeature from "functions/analyzeFeature.js";
-import analyzeConcerns from "functions/analyzeConcerns.js";
-import formatRatings from "@/helpers/formatRatings.js";
 import {
   DemographicsType,
   ToAnalyzeType,
@@ -17,7 +13,6 @@ import {
   BeforeAfterType,
   CategoryNameEnum,
   FormattedRatingType,
-  LatestScoresType,
 } from "types.js";
 import addModerationAnalyticsData from "./addModerationAnalyticsData.js";
 import addSuspiciousRecord from "./addSuspiciousRecord.js";
@@ -31,9 +26,8 @@ import httpError from "@/helpers/httpError.js";
 import { urlToBase64 } from "@/helpers/utils.js";
 import { CookieOptions } from "express";
 import incrementProgress from "@/helpers/incrementProgress.js";
-import { FeatureAnalysisType } from "types.js";
-import compareFeatureProgress from "./compareFeatureProgress.js";
-import { FeatureAnalysisResultType } from "@/types/analyzeFeatureType.js";
+import { defaultLatestScores } from "@/data/defaultUser.js";
+import getScoresAndFeedback from "./getScoresAndFeedback.js";
 
 type Props = {
   userId: string;
@@ -73,6 +67,7 @@ export default async function analyzePart({
     let isSuspicious = false;
     let isSafe = false;
     let moderationResults: ModerationResultType[] = [];
+    const createdAt = new Date();
 
     for (const object of partToAnalyze) {
       const moderationResponse = await moderateContent({
@@ -118,22 +113,10 @@ export default async function analyzePart({
 
     const partResult = { part, concerns: [] } as PartResultType;
 
-    const defaultLatestScores = {
-      overall: 0,
-      face: 0,
-      mouth: 0,
-      scalp: 0,
-      body: 0,
-    };
-
     let scores: FormattedRatingType = defaultLatestScores;
     let scoresDifference: FormattedRatingType = defaultLatestScores;
     let newConcerns: UserConcernType[] = [];
-    const createdAt = new Date();
 
-    /* start scores and feedback analysis */
-
-    /* calculate the progress so far */
     let initialProgress = (await doWithRetries(async () =>
       db
         .collection("Progress")
@@ -147,124 +130,30 @@ export default async function analyzePart({
         .next()
     )) as unknown as {
       _id: ObjectId;
-      scores: { [key: string]: number };
+      scores: FormattedRatingType[];
       images: ProgressImageType[];
       createdAt: Date;
     };
 
     if (enableScanAnalysis) {
-      const featuresToAnalyze = getFeaturesToAnalyze({
-        sex: demographics.sex,
-        part,
-      });
-
-      let appearanceAnalysisResults: FeatureAnalysisResultType[] = [];
-
-      const previousScan = await doWithRetries(
-        async () =>
-          db
-            .collection("Progress")
-            .find(
-              { userId: new ObjectId(userId), part },
-              { projection: { images: 1, scores: 1 } }
-            )
-            .sort({ createdAt: -1 })
-            .next() as unknown as {
-            images: ProgressImageType[];
-            scores: FormattedRatingType;
-          }
-      );
-
-      if (!previousScan) {
-        // first scan case
-        appearanceAnalysisResults = await doWithRetries(async () =>
-          Promise.all(
-            featuresToAnalyze.map(async (feature: string) =>
-              doWithRetries(() =>
-                analyzeFeature({
-                  part,
-                  userId,
-                  feature,
-                  categoryName,
-                  sex: demographics.sex,
-                  toAnalyze: partToAnalyze,
-                })
-              )
-            )
-          )
-        );
-      } else {
-        const previousImages = previousScan.images.map(
-          (obj) => obj.mainUrl.url
-        );
-
-        const allPreviousExplanations = previousScan.scores.explanations;
-
-        appearanceAnalysisResults = await doWithRetries(async () =>
-          Promise.all(
-            featuresToAnalyze.map(async (feature: string) => {
-              const relevantPreviousExplanation = allPreviousExplanations.find(
-                (obj) => obj.feature === feature
-              );
-
-              return doWithRetries(() =>
-                compareFeatureProgress({
-                  part,
-                  userId,
-                  feature,
-                  categoryName,
-                  sex: demographics.sex,
-                  toAnalyze: partToAnalyze,
-                  previousImages,
-                  previousExplanation: relevantPreviousExplanation.explanation,
-                })
-              );
-            })
-          )
-        );
-      }
-
-      await incrementProgress({ value: 4, operationKey: "progress", userId });
-
-      const newConcerns = await analyzeConcerns({
-        part,
-        userId,
+      const imageObjects = toAnalyze.map((tAo) => ({
+        part: tAo.part,
+        position: tAo.position,
+        url: tAo.mainUrl.url,
+      }));
+      const response = await getScoresAndFeedback({
         categoryName,
+        currentPartConcerns: partConcerns,
+        part,
         sex: demographics.sex,
-        appearanceAnalysisResults,
-        toAnalyze: partToAnalyze,
+        imageObjects,
+        userId,
+        initialScores: initialProgress?.scores,
       });
 
-      if (newConcerns && newConcerns.length > 0) {
-        const uniqueConcerns = [...partConcerns, ...newConcerns].filter(
-          (obj, i, arr) => arr.findIndex((o) => o.name === obj.name) === i
-        );
-
-        partResult.concerns = uniqueConcerns;
-      }
-
-      /* add the record of progress to the Progress collection*/
-      scores = formatRatings(appearanceAnalysisResults);
-
-      scores.explanations = appearanceAnalysisResults.map(
-        ({ feature, explanation }: FeatureAnalysisType) => ({
-          feature,
-          explanation,
-        })
-      );
-
-      let initialScores: { [key: string]: number } = scores;
-
-      if (initialProgress) initialScores = initialProgress.scores;
-
-      scoresDifference = Object.keys(initialScores).reduce(
-        (a: { [key: string]: number }, key) => {
-          if (typeof Number(scores[key]) === "number")
-            a[key] = Number(scores[key]) - Number(initialScores[key]);
-          return a;
-        },
-        {}
-      );
+      scores = response.scores;
+      scoresDifference = response.scoresDifference;
+      newConcerns = response.concerns;
     }
 
     const images = partToAnalyze.map((record: ToAnalyzeType) => ({

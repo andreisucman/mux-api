@@ -1,10 +1,14 @@
-import { ToAnalyzeType } from "@/types.js";
+type ImageObject = {
+  position: string;
+  part: string;
+  url: string;
+}
 
 export default function filterImagesByFeature(
-  toAnalyzeObjects: ToAnalyzeType[],
+  toAnalyzeObjects: ImageObject[],
   feature: string
 ) {
-  let filteredImages: ToAnalyzeType[] = [];
+  let filteredImages: ImageObject[] = [];
 
   if (feature === "mouth") {
     filteredImages = toAnalyzeObjects.filter(

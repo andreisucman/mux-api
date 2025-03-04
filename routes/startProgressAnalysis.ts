@@ -108,7 +108,7 @@ route.post(
           return;
         }
       }
-
+      
       await doWithRetries(async () =>
         db
           .collection("AnalysisStatus")

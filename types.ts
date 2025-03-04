@@ -52,10 +52,18 @@ export type FormattedRatingType = {
 
 export type LatestScoresType = {
   overall: number;
-  face: number;
-  mouth: number;
-  scalp: number;
-  body: number;
+  face: FormattedRatingType;
+  mouth: FormattedRatingType;
+  scalp: FormattedRatingType;
+  body: FormattedRatingType;
+};
+
+export type LatestScoresDifferenceType = {
+  overall: number;
+  face: { [key: string]: number };
+  mouth: { [key: string]: number };
+  scalp: { [key: string]: number };
+  body: { [key: string]: number };
 };
 
 export type UserType = {
@@ -72,9 +80,9 @@ export type UserType = {
   auth: string;
   isPublic: boolean;
   createdAt: Date;
+  latestScanImages?: string[];
   specialConsiderations: string;
   streaks: StreaksType;
-  latestProgress: LatestProgressType;
   nextScan: NextActionType[];
   nextRoutine: NextActionType[];
   streakDates: {
@@ -89,7 +97,8 @@ export type UserType = {
   tosAccepted: boolean;
   requiredProgress: RequirementType[];
   latestScores: FormattedRatingType;
-  latestScoresDifference: LatestScoresType;
+  latestScoresDifference: LatestScoresDifferenceType;
+  latestProgress: LatestProgressType;
   club: ClubDataType;
   scanAnalysisQuota: number;
   deleteOn: Date;
