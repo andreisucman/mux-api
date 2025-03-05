@@ -4,7 +4,7 @@ import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import checkProofImage from "functions/checkProofImage.js";
-import { daysFrom, delayExecution, urlToBase64 } from "helpers/utils.js";
+import { daysFrom, urlToBase64 } from "helpers/utils.js";
 import isMajorityOfImagesIdentical from "functions/isMajorityOfImagesIdentical.js";
 import { extensionTypeMap } from "data/extensionTypeMap.js";
 import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
@@ -57,6 +57,21 @@ route.post(
     }
 
     try {
+      const analysisAlreadyStarted = await doWithRetries(async () =>
+        db.collection("AnalysisStatus").countDocuments({
+          userId: new ObjectId(req.userId),
+          operationKey: taskId,
+          isRunning: true,
+        })
+      );
+
+      if (analysisAlreadyStarted) {
+        res.status(400).json({
+          error: "Bad request",
+        });
+        return;
+      }
+
       await doWithRetries(async () =>
         db.collection("AnalysisStatus").updateOne(
           { userId: new ObjectId(req.userId), operationKey: taskId },
@@ -67,8 +82,6 @@ route.post(
           { upsert: true }
         )
       );
-
-      await delayExecution(2000);
 
       res.status(200).end();
 
@@ -370,6 +383,7 @@ route.post(
       const { streakDates, timeZone } = userInfo;
       const { newStreakDates, streaksToIncrement } =
         await getStreaksToIncrement({
+          userId: req.userId,
           privacy,
           part,
           timeZone,

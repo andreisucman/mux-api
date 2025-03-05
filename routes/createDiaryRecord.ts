@@ -73,7 +73,7 @@ route.post(
       );
 
       for (const proof of todaysProof) {
-        results.push({
+        results.unshift({
           contentId: proof._id,
           taskId: proof.taskId,
           name: proof.taskName,
@@ -101,7 +101,7 @@ route.post(
       );
 
       for (const food of todaysFood) {
-        results.push({
+        results.unshift({
           contentId: food._id,
           url: food.url,
           contentType: "image",

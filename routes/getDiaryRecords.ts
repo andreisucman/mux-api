@@ -63,7 +63,9 @@ route.get(
       )) as unknown as DiaryRecordType[];
 
       if (userName) {
-        const categoriesToExclude = privacy
+        const relevantPrivacy = privacy.find((p) => p.name === "proof");
+
+        const categoriesToExclude = relevantPrivacy.parts
           .filter((ob) => !ob.value)
           .map((r) => r.name);
 

@@ -72,7 +72,7 @@ route.get(
       if (!userInfo) throw httpError(`User ${followingUserName} not found`);
 
       const { _id, club, name, avatar, latestScores, latestScoresDifference } =
-        userInfo as GetYouFollowUserType;
+        userInfo;
 
       const { bio } = club;
 

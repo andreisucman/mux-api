@@ -4,6 +4,7 @@ import httpError from "./httpError.js";
 import { daysFrom, setToUtcMidnight } from "./utils.js";
 import doWithRetries from "./doWithRetries.js";
 import { db } from "@/init.js";
+import { ObjectId } from "mongodb";
 
 type StreakDatesType = {
   default: { [key: string]: Date };
@@ -11,6 +12,7 @@ type StreakDatesType = {
 };
 
 type Props = {
+  userId:string;
   part: PartEnum;
   privacy: PrivacyType[];
   streakDates: StreakDatesType;
@@ -30,6 +32,7 @@ function getCanIncrement(
 }
 
 export default async function getStreaksToIncrement({
+  userId,
   part,
   timeZone,
   privacy,
@@ -40,13 +43,15 @@ export default async function getStreaksToIncrement({
 
     const remainingActiveTasksForPart = await doWithRetries(async () =>
       db.collection("Task").countDocuments({
+        userId: new ObjectId(userId),
         startsAt: { $gte: todayMidnight },
         expiresAt: { $lt: daysFrom({ days: 1, date: todayMidnight }) },
         status: "active",
         part,
       })
     );
-    if (remainingActiveTasksForPart > 0) return;
+
+    if (remainingActiveTasksForPart > 1) return;
     
     let canIncrementDefault = getCanIncrement(streakDates.default, part);
     let canIncrementClub = getCanIncrement(streakDates.club, part);

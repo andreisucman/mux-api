@@ -16,8 +16,9 @@ import httpError from "@/helpers/httpError.js";
 import combineAllTasks from "@/helpers/combineAllTasks.js";
 import getLatestRoutinesAndTasks from "@/functions/getLatestRoutineAndTasks.js";
 import sortTasksInScheduleByDate from "@/helpers/sortTasksInScheduleByDate.js";
-import { db } from "init.js";
+import setToMidnight from "@/helpers/setToMidnight.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
+import { db } from "init.js";
 
 const route = Router();
 
@@ -65,10 +66,13 @@ route.post(
         return;
       }
 
-      const newStartsAt = new Date(startDate);
+      const newStartsAt = setToMidnight({
+        date: new Date(startDate),
+        timeZone,
+      });
 
       const newExpiresAt = daysFrom({
-        date: new Date(startDate),
+        date: new Date(newStartsAt),
         days: 1,
       });
 

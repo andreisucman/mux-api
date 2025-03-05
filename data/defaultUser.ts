@@ -131,10 +131,10 @@ const defaultStreaks = {
 
 export const defaultLatestScores = {
   overall: 0,
-  face: 0,
-  mouth: 0,
-  scalp: 0,
-  body: 0,
+  face: null,
+  mouth: null,
+  scalp: null,
+  body: null,
 };
 
 export const defaultUser: UserType = {
