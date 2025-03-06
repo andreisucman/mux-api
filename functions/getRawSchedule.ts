@@ -7,20 +7,26 @@ import doWithRetries from "helpers/doWithRetries.js";
 import { AllTaskType } from "types.js";
 import httpError from "helpers/httpError.js";
 import { db } from "init.js";
+import setToMidnight from "@/helpers/setToMidnight.js";
 
 type Props = {
   solutionsAndFrequencies: AllTaskType[];
-  days: number;
   routineStartDate: string;
+  timeZone: string;
+  days: number;
 };
 
 export default async function getRawSchedule({
   solutionsAndFrequencies,
   routineStartDate,
+  timeZone,
   days,
 }: Props) {
   try {
-    const dateOne = new Date(routineStartDate);
+    const dateOne = setToMidnight({
+      date: new Date(routineStartDate),
+      timeZone,
+    });
     const dateTwo = daysFrom({ date: dateOne, days: days > 0 ? days : 7 });
     const lastMonth = daysFrom({ days: -30 });
 

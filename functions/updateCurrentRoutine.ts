@@ -46,7 +46,12 @@ export default async function updateCurrentRoutine({
   routineStartDate,
   incrementMultiplier = 1,
 }: Props) {
-  const { _id: userId, name: userName, specialConsiderations } = userInfo;
+  const {
+    _id: userId,
+    timeZone,
+    name: userName,
+    specialConsiderations,
+  } = userInfo;
 
   try {
     if (!routineId) throw httpError("No routineId");
@@ -91,6 +96,7 @@ export default async function updateCurrentRoutine({
         solutionsAndFrequencies,
         days: daysDifference,
         routineStartDate,
+        timeZone,
       })
     );
 

@@ -48,7 +48,12 @@ export default async function addAdditionalTasks({
   categoryName,
   latestCompletedTasks,
 }: Props) {
-  const { _id: userId, specialConsiderations, demographics } = userInfo;
+  const {
+    _id: userId,
+    timeZone,
+    specialConsiderations,
+    demographics,
+  } = userInfo;
 
   try {
     let taskFrequencyMap = currentTasks.reduce(
@@ -119,6 +124,7 @@ export default async function addAdditionalTasks({
         solutionsAndFrequencies: filteredSolutionsAndFrequencies,
         routineStartDate,
         days: 7,
+        timeZone,
       })
     );
 

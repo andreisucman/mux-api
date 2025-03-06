@@ -154,7 +154,7 @@ export type PrivacyType = {
 export type ClubBioType = {
   intro: string;
   about: string;
-  socials: { value: string; label: string }[];
+  socials: { value: string | null; label: string }[];
   nextRegenerateBio: string | null;
 };
 
@@ -444,6 +444,7 @@ export type BeforeAfterType = {
   avatar?: { [key: string]: any };
   userName?: string;
   part: PartEnum;
+  progresses?: { progressId: ObjectId; createdAt: Date }[];
 };
 
 export type ProofType = {

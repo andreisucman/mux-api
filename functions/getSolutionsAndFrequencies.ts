@@ -84,11 +84,13 @@ export default async function getSolutionsAndFrequencies({
 
     const allSolutionsList = allSolutions.map((obj) => obj.key).join(", ");
 
-    const findSolutionsInstruction = `You are a dermatologist, dentist and fitness coach. The user gives you a list of their concerns. Your goal is to select the most effective combination of solutions for each of their concerns from this list of solutions: ${allSolutionsList}. DON'T MODIFY THE NAMES OF THE CONCERNS AND SOLUTIONS. Be concise and to the point.`;
+    let findSolutionsInstruction = `You are a dermatologist, dentist and fitness coach. The user gives you a list of their concerns. Your goal is to select the most effective combination of solutions for each of their concerns from this list of solutions: ${allSolutionsList}. DON'T MODIFY THE NAMES OF THE CONCERNS AND SOLUTIONS. Be concise and to the point.`;
 
     const allConcerns = partConcerns.map((co) => co.name);
 
-    const findSolutionsContentArray: RunType[] = [
+    const findSolutionsContentArray: RunType[] = [];
+
+    findSolutionsContentArray.push(
       {
         model: "o3-mini",
         content: [
@@ -97,7 +99,6 @@ export default async function getSolutionsAndFrequencies({
             text: `My concerns are: ${allConcerns.join(", ")}`,
           },
         ],
-
         callback,
       },
       {
@@ -109,8 +110,21 @@ export default async function getSolutionsAndFrequencies({
           },
         ],
         callback,
-      },
-    ];
+      }
+    );
+
+    if (part === "body") {
+      findSolutionsContentArray.push({
+        model: "o3-mini",
+        content: [
+          {
+            type: "text",
+            text: "Have you included enough exercises for the whole month according to the push-pull-legs workout type? The user will be working out 3 days per week.",
+          },
+        ],
+        callback,
+      });
+    }
 
     if (specialConsiderations) {
       findSolutionsContentArray.push({
@@ -121,7 +135,6 @@ export default async function getSolutionsAndFrequencies({
             text: `The user has this special consideration: ${specialConsiderations}. Is it contraindicated for any of the solutions? If yes, remove those solutions.`,
           },
         ],
-
         callback,
       });
     }

@@ -41,7 +41,6 @@ export default async function createRoutine({
   routineStartDate,
   specialConsiderations,
 }: Props) {
-  
   try {
     if (concerns.length === 0) throw new Error("No concerns");
 

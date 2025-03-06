@@ -3,7 +3,7 @@ dotenv.config();
 
 import askRepeatedly from "functions/askRepeatedly.js";
 import incrementProgress from "helpers/incrementProgress.js";
-import { UserConcernType, CategoryNameEnum } from "types.js";
+import { UserConcernType, CategoryNameEnum, PartEnum } from "types.js";
 import { RunType } from "types/askOpenaiTypes.js";
 import httpError from "helpers/httpError.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
@@ -12,6 +12,7 @@ type Props = {
   rawSchedule: { [key: string]: ScheduleTaskType[] };
   concerns: UserConcernType[];
   userId: string;
+  part: PartEnum;
   categoryName: CategoryNameEnum;
   specialConsiderations: string;
   incrementMultiplier?: number;
@@ -21,13 +22,18 @@ export default async function polishRawSchedule({
   rawSchedule,
   concerns,
   userId,
+  part,
   categoryName,
   incrementMultiplier = 1,
   specialConsiderations,
 }: Props) {
   try {
     const callback = () =>
-      incrementProgress({ operationKey: "routine", value: 1 * incrementMultiplier, userId });
+      incrementProgress({
+        operationKey: "routine",
+        value: 1 * incrementMultiplier,
+        userId,
+      });
 
     const listOfConcerns = JSON.stringify(concerns);
 
@@ -51,6 +57,19 @@ export default async function polishRawSchedule({
         callback,
       },
     ];
+
+    if (part === "body") {
+      userContent.push({
+        model: "o3-mini",
+        content: [
+          {
+            type: "text",
+            text: "Reschedule the exercises according to the push-pull-legs workout type. Group similar exercises on the same day.",
+          },
+        ],
+        callback,
+      });
+    }
 
     if (specialConsiderations) {
       userContent.push({

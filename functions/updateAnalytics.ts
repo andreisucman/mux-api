@@ -40,18 +40,14 @@ export default async function updateAnalytics({
 
   try {
     if (userId) {
-      const response = await updateCollection(
+      await updateCollection(
         "UserAnalytics",
         { createdAt, userId: new ObjectId(userId) },
         incrementPayload
       );
     }
 
-    const response = await updateCollection(
-      "TotalAnalytics",
-      { createdAt },
-      incrementPayload
-    );
+    await updateCollection("TotalAnalytics", { createdAt }, incrementPayload);
 
     if (decrementPayload) {
       if (userId) {

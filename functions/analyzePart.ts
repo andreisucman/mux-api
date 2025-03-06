@@ -214,6 +214,18 @@ export default async function analyzePart({
       beforeAfterUpdate.userName = name;
     }
 
+    const updateOperation: any = {
+      $set: beforeAfterUpdate,
+      $push: {
+        progresses: {
+          $push: {
+            progressId: recordOfProgress._id,
+            createdAt: recordOfProgress.createdAt,
+          },
+        },
+      },
+    };
+
     await doWithRetries(async () =>
       db.collection("Progress").insertOne(recordOfProgress)
     );
@@ -221,11 +233,9 @@ export default async function analyzePart({
     await doWithRetries(async () =>
       db
         .collection("BeforeAfter")
-        .updateOne(
-          { userId: new ObjectId(userId), part },
-          { $set: beforeAfterUpdate },
-          { upsert: true }
-        )
+        .updateOne({ userId: new ObjectId(userId), part }, updateOperation, {
+          upsert: true,
+        })
     );
 
     partResult.latestScores = scores;

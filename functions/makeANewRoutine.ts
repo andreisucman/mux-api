@@ -49,11 +49,13 @@ export default async function makeANewRoutine({
   allSolutions,
 }: Props) {
   try {
+    const { demographics, timeZone } = userInfo;
+
     const solutionsAndFrequencies = await doWithRetries(async () =>
       getSolutionsAndFrequencies({
         specialConsiderations,
-        demographics: userInfo.demographics,
         incrementMultiplier,
+        demographics,
         partConcerns,
         allSolutions,
         categoryName,
@@ -68,6 +70,7 @@ export default async function makeANewRoutine({
         solutionsAndFrequencies,
         routineStartDate,
         days: 7,
+        timeZone,
       })
     );
 
@@ -80,6 +83,7 @@ export default async function makeANewRoutine({
     const finalSchedule = await doWithRetries(async () =>
       polishRawSchedule({
         userId,
+        part,
         concerns: partConcerns,
         categoryName,
         rawSchedule,

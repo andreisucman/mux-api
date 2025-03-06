@@ -51,8 +51,8 @@ route.get(
               if (c !== "intro") {
                 if (c === "socials") {
                   const newSocials = userInfo.club.bio[c].map((item) => ({
-                    label: "******",
-                    value: "******",
+                    label: item.label,
+                    value: null,
                   }));
                   a[c as "socials"] = newSocials;
                 } else {

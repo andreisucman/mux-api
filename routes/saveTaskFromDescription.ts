@@ -115,11 +115,13 @@ route.post(
 
       res.status(200).end();
 
-      const latestRelevantRoutine = await doWithRetries(async () =>
+      const relevantRoutine = await doWithRetries(async () =>
         db.collection("Routine").findOne({
           userId: new ObjectId(req.userId),
           status: RoutineStatusEnum.ACTIVE,
           part,
+          startsAt: { $gte: new Date(startDate) },
+          lastDate: { $lte: new Date(startDate) },
         })
       );
 
@@ -270,9 +272,9 @@ route.post(
         });
       }
 
-      let { concerns = [], allTasks = [], createdAt } = latestRelevantRoutine;
+      let { concerns = [], allTasks = [], createdAt } = relevantRoutine;
       let finalSchedule: { [key: string]: ScheduleTaskType[] } =
-        latestRelevantRoutine.finalSchedule || {};
+        relevantRoutine.finalSchedule || {};
 
       for (let i = 0; i < draftTasks.length; i++) {
         const task = draftTasks[i];
@@ -331,7 +333,7 @@ route.post(
       const { minDate, maxDate } = getMinAndMaxRoutineDates(allTasks);
 
       const routinePayload: Partial<RoutineType> = {
-        ...latestRelevantRoutine,
+        ...relevantRoutine,
         userId: new ObjectId(req.userId),
         concerns,
         allTasks,
@@ -355,15 +357,15 @@ route.post(
         value: 15,
       });
 
-      if (latestRelevantRoutine) {
+      if (relevantRoutine) {
         draftTasks = draftTasks.map((t) => ({
           ...t,
-          routineId: new ObjectId(latestRelevantRoutine._id),
+          routineId: new ObjectId(relevantRoutine._id),
         }));
 
         await doWithRetries(async () =>
           db.collection("Routine").updateOne(
-            { _id: new ObjectId(latestRelevantRoutine._id), part },
+            { _id: new ObjectId(relevantRoutine._id) },
             {
               $set: routinePayload,
             }

@@ -8,8 +8,9 @@ import doWithRetries from "@/helpers/doWithRetries.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import { defaultUser } from "@/data/defaultUser.js";
 import { CustomRequest, ProgressType } from "types.js";
-import { db } from "@/init.js";
 import httpError from "@/helpers/httpError.js";
+import { DiaryActivityType } from "@/types/saveDiaryRecordTypes.js";
+import { db } from "@/init.js";
 
 const route = Router();
 
@@ -134,6 +135,28 @@ route.post(
               )
             );
           }
+          break;
+        case "proof":
+          const relevantDiaryRecord = await doWithRetries(async () =>
+            db.collection("Diary").findOne({ "activity.contentId": contentId })
+          );
+
+          if (!relevantDiaryRecord) break;
+
+          const { activity } = relevantDiaryRecord;
+
+          const newActivity = activity.filter(
+            (a: DiaryActivityType) => a.contentId !== contentId
+          );
+
+          await doWithRetries(async () =>
+            db
+              .collection("Diary")
+              .updateOne(
+                { _id: new ObjectId(relevantDiaryRecord._id) },
+                { $set: { activity: newActivity } }
+              )
+          );
           break;
       }
 

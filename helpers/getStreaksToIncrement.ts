@@ -1,4 +1,4 @@
-import { PartEnum, PrivacyType } from "types.js";
+import { PartEnum, PrivacyType, TaskStatusEnum } from "types.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
 import httpError from "./httpError.js";
 import { daysFrom, setToUtcMidnight } from "./utils.js";
@@ -45,8 +45,8 @@ export default async function getStreaksToIncrement({
       db.collection("Task").countDocuments({
         userId: new ObjectId(userId),
         startsAt: { $gte: todayMidnight },
-        expiresAt: { $lt: daysFrom({ days: 1, date: todayMidnight }) },
-        status: "active",
+        expiresAt: { $lte: daysFrom({ days: 1, date: todayMidnight }) },
+        status: TaskStatusEnum.ACTIVE,
         part,
       })
     );

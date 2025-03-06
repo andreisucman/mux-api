@@ -55,7 +55,8 @@ export default async function generateImage({
           n: 1,
           width,
           height,
-          negative_prompt: "deformed, scary, blurred, unrealistic",
+          negative_prompt:
+            "deformed, scary, blurred, unrealistic, nsfw, sexual, pornographic, nude",
         })
     );
 
