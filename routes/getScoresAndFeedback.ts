@@ -148,18 +148,18 @@ route.post(
         latestProgress[resultsRecord.part] = updatedProgressRecord;
       }
 
-      const latestScoresValues = Object.values(latestScores).filter(
-        (v) => typeof v === "number"
-      );
+      const latestScoresValues = Object.values(latestScores)
+        .filter((v) => typeof v !== "number")
+        .map((object) => object.overall);
 
       latestScores.overall = Math.round(
         latestScoresValues.reduce((a, c) => a + c, 0) /
           latestScoresValues.length
       );
 
-      const latestScoresDifferenceValues = Object.values(
-        latestScoresDifference
-      ).filter((v) => typeof v === "number");
+      const latestScoresDifferenceValues = Object.values(latestScoresDifference)
+        .filter((v) => typeof v !== "number")
+        .map((object) => object.overall);
 
       latestScoresDifference.overall = Math.round(
         latestScoresDifferenceValues.reduce((a, c) => a + c, 0) /

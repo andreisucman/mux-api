@@ -165,10 +165,8 @@ export default async function getScoresAndFeedback({
 
   scoresDifference = Object.keys(safeInitialScores).reduce(
     (a: { [key: string]: number }, key) => {
-      console.log("key", key);
-      console.log("a", a);
-      if (typeof safeInitialScores[key] === "number") {
-        a[key] = safeInitialScores[key] - initialScores[key];
+      if (typeof scores[key] === "number") {
+        a[key] = scores[key] - initialScores[key];
       }
       return a;
     },

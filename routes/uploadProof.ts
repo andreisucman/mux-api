@@ -15,6 +15,7 @@ import {
   TaskStatusEnum,
   CategoryNameEnum,
   TaskType,
+  BlurTypeEnum,
 } from "types.js";
 import { db } from "init.js";
 import {
@@ -277,15 +278,15 @@ route.post(
         ...oldProofImages
       );
 
-      if (!validSubmission) {
-        await addAnalysisStatusError({
-          message:
-            "This appears to be a copy of the previous content. Please upload a new proof.",
-          userId: req.userId,
-          operationKey: taskId,
-        });
-        return;
-      }
+      // if (!validSubmission) {
+      //   await addAnalysisStatusError({
+      //     message:
+      //       "This appears to be a copy of the previous content. Please upload a new proof.",
+      //     userId: req.userId,
+      //     operationKey: taskId,
+      //   });
+      //   return;
+      // }
 
       const verdicts = [];
       const explanations = [];
@@ -308,26 +309,29 @@ route.post(
         verdicts.filter((i) => i).length <
         Math.round(selectedProofImages.length / 2);
 
-      // if (checkFailed) {
-      //   await addAnalysisStatusError({
-      //     originalMessage: explanations.join("\n"),
-      //     message:
-      //       "This submission doesn't satisfy the requirements from the instructions.",
-      //     userId: req.userId,
-      //     operationKey: taskId,
-      //   });
-      //   return;
-      // }
+      if (checkFailed) {
+        await addAnalysisStatusError({
+          originalMessage: explanations.join("\n"),
+          message:
+            "This submission doesn't satisfy the requirements from the instructions.",
+          userId: req.userId,
+          operationKey: taskId,
+        });
+        return;
+      }
 
-      let mainThumbnail = { name: blurType, url: proofImages[0] };
-      let mainUrl = { name: blurType, url };
+      const finalBlurType =
+        urlType === "image" ? blurType : BlurTypeEnum.ORIGINAL;
+
+      let mainThumbnail = { name: finalBlurType, url: proofImages[0] };
+      let mainUrl = { name: finalBlurType, url };
       let thumbnails = [mainThumbnail];
       let urls = [mainUrl];
 
-      if (blurType !== "original") {
+      if (finalBlurType !== "original") {
         const response = await getReadyBlurredUrls({
           url,
-          blurType,
+          blurType: finalBlurType,
           thumbnail: proofImages[0],
           cookies: req.cookies,
         });
@@ -382,13 +386,13 @@ route.post(
 
       const { streakDates, timeZone } = userInfo;
       const { newStreakDates, streaksToIncrement } =
-        await getStreaksToIncrement({
+        (await getStreaksToIncrement({
           userId: req.userId,
           privacy,
           part,
           timeZone,
           streakDates,
-        }) || {};
+        })) || {};
 
       if (streaksToIncrement) userUpdatePayload.$inc = streaksToIncrement;
       if (newStreakDates)
