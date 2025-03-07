@@ -7,7 +7,6 @@ import doWithRetries from "helpers/doWithRetries.js";
 import {
   CategoryNameEnum,
   CustomRequest,
-  FormattedRatingType,
   ModerationStatusEnum,
   ProgressType,
 } from "types.js";
@@ -23,23 +22,26 @@ route.post(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
       const progressRecords = (await doWithRetries(async () =>
-        db.collection("Progress").aggregate([
-          {
-            $match: {
-              userId: new ObjectId(req.userId),
-              "scores.explanations": { $exists: false },
-              moderationStatus: ModerationStatusEnum.ACTIVE,
+        db
+          .collection("Progress")
+          .aggregate([
+            {
+              $match: {
+                userId: new ObjectId(req.userId),
+                "scores.explanations": { $exists: false },
+                moderationStatus: ModerationStatusEnum.ACTIVE,
+              },
             },
-          },
-          { $sort: { createdAt: -1 } },
-          {
-            $group: {
-              _id: "$part",
-              doc: { $first: "$$ROOT" },
+            { $sort: { createdAt: -1 } },
+            {
+              $group: {
+                _id: "$part",
+                doc: { $first: "$$ROOT" },
+              },
             },
-          },
-          { $replaceRoot: { newRoot: "$doc" } },
-        ])
+            { $replaceRoot: { newRoot: "$doc" } },
+          ])
+          .toArray()
       )) as unknown as ProgressType[];
 
       const userInfo = (await doWithRetries(async () =>
@@ -104,6 +106,7 @@ route.post(
             part: record.part,
             sex,
             userId: req.userId,
+            progressId: record._id,
             partConcerns,
             imageObjects,
           })
@@ -111,6 +114,8 @@ route.post(
       });
 
       const results = await Promise.all(promises);
+
+      console.log("results", results);
 
       const toUpdateProgressOps = progressRecords.map((record, index) => ({
         updateOne: {
@@ -143,22 +148,22 @@ route.post(
         latestProgress[resultsRecord.part] = updatedProgressRecord;
       }
 
-      const latestScoresValues = Object.values(latestScores);
+      const latestScoresValues = Object.values(latestScores).filter(
+        (v) => typeof v === "number"
+      );
 
       latestScores.overall = Math.round(
-        latestScoresValues
-          .map((v: FormattedRatingType) => v.overall)
-          .reduce((a, c) => a + c, 0) / latestScoresValues.length
+        latestScoresValues.reduce((a, c) => a + c, 0) /
+          latestScoresValues.length
       );
 
       const latestScoresDifferenceValues = Object.values(
         latestScoresDifference
-      );
+      ).filter((v) => typeof v === "number");
 
       latestScoresDifference.overall = Math.round(
-        latestScoresDifferenceValues
-          .map((v: FormattedRatingType) => v.overall)
-          .reduce((a, c) => a + c, 0) / latestScoresDifferenceValues.length
+        latestScoresDifferenceValues.reduce((a, c) => a + c, 0) /
+          latestScoresDifferenceValues.length
       );
 
       latestProgress.overall = latestScores.overall;

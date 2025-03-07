@@ -16,7 +16,7 @@ function updateObject(overallObject: { [key: string]: any }) {
 }
 
 type Props = {
-  latestScores: FormattedRatingType;
+  latestScores: LatestScoresType;
   latestScoresDifference: LatestScoresType;
   substituteProgressRecord: ProgressType;
 };

@@ -26,7 +26,7 @@ import httpError from "@/helpers/httpError.js";
 import { urlToBase64 } from "@/helpers/utils.js";
 import { CookieOptions } from "express";
 import incrementProgress from "@/helpers/incrementProgress.js";
-import { defaultLatestScores } from "@/data/defaultUser.js";
+import { defaultLatestProgressScores } from "@/data/defaultUser.js";
 import getScoresAndFeedback from "./getScoresAndFeedback.js";
 
 type Props = {
@@ -113,8 +113,8 @@ export default async function analyzePart({
 
     const partResult = { part, concerns: [] } as PartResultType;
 
-    let scores: FormattedRatingType = defaultLatestScores;
-    let scoresDifference: FormattedRatingType = defaultLatestScores;
+    let scores: FormattedRatingType = defaultLatestProgressScores;
+    let scoresDifference: FormattedRatingType = defaultLatestProgressScores;
     let newConcerns: UserConcernType[] = [];
 
     let initialProgress = (await doWithRetries(async () =>
@@ -130,7 +130,7 @@ export default async function analyzePart({
         .next()
     )) as unknown as {
       _id: ObjectId;
-      scores: FormattedRatingType[];
+      scores: FormattedRatingType;
       images: ProgressImageType[];
       createdAt: Date;
     };
@@ -141,6 +141,7 @@ export default async function analyzePart({
         position: tAo.position,
         url: tAo.mainUrl.url,
       }));
+
       const response = await getScoresAndFeedback({
         categoryName,
         currentPartConcerns: partConcerns,

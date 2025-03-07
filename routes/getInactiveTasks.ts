@@ -6,7 +6,7 @@ import { Router, Response, NextFunction } from "express";
 import { db } from "init.js";
 import aqp, { AqpQuery } from "api-query-params";
 import { CustomRequest } from "types.js";
-import { setToUtcMidnight } from "@/helpers/utils.js";
+import { daysFrom } from "@/helpers/utils.js";
 import doWithRetries from "helpers/doWithRetries.js";
 
 const route = Router();
@@ -20,7 +20,7 @@ route.get(
     try {
       const finalFilter: { [key: string]: any } = {
         userId: new ObjectId(req.userId),
-        expiresAt: { $lte: setToUtcMidnight(new Date()) },
+        expiresAt: { $lte: daysFrom({ days: 1 }) },
       };
 
       const projection = {
@@ -54,6 +54,7 @@ route.get(
             },
             { $sort: finalSort },
             { $skip: skip || 0 },
+            { $limit: 61 },
             { $sort: finalSort },
           ])
           .toArray()

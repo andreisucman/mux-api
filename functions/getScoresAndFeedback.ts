@@ -17,7 +17,7 @@ import compareFeatureProgress from "./compareFeatureProgress.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import analyzeConcerns from "./analyzeConcerns.js";
 import formatRatings from "@/helpers/formatRatings.js";
-import { defaultLatestScores } from "@/data/defaultUser.js";
+import { defaultLatestProgressScores } from "@/data/defaultUser.js";
 import filterImagesByFeature from "@/helpers/filterImagesByFeature.js";
 
 export type ImageObject = {
@@ -30,7 +30,8 @@ type Props = {
   part: PartEnum;
   userId: string;
   sex: SexEnum;
-  initialScores?: FormattedRatingType[];
+  progressIdToExclude?: ObjectId;
+  initialScores?: FormattedRatingType;
   categoryName: CategoryNameEnum;
   imageObjects: ImageObject[];
   currentPartConcerns: UserConcernType[];
@@ -43,10 +44,11 @@ export default async function getScoresAndFeedback({
   initialScores,
   categoryName,
   imageObjects,
+  progressIdToExclude,
   currentPartConcerns,
 }: Props) {
-  let scores: FormattedRatingType = defaultLatestScores;
-  let scoresDifference: FormattedRatingType = defaultLatestScores;
+  let scores: FormattedRatingType = defaultLatestProgressScores;
+  let scoresDifference: FormattedRatingType = defaultLatestProgressScores;
   let concerns: UserConcernType[] = [];
 
   const featuresToAnalyze = getFeaturesToAnalyze({
@@ -56,14 +58,18 @@ export default async function getScoresAndFeedback({
 
   let appearanceAnalysisResults: FeatureAnalysisResultType[] = [];
 
+  const previousScanFilter: { [key: string]: any } = {
+    userId: new ObjectId(userId),
+    part,
+  };
+
+  if (previousScanFilter) previousScanFilter._id = { $ne: progressIdToExclude };
+
   const previousScan = await doWithRetries(
     async () =>
       db
         .collection("Progress")
-        .find(
-          { userId: new ObjectId(userId), part },
-          { projection: { images: 1, scores: 1 } }
-        )
+        .find(previousScanFilter, { projection: { images: 1, scores: 1 } })
         .sort({ createdAt: -1 })
         .next() as unknown as {
         images: ProgressImageType[];
@@ -155,10 +161,15 @@ export default async function getScoresAndFeedback({
     })
   );
 
-  scoresDifference = Object.keys(initialScores || scores).reduce(
+  const safeInitialScores = initialScores || scores;
+
+  scoresDifference = Object.keys(safeInitialScores).reduce(
     (a: { [key: string]: number }, key) => {
-      if (typeof Number(scores[key]) === "number")
-        a[key] = Number(scores[key]) - Number(initialScores[key]);
+      console.log("key", key);
+      console.log("a", a);
+      if (typeof safeInitialScores[key] === "number") {
+        a[key] = safeInitialScores[key] - initialScores[key];
+      }
       return a;
     },
     {}

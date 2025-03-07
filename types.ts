@@ -58,14 +58,6 @@ export type LatestScoresType = {
   body: FormattedRatingType;
 };
 
-export type LatestScoresDifferenceType = {
-  overall: number;
-  face: { [key: string]: number };
-  mouth: { [key: string]: number };
-  scalp: { [key: string]: number };
-  body: { [key: string]: number };
-};
-
 export type UserType = {
   _id?: ObjectId;
   name: string;
@@ -96,8 +88,8 @@ export type UserType = {
   concerns: UserConcernType[] | null;
   tosAccepted: boolean;
   requiredProgress: RequirementType[];
-  latestScores: FormattedRatingType;
-  latestScoresDifference: LatestScoresDifferenceType;
+  latestScores: LatestScoresType;
+  latestScoresDifference: LatestScoresType;
   latestProgress: LatestProgressType;
   club: ClubDataType;
   scanAnalysisQuota: number;

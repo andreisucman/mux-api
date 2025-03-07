@@ -9,7 +9,7 @@ import { CustomRequest, RoutineType } from "types.js";
 import { checkDateValidity } from "helpers/utils.js";
 import httpError from "@/helpers/httpError.js";
 import getUserInfo from "@/functions/getUserInfo.js";
-import createRoutineReplacementData from "@/functions/createRoutineReplacementData.js";
+import stealSingleRoutine from "@/functions/stealSingleRoutine.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 
 const route = Router();
@@ -69,7 +69,7 @@ route.post(
       for (let i = 0; i < routinesToAdd.length; i++) {
         promises.push(
           doWithRetries(() =>
-            createRoutineReplacementData({
+            stealSingleRoutine({
               hostRoutine: routinesToAdd[i],
               startDate,
               timeZone,

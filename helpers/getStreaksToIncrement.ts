@@ -12,7 +12,7 @@ type StreakDatesType = {
 };
 
 type Props = {
-  userId:string;
+  userId: string;
   part: PartEnum;
   privacy: PrivacyType[];
   streakDates: StreakDatesType;
@@ -40,19 +40,20 @@ export default async function getStreaksToIncrement({
 }: Props) {
   try {
     const todayMidnight = setToMidnight({ date: new Date(), timeZone });
+    const tomorrowMidnight = daysFrom({ days: 1, date: todayMidnight });
 
     const remainingActiveTasksForPart = await doWithRetries(async () =>
       db.collection("Task").countDocuments({
         userId: new ObjectId(userId),
         startsAt: { $gte: todayMidnight },
-        expiresAt: { $lte: daysFrom({ days: 1, date: todayMidnight }) },
+        expiresAt: { $lte: tomorrowMidnight },
         status: TaskStatusEnum.ACTIVE,
         part,
       })
     );
 
     if (remainingActiveTasksForPart > 1) return;
-    
+
     let canIncrementDefault = getCanIncrement(streakDates.default, part);
     let canIncrementClub = getCanIncrement(streakDates.club, part);
 

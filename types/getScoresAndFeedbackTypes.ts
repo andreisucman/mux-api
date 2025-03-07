@@ -1,7 +1,6 @@
 import {
   DemographicsType,
   LatestProgressType,
-  LatestScoresDifferenceType,
   LatestScoresType,
   UserConcernType,
 } from "@/types.js";
@@ -13,6 +12,6 @@ export type GetScoresAndFeedbackUserType = {
   demographics: DemographicsType;
   concerns: UserConcernType[];
   latestScores: LatestScoresType;
-  latestScoresDifference: LatestScoresDifferenceType;
+  latestScoresDifference: LatestScoresType;
   latestProgress: LatestProgressType;
 };

@@ -12,11 +12,10 @@ import {
   CustomRequest,
   RoutineStatusEnum,
   RoutineType,
-  SuggestionType,
   TaskStatusEnum,
   TaskType,
 } from "types.js";
-import { adminDb, db } from "init.js";
+import { db } from "init.js";
 import askRepeatedly from "functions/askRepeatedly.js";
 import isActivityHarmful from "@/functions/isActivityHarmful.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
@@ -97,7 +96,7 @@ route.post(
           })
         );
         res.status(200).json({
-          error: `This task violates our ToS.`,
+          error: "This task violates our ToS or is too dangerous for amateurs.",
         });
         return;
       }
@@ -115,13 +114,18 @@ route.post(
 
       res.status(200).end();
 
+      const todayMidnight = setToMidnight({
+        date: new Date(startDate),
+        timeZone,
+      });
+
       const relevantRoutine = await doWithRetries(async () =>
         db.collection("Routine").findOne({
           userId: new ObjectId(req.userId),
           status: RoutineStatusEnum.ACTIVE,
           part,
-          startsAt: { $gte: new Date(startDate) },
-          lastDate: { $lte: new Date(startDate) },
+          startsAt: { $gte: todayMidnight },
+          lastDate: { $lte: todayMidnight },
         })
       );
 
@@ -129,10 +133,10 @@ route.post(
 
       const TaskResponseType = z.object({
         name: z.string().describe("The name of the task in an imperative form"),
-        word: z
-          .string()
+        words: z
+          .array(z.string())
           .describe(
-            "A single word based on the description that can be userd for the closest node-emoji search (e.g. tomato, potato, shoe, weights... etc. )"
+            "An array of up to 10 words that can be used for searching the closest node-emoji icon based on the task's info (e.g. [weight lifting, weight, barbell, leg])."
           ),
         requisite: z
           .string()
@@ -188,7 +192,7 @@ route.post(
         value: 10,
       });
 
-      const { word, ...otherResponse } = response || {};
+      const { words, ...otherResponse } = response || {};
 
       const color = generateRandomPastelColor();
       const image = await generateImage({
@@ -244,7 +248,8 @@ route.post(
       const finalStartDate =
         new Date(startDate) > latestDateOfWeeek ? latestDateOfWeeek : startDate;
 
-      const icon = (await findEmoji(word)) || "🚩";
+      console.log("words", words);
+      const icon = await findEmoji(words);
 
       generalTaskInfo.icon = icon;
 

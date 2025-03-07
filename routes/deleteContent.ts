@@ -52,8 +52,8 @@ route.post(
         case "progress":
           const {
             _id: userId,
-            latestScores,
             nextScan,
+            latestScores,
             latestScoresDifference,
           } = userInfo;
 

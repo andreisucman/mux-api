@@ -308,16 +308,16 @@ route.post(
         verdicts.filter((i) => i).length <
         Math.round(selectedProofImages.length / 2);
 
-      if (checkFailed) {
-        await addAnalysisStatusError({
-          originalMessage: explanations.join("\n"),
-          message:
-            "This submission doesn't satisfy the requirements from the instructions.",
-          userId: req.userId,
-          operationKey: taskId,
-        });
-        return;
-      }
+      // if (checkFailed) {
+      //   await addAnalysisStatusError({
+      //     originalMessage: explanations.join("\n"),
+      //     message:
+      //       "This submission doesn't satisfy the requirements from the instructions.",
+      //     userId: req.userId,
+      //     operationKey: taskId,
+      //   });
+      //   return;
+      // }
 
       let mainThumbnail = { name: blurType, url: proofImages[0] };
       let mainUrl = { name: blurType, url };
@@ -388,7 +388,7 @@ route.post(
           part,
           timeZone,
           streakDates,
-        });
+        }) || {};
 
       if (streaksToIncrement) userUpdatePayload.$inc = streaksToIncrement;
       if (newStreakDates)

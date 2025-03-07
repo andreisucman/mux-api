@@ -71,13 +71,15 @@ export default async function analyzeAppearance({
     if (enableScanAnalysis) {
       toUpdateUser.$inc.scanAnalysisQuota = -1;
     } else {
-      // needed for displaying on analysis page when feedback is not requested
-      toUpdateUser.$set.latestScanImages = toAnalyze.map((obj) => {
+      const relevantImages = toAnalyze.map((obj) => {
         const relevantImage = obj.contentUrlTypes.find(
           (o) => o.name === blurType
         );
         return relevantImage.url;
       });
+
+      // needed for displaying on analysis page when feedback is not requested
+      toUpdateUser.$set.latestScanImages = relevantImages;
     }
 
     if (defaultToUpdateUser) {

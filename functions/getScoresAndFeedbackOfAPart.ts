@@ -21,6 +21,7 @@ type Props = {
   userId: string;
   part: PartEnum;
   sex: SexEnum;
+  progressId: ObjectId;
   categoryName: CategoryNameEnum;
   partConcerns: UserConcernType[];
   imageObjects: ImageObject[];
@@ -30,6 +31,7 @@ export default async function getScoresAndFeedbackOfAPart({
   userId,
   part,
   sex,
+  progressId,
   categoryName,
   partConcerns,
   imageObjects,
@@ -48,7 +50,7 @@ export default async function getScoresAndFeedbackOfAPart({
         .next()
     )) as unknown as {
       _id: ObjectId;
-      scores: FormattedRatingType[];
+      scores: FormattedRatingType;
       images: ProgressImageType[];
       createdAt: Date;
     };
@@ -60,6 +62,7 @@ export default async function getScoresAndFeedbackOfAPart({
       sex,
       imageObjects,
       userId,
+      progressIdToExclude: progressId,
       initialScores: initialProgress?.scores,
     });
 

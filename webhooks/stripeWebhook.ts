@@ -18,13 +18,6 @@ route.post(
 
       const signature = req.headers["stripe-signature"];
 
-      console.log("stripeWebhook req.body", req.body);
-      console.log("signature", signature);
-      console.log(
-        "process.env.STRIPE_WEBHOOK_SECRET_ACCOUNT",
-        process.env.STRIPE_WEBHOOK_SECRET_ACCOUNT
-      );
-
       const event = stripe.webhooks.constructEvent(
         req.body,
         signature,
