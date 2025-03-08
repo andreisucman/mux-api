@@ -1,7 +1,7 @@
 import { PartEnum, PrivacyType, TaskStatusEnum } from "types.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
 import httpError from "./httpError.js";
-import { daysFrom, setToUtcMidnight } from "./utils.js";
+import { daysFrom } from "./utils.js";
 import doWithRetries from "./doWithRetries.js";
 import { db } from "@/init.js";
 import { ObjectId } from "mongodb";
@@ -19,14 +19,24 @@ type Props = {
   timeZone: string;
 };
 
-function getCanIncrement(
-  typeStreakDates: { [key: string]: Date },
-  part: string
-) {
+type GetCanIncrementProps = {
+  typeStreakDates: { [key: string]: Date };
+  part: string;
+  timeZone: string;
+};
+
+function getCanIncrement({
+  typeStreakDates,
+  part,
+  timeZone,
+}: GetCanIncrementProps) {
   if (!typeStreakDates[part]) return true;
 
-  const todayMidnight = setToUtcMidnight(new Date());
-  const streakDate = setToUtcMidnight(new Date(typeStreakDates[part]));
+  const todayMidnight = setToMidnight({ date: new Date(), timeZone });
+  const streakDate = setToMidnight({
+    date: new Date(typeStreakDates[part]),
+    timeZone,
+  });
 
   return todayMidnight > streakDate;
 }
@@ -54,8 +64,24 @@ export default async function getStreaksToIncrement({
 
     if (remainingActiveTasksForPart > 1) return;
 
-    let canIncrementDefault = getCanIncrement(streakDates.default, part);
-    let canIncrementClub = getCanIncrement(streakDates.club, part);
+    console.log("part", part);
+    console.log("todayMidnight", todayMidnight);
+    console.log("tomorrowMidnight", tomorrowMidnight);
+    console.log(
+      "remainingActiveTasksForPart count",
+      remainingActiveTasksForPart
+    );
+
+    let canIncrementDefault = getCanIncrement({
+      typeStreakDates: streakDates.default,
+      part,
+      timeZone,
+    });
+    let canIncrementClub = getCanIncrement({
+      typeStreakDates: streakDates.club,
+      part,
+      timeZone,
+    });
 
     const streaksToIncrement: { [key: string]: number } = {};
     let newStreakDates = { ...streakDates };
@@ -86,7 +112,7 @@ export default async function getStreaksToIncrement({
       };
     }
 
-    const progressPrivacy = privacy.find((pr) => pr.name === "progress");
+    const progressPrivacy = privacy.find((pr) => pr.name === "proof");
     const relevantPrivacy = progressPrivacy.parts.find(
       (tp) => tp.name === part
     );

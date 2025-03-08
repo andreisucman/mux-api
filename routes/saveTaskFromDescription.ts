@@ -124,8 +124,10 @@ route.post(
           userId: new ObjectId(req.userId),
           status: RoutineStatusEnum.ACTIVE,
           part,
-          startsAt: { $gte: todayMidnight },
-          lastDate: { $lte: todayMidnight },
+          $and: [
+            { startsAt: { $gte: todayMidnight } },
+            { startsAt: { $lt: daysFrom({ date: todayMidnight, days: 7 }) } },
+          ],
         })
       );
 
@@ -136,7 +138,7 @@ route.post(
         words: z
           .array(z.string())
           .describe(
-            "An array of up to 10 words that can be used for searching the closest node-emoji icon based on the task's info (e.g. [weight lifting, weight, barbell, leg])."
+            "An array of up to 10 most contextually meaningfull node-emoji keywords based on the task's info."
           ),
         requisite: z
           .string()
@@ -248,7 +250,6 @@ route.post(
       const finalStartDate =
         new Date(startDate) > latestDateOfWeeek ? latestDateOfWeeek : startDate;
 
-      console.log("words", words);
       const icon = await findEmoji(words);
 
       generalTaskInfo.icon = icon;

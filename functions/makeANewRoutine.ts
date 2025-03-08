@@ -3,7 +3,7 @@ import doWithRetries from "helpers/doWithRetries.js";
 import getRawSchedule from "functions/getRawSchedule.js";
 import polishRawSchedule from "functions/polishRawSchedule.js";
 import createTasks from "functions/createTasks.js";
-import getSolutionsAndFrequencies from "functions/getSolutionsAndFrequencies.js";
+import getSolutionsAndFrequencies from "@/functions/getSolutionsAndFrequencies.js";
 import deactivatePreviousRoutineAndTasks from "functions/deactivatePreviousRoutineAndTasks.js";
 import {
   UserConcernType,

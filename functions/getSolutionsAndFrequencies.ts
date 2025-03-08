@@ -32,6 +32,7 @@ type Props = {
   categoryName: CategoryNameEnum;
   demographics: DemographicsType;
   incrementMultiplier?: number;
+  currentSolutions?: string[];
 };
 
 export default async function getSolutionsAndFrequencies({
@@ -42,6 +43,7 @@ export default async function getSolutionsAndFrequencies({
   partImages,
   incrementMultiplier = 1,
   demographics,
+  currentSolutions,
   userId,
   part,
 }: Props) {
@@ -86,45 +88,54 @@ export default async function getSolutionsAndFrequencies({
 
     let findSolutionsInstruction = `You are a dermatologist, dentist and fitness coach. The user gives you a list of their concerns. Your goal is to select the most effective combination of solutions for each of their concerns from this list of solutions: ${allSolutionsList}. DON'T MODIFY THE NAMES OF THE CONCERNS AND SOLUTIONS. Be concise and to the point.`;
 
+    if (currentSolutions) {
+      findSolutionsInstruction = `You are a dermatologist, dentist and fitness coach. The user gives you a list of their concerns and the current solutions they use to address them. Your goal is to find additional solutions from the list of solutions below that could be added to the user's current solutions to better address their concerns. Respond with the additional solutions only. DON'T MODIFY THE NAMES OF THE CONCERNS AND SOLUTIONS. Be concise and to the point. ### List of solutions: ${allSolutionsList}.`;
+    }
+
     const allConcerns = partConcerns.map((co) => co.name);
 
     const findSolutionsContentArray: RunType[] = [];
 
-    findSolutionsContentArray.push(
-      {
-        model: "o3-mini",
-        content: [
-          {
-            type: "text",
-            text: `My concerns are: ${allConcerns.join(", ")}`,
-          },
-        ],
-        callback,
-      },
-      {
-        model: "o3-mini",
-        content: [
-          {
-            type: "text",
-            text: `Among your proposed combination are there any solutions that require resting time such that the other solutions can't be used within the same week? If yes, remove the least effective conflicting solutions.`,
-          },
-        ],
-        callback,
-      }
-    );
-
-    if (part === "body") {
+    if (currentSolutions) {
       findSolutionsContentArray.push({
         model: "o3-mini",
         content: [
           {
             type: "text",
-            text: "Have you included enough exercises for the whole month according to the push-pull-legs workout type? The user will be working out 3 days per week.",
+            text: `My concerns: ${allConcerns.join(", ")}`,
+          },
+          {
+            type: "text",
+            text: `My current solutions: ${currentSolutions.join(", ")}`,
+          },
+        ],
+        callback,
+      });
+    } else {
+      findSolutionsContentArray.push({
+        model: "o3-mini",
+        content: [
+          {
+            type: "text",
+            text: `The user has these concerns: ${allConcerns.join(
+              ", "
+            )}. Select an optimal number of solutions from the list to address each of them.`,
           },
         ],
         callback,
       });
     }
+
+    findSolutionsContentArray.push({
+      model: "o3-mini",
+      content: [
+        {
+          type: "text",
+          text: `Among your proposed combination are there any solutions that require resting time such that the other solutions can't be used within the same week? If yes, remove the least effective conflicting solutions or replace them with other non-conflicting solutions.`,
+        },
+      ],
+      callback,
+    });
 
     if (specialConsiderations) {
       findSolutionsContentArray.push({
@@ -150,10 +161,16 @@ export default async function getSolutionsAndFrequencies({
             z
               .string()
               .describe(
-                `name of a solution for concern ${c} from the list of solution`
+                `name of ${
+                  currentSolutions ? "an additional solution" : "a solution"
+                } for concern ${c} from the list of solution`
               )
           )
-          .describe(`list of solutions for concern ${c}`);
+          .describe(
+            `${
+              currentSolutions ? "additional solutions" : "list of solutions"
+            } for concern ${c}`
+          );
         return a;
       },
       {}
@@ -204,11 +221,11 @@ export default async function getSolutionsAndFrequencies({
 
     const findFrequenciesContentArray: RunType[] = [
       {
-        isMini: false,
+        model: "o3-mini",
         content: [
           {
             type: "text",
-            text: `The user has these concerns and plans to use the solutions in square brackets to improve them: ${JSON.stringify(
+            text: `The user has the following concerns and plans to use the solutions in square brackets to improve them: ${JSON.stringify(
               findSolutionsResponse
             )}. What would be the best usage frequency for each solution?`,
           },
@@ -269,11 +286,11 @@ export default async function getSolutionsAndFrequencies({
 
       if (condition && wish)
         findFrequenciesContentArray.push({
-          isMini: false,
+          model: "o3-mini",
           content: [
             {
               type: "text" as "text",
-              text: `The user is ${condition} and they want to ${wish} as fast as possible. Should the frequencies of the solutions be changed to account for that? If yes, change them, if not leave as is. Check each solution.`,
+              text: `The user is ${condition} and they want to ${wish} as fast as possible. Should the frequencies of the solutions be changed to best satisfy their wish for that? If yes, change them, if not leave as is. Check each solution.`,
             },
           ],
           callback,

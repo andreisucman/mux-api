@@ -8,7 +8,7 @@ import {
   RoutineStatusEnum,
   ProgressImageType,
 } from "types.js";
-import getSolutionsAndFrequencies from "functions/getSolutionsAndFrequencies.js";
+import getSolutionsAndFrequencies from "@/functions/getSolutionsAndFrequencies.js";
 import getRawSchedule from "functions/getRawSchedule.js";
 import createTasks from "functions/createTasks.js";
 import mergeSchedules from "functions/mergeSchedules.js";

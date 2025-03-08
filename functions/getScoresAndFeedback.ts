@@ -5,10 +5,10 @@ import {
   CategoryNameEnum,
   FeatureAnalysisType,
   FormattedRatingType,
-  PartEnum,
   ProgressImageType,
-  SexEnum,
   UserConcernType,
+  PartEnum,
+  SexEnum,
 } from "@/types.js";
 import { FeatureAnalysisResultType } from "@/types/analyzeFeatureType.js";
 import { ObjectId } from "mongodb";
@@ -17,7 +17,6 @@ import compareFeatureProgress from "./compareFeatureProgress.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import analyzeConcerns from "./analyzeConcerns.js";
 import formatRatings from "@/helpers/formatRatings.js";
-import { defaultLatestProgressScores } from "@/data/defaultUser.js";
 import filterImagesByFeature from "@/helpers/filterImagesByFeature.js";
 
 export type ImageObject = {
@@ -47,8 +46,8 @@ export default async function getScoresAndFeedback({
   progressIdToExclude,
   currentPartConcerns,
 }: Props) {
-  let scores: FormattedRatingType = defaultLatestProgressScores;
-  let scoresDifference: FormattedRatingType = defaultLatestProgressScores;
+  let scores: FormattedRatingType = { overall: 0 };
+  let scoresDifference: FormattedRatingType = { overall: 0 };
   let concerns: UserConcernType[] = [];
 
   const featuresToAnalyze = getFeaturesToAnalyze({
@@ -160,13 +159,12 @@ export default async function getScoresAndFeedback({
       explanation,
     })
   );
-
   const safeInitialScores = initialScores || scores;
 
   scoresDifference = Object.keys(safeInitialScores).reduce(
     (a: { [key: string]: number }, key) => {
       if (typeof scores[key] === "number") {
-        a[key] = scores[key] - initialScores[key];
+        a[key] = scores[key] - safeInitialScores[key];
       }
       return a;
     },

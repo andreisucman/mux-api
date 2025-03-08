@@ -15,7 +15,7 @@ import {
   CreateRoutineAllSolutionsType,
 } from "types/createRoutineTypes.js";
 import httpError from "@/helpers/httpError.js";
-import getAdditionalSolutionsAndFrequencies from "./getAdditionalSolutionsAndFrequencies.js";
+import getSolutionsAndFrequencies from "./getSolutionsAndFrequencies.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import addDateAndIdsToAllTasks from "@/helpers/addDateAndIdsToAllTasks.js";
 import getAreCurrentTasksEnough from "./getAreCurrentTasksEnough.js";
@@ -92,7 +92,7 @@ export default async function addAdditionalTasks({
     const currentSolutions = Object.keys(taskFrequencyMap);
 
     const solutionsAndFrequencies = await doWithRetries(async () =>
-      getAdditionalSolutionsAndFrequencies({
+      getSolutionsAndFrequencies({
         userId: String(userId),
         part,
         currentSolutions,

@@ -42,7 +42,6 @@ export default async function polishRawSchedule({
 
     const userContent: RunType[] = [
       {
-        isMini: false,
         model: "o3-mini",
         content: [
           {
@@ -64,7 +63,7 @@ export default async function polishRawSchedule({
         content: [
           {
             type: "text",
-            text: "Reschedule the exercises according to the push-pull-legs workout type. Group similar exercises on the same day.",
+            text: "Reschedule the exercises into a push-pull-legs split, ensuring pushing exercises are on one day, pulling exercises on another, and leg exercises on a separate day.",
           },
         ],
         callback,
@@ -73,12 +72,11 @@ export default async function polishRawSchedule({
 
     if (specialConsiderations) {
       userContent.push({
-        isMini: true,
         model: "o3-mini",
         content: [
           {
             type: "text",
-            text: `The user has the following special consideration: ${specialConsiderations}. Does the order of the tasks need to be changed to account for it? If yes, reorder, if not leave as is.`,
+            text: `The user has the following special consideration: ${specialConsiderations}. Does the schedule to be changed to account for it? If yes, change it, if not leave as is.`,
           },
         ],
         callback,

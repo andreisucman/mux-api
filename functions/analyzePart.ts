@@ -26,7 +26,6 @@ import httpError from "@/helpers/httpError.js";
 import { urlToBase64 } from "@/helpers/utils.js";
 import { CookieOptions } from "express";
 import incrementProgress from "@/helpers/incrementProgress.js";
-import { defaultLatestProgressScores } from "@/data/defaultUser.js";
 import getScoresAndFeedback from "./getScoresAndFeedback.js";
 
 type Props = {
@@ -113,8 +112,8 @@ export default async function analyzePart({
 
     const partResult = { part, concerns: [] } as PartResultType;
 
-    let scores: FormattedRatingType = defaultLatestProgressScores;
-    let scoresDifference: FormattedRatingType = defaultLatestProgressScores;
+    let scores: FormattedRatingType = { overall: 0 };
+    let scoresDifference: FormattedRatingType = { overall: 0 };
     let newConcerns: UserConcernType[] = [];
 
     let initialProgress = (await doWithRetries(async () =>
@@ -219,10 +218,8 @@ export default async function analyzePart({
       $set: beforeAfterUpdate,
       $push: {
         progresses: {
-          $push: {
-            progressId: recordOfProgress._id,
-            createdAt: recordOfProgress.createdAt,
-          },
+          progressId: recordOfProgress._id,
+          createdAt: recordOfProgress.createdAt,
         },
       },
     };

@@ -156,6 +156,11 @@ route.post(
       if (contentCategory === "progress") {
         const { images, initialImages, part } = relevantRecord as ProgressType;
 
+        const originalImage = images
+          .filter((im) => im.position === "front")
+          .flatMap((io) => io.urls.map((obj) => obj))
+          .find((obj) => obj.name === "original");
+
         const { images: updatedImages } = await getUpdatedProgressRecord({
           images,
           blurType,
@@ -185,12 +190,25 @@ route.post(
         );
 
         await doWithRetries(() =>
-          db
-            .collection("BeforeAfter")
-            .updateOne(
-              { userId: new ObjectId(req.userId), part },
-              { $set: message }
-            )
+          db.collection("BeforeAfter").updateOne(
+            {
+              userId: new ObjectId(req.userId),
+              part,
+              "images.urls.url": originalImage.url,
+            },
+            { $set: { images: updatedImages } }
+          )
+        );
+
+        await doWithRetries(() =>
+          db.collection("BeforeAfter").updateOne(
+            {
+              userId: new ObjectId(req.userId),
+              part,
+              "initialImages.urls.url": originalImage.url,
+            },
+            { $set: { initialImages: updatedImages } }
+          )
         );
       } else {
         const { urls, thumbnails } = relevantRecord;

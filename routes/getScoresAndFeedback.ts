@@ -12,8 +12,8 @@ import {
 } from "types.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import getScoresAndFeedbackOfAPart from "@/functions/getScoresAndFeedbackOfAPart.js";
-import { db } from "init.js";
 import { GetScoresAndFeedbackUserType } from "@/types/getScoresAndFeedbackTypes.js";
+import { db } from "init.js";
 
 const route = Router();
 
@@ -114,8 +114,6 @@ route.post(
       });
 
       const results = await Promise.all(promises);
-
-      console.log("results", results);
 
       const toUpdateProgressOps = progressRecords.map((record, index) => ({
         updateOne: {

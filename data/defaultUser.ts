@@ -137,14 +137,6 @@ export const defaultLatestScores = {
   body: null,
 };
 
-export const defaultLatestProgressScores = {
-  overall: 0,
-  face: 0,
-  mouth: 0,
-  scalp: 0,
-  body: 0,
-};
-
 export const defaultUser: UserType = {
   name: "",
   avatar: null,
