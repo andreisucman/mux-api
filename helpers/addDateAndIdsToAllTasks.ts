@@ -1,4 +1,5 @@
 import { AllTaskType, TaskStatusEnum, TaskType } from "@/types.js";
+import { ObjectId } from "mongodb";
 
 type Props = {
   allTasksWithoutDates: AllTaskType[];
@@ -15,7 +16,7 @@ export default function addDateAndIdsToAllTasks({
 
     const newIds = filteredTasks.map((t) => {
       const newIo = {
-        _id: t._id,
+        _id: new ObjectId(t._id),
         startsAt: t.startsAt,
         status: TaskStatusEnum.ACTIVE,
       };

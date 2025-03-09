@@ -92,7 +92,10 @@ export default async function getSolutionsAndFrequencies({
       findSolutionsInstruction = `You are a dermatologist, dentist and fitness coach. The user gives you a list of their concerns and the current solutions they use to address them. Your goal is to find additional solutions from the list of solutions below that could be added to the user's current solutions to better address their concerns. Respond with the additional solutions only. DON'T MODIFY THE NAMES OF THE CONCERNS AND SOLUTIONS. Be concise and to the point. ### List of solutions: ${allSolutionsList}.`;
     }
 
-    const allConcerns = partConcerns.map((co) => co.name);
+    const allConcerns = partConcerns.map((co) => ({
+      name: co.name,
+      importance: co.importance,
+    }));
 
     const findSolutionsContentArray: RunType[] = [];
 
@@ -102,7 +105,7 @@ export default async function getSolutionsAndFrequencies({
         content: [
           {
             type: "text",
-            text: `My concerns: ${allConcerns.join(", ")}`,
+            text: `My concerns: ${JSON.stringify(allConcerns)}`,
           },
           {
             type: "text",
@@ -117,8 +120,8 @@ export default async function getSolutionsAndFrequencies({
         content: [
           {
             type: "text",
-            text: `The user has these concerns: ${allConcerns.join(
-              ", "
+            text: `The user has these concerns: ${JSON.stringify(
+              allConcerns
             )}. Select an optimal number of solutions from the list to address each of them.`,
           },
         ],
@@ -156,20 +159,20 @@ export default async function getSolutionsAndFrequencies({
 
     const findSolutionsResponseMap = allConcerns.reduce(
       (a: { [key: string]: any }, c) => {
-        a[c] = z
+        a[c.name] = z
           .array(
             z
               .string()
               .describe(
                 `name of ${
                   currentSolutions ? "an additional solution" : "a solution"
-                } for concern ${c} from the list of solution`
+                } for concern ${c.name} from the list of solution`
               )
           )
           .describe(
             `${
               currentSolutions ? "additional solutions" : "list of solutions"
-            } for concern ${c}`
+            } for concern ${c.name}`
           );
         return a;
       },
