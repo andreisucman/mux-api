@@ -42,7 +42,7 @@ function deepMerge(target: any, source: any, sortKey?: string): any {
 }
 
 export default function combineAllTasks({ oldAllTasks, newAllTasks }: Props) {
-  if (!newAllTasks || newAllTasks.length === 0) return [];
+  if (!newAllTasks || newAllTasks.length === 0) return oldAllTasks;
 
   const mergedTasksMap = new Map<string, AllTaskTypeWithIds>();
 

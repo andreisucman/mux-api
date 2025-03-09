@@ -64,14 +64,6 @@ export default async function getStreaksToIncrement({
 
     if (remainingActiveTasksForPart > 1) return;
 
-    console.log("part", part);
-    console.log("todayMidnight", todayMidnight);
-    console.log("tomorrowMidnight", tomorrowMidnight);
-    console.log(
-      "remainingActiveTasksForPart count",
-      remainingActiveTasksForPart
-    );
-
     let canIncrementDefault = getCanIncrement({
       typeStreakDates: streakDates.default,
       part,

@@ -31,8 +31,6 @@ route.post(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { userId, blurType, enableScanAnalysis }: Props = req.body;
 
-    console.log("req.body", req.body);
-
     const finalUserId = req.userId || userId;
 
     if (!ObjectId.isValid(finalUserId)) {

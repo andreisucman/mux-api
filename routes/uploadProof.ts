@@ -44,8 +44,6 @@ route.post(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { taskId, url, blurType, timeZone } = req.body;
 
-    console.log("req.body", req.body);
-
     const urlExtension = url.includes(".") ? url.split(".").pop() : "";
 
     if (

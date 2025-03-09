@@ -153,7 +153,7 @@ export default async function prolongPreviousRoutine({
 
     await deactivatePreviousRoutineAndTasks(String(previousRoutineId));
 
-    const { additionalAllTasks, tasksToInsert, mergedSchedule } =
+    const { additionalAllTasks, additionalTasksToInsert, mergedSchedule } =
       await addAdditionalTasks({
         part,
         userInfo,
@@ -173,15 +173,13 @@ export default async function prolongPreviousRoutine({
       newAllTasks: additionalAllTasks,
     });
 
-    const finalSchedule = mergedSchedule;
-
     const { minDate, maxDate } = getMinAndMaxRoutineDates(finalRoutineAllTasks);
 
     const newRoutineObject = await doWithRetries(async () =>
       db.collection("Routine").insertOne({
         userId: new ObjectId(userId),
         userName,
-        finalSchedule,
+        finalSchedule: mergedSchedule,
         concerns: partConcerns,
         status: RoutineStatusEnum.ACTIVE,
         createdAt: new Date(),
@@ -193,22 +191,17 @@ export default async function prolongPreviousRoutine({
     );
 
     /* update final tasks */
-    const finalTasks = tasksToInsert.map((rt, i) => ({
-      ...rt,
-      routineId: newRoutineObject.insertedId,
-    }));
-
-    console.log(
-      "finalTasks",
-      finalTasks.map((t) => t._id)
+    const finalTasks = [...resetTasks, ...additionalTasksToInsert].map(
+      (rt, i) => ({
+        ...rt,
+        routineId: newRoutineObject.insertedId,
+      })
     );
 
     if (finalTasks.length > 0) {
-      const insertedResponse = await doWithRetries(async () =>
+      await doWithRetries(async () =>
         db.collection("Task").insertMany(finalTasks)
       );
-
-      console.log("insertedResponse", insertedResponse);
     }
 
     updateTasksAnalytics({

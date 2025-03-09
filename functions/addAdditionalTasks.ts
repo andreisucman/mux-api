@@ -85,7 +85,7 @@ export default async function addAdditionalTasks({
       return {
         mergedSchedule: currentSchedule,
         additionalAllTasks: [],
-        tasksToInsert: [],
+        additionalTasksToInsert: [],
       };
     }
 
@@ -164,7 +164,7 @@ export default async function addAdditionalTasks({
     return {
       mergedSchedule,
       additionalAllTasks: allTasksWithDates,
-      tasksToInsert,
+      additionalTasksToInsert: tasksToInsert,
     };
   } catch (error) {
     await addAnalysisStatusError({
