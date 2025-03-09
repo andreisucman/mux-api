@@ -10,6 +10,7 @@ import { ModerationStatusEnum, PrivacyType } from "types.js";
 import { DiaryRecordType } from "@/types/saveDiaryRecordTypes.js";
 import { CustomRequest } from "types.js";
 import { db } from "init.js";
+import { daysFrom } from "@/helpers/utils.js";
 
 const route = Router();
 
@@ -17,7 +18,8 @@ route.get(
   "/:userName?",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { userName } = req.params;
-    const { sort, skip } = aqp(req.query as any) as AqpQuery;
+    const { filter, sort, skip } = aqp(req.query as any) as AqpQuery;
+    const { dateFrom, dateTo } = filter;
 
     try {
       let privacy: PrivacyType[] = [];
@@ -49,6 +51,13 @@ route.get(
         filters.userName = userName;
       } else {
         filters.userId = new ObjectId(req.userId);
+      }
+
+      if (dateFrom && dateTo) {
+        filters.$and = [
+          { createdAt: { $gte: dateFrom } },
+          { createdAt: { $lte: daysFrom({ date: dateTo, days: 1 }) } },
+        ];
       }
 
       let results = (await doWithRetries(async () =>

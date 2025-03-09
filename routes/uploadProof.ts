@@ -37,12 +37,14 @@ import checkIfTaskIsAboutFood from "@/functions/checkIfTaskIsRelated.js";
 
 const route = Router();
 
-const validExtensions = ["jpg", "webm", "mp4"];
+const validExtensions = ["jpg", "webm", "mp4", "webp"];
 
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { taskId, url, blurType } = req.body;
+    const { taskId, url, blurType, timeZone } = req.body;
+
+    console.log("req.body", req.body);
 
     const urlExtension = url.includes(".") ? url.split(".").pop() : "";
 
@@ -384,7 +386,7 @@ route.post(
 
       const userUpdatePayload: { [key: string]: any } = {};
 
-      const { streakDates, timeZone } = userInfo;
+      const { streakDates } = userInfo;
       const { newStreakDates, streaksToIncrement } =
         (await getStreaksToIncrement({
           userId: req.userId,
@@ -448,6 +450,7 @@ route.post(
       /* decrement the daily calories for food submissions */
       if (isTaskAboutFood) {
         const { nutrition } = userInfo;
+
         const { remainingDailyCalories } = nutrition;
 
         const foodAnalysis = await analyzeCalories({
@@ -459,6 +462,7 @@ route.post(
         });
 
         const { energy } = foodAnalysis;
+
         const newRemainingCalories = Math.max(
           0,
           remainingDailyCalories - energy

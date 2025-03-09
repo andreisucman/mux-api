@@ -198,10 +198,18 @@ export default async function prolongPreviousRoutine({
       routineId: newRoutineObject.insertedId,
     }));
 
-    if (finalTasks.length > 0)
-      await doWithRetries(async () =>
+    console.log(
+      "finalTasks",
+      finalTasks.map((t) => t._id)
+    );
+
+    if (finalTasks.length > 0) {
+      const insertedResponse = await doWithRetries(async () =>
         db.collection("Task").insertMany(finalTasks)
       );
+
+      console.log("insertedResponse", insertedResponse);
+    }
 
     updateTasksAnalytics({
       userId: String(userId),

@@ -85,7 +85,7 @@ export default async function addAdditionalTasks({
       return {
         mergedSchedule: currentSchedule,
         additionalAllTasks: [],
-        additionalTasksToInsert: [],
+        tasksToInsert: [],
       };
     }
 

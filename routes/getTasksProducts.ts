@@ -4,7 +4,7 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
-import { CustomRequest } from "types.js";
+import { CustomRequest, TaskStatusEnum } from "types.js";
 import { db } from "init.js";
 
 const route = Router();
@@ -16,6 +16,7 @@ route.get(
     try {
       const filter: { [key: string]: any } = {
         userId: new ObjectId(req.userId),
+        status: TaskStatusEnum.ACTIVE,
       };
 
       if (part) filter.part = part;

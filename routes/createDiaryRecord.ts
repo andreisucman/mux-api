@@ -78,7 +78,7 @@ route.post(
           taskId: proof.taskId,
           name: proof.taskName,
           url: proof.mainUrl.url,
-          thumbnail: proof.type === "video" ? proof.mainThumbnail.url : "",
+          thumbnail: proof.contentType === "video" ? proof.mainThumbnail.url : "",
           icon: proof.icon,
           categoryName: "proof",
           contentType: proof.contentType,
