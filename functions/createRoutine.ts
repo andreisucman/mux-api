@@ -9,10 +9,7 @@ import {
   ModerationStatusEnum,
   CategoryNameEnum,
 } from "@/types.js";
-import {
-  CreateRoutineUserInfoType,
-  CreateRoutineAllSolutionsType,
-} from "@/types/createRoutineTypes.js";
+import { CreateRoutineUserInfoType } from "@/types/createRoutineTypes.js";
 import makeANewRoutine from "functions/makeANewRoutine.js";
 import addAnalysisStatusError from "functions/addAnalysisStatusError.js";
 import prolongPreviousRoutine from "functions/prolongPreviousRoutine.js";
@@ -56,7 +53,6 @@ export default async function createRoutine({
             concerns: 1,
             ageInterval: 1,
             name: 1,
-            city: 1,
             country: 1,
             timeZone: 1,
             nextRoutine: 1,
@@ -70,35 +66,7 @@ export default async function createRoutine({
 
     const partConcerns = concerns.filter((c) => c.part === part);
 
-    const concernNames = partConcerns.map((obj) => obj.name);
-
-    const allSolutions = (await doWithRetries(async () =>
-      db
-        .collection("Solution")
-        .find(
-          { nearestConcerns: { $in: concernNames } },
-          {
-            projection: {
-              instruction: 1,
-              description: 1,
-              requisite: 1,
-              example: 1,
-              color: 1,
-              name: 1,
-              key: 1,
-              icon: 1,
-              recipe: 1,
-              restDays: 1,
-              isRecipe: 1,
-              suggestions: 1,
-              productTypes: 1,
-              embedding: 1,
-              _id: 0,
-            },
-          }
-        )
-        .toArray()
-    )) as unknown as CreateRoutineAllSolutionsType[];
+    const partImages = await getUsersImages({ userId, part });
 
     const latestRelevantTask = await doWithRetries(async () =>
       db
@@ -122,15 +90,18 @@ export default async function createRoutine({
 
     const oneWeekAgo = daysFrom(daysFromPayload);
 
-    const existingActiveTask = await doWithRetries(async () =>
-      db.collection("Task").findOne(
-        {
-          userId: new ObjectId(userId),
-          status: TaskStatusEnum.ACTIVE,
-          part,
-        },
-        { projection: { routineId: 1 } }
-      )
+    const existingActiveTasks = await doWithRetries(async () =>
+      db
+        .collection("Task")
+        .find(
+          {
+            userId: new ObjectId(userId),
+            status: TaskStatusEnum.ACTIVE,
+            part,
+          },
+          { projection: { routineId: 1 } }
+        )
+        .toArray()
     );
 
     const latestCompletedTasks = await doWithRetries(async () =>
@@ -170,17 +141,26 @@ export default async function createRoutine({
         .toArray()
     )) as unknown as TaskType[];
 
-    const partImages = await getUsersImages({ userId, part });
-
-    if (existingActiveTask) {
+    if (existingActiveTasks.length) {
+      const currentSolutions = existingActiveTasks.reduce(
+        (a: { [key: string]: number }, c: TaskType) => {
+          if (a[c.key]) {
+            a[c.key] += 1;
+          } else {
+            a[c.key] = 1;
+          }
+          return a;
+        },
+        {}
+      );
       await updateCurrentRoutine({
         part,
         partImages,
-        routineId: existingActiveTask.routineId,
+        routineId: existingActiveTasks[0].routineId,
         partConcerns,
         userInfo,
-        allSolutions,
         categoryName,
+        currentSolutions,
         routineStartDate,
         incrementMultiplier,
       });
@@ -190,7 +170,6 @@ export default async function createRoutine({
         partImages,
         partConcerns,
         userInfo,
-        allSolutions,
         routineStartDate,
         tasksToProlong: draftTasksToProlong,
         categoryName,
@@ -204,7 +183,6 @@ export default async function createRoutine({
         partImages,
         userInfo,
         partConcerns,
-        allSolutions,
         routineStartDate,
         specialConsiderations,
         categoryName,

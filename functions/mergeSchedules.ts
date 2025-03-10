@@ -3,13 +3,14 @@ dotenv.config();
 
 import askRepeatedly from "functions/askRepeatedly.js";
 import { RunType } from "types/askOpenaiTypes.js";
-import { CategoryNameEnum } from "types.js";
+import { CategoryNameEnum, PartEnum } from "types.js";
 import httpError from "helpers/httpError.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 
 type Props = {
   userId: string;
+  part: PartEnum;
   incrementMultiplier?: number;
   categoryName: CategoryNameEnum;
   specialConsiderations: string;
@@ -24,6 +25,7 @@ type Props = {
 
 export default async function mergeSchedules({
   userId,
+  part,
   categoryName,
   incrementMultiplier = 1,
   specialConsiderations,
@@ -32,7 +34,7 @@ export default async function mergeSchedules({
   latestCompletedTasks,
 }: Props) {
   try {
-    let systemContent = `You are a dermatologist, dentist and a fitness coach. The user gives you two schedules - 1 and 2. Your goal is to merge schedule 2 into schedule 1 without moving the dates of the schedule 1. Your response is the merged schedule in the original JSON object format.`;
+    let systemContent = `You are a dermatologist, dentist and a fitness coach. The user gives you two schedules - 1 and 2. Your goal is to merge schedule 2 optimally into schedule 1 without moving the dates of the schedule 1. Your response is the merged schedule in the original JSON object format.`;
     const callback = () =>
       incrementProgress({
         operationKey: "routine",
@@ -65,17 +67,20 @@ export default async function mergeSchedules({
         ],
         callback,
       },
-      {
-        isMini: true,
+    ];
+
+    if (part === "body") {
+      userContent.push({
+        model: "o3-mini",
         content: [
           {
             type: "text",
-            text: "Can you confirm that you've transferred all of the tasks from the schedule 2 into the schedule 1?",
+            text: "Reschedule the exercises from schedule 2 into a push-pull-legs split, ensuring pushing exercises are grouped in the same dates, and similarly for the pulling and leg exercises. Remember NOT to move the exercises from schedule 1.",
           },
         ],
         callback,
-      },
-    ];
+      });
+    }
 
     if (Object.keys(latestCompletedTasks).length > 0) {
       userContent.push({
@@ -109,28 +114,16 @@ export default async function mergeSchedules({
       });
     }
 
-    userContent.push(
-      {
-        isMini: true,
-        content: [
-          {
-            type: "text",
-            text: "Can you confirm that the newly added tasks are ordered optimally? If not, reorder them for the maximum efficiency.",
-          },
-        ],
-        callback,
-      },
-      {
-        isMini: true,
-        content: [
-          {
-            type: "text",
-            text: `Return the latest updated schedule in the original JSON format.`,
-          },
-        ],
-        callback,
-      }
-    );
+    userContent.push({
+      isMini: true,
+      content: [
+        {
+          type: "text",
+          text: `Return the latest updated schedule in the original JSON format.`,
+        },
+      ],
+      callback,
+    });
 
     const mergedSchedule: { [key: string]: ScheduleTaskType[] } =
       await askRepeatedly({

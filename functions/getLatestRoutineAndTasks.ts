@@ -81,7 +81,7 @@ export default async function getLatestRoutinesAndTasks({
       status: 1,
       part: 1,
       routineId: 1,
-      isRecipe: 1,
+      isFood: 1,
       description: 1,
       startsAt: 1,
       completedAt: 1,

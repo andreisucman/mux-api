@@ -12,15 +12,11 @@ import {
 } from "types.js";
 import addAdditionalTasks from "functions/addAdditionalTasks.js";
 import deactivatePreviousRoutineAndTasks from "functions/deactivatePreviousRoutineAndTasks.js";
-import {
-  CreateRoutineAllSolutionsType,
-  CreateRoutineUserInfoType,
-} from "types/createRoutineTypes.js";
+import { CreateRoutineUserInfoType } from "types/createRoutineTypes.js";
 import httpError from "helpers/httpError.js";
 import { db } from "init.js";
 import updateTasksAnalytics from "./updateTasksAnalytics.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
-import combineAllTasks from "@/helpers/combineAllTasks.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 
 type Props = {
@@ -31,7 +27,6 @@ type Props = {
   categoryName: CategoryNameEnum;
   partConcerns: UserConcernType[];
   tasksToProlong: TaskType[];
-  allSolutions: CreateRoutineAllSolutionsType[];
   userInfo: CreateRoutineUserInfoType;
   latestCompletedTasks: { [key: string]: any };
 };
@@ -41,7 +36,6 @@ export default async function prolongPreviousRoutine({
   partImages,
   partConcerns,
   categoryName,
-  allSolutions,
   userInfo,
   incrementMultiplier = 1,
   routineStartDate,
@@ -153,27 +147,27 @@ export default async function prolongPreviousRoutine({
 
     await deactivatePreviousRoutineAndTasks(String(previousRoutineId));
 
-    const { additionalAllTasks, additionalTasksToInsert, mergedSchedule } =
-      await addAdditionalTasks({
+    let { totalTasksToInsert, totalAllTasks, mergedSchedule, areEnough } =
+      (await addAdditionalTasks({
         part,
         userInfo,
         routineStartDate,
         partImages,
+        allTasks,
         categoryName,
-        allSolutions,
         partConcerns,
         currentTasks: resetTasks,
         currentSchedule: schedule,
         latestCompletedTasks,
         incrementMultiplier,
-      });
+      })) || {};
 
-    const finalRoutineAllTasks = combineAllTasks({
-      oldAllTasks: allTasks,
-      newAllTasks: additionalAllTasks,
-    });
+    if (areEnough) {
+      totalTasksToInsert = resetTasks;
+      totalAllTasks = allTasks;
+    }
 
-    const { minDate, maxDate } = getMinAndMaxRoutineDates(finalRoutineAllTasks);
+    const { minDate, maxDate } = getMinAndMaxRoutineDates(totalAllTasks);
 
     const newRoutineObject = await doWithRetries(async () =>
       db.collection("Routine").insertOne({
@@ -185,18 +179,16 @@ export default async function prolongPreviousRoutine({
         createdAt: new Date(),
         startsAt: new Date(minDate),
         lastDate: new Date(maxDate),
-        allTasks: finalRoutineAllTasks,
+        allTasks: totalAllTasks,
         part,
       })
     );
 
     /* update final tasks */
-    const finalTasks = [...resetTasks, ...additionalTasksToInsert].map(
-      (rt, i) => ({
-        ...rt,
-        routineId: newRoutineObject.insertedId,
-      })
-    );
+    const finalTasks = totalTasksToInsert.map((rt, i) => ({
+      ...rt,
+      routineId: newRoutineObject.insertedId,
+    }));
 
     if (finalTasks.length > 0) {
       await doWithRetries(async () =>

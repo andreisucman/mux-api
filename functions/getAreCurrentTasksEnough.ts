@@ -6,20 +6,17 @@ import askRepeatedly from "functions/askRepeatedly.js";
 import incrementProgress from "helpers/incrementProgress.js";
 import { UserConcernType, CategoryNameEnum } from "types.js";
 import { RunType } from "types/askOpenaiTypes.js";
-import { CreateRoutineAllSolutionsType } from "types/createRoutineTypes.js";
 import httpError from "helpers/httpError.js";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 
 type Props = {
   userId: string;
   taskFrequencyMap: { [key: string]: number };
-  allSolutions: CreateRoutineAllSolutionsType[];
   partConcerns: UserConcernType[];
   categoryName: CategoryNameEnum;
 };
 
 export default async function getAreCurrentTasksEnough({
-  allSolutions,
   partConcerns,
   categoryName,
   taskFrequencyMap,
@@ -43,9 +40,7 @@ export default async function getAreCurrentTasksEnough({
         ),
     });
 
-    const solutionsList = allSolutions.map((obj) => obj.key).join(", ");
-
-    const checkIfEnoughSystem = `You are a dermatologist, dentist and fitness coach. The user tells you their concerns and gives their improvement routine with monthly frequencies for addressing the concerns. Your goal is to check if the number of solutions in their routine and their frequency is optimal for addressing their concerns, or if more solutions should be added from this list ${solutionsList}. Consider the solutions from the list ONLY.`;
+    const checkIfEnoughSystem = `You are a dermatologist, dentist and fitness coach. The user tells you their concerns and gives their improvement routine with monthly frequencies for addressing the concerns. Your goal is to check if the number of solutions in their routine and their frequency is optimal for addressing their concerns.`;
 
     const checkIfEnoughRuns: RunType[] = [
       {

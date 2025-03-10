@@ -21,7 +21,7 @@ export default async function personalizeInstruction({
   categoryName,
   name,
 }: Props) {
-  const { city, country, specialConsiderations, _id: userId } = userInfo;
+  const { country, specialConsiderations, _id: userId } = userInfo;
 
   const callback = () =>
     incrementProgress({ operationKey: "routine", userId, value: 1 });
@@ -39,7 +39,7 @@ export default async function personalizeInstruction({
           },
           {
             type: "text",
-            text: `The user's location is: ${city}, ${country}.`,
+            text: `The user's country is: ${country}.`,
           },
           {
             type: "text",

@@ -198,7 +198,7 @@ export default async function getSolutionsAndFrequencies({
       callback,
     });
 
-    const findSolutionsResponse: { [key: string]: string } =
+    const findSolutionsResponse: { [key: string]: string[] } =
       await askRepeatedly({
         userId: String(userId),
         categoryName,
@@ -224,7 +224,7 @@ export default async function getSolutionsAndFrequencies({
 
     const findFrequenciesContentArray: RunType[] = [
       {
-        model: "o3-mini",
+        isMini: false,
         content: [
           {
             type: "text",
@@ -289,7 +289,7 @@ export default async function getSolutionsAndFrequencies({
 
       if (condition && wish)
         findFrequenciesContentArray.push({
-          model: "o3-mini",
+          isMini: false,
           content: [
             {
               type: "text" as "text",

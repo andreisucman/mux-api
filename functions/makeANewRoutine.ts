@@ -3,7 +3,6 @@ import doWithRetries from "helpers/doWithRetries.js";
 import getRawSchedule from "functions/getRawSchedule.js";
 import polishRawSchedule from "functions/polishRawSchedule.js";
 import createTasks from "functions/createTasks.js";
-import getSolutionsAndFrequencies from "@/functions/getSolutionsAndFrequencies.js";
 import deactivatePreviousRoutineAndTasks from "functions/deactivatePreviousRoutineAndTasks.js";
 import {
   UserConcernType,
@@ -12,16 +11,15 @@ import {
   RoutineStatusEnum,
   ProgressImageType,
 } from "types.js";
-import {
-  CreateRoutineUserInfoType,
-  CreateRoutineAllSolutionsType,
-} from "types/createRoutineTypes.js";
+import { CreateRoutineUserInfoType } from "types/createRoutineTypes.js";
 import { db } from "init.js";
 import httpError from "helpers/httpError.js";
 import updateTasksAnalytics from "./updateTasksAnalytics.js";
 import addDateAndIdsToAllTasks from "@/helpers/addDateAndIdsToAllTasks.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
+import createSolutionData from "./createSolutionData.js";
+import chooseSolutionsForConcerns from "./chooseSolutionsForConcerns.js";
 
 type Props = {
   userId: string;
@@ -33,7 +31,6 @@ type Props = {
   partConcerns: UserConcernType[];
   specialConsiderations: string;
   categoryName: CategoryNameEnum;
-  allSolutions: CreateRoutineAllSolutionsType[];
 };
 
 export default async function makeANewRoutine({
@@ -46,28 +43,33 @@ export default async function makeANewRoutine({
   partConcerns,
   categoryName,
   specialConsiderations,
-  allSolutions,
 }: Props) {
   try {
-    const { demographics, timeZone } = userInfo;
+    const { demographics, timeZone, country } = userInfo;
 
-    const solutionsAndFrequencies = await doWithRetries(async () =>
-      getSolutionsAndFrequencies({
-        specialConsiderations,
-        incrementMultiplier,
-        demographics,
-        partConcerns,
-        allSolutions,
-        categoryName,
-        partImages,
-        userId,
-        part,
-      })
-    );
+    const { concernsSolutionsAndFrequencies } = await chooseSolutionsForConcerns({
+      userId: String(userId),
+      part,
+      timeZone,
+      country,
+      categoryName,
+      demographics,
+      partConcerns,
+      partImages,
+      incrementMultiplier,
+      specialConsiderations,
+    });
+
+    const { allSolutions, allTasks } = await createSolutionData({
+      categoryName,
+      concernsSolutionsAndFrequencies,
+      part,
+      userId: String(userId),
+    });
 
     const rawSchedule = await doWithRetries(async () =>
       getRawSchedule({
-        solutionsAndFrequencies,
+        allTasks,
         routineStartDate,
         days: 7,
         timeZone,
@@ -131,7 +133,7 @@ export default async function makeANewRoutine({
     const { name: userName } = userInfo;
 
     const allTasksWithDateAndIds = addDateAndIdsToAllTasks({
-      allTasksWithoutDates: solutionsAndFrequencies,
+      allTasksWithoutDates: allTasks,
       tasksToInsert,
     });
 

@@ -1,0 +1,64 @@
+import { CategoryNameEnum } from "@/types.js";
+import { RunType } from "@/types/askOpenaiTypes.js";
+import { zodResponseFormat } from "openai/helpers/zod.mjs";
+import { z } from "zod";
+import askRepeatedly from "./askRepeatedly.js";
+import httpError from "@/helpers/httpError.js";
+
+type Props = {
+  solution: string;
+  concern: string;
+  part: string;
+  userId: string;
+  categoryName: CategoryNameEnum;
+};
+
+export default async function createSolutionDescriptionAndInstruction({
+  solution,
+  concern,
+  part,
+  userId,
+  categoryName,
+}: Props) {
+  try {
+    const systemContent = `The user gives you the info about an activity. Your goal is to create a task based on this info.
+                  Here is what you should to:
+                  1. Create a 2-3 sentence description for the activity that tells what it is and why it is important.
+                  2. Create a concise step-by-step instruction for the activity where each step is on a new line (separated by \n).`;
+
+    const TaskType = z.object({
+      description: z.string(),
+      instruction: z.string(),
+    });
+
+    const runs = [
+      {
+        content: [
+          {
+            type: "text",
+            text: `Name of the actvity: ${solution}`,
+          },
+          {
+            type: "text",
+            text: `Concern targeted: ${concern}. Relevant part of the body: ${part}.`,
+          },
+        ],
+        model:
+          "ft:gpt-4o-mini-2024-07-18:personal:create-task-from-description:AHtZHgUJ",
+        responseFormat: zodResponseFormat(TaskType, "task"),
+      },
+    ];
+
+    const response = await askRepeatedly({
+      systemContent: systemContent,
+      runs: runs as RunType[],
+      userId,
+      categoryName,
+      functionName: "createTaskFromDescription",
+    });
+
+    return { ...response, key: solution };
+  } catch (err) {
+    throw httpError(err);
+  }
+}

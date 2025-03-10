@@ -10,14 +10,14 @@ import { db } from "init.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
 
 type Props = {
-  solutionsAndFrequencies: AllTaskType[];
+  allTasks: AllTaskType[];
   routineStartDate: string;
   timeZone: string;
   days: number;
 };
 
 export default async function getRawSchedule({
-  solutionsAndFrequencies,
+  allTasks,
   routineStartDate,
   timeZone,
   days,
@@ -61,7 +61,7 @@ export default async function getRawSchedule({
       dateOne,
       dateTwo,
       earliestStartMap,
-      solutionsAndFrequencies,
+      allTasks,
     });
 
     return sortedSchedule;
