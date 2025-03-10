@@ -62,7 +62,6 @@ export type UserType = {
   _id?: ObjectId;
   name: string;
   avatar: { [key: string]: any } | null;
-  city: string;
   country: string;
   email: string;
   password: string | null;
@@ -366,7 +365,7 @@ export type TaskType = {
   proofEnabled: boolean;
   proofId: string;
   isCreated: boolean;
-  isRecipe: boolean;
+  isFood: boolean;
   recipe: RecipeType | null;
   example: { type: string; url: string } | null;
   suggestions: SuggestionType[] | null;
@@ -478,7 +477,7 @@ export type SolutionType = {
   productTypes: string[];
   nearestConcerns: string[];
   embedding: number[];
-  isRecipe: boolean;
+  isFood: boolean;
   recipe: RecipeType | null;
   restDays: number;
 };

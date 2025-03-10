@@ -23,7 +23,6 @@ export type UploadProgressUserInfo = {
   toAnalyze: ToAnalyzeType[];
   concerns: UserConcernType[];
   demographics: DemographicsType;
-  city: string;
   country: string;
   timeZone: string;
   nextScan: NextActionType[];

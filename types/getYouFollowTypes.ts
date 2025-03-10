@@ -6,7 +6,6 @@ export type GetYouFollowUserType = {
   name: string;
   avatar: { [key: string]: any };
   club: ClubDataType;
-  city: string;
   latestScores: LatestScoresType;
   latestScoresDifference: LatestScoresType;
 };

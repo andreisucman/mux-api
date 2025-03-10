@@ -278,15 +278,15 @@ route.post(
         ...oldProofImages
       );
 
-      // if (!validSubmission) {
-      //   await addAnalysisStatusError({
-      //     message:
-      //       "This appears to be a copy of the previous content. Please upload a new proof.",
-      //     userId: req.userId,
-      //     operationKey: taskId,
-      //   });
-      //   return;
-      // }
+      if (!validSubmission) {
+        await addAnalysisStatusError({
+          message:
+            "This appears to be a copy of the previous content. Please upload a new proof.",
+          userId: req.userId,
+          operationKey: taskId,
+        });
+        return;
+      }
 
       const verdicts = [];
       const explanations = [];

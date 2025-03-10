@@ -104,79 +104,49 @@ route.post(
 
       let updatedNextRoutine;
 
-      if (part) {
-        const relevantRoutine = nextRoutine.find((r) => r.part === part);
-        const isInCooldown = new Date(relevantRoutine.date) > new Date();
+      /* to prevent cases when the user creates all routines and routines for not analyzed parts are created too */
+      let { canRoutineDate, availableRoutines } = checkCanRoutine({
+        nextScan,
+        nextRoutine,
+      });
 
-        if (isInCooldown) {
-          const formattedDate = formatDate({
-            date: new Date(relevantRoutine.date),
-          });
-          addAnalysisStatusError({
-            message: `You can create a routine once a week only. Try again after ${formattedDate}.`,
-            operationKey: "routine",
-            userId: req.userId,
-          });
-          return;
-        }
+      if (availableRoutines.length === 0) {
+        const formattedDate = formatDate({
+          date: new Date(canRoutineDate),
+          hideYear: true,
+        });
 
-        await createRoutine({
-          part,
+        addAnalysisStatusError({
+          message: `You can create a routine once a week only. Try again after ${formattedDate}.`,
+          operationKey: "routine",
           userId: req.userId,
-          concerns: activeConcerns,
-          specialConsiderations,
-          incrementMultiplier: 4,
-          categoryName: CategoryNameEnum.TASKS,
-          routineStartDate,
         });
-
-        updatedNextRoutine = updateNextRoutine({
-          nextRoutine,
-          parts: [part],
-        });
-      } else {
-        /* to prevent cases when the user creates all routines and routines for not analyzed parts are created too */
-        const { canRoutine, availableRoutines, canRoutineDate } =
-          checkCanRoutine({
-            nextScan,
-            nextRoutine,
-          });
-
-        if (!canRoutine) {
-          const formattedDate = formatDate({
-            date: new Date(canRoutineDate),
-            hideYear: true,
-          });
-
-          addAnalysisStatusError({
-            message: `You can create a routine once a week only. Try again after ${formattedDate}.`,
-            operationKey: "routine",
-            userId: req.userId,
-          });
-          return;
-        }
-
-        const promises = availableRoutines.map((partKey) =>
-          doWithRetries(
-            async () =>
-              await createRoutine({
-                userId: req.userId,
-                part: partKey,
-                concerns: activeConcerns,
-                specialConsiderations,
-                categoryName: CategoryNameEnum.TASKS,
-                routineStartDate,
-              })
-          )
-        );
-
-        await Promise.all(promises);
-
-        updatedNextRoutine = updateNextRoutine({
-          nextRoutine,
-          parts: availableRoutines,
-        });
+        return;
       }
+
+      if (part)
+        availableRoutines = availableRoutines.filter((r) => r.part === part);
+
+      const promises = availableRoutines.map((r) =>
+        doWithRetries(
+          async () =>
+            await createRoutine({
+              userId: req.userId,
+              part: r.part,
+              concerns: activeConcerns,
+              specialConsiderations,
+              categoryName: CategoryNameEnum.TASKS,
+              routineStartDate,
+            })
+        )
+      );
+
+      await Promise.all(promises);
+
+      updatedNextRoutine = updateNextRoutine({
+        nextRoutine,
+        parts: availableRoutines.map((r) => r.part),
+      });
 
       await doWithRetries(async () =>
         db.collection("User").updateOne(

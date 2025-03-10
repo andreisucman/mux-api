@@ -11,7 +11,6 @@ export type CreateRoutineUserInfoType = {
   _id: ObjectId;
   demographics: DemographicsType;
   concerns: UserConcernType[];
-  city: string;
   name: string;
   country: string;
   timeZone: string;
@@ -32,7 +31,7 @@ export type CreateRoutineAllSolutionsType = {
   name: string;
   key: string;
   productTypes: string[];
-  isRecipe: boolean;
+  isFood: boolean;
   recipe: RecipeType;
   restDays: number;
 };

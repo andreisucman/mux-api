@@ -56,7 +56,6 @@ route.post(
               toAnalyze: 1,
               demographics: 1,
               concerns: 1,
-              city: 1,
               nutrition: 1,
               country: 1,
               timeZone: 1,

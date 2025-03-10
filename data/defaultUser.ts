@@ -145,7 +145,6 @@ export const defaultUser: UserType = {
   nextNameUpdateAt: null,
   email: "",
   auth: "",
-  city: "",
   country: "",
   timeZone: "",
   timeZoneOffsetInMinutes: 0,

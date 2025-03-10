@@ -13,23 +13,23 @@ export default function checkCanRoutine({ nextScan, nextRoutine }: Props) {
     validScanPartKeys.includes(rt.part)
   );
 
-  const availableRoutines = relevantRoutines
-    .filter((routine) => !routine.date || new Date(routine.date) < new Date())
-    .map((obj) => obj.part);
+  const availableRoutines = relevantRoutines.filter(
+    (routine) => !routine.date || new Date(routine.date) < new Date()
+  );
 
-  let canRoutineDate = new Date().getTime();
+  const unavailableRoutines = relevantRoutines.filter(
+    (routine) => routine.date || new Date(routine.date) > new Date()
+  );
 
-  if (availableRoutines.length === 0) {
-    canRoutineDate = Math.min(
-      ...relevantRoutines.map((r) =>
-        r.date ? new Date(r.date).getTime() : Infinity
-      )
-    );
-  }
+  const canRoutineDate = Math.min(
+    ...unavailableRoutines.map((r) =>
+      r.date ? new Date(r.date).getTime() : Infinity
+    )
+  );
 
   return {
-    canRoutine: availableRoutines.length > 0,
+    canRoutineDate,
     availableRoutines,
-    canRoutineDate: new Date(Math.round(canRoutineDate)),
+    unavailableRoutines,
   };
 }

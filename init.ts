@@ -39,12 +39,18 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+const deepSeek = new OpenAI({
+  baseURL: "https://api.deepseek.com",
+  apiKey: process.env.DEEPSEEK_API_KEY,
+});
+
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export {
   db,
+  deepSeek,
   adminDb,
   client,
   s3Client,

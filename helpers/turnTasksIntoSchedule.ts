@@ -3,7 +3,7 @@ import generateTaskIntervals from "./generateTaskIntervals.js";
 import sortTasksInScheduleByDate from "./sortTasksInScheduleByDate.js";
 
 type TurnTasksIntoScheduleProps = {
-  solutionsAndFrequencies: AllTaskType[];
+  allTasks: AllTaskType[];
   dateOne: Date;
   dateTwo: Date;
   earliestStartMap: { [key: string]: any };
@@ -16,14 +16,14 @@ export type ScheduleTaskType = {
 };
 
 export default function turnTasksIntoSchedule({
-  solutionsAndFrequencies,
+  allTasks,
   earliestStartMap,
   dateOne,
   dateTwo,
 }: TurnTasksIntoScheduleProps) {
   const scheduleTasks: ScheduleTaskType[] = [];
 
-  solutionsAndFrequencies.forEach((solution) => {
+  allTasks.forEach((solution) => {
     const intervals = generateTaskIntervals({
       key: solution.key,
       total: solution.total,

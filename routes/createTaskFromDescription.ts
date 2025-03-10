@@ -90,7 +90,7 @@ route.post(
           })
         );
         res.status(200).json({
-          error: "This task violates our ToS or is too dangerous for amateurs.",
+          error: "This task violates our ToS or is too dangerous for general use.",
         });
         return;
       }

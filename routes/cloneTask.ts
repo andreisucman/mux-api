@@ -91,7 +91,12 @@ route.post(
         status: TaskStatusEnum.ACTIVE,
       };
 
-      if (resetNewTask) resetTask.recipe = null;
+      if (resetTask.recipe) {
+        resetTask.recipe = {
+          ...resetTask.recipe,
+          canPersonalize: true,
+        };
+      }
 
       await doWithRetries(async () =>
         db.collection("Task").insertOne(resetTask)

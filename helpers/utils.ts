@@ -87,9 +87,17 @@ export function convertKeysAndValuesTotoSnakeCase(obj: { [key: string]: any }) {
       let toSnakeCaseValues;
 
       if (Array.isArray(obj[key])) {
-        toSnakeCaseValues = obj[key].map((value: any) => toSnakeCase(value));
+        toSnakeCaseValues = obj[key].map(
+          ({
+            solution,
+            monthlyFrequency,
+          }: {
+            solution: string;
+            monthlyFrequency: number;
+          }) => ({ solution: toSnakeCase(solution), monthlyFrequency })
+        );
       } else {
-        toSnakeCaseValues = toSnakeCase(obj[key]);
+        toSnakeCaseValues = obj[key];
       }
 
       newObj[lowerCaseKey] = toSnakeCaseValues;

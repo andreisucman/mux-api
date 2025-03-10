@@ -34,6 +34,7 @@ import getUserInfo from "@/functions/getUserInfo.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 import { validParts } from "@/data/other.js";
 import findRelevantSuggestions from "@/functions/findRelevantSuggestions.js";
+import searchYoutubeVideo from "@/functions/searchYoutubeVideo.js";
 
 const route = Router();
 
@@ -96,7 +97,8 @@ route.post(
           })
         );
         res.status(200).json({
-          error: "This task violates our ToS or is too dangerous for amateurs.",
+          error:
+            "This task violates our ToS or is too dangerous for general use.",
         });
         return;
       }
@@ -197,16 +199,10 @@ route.post(
       const { words, ...otherResponse } = response || {};
 
       const color = generateRandomPastelColor();
-      const image = await generateImage({
-        description,
-        userId: req.userId,
-        categoryName: CategoryNameEnum.TASKS,
-      });
 
       const generalTaskInfo: TaskType = {
         ...otherResponse,
         userId: new ObjectId(req.userId),
-        example: { type: "image", url: image },
         proofEnabled: true,
         status: TaskStatusEnum.ACTIVE,
         key: toSnakeCase(otherResponse.name),
@@ -219,6 +215,21 @@ route.post(
         concern,
         nearestConcerns: [concern],
       };
+
+      const youtubeVideo = await searchYoutubeVideo(
+        `How to ${generalTaskInfo.name}`
+      );
+
+      if (youtubeVideo) {
+        generalTaskInfo.example = { type: "video", url: youtubeVideo };
+      } else {
+        const image = await generateImage({
+          description,
+          userId: req.userId,
+          categoryName: CategoryNameEnum.TASKS,
+        });
+        generalTaskInfo.example = { type: "image", url: image };
+      }
 
       const suggestions = await findRelevantSuggestions(
         generalTaskInfo.productTypes

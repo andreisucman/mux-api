@@ -49,60 +49,17 @@ export default async function getStreaksToIncrement({
   streakDates,
 }: Props) {
   try {
+    const streaksToIncrement: { [key: string]: number } = {};
+    let newStreakDates = { ...streakDates };
+
     const todayMidnight = setToMidnight({ date: new Date(), timeZone });
     const tomorrowMidnight = daysFrom({ days: 1, date: todayMidnight });
 
-    const remainingActiveTasksForPart = await doWithRetries(async () =>
-      db.collection("Task").countDocuments({
-        userId: new ObjectId(userId),
-        startsAt: { $gte: todayMidnight },
-        expiresAt: { $lte: tomorrowMidnight },
-        status: TaskStatusEnum.ACTIVE,
-        part,
-      })
-    );
-
-    if (remainingActiveTasksForPart > 1) return;
-
-    let canIncrementDefault = getCanIncrement({
-      typeStreakDates: streakDates.default,
-      part,
-      timeZone,
-    });
     let canIncrementClub = getCanIncrement({
       typeStreakDates: streakDates.club,
       part,
       timeZone,
     });
-
-    const streaksToIncrement: { [key: string]: number } = {};
-    let newStreakDates = { ...streakDates };
-
-    if (canIncrementDefault) {
-      if (part === "face") {
-        streaksToIncrement["streaks.faceStreak"] = 1;
-      }
-
-      if (part === "mouth") {
-        streaksToIncrement["streaks.mouthStreak"] = 1;
-      }
-
-      if (part === "scalp") {
-        streaksToIncrement["streaks.scalpStreak"] = 1;
-      }
-
-      if (part === "body") {
-        streaksToIncrement["streaks.bodyStreak"] = 1;
-      }
-
-      newStreakDates = {
-        ...newStreakDates,
-        default: {
-          ...newStreakDates.default,
-          [part]: todayMidnight,
-        },
-      };
-    }
 
     const progressPrivacy = privacy.find((pr) => pr.name === "proof");
     const relevantPrivacy = progressPrivacy.parts.find(
@@ -135,6 +92,50 @@ export default async function getStreaksToIncrement({
           },
         };
       }
+    }
+
+    const remainingActiveTasksForPart = await doWithRetries(async () =>
+      db.collection("Task").countDocuments({
+        userId: new ObjectId(userId),
+        startsAt: { $gte: todayMidnight },
+        expiresAt: { $lte: tomorrowMidnight },
+        status: TaskStatusEnum.ACTIVE,
+        part,
+      })
+    );
+
+    if (remainingActiveTasksForPart > 1) return;
+
+    let canIncrementDefault = getCanIncrement({
+      typeStreakDates: streakDates.default,
+      part,
+      timeZone,
+    });
+
+    if (canIncrementDefault) {
+      if (part === "face") {
+        streaksToIncrement["streaks.faceStreak"] = 1;
+      }
+
+      if (part === "mouth") {
+        streaksToIncrement["streaks.mouthStreak"] = 1;
+      }
+
+      if (part === "scalp") {
+        streaksToIncrement["streaks.scalpStreak"] = 1;
+      }
+
+      if (part === "body") {
+        streaksToIncrement["streaks.bodyStreak"] = 1;
+      }
+
+      newStreakDates = {
+        ...newStreakDates,
+        default: {
+          ...newStreakDates.default,
+          [part]: todayMidnight,
+        },
+      };
     }
 
     return { newStreakDates, streaksToIncrement };
