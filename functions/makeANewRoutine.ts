@@ -47,18 +47,19 @@ export default async function makeANewRoutine({
   try {
     const { demographics, timeZone, country } = userInfo;
 
-    const { concernsSolutionsAndFrequencies } = await chooseSolutionsForConcerns({
-      userId: String(userId),
-      part,
-      timeZone,
-      country,
-      categoryName,
-      demographics,
-      partConcerns,
-      partImages,
-      incrementMultiplier,
-      specialConsiderations,
-    });
+    const { concernsSolutionsAndFrequencies } =
+      await chooseSolutionsForConcerns({
+        userId: String(userId),
+        part,
+        timeZone,
+        country,
+        categoryName,
+        demographics,
+        partConcerns,
+        partImages,
+        incrementMultiplier,
+        specialConsiderations,
+      });
 
     const { allSolutions, allTasks } = await createSolutionData({
       categoryName,
@@ -104,7 +105,7 @@ export default async function makeANewRoutine({
       db
         .collection("Routine")
         .find(
-          { userId: new ObjectId(userId), part },
+          { userId: new ObjectId(userId) },
           {
             projection: {
               _id: 1,
@@ -152,7 +153,6 @@ export default async function makeANewRoutine({
         allTasks: allTasksWithDateAndIds,
         startsAt: new Date(minDate),
         lastDate: new Date(maxDate),
-        part,
       })
     );
 
