@@ -11,8 +11,10 @@ import {
   ProgressImageType,
 } from "types.js";
 import addAdditionalTasks from "functions/addAdditionalTasks.js";
-import deactivatePreviousRoutineAndTasks from "functions/deactivatePreviousRoutineAndTasks.js";
-import { CreateRoutineUserInfoType } from "types/createRoutineTypes.js";
+import {
+  CreateRoutineAllSolutionsType,
+  CreateRoutineUserInfoType,
+} from "types/createRoutineTypes.js";
 import httpError from "helpers/httpError.js";
 import { db } from "init.js";
 import updateTasksAnalytics from "./updateTasksAnalytics.js";
@@ -27,6 +29,7 @@ type Props = {
   categoryName: CategoryNameEnum;
   partConcerns: UserConcernType[];
   tasksToProlong: TaskType[];
+  allSolutions: CreateRoutineAllSolutionsType[];
   userInfo: CreateRoutineUserInfoType;
   latestCompletedTasks: { [key: string]: any };
 };
@@ -49,7 +52,6 @@ export default async function prolongPreviousRoutine({
       throw httpError("No tasks to prolong");
 
     const firstTask = tasksToProlong[0];
-    const previousRoutineId = firstTask.routineId;
 
     const daysDifference = calculateDaysDifference(
       firstTask.startsAt,
@@ -138,14 +140,9 @@ export default async function prolongPreviousRoutine({
           part: task.part,
           instruction: task.instruction,
           description: task.description,
-          total: resetTasks.filter((t) => t.key === task.key).length,
-          completed: 0,
-          unknown: 0,
         };
       })
       .filter(Boolean);
-
-    await deactivatePreviousRoutineAndTasks(String(previousRoutineId));
 
     let { totalTasksToInsert, totalAllTasks, mergedSchedule, areEnough } =
       (await addAdditionalTasks({

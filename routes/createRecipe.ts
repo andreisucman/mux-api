@@ -139,7 +139,7 @@ route.post(
       const runs: RunType[] = [];
 
       const initialMessage: RunType = {
-        isMini: false,
+        model: "gpt-4o",
         content: [
           {
             type: "text",
@@ -181,7 +181,7 @@ route.post(
 
       if (specialConsiderations) {
         runs.push({
-          isMini: false,
+          model: "gpt-4o",
           content: [
             {
               type: "text",
@@ -198,7 +198,7 @@ route.post(
       }
 
       const checkMessage: RunType = {
-        isMini: false,
+        model: "gpt-4o",
         content: [
           {
             type: "text",

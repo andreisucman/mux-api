@@ -58,8 +58,8 @@ export default async function getLatestRoutinesAndTasks({
       date: new Date(),
       timeZone,
     });
-    const tomorrowMidnight = setToMidnight({
-      date: daysFrom({ days: 1 }),
+    const nextMidnight = setToMidnight({
+      date: daysFrom({ days: 2 }),
       timeZone,
     });
     const startsAtFrom = setToMidnight({
@@ -67,7 +67,7 @@ export default async function getLatestRoutinesAndTasks({
       timeZone,
     });
     const startsAtTo = setToMidnight({
-      date: daysFrom({ date: startsAtFrom, days: 1 }),
+      date: daysFrom({ date: startsAtFrom, days: 2 }),
       timeZone,
     });
 
@@ -79,9 +79,10 @@ export default async function getLatestRoutinesAndTasks({
       color: 1,
       type: 1,
       status: 1,
+      concern: 1,
       part: 1,
       routineId: 1,
-      isFood: 1,
+      isDish: 1,
       description: 1,
       startsAt: 1,
       completedAt: 1,
@@ -97,7 +98,7 @@ export default async function getLatestRoutinesAndTasks({
           {
             $match: {
               userId: new ObjectId(userId),
-              startsAt: { $gte: todayMidnight, $lt: tomorrowMidnight },
+              startsAt: { $gte: todayMidnight, $lt: nextMidnight },
               status: { $in: ["active", "completed"] },
             },
           },

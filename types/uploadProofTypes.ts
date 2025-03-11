@@ -33,7 +33,7 @@ export type UploadProofTaskType = {
   concern: string;
   requisite: string;
   routineId: ObjectId;
-  isFood: boolean;
+  isDish: boolean;
   description: string;
   instruction: string;
   recipe: RecipeType;

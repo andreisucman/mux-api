@@ -5,6 +5,8 @@ import { SuggestionType } from "@/types.js";
 export default async function findRelevantSuggestions(
   productTypes: string[]
 ): Promise<SuggestionType[]> {
+  if (!productTypes.length) return [];
+
   const relevantSuggestions = (await doWithRetries(async () =>
     db
       .collection("Suggestion")

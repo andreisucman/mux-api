@@ -31,7 +31,7 @@ export default async function personalizeInstruction({
 
     const userContentArray: RunType[] = [
       {
-        isMini: true,
+        model: "gpt-4o-mini",
         content: [
           {
             type: "text",
@@ -52,7 +52,7 @@ export default async function personalizeInstruction({
 
     if (specialConsiderations) {
       userContentArray.push({
-        isMini: true,
+        model: "gpt-4o-mini",
         content: [
           {
             type: "text",
@@ -77,7 +77,7 @@ export default async function personalizeInstruction({
     });
 
     userContentArray.push({
-      isMini: true,
+      model: "gpt-4o-mini",
       content: [
         {
           type: "text",

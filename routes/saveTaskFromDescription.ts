@@ -137,11 +137,16 @@ route.post(
 
       const TaskResponseType = z.object({
         name: z.string().describe("The name of the task in an imperative form"),
-        words: z
-          .array(z.string())
+        icon: z
+          .string()
           .describe(
-            "An array of up to 10 most contextually meaningfull node-emoji keywords based on the task's info."
+            "The closest unicode icon from node-emoji for this activity based on description and instructon"
           ),
+        // words: z
+        //   .array(z.string())
+        //   .describe(
+        //     "An array of up to 10 most contextually meaningfull node-emoji keywords based on the task's info."
+        //   ),
         requisite: z
           .string()
           .describe(
@@ -161,7 +166,6 @@ route.post(
 
       const runs: RunType[] = [
         {
-          isMini: false,
           content: [
             {
               type: "text",
@@ -334,11 +338,8 @@ route.post(
         color: generalTaskInfo.color,
         key: generalTaskInfo.key,
         concern: generalTaskInfo.concern,
-        total: moderatedFrequency,
         description,
         instruction,
-        completed: 0,
-        unknown: 0,
       });
 
       await incrementProgress({

@@ -44,7 +44,7 @@ export default async function mergeSchedules({
 
     const userContent: RunType[] = [
       {
-        isMini: true,
+        model: "o3-mini",
         content: [
           {
             type: "text",
@@ -58,7 +58,7 @@ export default async function mergeSchedules({
         callback,
       },
       {
-        isMini: true,
+        model: "gpt-4o-mini",
         content: [
           {
             type: "text",
@@ -88,7 +88,7 @@ export default async function mergeSchedules({
         content: [
           {
             type: "text",
-            text: `Here are the solutions I've completed within the last 2 weeks. Does any of them require resting time that extends to the current routine, conflicting with any of this week's tasks? If yes remove the conflicting solutions from THIS WEEK'S schedule.`,
+            text: `Here are the solutions I've completed within the last 2 weeks. Does any of them require resting time that extends to the current routine, conflicting with any of this week's tasks? If yes remove the conflicting 2nd schedule solutions from the final schedule.`,
           },
           {
             type: "text",
@@ -104,7 +104,7 @@ export default async function mergeSchedules({
     if (specialConsiderations) {
       // this check is needed to ensure that last weeks tasks don't contradict the new special consideration
       userContent.push({
-        isMini: true,
+        model: "gpt-4o-mini",
         content: [
           {
             type: "text",
@@ -115,7 +115,7 @@ export default async function mergeSchedules({
     }
 
     userContent.push({
-      isMini: true,
+      model: "gpt-4o-mini",
       content: [
         {
           type: "text",

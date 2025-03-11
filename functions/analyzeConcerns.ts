@@ -76,13 +76,13 @@ export default async function analyzeConcerns({
 
     const userContent: RunType[] = [
       {
-        isMini: true,
+        model: "gpt-4o-mini",
         content,
         callback: () =>
           incrementProgress({ userId, operationKey: "progress", value: 3 }),
       },
       {
-        isMini: true,
+        model: "gpt-4o-mini",
         content: [
           {
             type: "text",
@@ -93,7 +93,7 @@ export default async function analyzeConcerns({
           incrementProgress({ userId, operationKey: "progress", value: 3 }),
       },
       {
-        isMini: true,
+        model: "gpt-4o-mini",
         content: [
           {
             type: "text",
@@ -113,7 +113,7 @@ export default async function analyzeConcerns({
     );
 
     userContent.push({
-      isMini: false,
+      model: "gpt-4o",
       content: [
         {
           type: "text",

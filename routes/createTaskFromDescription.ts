@@ -90,7 +90,8 @@ route.post(
           })
         );
         res.status(200).json({
-          error: "This task violates our ToS or is too dangerous for general use.",
+          error:
+            "This task violates our ToS or is too dangerous for general use.",
         });
         return;
       }
@@ -107,7 +108,7 @@ route.post(
 
       const runs = [
         {
-          isMini: false,
+          model: "gpt-4o",
           content: [
             {
               type: "text",

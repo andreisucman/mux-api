@@ -61,7 +61,7 @@ export default async function checkImageRequirements({
 
     const runs: RunType[] = [
       {
-        isMini: true,
+        model: "gpt-4o-mini",
         content: [
           {
             type: "image_url",

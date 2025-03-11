@@ -365,7 +365,7 @@ export type TaskType = {
   proofEnabled: boolean;
   proofId: string;
   isCreated: boolean;
-  isFood: boolean;
+  isDish: boolean;
   recipe: RecipeType | null;
   example: { type: string; url: string } | null;
   suggestions: SuggestionType[] | null;
@@ -410,10 +410,8 @@ export type AllTaskType = {
   instruction: string;
   key: string;
   icon: string;
-  total: number;
-  completed: number;
-  unknown: number;
   concern: string;
+  total: number;
 };
 
 export interface AllTaskTypeWithIds extends AllTaskType {
@@ -477,7 +475,7 @@ export type SolutionType = {
   productTypes: string[];
   nearestConcerns: string[];
   embedding: number[];
-  isFood: boolean;
+  isDish: boolean;
   recipe: RecipeType | null;
   restDays: number;
 };

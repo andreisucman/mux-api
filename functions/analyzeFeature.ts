@@ -8,6 +8,7 @@ import { FeatureAnalysisResultType } from "@/types/analyzeFeatureType.js";
 import httpError from "@/helpers/httpError.js";
 import { urlToBase64 } from "@/helpers/utils.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
+import { RunType } from "@/types/askOpenaiTypes.js";
 
 dotenv.config();
 
@@ -56,9 +57,9 @@ export default async function analyzeFeature({
       });
     }
 
-    const runs = [
+    const runs: RunType[] = [
       {
-        isMini: false,
+        model: "gpt-4o",
         content: imageContent,
       },
     ];
@@ -69,7 +70,6 @@ export default async function analyzeFeature({
       systemContent,
       categoryName,
       functionName: "analyzeFeature",
-      isResultString: true,
     });
 
     const formatSystemContent =
@@ -77,7 +77,6 @@ export default async function analyzeFeature({
 
     const formatRuns = [
       {
-        isMini: true,
         model: "ft:gpt-4o-mini-2024-07-18:personal:analyzefeature:B0pQR81v",
         content: [
           {

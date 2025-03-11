@@ -5,7 +5,7 @@ import { ObjectId } from "mongodb";
 import doWithRetries from "@/helpers/doWithRetries.js";
 import { AskOpenaiProps, RunType } from "types/askOpenaiTypes.js";
 import { CategoryNameEnum } from "@/types.js";
-import askOpenai from "functions/askOpenai.js";
+import askAi from "@/functions/askAi.js";
 import generateSeed from "@/helpers/generateSeed.js";
 import { ChatCompletionMessageParam } from "openai/resources/index.mjs";
 import httpError from "@/helpers/httpError.js";
@@ -17,7 +17,6 @@ type Props = {
   categoryName: CategoryNameEnum;
   functionName: string;
   systemContent: string;
-  isResultString?: boolean;
 };
 
 async function askRepeatedly({
@@ -27,7 +26,6 @@ async function askRepeatedly({
   functionName,
   categoryName,
   systemContent,
-  isResultString,
 }: Props) {
   try {
     if (!ObjectId.isValid(userId))
@@ -52,19 +50,18 @@ async function askRepeatedly({
 
       const payload: AskOpenaiProps = {
         userId,
+        seed: finalSeed,
         functionName,
         categoryName,
-        seed,
         messages: conversation,
-        isMini: runs[i].isMini,
-        isJson: isResultString ? false : i === runs.length - 1,
+        model: runs[i].model,
       };
 
       if (runs[i].model) payload.model = runs[i].model;
       if (runs[i].responseFormat)
         payload.responseFormat = runs[i].responseFormat;
 
-      result = await doWithRetries(async () => askOpenai(payload));
+      result = await doWithRetries(async () => askAi(payload));
 
       conversation.push({
         role: "assistant",

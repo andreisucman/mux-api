@@ -188,8 +188,6 @@ route.post(
           description,
           instruction,
           total,
-          completed: 0,
-          unknown: 0,
         };
       });
 

@@ -25,7 +25,7 @@ export default async function checkIfTaskIsAboutFood({
 
     const runs = [
       {
-        isMini: false,
+        model: "gpt-4o",
         content: [
           {
             type: "text",

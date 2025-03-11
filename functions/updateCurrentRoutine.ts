@@ -11,17 +11,17 @@ import {
 import getRawSchedule from "functions/getRawSchedule.js";
 import createTasks from "functions/createTasks.js";
 import mergeSchedules from "functions/mergeSchedules.js";
-import { CreateRoutineUserInfoType } from "types/createRoutineTypes.js";
+import {
+  CreateRoutineAllSolutionsType,
+  CreateRoutineUserInfoType,
+} from "types/createRoutineTypes.js";
 import httpError from "helpers/httpError.js";
 import updateTasksAnalytics from "./updateTasksAnalytics.js";
 import { db } from "init.js";
 import addDateAndIdsToAllTasks from "@/helpers/addDateAndIdsToAllTasks.js";
 import combineAllTasks from "@/helpers/combineAllTasks.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
-import chooseSolutionsForConcerns, {
-  ConcernsSolutionsAndFrequenciesType,
-} from "./chooseSolutionsForConcerns.js";
-import createSolutionData from "./createSolutionData.js";
+import getSolutionsAndFrequencies from "./getSolutionsAndFrequencies.js";
 
 type Props = {
   part: PartEnum;
@@ -30,6 +30,7 @@ type Props = {
   partImages: ProgressImageType[];
   partConcerns: UserConcernType[];
   userInfo: CreateRoutineUserInfoType;
+  allSolutions: CreateRoutineAllSolutionsType[];
   routineStartDate: string;
   currentSolutions: { [key: string]: number };
   categoryName: CategoryNameEnum;
@@ -42,6 +43,7 @@ export default async function updateCurrentRoutine({
   routineId,
   userInfo,
   currentSolutions,
+  allSolutions,
   categoryName,
   routineStartDate,
   incrementMultiplier = 1,
@@ -51,8 +53,6 @@ export default async function updateCurrentRoutine({
     timeZone,
     name: userName,
     specialConsiderations,
-    demographics,
-    country,
   } = userInfo;
 
   try {
@@ -79,34 +79,24 @@ export default async function updateCurrentRoutine({
       currentRoutine.lastDate
     );
 
-    const { concernsSolutionsAndFrequencies, areEnough } =
-      await chooseSolutionsForConcerns({
-        userId: String(userId),
-        part,
-        timeZone,
-        country,
-        currentSolutions,
-        categoryName,
-        demographics,
-        partConcerns,
-        partImages,
-        incrementMultiplier,
+    const additionalAllTasks = await doWithRetries(async () =>
+      getSolutionsAndFrequencies({
         specialConsiderations,
-      });
-
-    if (areEnough) return;
-
-    const { allSolutions: additionalSolutions, allTasks: additionalTasks } = await createSolutionData({
-      categoryName,
-      concernsSolutionsAndFrequencies:
-        concernsSolutionsAndFrequencies as unknown as ConcernsSolutionsAndFrequenciesType,
-      part,
-      userId: String(userId),
-    });
+        allSolutions,
+        categoryName,
+        partConcerns,
+        currentSolutions,
+        incrementMultiplier,
+        demographics: userInfo.demographics,
+        userId: String(userId),
+        partImages,
+        part,
+      })
+    );
 
     const rawSchedule = await doWithRetries(async () =>
       getRawSchedule({
-        allTasks:additionalTasks,
+        allTasks: additionalAllTasks,
         days: daysDifference,
         routineStartDate,
         timeZone,
@@ -128,10 +118,10 @@ export default async function updateCurrentRoutine({
     let tasksToInsert = await createTasks({
       part,
       userInfo,
-      allSolutions: additionalSolutions,
+      allSolutions,
       categoryName,
       finalSchedule: mergedSchedule,
-      createOnlyTheseKeys: additionalTasks.map((sol) => sol.key),
+      createOnlyTheseKeys: additionalAllTasks.map((sol) => sol.key),
     });
 
     if (tasksToInsert.length > 0)
@@ -140,7 +130,7 @@ export default async function updateCurrentRoutine({
       );
 
     const additionalTasksWithDateAndIds = addDateAndIdsToAllTasks({
-      allTasksWithoutDates: additionalTasks,
+      allTasksWithoutDates: additionalAllTasks,
       tasksToInsert,
     });
 

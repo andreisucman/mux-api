@@ -79,7 +79,7 @@ export default async function getDemographics({
 
     const runs = [
       {
-        isMini: false,
+        model: "gpt-4o",
         content: images,
         responseFormat: zodResponseFormat(
           DemographicsResponseType,

@@ -32,10 +32,15 @@ export default async function createSolutionInfo({
 
     const TaskResponseType = z.object({
       name: z.string().describe("The name of the task in imperative form"),
-      words: z
-        .array(z.string())
+      // words: z
+      //   .array(z.string())
+      //   .describe(
+      //     "An array of up to 10 most contextually meaningfull node-emoji keywords based on the task's info."
+      //   ),
+      icon: z
+        .string()
         .describe(
-          "An array of up to 10 most contextually meaningfull node-emoji keywords based on the task's info."
+          "The closest unicode icon from node-emoji for this activity based on description and instructon"
         ),
       requisite: z
         .string()
@@ -47,7 +52,7 @@ export default async function createSolutionInfo({
         .describe(
           "Number of days the user should rest before repeating this activity"
         ),
-      isFood: z.boolean().describe("true if this activity is a food"),
+      isDish: z.boolean().describe("true if this activity is a food dish"),
       productTypes: z
         .array(z.string())
         .describe(
@@ -77,23 +82,22 @@ export default async function createSolutionInfo({
       functionName: "saveTaskFromDescription",
     });
 
-    const { words, ...restData } = data;
+    // const { words, ...restData } = data;
 
-    const icon = findEmoji(words);
+    // const icon = findEmoji(words);
 
     const color = generateRandomPastelColor();
 
     const response = {
-      ...restData,
+      ...data,
       key: solution,
-      icon,
       color,
       concern,
       description,
       instruction,
     };
 
-    if (restData.isFood) response.recipe = null;
+    if (data.isDish) response.recipe = null;
 
     const youtubeVideo = await searchYoutubeVideo(`How to ${data.name}`);
 

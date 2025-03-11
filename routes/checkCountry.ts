@@ -28,7 +28,7 @@ route.post(
 
       const userContent = [
         {
-          isMini: true,
+          model: "gpt-4o-mini",
           content: [
             {
               type: "text",

@@ -19,7 +19,7 @@ export default async function generateBioContent({
 
     const runs = [
       {
-        isMini: true,
+        model: "gpt-4o-mini",
         content: [
           {
             type: "text",
@@ -38,7 +38,6 @@ export default async function generateBioContent({
       userId,
       categoryName,
       systemContent,
-      isResultString: true,
       functionName: "updateAboutBio",
     });
   } catch (err) {

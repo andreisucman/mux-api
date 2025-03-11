@@ -32,7 +32,7 @@ type Props = {
   categoryName: CategoryNameEnum;
   demographics: DemographicsType;
   incrementMultiplier?: number;
-  currentSolutions?: string[];
+  currentSolutions?: { [key: string]: number };
 };
 
 export default async function getSolutionsAndFrequencies({
@@ -67,7 +67,7 @@ export default async function getSolutionsAndFrequencies({
     const relevantImage = partImages.find((imo) => imo.position === "front");
 
     const facialHairCheck: RunType = {
-      isMini: true,
+      model: "gpt-4o-mini",
       content: [
         {
           type: "text",
@@ -89,7 +89,7 @@ export default async function getSolutionsAndFrequencies({
     let findSolutionsInstruction = `You are a dermatologist, dentist and fitness coach. The user gives you a list of their concerns. Your goal is to select the most effective combination of solutions for each of their concerns from this list of solutions: ${allSolutionsList}. DON'T MODIFY THE NAMES OF THE CONCERNS AND SOLUTIONS. Be concise and to the point.`;
 
     if (currentSolutions) {
-      findSolutionsInstruction = `You are a dermatologist, dentist and fitness coach. The user gives you a list of their concerns and the current solutions they use to address them. Your goal is to find additional solutions from the list of solutions below that could be added to the user's current solutions to better address their concerns. Respond with the additional solutions only. DON'T MODIFY THE NAMES OF THE CONCERNS AND SOLUTIONS. Be concise and to the point. ### List of solutions: ${allSolutionsList}.`;
+      findSolutionsInstruction = `You are a dermatologist, dentist and fitness coach. The user gives you a list of their concerns and the current solutions they use to address them. Your goal is to find additional solutions from the list of solutions below that could be added to the user's current solutions to better address their concerns. RESPOND WITH THE ADDITIONAL SOLUTIONS ONLY. DON'T MODIFY THE NAMES OF THE CONCERNS AND SOLUTIONS. Be concise and to the point. ### List of solutions: ${allSolutionsList}.`;
     }
 
     const allConcerns = partConcerns.map((co) => ({
@@ -109,7 +109,7 @@ export default async function getSolutionsAndFrequencies({
           },
           {
             type: "text",
-            text: `My current solutions: ${currentSolutions.join(", ")}`,
+            text: `My current solutions: ${JSON.stringify(currentSolutions)}`,
           },
         ],
         callback,
@@ -184,7 +184,7 @@ export default async function getSolutionsAndFrequencies({
       .describe("concern:solutions[] map");
 
     findSolutionsContentArray.push({
-      isMini: true,
+      model: "gpt-4o-mini",
       content: [
         {
           type: "text",
@@ -224,7 +224,7 @@ export default async function getSolutionsAndFrequencies({
 
     const findFrequenciesContentArray: RunType[] = [
       {
-        isMini: false,
+        model: "gpt-4o",
         content: [
           {
             type: "text",
@@ -244,7 +244,7 @@ export default async function getSolutionsAndFrequencies({
 
     if (specialConsiderations) {
       findFrequenciesContentArray.push({
-        isMini: false,
+        model: "gpt-4o",
         content: [
           {
             type: "text",
@@ -289,7 +289,7 @@ export default async function getSolutionsAndFrequencies({
 
       if (condition && wish)
         findFrequenciesContentArray.push({
-          isMini: false,
+          model: "gpt-4o",
           content: [
             {
               type: "text" as "text",
@@ -353,8 +353,6 @@ export default async function getSolutionsAndFrequencies({
         description,
         instruction,
         concern: null,
-        completed: 0,
-        unknown: 0,
         total,
       };
 

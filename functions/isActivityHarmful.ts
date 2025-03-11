@@ -30,7 +30,7 @@ export default async function isActivityHarmful({
 
     const runs = [
       {
-        isMini: true,
+        model: "gpt-4o-mini",
         content: [
           {
             type: "text",

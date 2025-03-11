@@ -18,6 +18,7 @@ import incrementProgress from "@/helpers/incrementProgress.js";
 import analyzeConcerns from "./analyzeConcerns.js";
 import formatRatings from "@/helpers/formatRatings.js";
 import filterImagesByFeature from "@/helpers/filterImagesByFeature.js";
+import { maintenanceConcerns } from "@/data/maintenanceConcerns.js";
 
 export type ImageObject = {
   position: string;
@@ -148,6 +149,8 @@ export default async function getScoresAndFeedback({
     );
 
     concerns = uniqueConcerns;
+  } else {
+    concerns = maintenanceConcerns.filter((c) => c.part === part);
   }
 
   /* add the record of progress to the Progress collection*/

@@ -24,6 +24,10 @@ const {
   LLAMA_11B_VISION,
   LLAMA_8B_PRICE,
   LLAMA_11B_VISION_PRICE,
+
+  DEEPSEEK_REASONER,
+  DEEPSEEK_REASONER_INPUT_PRICE,
+  DEEPSEEK_REASONER_OUTPUT_PRICE,
 } = process.env;
 
 const priceMap: { [key: string]: { input: number; output: number } } = {
@@ -47,6 +51,10 @@ const priceMap: { [key: string]: { input: number; output: number } } = {
   [O3_MINI]: {
     input: Number(O3_MINI_INPUT_PRICE),
     output: Number(O3_MINI_OUTPUT_PRICE),
+  },
+  [DEEPSEEK_REASONER]: {
+    input: Number(DEEPSEEK_REASONER_INPUT_PRICE),
+    output: Number(DEEPSEEK_REASONER_OUTPUT_PRICE),
   },
 };
 

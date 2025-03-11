@@ -56,11 +56,11 @@ export default async function analyzeCalories({
 
     const runs: RunType[] = [
       {
-        isMini: true,
+        model: "gpt-4o-mini",
         content,
       },
       {
-        isMini: true,
+        model: "gpt-4o-mini",
         content: [
           {
             type: "text",
@@ -100,7 +100,7 @@ export default async function analyzeCalories({
 
       const runs: RunType[] = [
         {
-          isMini: true,
+          model: "gpt-4o-mini",
           content: [
             {
               type: "image_url",
@@ -113,7 +113,7 @@ export default async function analyzeCalories({
           ],
         },
         {
-          isMini: true,
+          model: "gpt-4o-mini",
           content: [
             {
               type: "text",

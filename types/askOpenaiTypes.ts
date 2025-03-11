@@ -11,7 +11,6 @@ export enum RoleEnum {
 }
 
 export type RunType = {
-  isMini?: boolean;
   content: ChatCompletionContentPart[];
   model?: string;
   responseFormat?: any;
@@ -21,11 +20,9 @@ export type RunType = {
 export type AskOpenaiProps = {
   userId: string;
   seed: number;
-  model?: string;
+  model: string;
   messages: ChatCompletionMessageParam[];
   responseFormat?: any;
-  isMini: boolean;
-  isJson: boolean;
   functionName: string;
   categoryName: CategoryNameEnum;
 };

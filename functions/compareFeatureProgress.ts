@@ -86,7 +86,7 @@ export default async function compareFeatureProgress({
 
     const runs: RunType[] = [
       {
-        isMini: false,
+        model: "gpt-4o",
         content,
         responseFormat: zodResponseFormat(
           FeatureProgressResponseFormatType,

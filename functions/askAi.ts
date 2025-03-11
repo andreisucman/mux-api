@@ -1,7 +1,7 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import { openai } from "init.js";
+import { deepSeek, openai, together } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { AskOpenaiProps } from "types/askOpenaiTypes.js";
 import httpError from "@/helpers/httpError.js";
@@ -9,36 +9,48 @@ import updateSpend from "./updateSpend.js";
 import { ChatCompletionCreateParams } from "openai/resources/index.mjs";
 import getCompletionCost from "@/helpers/getCompletionCost.js";
 
-async function askOpenai({
+const openAiModels = ["gpt", "o3", "ft:"];
+const llamaModels = ["meta-llama"];
+const deepseekModels = ["deepseek"];
+
+async function askAi({
   messages,
   seed,
   model,
   functionName,
   categoryName,
   userId,
-  isMini,
   responseFormat,
-  isJson = true,
 }: AskOpenaiProps) {
-  const finalModel = model
-    ? model
-    : isMini
-    ? process.env.GPT_4O_MINI
-    : process.env.GPT_4O;
-
   try {
+    const isOpenaiModel = openAiModels.some((name) => model.startsWith(name));
+    const isLlamaModel = llamaModels.some((name) => model.startsWith(name));
+    const isDeepseekModel = deepseekModels.some((name) =>
+      model.startsWith(name)
+    );
+
+    console.log("isOpenaiModel", isOpenaiModel);
+
+    let client: any = openai;
+    if (isLlamaModel) client = together;
+    if (isDeepseekModel) client = deepSeek;
+
     const options: ChatCompletionCreateParams = {
       messages,
       seed,
-      model: finalModel,
+      model,
     };
 
-    if (!finalModel.startsWith("o3")) options.temperature = 0;
-    if (isJson) options.response_format = { type: "json_object" };
-    if (responseFormat) options.response_format = responseFormat;
+    if (isOpenaiModel) {
+      if (!model.startsWith("o3")) options.temperature = 0;
+      if (responseFormat) options.response_format = responseFormat;
+    }
+
+    console.log("messages", messages);
+    console.log("content", messages.map((m) => m.content).flat());
 
     const completion = await doWithRetries(async () =>
-      openai.chat.completions.create(options)
+      client.chat.completions.create(options)
     );
 
     const inputTokens = completion.usage.prompt_tokens;
@@ -47,20 +59,22 @@ async function askOpenai({
     const { unitCost, units } = getCompletionCost({
       inputTokens,
       outputTokens,
-      modelName: finalModel,
+      modelName: model,
       divisor: 1000000,
     });
 
+    console.log("model", model, "cost", unitCost * units);
+
     updateSpend({
       functionName,
-      modelName: finalModel,
+      modelName: model,
       categoryName,
       unitCost,
       units,
       userId,
     });
 
-    return isJson
+    return responseFormat
       ? JSON.parse(completion.choices[0].message.content)
       : completion.choices[0].message.content;
   } catch (err) {
@@ -68,4 +82,4 @@ async function askOpenai({
   }
 }
 
-export default askOpenai;
+export default askAi;

@@ -84,7 +84,7 @@ export default async function polishRawSchedule({
     }
 
     userContent.push({
-      isMini: true,
+      model: "gpt-4o-mini",
       content: [
         {
           type: "text",
@@ -95,7 +95,8 @@ export default async function polishRawSchedule({
     });
 
     userContent.push({
-      isMini: true,
+      model: "gpt-4o-mini",
+      responseFormat: { type: "json_object" },
       content: [
         {
           type: "text",

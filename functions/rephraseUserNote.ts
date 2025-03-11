@@ -19,7 +19,7 @@ export default async function rephraseUserNote({
 
     let runs = [
       {
-        isMini: true,
+        model: "gpt-4o-mini",
         content: [
           {
             type: "text",
@@ -28,7 +28,7 @@ export default async function rephraseUserNote({
         ],
       },
       {
-        isMini: true,
+        model: "gpt-4o-mini",
         content: [
           {
             type: "text",
@@ -54,7 +54,7 @@ export default async function rephraseUserNote({
 
     runs = [
       {
-        isMini: false,
+        model: "gpt-4o",
         content: [
           {
             type: "text",
@@ -63,7 +63,7 @@ export default async function rephraseUserNote({
         ],
       },
       {
-        isMini: false,
+        model: "gpt-4o",
         content: [
           {
             type: "text",
@@ -72,7 +72,7 @@ export default async function rephraseUserNote({
         ],
       },
       {
-        isMini: false,
+        model: "gpt-4o",
         content: [
           {
             type: "text",

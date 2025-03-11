@@ -71,11 +71,11 @@ export default async function chooseSolutionsForConcerns({
       concernsNames.includes("ungroomed_facial_hair");
 
     let findSolutionsInstruction = `You are a dermatologist, dentist and fitness coach. You are given the information about a user and a list of their ${part} concerns. Your goal is to come up with a combination of the most effective solutions that you know of that the user can do themselves to improve each of their concerns. These could include nutrition, skincare or fitness tasks. Each solution should have a monthly frequency of use and be compatible with the rest of the solutions that you suggest. 
-    <--->Your response is an object where keys are the concerns and values are an array of objects each havng a solution name and frequency. <--->Example of your response format: {chapped_lips: [{solution: lip healing balm, monthlyFrequency: 60}], thinning_hair: [{solution: minoxidil, monthlyFrequency: 60},{solution: scalp massage, monthlyFrequency: 30}, {solution: gentle shampoo, monthlyFrequency: 8}, ...], ...}`;
+     <--->Example of your response format: Concern: chapped_lips.\n\n Solutions for chapped lips:\n -lip healing balm, monthlyFrequency: 60\n\n Concern: thinning_hair. Solutions for thinning hair:\n -minoxidil, monthlyFrequency: 60\n -scalp massage, monthlyFrequency: 30\n -gentle shampoo, monthlyFrequency: 8.`;
 
     if (currentSolutions) {
       findSolutionsInstruction = `You are a dermatologist, dentist and fitness coach. You are given the information about a user, a list of their ${part} concerns and the current solutons that they are using to improve the concerns. Your goal is to check if the number and frequency of their solutions are optimal for addressing the concerns and if not, suggest additional solutions. The additional solutions could include nutrition, skincare or fitness tasks. Each solution should have a monthly frequency of use and be compatible with the exsting solutions. 
-    <--->Your response is an object with this structure: {areEnough: true if current solutions are enough, false if not, additionalSolutions: an object of additional solutions if required, each having a solution name and frequency, or null if no additional solutions are needed.} <--->Example of your response format: {areEnough: false, additionalSolutions: {chapped_lips: [{solution: lip healing balm, monthlyFrequency: 60}], thinning_hair: [{solution: minoxidil, monthlyFrequency: 60},{solution: scalp massage, monthlyFrequency: 30}, {solution: gentle shampoo, monthlyFrequency: 8}, ...], ...}}`;
+    <--->Your response is an object with this structure: {areEnough: true if current solutions are enough, false if not, additionalSolutions: an object of additional solutions if required, each having a solution name and frequency, or null if no additional solutions are needed.} <--->Example of your response format: The current solution are not enough.\n The additional solutions are: Concern: chapped_lips.\n\nSolutions for chapped lips:\n -lip healing balm, monthlyFrequency: 60\n\nConcern: thinning_hair. Solutions for thinning hair:\n -minoxidil, monthlyFrequency: 60\n -scalp massage, monthlyFrequency: 30\n -gentle shampoo, monthlyFrequency: 8.`;
     }
 
     if (shouldCheckFacialHar) {
@@ -90,7 +90,7 @@ export default async function chooseSolutionsForConcerns({
         findSolutionsInstruction += ` Don't suggest clean shave.`;
     }
 
-    const allConcerns = partConcerns.map((co) => ({
+    const usersConcerns = partConcerns.map((co) => ({
       name: co.name,
       importance: co.importance,
     }));
@@ -106,8 +106,12 @@ export default async function chooseSolutionsForConcerns({
       .map(([key, value]) => `${toSentenceCase(key)}: ${value}`)
       .join("\n");
 
+    const usersConcernsString = usersConcerns
+      .map((o) => `Concern: ${o.name}, Importance: ${o.importance}`)
+      .join("\n\n");
+
     findSolutionsContentArray.push({
-      model: "deepseek-reasoner",
+      model: "o3-mini",
       content: [
         {
           type: "text",
@@ -119,7 +123,33 @@ export default async function chooseSolutionsForConcerns({
         },
         {
           type: "text",
-          text: `The user's concerns are: ${JSON.stringify(allConcerns)}`,
+          text: `The user's concerns are:\n${usersConcernsString}`,
+        },
+      ],
+      callback,
+    });
+
+    findSolutionsContentArray.push({
+      model: "o3-mini",
+      content: [
+        {
+          type: "text",
+          text: `Ensure that all of your tasks are related to ${part}. Your list should only contain tasks that are effective at resolving the specific concern on the ${part} specifically.`,
+        },
+        {
+          type: "text",
+          text: `Ensure that your solutions can easily be sourced, or performed in the user's geography. Your suggestions shouldn't feel exotic for the user. You can get an idea of their geography from their timeZone or country if available.`,
+        },
+      ],
+      callback,
+    });
+
+    findSolutionsContentArray.push({
+      model: "o3-mini",
+      content: [
+        {
+          type: "text",
+          text: `Have you considered the user's demographic factors such as age or ethnicity? Think if they influence the solutions or their frequency and if yes, modify accordingly, if not leave as is.`,
         },
       ],
       callback,
@@ -143,7 +173,7 @@ export default async function chooseSolutionsForConcerns({
 
       if (condition && wish)
         findSolutionsContentArray.push({
-          model: "deepseek-reasoner",
+          model: "o3-mini",
           content: [
             {
               type: "text" as "text",
@@ -155,7 +185,7 @@ export default async function chooseSolutionsForConcerns({
     }
 
     let ChooseSolutonForConcernsResponseType = z.object(
-      allConcerns.reduce((a, c) => {
+      usersConcerns.reduce((a, c) => {
         a[c.name] = z
           .array(
             z.object({ solution: z.string(), monthlyFrequency: z.number() })
@@ -166,6 +196,11 @@ export default async function chooseSolutionsForConcerns({
       }, {})
     );
 
+    console.log(
+      "ChooseSolutonForConcernsResponseType",
+      ChooseSolutonForConcernsResponseType
+    );
+
     if (currentSolutions) {
       ChooseSolutonForConcernsResponseType = z.object({
         areEnough: z
@@ -174,13 +209,13 @@ export default async function chooseSolutionsForConcerns({
             "true if the current tasks are enought and no more solutions are needed, false otherwise"
           ),
         additionalSolutions: z.object(
-          allConcerns.reduce((a, c) => {
+          usersConcerns.reduce((a, c) => {
             a[c.name] = z
               .array(
                 z.object({ solution: z.string(), monthlyFrequency: z.number() })
               )
               .describe(
-                `The array of the adtional solutions for the ${c.name} concern`
+                `the array of the adtional solutions for the ${c.name} concern`
               );
 
             return a;
@@ -194,7 +229,7 @@ export default async function chooseSolutionsForConcerns({
       content: [
         {
           type: "text",
-          text: `Format your final list of solutions as a JSON object.`,
+          text: `format your final list of solutions as a JSON object.`,
         },
       ],
       responseFormat: zodResponseFormat(
@@ -213,14 +248,14 @@ export default async function chooseSolutionsForConcerns({
         functionName: "chooseSolutionsForConcerns",
       });
 
-    let data = findFrequencyResponse;
+      console.log("findFrequencyResponse 1", findFrequencyResponse);
 
     if (currentSolutions) {
-      data =
+      findFrequencyResponse =
         findFrequencyResponse.additionalSolutions as unknown as ConcernsSolutionsAndFrequenciesType;
     }
 
-    data = Object.fromEntries(
+    findFrequencyResponse = Object.fromEntries(
       Object.entries(findFrequencyResponse).map(([concern, arrayOfObjects]) => [
         concern,
         arrayOfObjects.map((ob) => {
@@ -230,15 +265,25 @@ export default async function chooseSolutionsForConcerns({
       ])
     );
 
-    data = convertKeysAndValuesTotoSnakeCase(findFrequencyResponse);
+    findFrequencyResponse = convertKeysAndValuesTotoSnakeCase(
+      findFrequencyResponse
+    );
+
+    console.log("findFrequencyResponse 2", findFrequencyResponse);
 
     if (currentSolutions) {
       const { areEnough } = findFrequencyResponse;
 
-      return { areEnough, concernsSolutionsAndFrequencies: data };
+      return {
+        areEnough,
+        concernsSolutionsAndFrequencies: findFrequencyResponse,
+      };
     }
 
-    return { areEnough: false, concernsSolutionsAndFrequencies: data };
+    return {
+      areEnough: false,
+      concernsSolutionsAndFrequencies: findFrequencyResponse,
+    };
   } catch (error) {
     throw httpError(error);
   }

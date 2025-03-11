@@ -204,7 +204,6 @@ export default async function stealSingleRoutine({
         concern,
         total,
         completed: 0,
-        unknown: 0,
         description,
         instruction,
       };

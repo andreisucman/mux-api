@@ -28,7 +28,7 @@ export default async function validateImage({
 
     const runs = [
       {
-        isMini: true,
+        model: "gpt-4o-mini",
         content: [
           {
             type: "image_url",

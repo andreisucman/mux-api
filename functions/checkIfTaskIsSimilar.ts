@@ -32,7 +32,7 @@ export default async function checkIfTaskIsSimilar({
 
     const runs = [
       {
-        isMini: false,
+        model: "gpt-4o",
         content: [
           {
             type: "text",

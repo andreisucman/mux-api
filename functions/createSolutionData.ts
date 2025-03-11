@@ -62,6 +62,8 @@ export default async function createSolutionData({
       descriptionAndInstructionsPromises
     );
 
+    console.log("line 66");
+
     const taskInfoPromises = taskKeyDescriptionInstruction.map(
       ({ key, description, instruction }) =>
         doWithRetries(async () =>
@@ -77,6 +79,8 @@ export default async function createSolutionData({
     );
 
     const taskInfoRecords = await Promise.all(taskInfoPromises);
+
+    console.log("line 83"), taskInfoRecords;
 
     /* change names of solutions to snake case */
     const valuesWithConcerns: AllTaskType[] = [];
@@ -97,11 +101,6 @@ export default async function createSolutionData({
 
       const { name, icon, color, description, instruction } = relevantSolution;
 
-      const total = Math.max(
-        Math.round(Number(frequencyMap[key]) / 4.285714301020408), // needed to turn monthly frequency into weekly
-        1
-      );
-
       const record: AllTaskType = {
         name,
         key,
@@ -110,9 +109,6 @@ export default async function createSolutionData({
         description,
         instruction,
         concern: null,
-        completed: 0,
-        unknown: 0,
-        total,
       };
 
       const indexOfConcern = concernSolutions.findIndex((arrayOfSolutions) =>

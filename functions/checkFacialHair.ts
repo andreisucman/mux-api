@@ -29,7 +29,7 @@ export default async function checkFacialHair({
 
     const facialHairCheck: RunType[] = [
       {
-        isMini: true,
+        model: "gpt-4o-mini",
         content: [
           {
             type: "image_url",

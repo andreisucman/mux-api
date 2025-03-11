@@ -35,6 +35,7 @@ route.post(
 
     if (
       !concerns ||
+      !concerns.length ||
       !isValidDate ||
       !isFutureDate ||
       (part && !validParts.includes(part))
@@ -110,6 +111,10 @@ route.post(
         nextRoutine,
       });
 
+      if (part) {
+        availableRoutines = availableRoutines.filter((r) => r.part === part);
+      }
+
       if (availableRoutines.length === 0) {
         const formattedDate = formatDate({
           date: new Date(canRoutineDate),
@@ -123,9 +128,6 @@ route.post(
         });
         return;
       }
-
-      if (part)
-        availableRoutines = availableRoutines.filter((r) => r.part === part);
 
       const promises = availableRoutines.map((r) =>
         doWithRetries(

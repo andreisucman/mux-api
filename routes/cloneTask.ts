@@ -138,8 +138,6 @@ route.post(
         description: resetTask.description,
         instruction: resetTask.instruction,
         total: 1,
-        completed: 0,
-        unknown: 0,
       };
 
       const finalRoutineAllTasks = combineAllTasks({

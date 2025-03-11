@@ -59,8 +59,6 @@ export default function combineAllTasks({ oldAllTasks, newAllTasks }: Props) {
       mergedTasksMap.set(task.key, {
         ...existingTask,
         ...task,
-        unknown: deepMerge(existingTask.unknown, task.unknown),
-        completed: deepMerge(existingTask.completed, task.completed),
         total: deepMerge(existingTask.total, task.total),
         ids: deepMerge(existingTask.ids, task.ids, "startsAt"),
       });

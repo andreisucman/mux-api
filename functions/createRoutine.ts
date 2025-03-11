@@ -9,15 +9,18 @@ import {
   ModerationStatusEnum,
   CategoryNameEnum,
 } from "@/types.js";
-import { CreateRoutineUserInfoType } from "@/types/createRoutineTypes.js";
+import {
+  CreateRoutineAllSolutionsType,
+  CreateRoutineUserInfoType,
+} from "@/types/createRoutineTypes.js";
 import makeANewRoutine from "functions/makeANewRoutine.js";
 import addAnalysisStatusError from "functions/addAnalysisStatusError.js";
 import prolongPreviousRoutine from "functions/prolongPreviousRoutine.js";
 import updateCurrentRoutine from "functions/updateCurrentRoutine.js";
 import httpError from "@/helpers/httpError.js";
 import getUsersImages from "./getUserImages.js";
-import { db } from "init.js";
 import getLatestCompletedTasks from "./getLatestCompletedTasks.js";
+import { db } from "init.js";
 
 type Props = {
   userId: string;
@@ -65,6 +68,36 @@ export default async function createRoutine({
     if (!userInfo) throw new Error("This user doesn't exist");
 
     const partConcerns = concerns.filter((c) => c.part === part);
+
+    const concernNames = partConcerns.map((obj) => obj.name);
+
+    const allSolutions = (await doWithRetries(async () =>
+      db
+        .collection("Solution")
+        .find(
+          { nearestConcerns: { $in: concernNames } },
+          {
+            projection: {
+              instruction: 1,
+              description: 1,
+              requisite: 1,
+              example: 1,
+              color: 1,
+              name: 1,
+              key: 1,
+              icon: 1,
+              recipe: 1,
+              restDays: 1,
+              isRecipe: 1,
+              suggestions: 1,
+              productTypes: 1,
+              embedding: 1,
+              _id: 0,
+            },
+          }
+        )
+        .toArray()
+    )) as unknown as CreateRoutineAllSolutionsType[];
 
     const partImages = await getUsersImages({ userId, part });
 
@@ -159,6 +192,7 @@ export default async function createRoutine({
         routineId: existingActiveTasks[0].routineId,
         partConcerns,
         userInfo,
+        allSolutions,
         categoryName,
         currentSolutions,
         routineStartDate,
@@ -170,6 +204,7 @@ export default async function createRoutine({
         partImages,
         partConcerns,
         userInfo,
+        allSolutions,
         routineStartDate,
         tasksToProlong: draftTasksToProlong,
         categoryName,
@@ -182,6 +217,7 @@ export default async function createRoutine({
         userId,
         partImages,
         userInfo,
+        allSolutions,
         partConcerns,
         routineStartDate,
         specialConsiderations,
