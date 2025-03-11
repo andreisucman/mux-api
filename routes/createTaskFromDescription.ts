@@ -108,7 +108,6 @@ route.post(
 
       const runs = [
         {
-          model: "gpt-4o",
           content: [
             {
               type: "text",

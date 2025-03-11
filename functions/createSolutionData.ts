@@ -109,6 +109,7 @@ export default async function createSolutionData({
         description,
         instruction,
         concern: null,
+        total: 1,
       };
 
       const indexOfConcern = concernSolutions.findIndex((arrayOfSolutions) =>

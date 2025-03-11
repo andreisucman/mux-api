@@ -140,6 +140,7 @@ export default async function prolongPreviousRoutine({
           part: task.part,
           instruction: task.instruction,
           description: task.description,
+          total: ids.length,
         };
       })
       .filter(Boolean);
