@@ -378,7 +378,6 @@ route.post(
         proofImages,
         avatar,
         userName: name,
-        isPublic: false,
         moderationStatus: ModerationStatusEnum.ACTIVE,
       };
 
@@ -397,17 +396,6 @@ route.post(
       if (streaksToIncrement) userUpdatePayload.$inc = streaksToIncrement;
       if (newStreakDates)
         userUpdatePayload.$set = { streakDates: newStreakDates };
-
-      if (privacy) {
-        const proofPrivacy = privacy.find((pr) => pr.name === "proof");
-
-        if (proofPrivacy) {
-          const relevantPartPrivacy = proofPrivacy.parts.find(
-            (p) => p.name === part
-          );
-          newProof.isPublic = relevantPartPrivacy.value;
-        }
-      }
 
       const taskUpdate = {
         $set: {

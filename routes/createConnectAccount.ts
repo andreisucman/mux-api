@@ -9,7 +9,6 @@ import { CustomRequest, ModerationStatusEnum } from "types.js";
 import { ConnectParamsType } from "types/createConnectAccountTypes.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -28,8 +27,8 @@ async function createAccountAndLink({ userId, params }: Props) {
 
     accLink = await stripe.accountLinks.create({
       account: account.id,
-      return_url: process.env.CLIENT_URL + "/club/admission",
-      refresh_url: process.env.CLIENT_URL + "/club/admission",
+      return_url: process.env.CLIENT_URL + "/club",
+      refresh_url: process.env.CLIENT_URL + "/club",
       type: "account_onboarding",
     });
   } catch (err) {
@@ -61,7 +60,9 @@ async function createAccountAndLink({ userId, params }: Props) {
       err.raw.message.includes(
         "you must either specify the `recipient` service agreement"
       ) ||
-      err.raw.message.includes("`recipient` service agreement is required for accounts");
+      err.raw.message.includes(
+        "`recipient` service agreement is required for accounts"
+      );
 
     if (agreementMustBeRecipient) {
       const updatedParams = {
@@ -106,7 +107,7 @@ route.post(
           },
           business_profile: {
             mcc: "5734",
-            url: `https://muxout.com/club/${name}`,
+            url: `https://muxout.com/club/progress/${name}`,
           },
           settings: {
             payments: {
@@ -150,8 +151,8 @@ route.post(
         if (!account.details_submitted) {
           const accLink = await stripe.accountLinks.create({
             account: connectId,
-            return_url: process.env.CLIENT_URL + "/club/admission",
-            refresh_url: process.env.CLIENT_URL + "/club/admission",
+            return_url: process.env.CLIENT_URL + "/club",
+            refresh_url: process.env.CLIENT_URL + "/club",
             type: "account_onboarding",
           });
           res.status(200).json({ message: accLink.url });

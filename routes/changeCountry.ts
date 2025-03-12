@@ -60,13 +60,18 @@ route.post(
         await stripe.accounts.del(connectId);
       }
 
-      if (!existingCountry) {
-        updateAnalytics({
-          userId: req.userId,
-          incrementPayload: { [`overview.club.country.${newCountry}`]: 1 },
-          decrementPayload: { [`overview.club.country.${existingCountry}`]: -1 },
-        });
+      const payload: any = {
+        userId: req.userId,
+        incrementPayload: { [`overview.club.country.${newCountry}`]: 1 },
+      };
+
+      if (existingCountry) {
+        payload.decrementPayload = {
+          [`overview.club.country.${existingCountry}`]: -1,
+        };
       }
+
+      updateAnalytics(payload);
 
       res
         .status(200)

@@ -144,9 +144,7 @@ export type PrivacyType = {
 
 export type ClubBioType = {
   intro: string;
-  about: string;
   socials: { value: string | null; label: string }[];
-  nextRegenerateBio: string | null;
 };
 
 export type ClubPayoutDataType = {
@@ -394,7 +392,6 @@ export type RoutineType = {
   stolenFrom: string;
   avatar: { [key: string]: any };
   userName: string;
-  isPublic: boolean;
 };
 
 export type ConcernType = {
@@ -459,7 +456,6 @@ export type ProofType = {
   proofImages: string[];
   avatar: { [key: string]: any } | null;
   userName: string;
-  isPublic: boolean;
   moderationStatus: ModerationStatusEnum;
 };
 

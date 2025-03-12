@@ -2,7 +2,6 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import { Router, Response, NextFunction } from "express";
-import { GetYouFollowUserType } from "@/types/getYouFollowTypes.js";
 import { ClubBioType, CustomRequest, UserType } from "types.js";
 import checkTrackedRBAC from "@/functions/checkTrackedRBAC.js";
 import httpError from "@/helpers/httpError.js";

@@ -14,8 +14,6 @@ import getUserInfo from "./getUserInfo.js";
 import createRandomName from "./createRandomName.js";
 import httpError from "@/helpers/httpError.js";
 import * as reactNiceAvatar from "react-nice-avatar";
-import { AboutQuestionType } from "@/types/saveAboutResponseTypes.js";
-import updateContentPublicity from "./updateContentPublicity.js";
 
 type Props = {
   userId: string;
@@ -65,28 +63,10 @@ export default async function createClubProfile({ userId }: Props) {
       isGradient: true,
     });
 
-    const defaultQuestions = [
-      "Tell about your life style. Speak about your wake up time, school, work, leisure preferences etc.",
-    ];
-
     const randomName = await createRandomName();
-
-    const aboutQuestions: AboutQuestionType[] = defaultQuestions.map((q) => ({
-      _id: new ObjectId(),
-      question: q,
-      userId: new ObjectId(userId),
-      userName: randomName,
-      updatedAt: new Date(),
-      asking: "coach",
-      skipped: false,
-      answer: "",
-      moderationStatus: ModerationStatusEnum.ACTIVE,
-    }));
 
     const clubBio: ClubBioType = {
       intro: "I love working out and eating healthy.",
-      about: "",
-      nextRegenerateBio: "",
       socials: [],
     };
 
@@ -114,12 +94,6 @@ export default async function createClubProfile({ userId }: Props) {
         }
       )
     );
-
-    await doWithRetries(async () =>
-      db.collection("FaqAnswer").insertMany(aboutQuestions)
-    );
-
-    await updateContentPublicity({ userId, newPrivacy: defaultClubPrivacy });
 
     await doWithRetries(async () =>
       db
