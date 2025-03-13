@@ -196,11 +196,6 @@ export default async function chooseSolutionsForConcerns({
       }, {})
     );
 
-    console.log(
-      "ChooseSolutonForConcernsResponseType",
-      ChooseSolutonForConcernsResponseType
-    );
-
     if (currentSolutions) {
       ChooseSolutonForConcernsResponseType = z.object({
         areEnough: z
@@ -248,8 +243,6 @@ export default async function chooseSolutionsForConcerns({
         functionName: "chooseSolutionsForConcerns",
       });
 
-      console.log("findFrequencyResponse 1", findFrequencyResponse);
-
     if (currentSolutions) {
       findFrequencyResponse =
         findFrequencyResponse.additionalSolutions as unknown as ConcernsSolutionsAndFrequenciesType;
@@ -268,8 +261,6 @@ export default async function chooseSolutionsForConcerns({
     findFrequencyResponse = convertKeysAndValuesTotoSnakeCase(
       findFrequencyResponse
     );
-
-    console.log("findFrequencyResponse 2", findFrequencyResponse);
 
     if (currentSolutions) {
       const { areEnough } = findFrequencyResponse;

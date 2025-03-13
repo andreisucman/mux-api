@@ -12,7 +12,6 @@ route.post(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { country } = req.body;
 
-    console.log("checkCountry req.body", req.body);
     try {
       const systemContent = `The user gives you the name of their country. If this is a valid country return its ISO 3166-1 alpha-2 code. If this is an invalid country return isValid as false and other fields as empty strings.`;
 

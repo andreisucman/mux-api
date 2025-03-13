@@ -104,7 +104,7 @@ export type UserType = {
   emailVerified: boolean;
   canRejoinClubAfter: Date | null;
   nextAvatarUpdateAt: Date | null;
-  nextDiaryRecordAfter: Date | null;
+  nextDiaryRecordAfter: { [key: string]: Date | null } | null;
   nextNameUpdateAt: Date | null;
   moderationStatus: ModerationStatusEnum;
   nutrition: {

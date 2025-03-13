@@ -90,6 +90,8 @@ import cloneTask from "routes/cloneTask.js";
 import signOut from "routes/signOut.js";
 import activateRoutine from "routes/activateRoutine.js";
 import getScoresAndFeedback from "routes/getScoresAndFeedback.js";
+import getRoutineData from "./routes/getRoutineData.js";
+import saveRoutineData from "./routes/saveRoutinedATA.js";
 
 import { client } from "init.js";
 
@@ -173,6 +175,8 @@ app.use("/getAllProofRecords", getAllProofRecords);
 
 // protected routes
 app.use((req, res, next) => checkAccess(req, res, next, true));
+app.use("/getRoutineData", getRoutineData);
+app.use("/saveRoutineData", saveRoutineData);
 app.use("/getScoresAndFeedback", getScoresAndFeedback);
 app.use("/activateRoutine", activateRoutine);
 app.use("/deleteContent", deleteContent);

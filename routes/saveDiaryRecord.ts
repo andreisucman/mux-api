@@ -136,20 +136,6 @@ route.post(
         db.collection("Diary").insertOne(newDiaryRecord)
       );
 
-      const nextDiaryRecordAfter = setToMidnight({
-        date: daysFrom({ days: 1 }),
-      });
-
-      await doWithRetries(async () =>
-        db.collection("User").updateOne(
-          {
-            _id: new ObjectId(req.userId),
-            moderationStatus: ModerationStatusEnum.ACTIVE,
-          },
-          { $set: { nextDiaryRecordAfter } }
-        )
-      );
-
       res.status(200).json({
         message: {
           _id: newDiaryRecord._id,

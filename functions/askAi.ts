@@ -29,8 +29,6 @@ async function askAi({
       model.startsWith(name)
     );
 
-    console.log("isOpenaiModel", isOpenaiModel);
-
     let client: any = openai;
     if (isLlamaModel) client = together;
     if (isDeepseekModel) client = deepSeek;
@@ -46,9 +44,6 @@ async function askAi({
       if (responseFormat) options.response_format = responseFormat;
     }
 
-    console.log("messages", messages);
-    console.log("content", messages.map((m) => m.content).flat());
-
     const completion = await doWithRetries(async () =>
       client.chat.completions.create(options)
     );
@@ -62,8 +57,6 @@ async function askAi({
       modelName: model,
       divisor: 1000000,
     });
-
-    console.log("model", model, "cost", unitCost * units);
 
     updateSpend({
       functionName,

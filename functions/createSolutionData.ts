@@ -62,8 +62,6 @@ export default async function createSolutionData({
       descriptionAndInstructionsPromises
     );
 
-    console.log("line 66");
-
     const taskInfoPromises = taskKeyDescriptionInstruction.map(
       ({ key, description, instruction }) =>
         doWithRetries(async () =>
@@ -79,8 +77,6 @@ export default async function createSolutionData({
     );
 
     const taskInfoRecords = await Promise.all(taskInfoPromises);
-
-    console.log("line 83"), taskInfoRecords;
 
     /* change names of solutions to snake case */
     const valuesWithConcerns: AllTaskType[] = [];

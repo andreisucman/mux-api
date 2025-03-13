@@ -51,8 +51,6 @@ route.post(
       timeZone = "America/New_York",
     } = req.body;
 
-    console.log("req.body", req.body);
-
     const { isValidDate, isFutureDate } = checkDateValidity(startDate);
 
     if (
@@ -121,16 +119,6 @@ route.post(
       const todayMidnight = setToMidnight({
         date: new Date(startDate),
         timeZone,
-      });
-
-      console.log("payload", {
-        userId: new ObjectId(req.userId),
-        status: RoutineStatusEnum.ACTIVE,
-        part,
-        $and: [
-          { startsAt: { $gte: todayMidnight } },
-          { startsAt: { $lt: daysFrom({ date: todayMidnight, days: 7 }) } },
-        ],
       });
 
       const relevantRoutine = await doWithRetries(async () =>
