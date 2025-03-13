@@ -4,7 +4,7 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
-import { CustomRequest } from "types.js";
+import { CustomRequest, TaskStatusEnum } from "types.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
 import { DiaryActivityType } from "@/types/saveDiaryRecordTypes.js";
 import { ModerationStatusEnum } from "types.js";
@@ -16,7 +16,7 @@ const route = Router();
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { timeZone } = req.body;
+    const { timeZone, part } = req.body;
 
     if (!timeZone) {
       res.status(400).json({ error: "Bad request" });
@@ -28,6 +28,7 @@ route.post(
 
       const todaysDiaryRecords = await doWithRetries(async () =>
         db.collection("Diary").findOne({
+          part,
           createdAt: { $gt: usersTodayMidnight },
           moderationStatus: ModerationStatusEnum.ACTIVE,
         })
@@ -46,10 +47,37 @@ route.post(
         timeZone,
       });
 
+      const anyCompleted = await doWithRetries(async () =>
+        db.collection("Task").findOne(
+          {
+            userId: new ObjectId(req.userId),
+            completedAt: {
+              $gte: usersTodayMidnight,
+              $lt: usersTomorrowMidnight,
+            },
+            status: TaskStatusEnum.COMPLETED,
+            part,
+          },
+          {
+            projection: {
+              _id: 1,
+            },
+          }
+        )
+      );
+
+      if (!anyCompleted) {
+        res.status(200).json({
+          error: `You haven't completed any ${part} tasks today.`,
+        });
+        return;
+      }
+
       const results: DiaryActivityType[] = [];
 
       const proofFilters: { [key: string]: any } = {
         userId: new ObjectId(req.userId),
+        part,
         createdAt: { $gte: usersTodayMidnight, $lt: usersTomorrowMidnight },
         moderationStatus: ModerationStatusEnum.ACTIVE,
       };
@@ -64,7 +92,7 @@ route.post(
               mainUrl: 1,
               mainThumbnail: 1,
               icon: 1,
-              type: 1,
+              part: 1,
               taskId: 1,
             },
           })
@@ -78,42 +106,12 @@ route.post(
           taskId: proof.taskId,
           name: proof.taskName,
           url: proof.mainUrl.url,
-          thumbnail: proof.contentType === "video" ? proof.mainThumbnail.url : "",
+          thumbnail:
+            proof.contentType === "video" ? proof.mainThumbnail.url : "",
           icon: proof.icon,
           categoryName: "proof",
           contentType: proof.contentType,
         });
-      }
-
-      const foodFilters: { [key: string]: any } = {
-        userId: new ObjectId(req.userId),
-        createdAt: { $gte: usersTodayMidnight, $lt: usersTomorrowMidnight },
-      };
-
-      const todaysFood = await doWithRetries(async () =>
-        db
-          .collection("FoodAnalysis")
-          .find(foodFilters, {
-            projection: { url: 1 },
-          })
-          .sort({ _id: -1 })
-          .toArray()
-      );
-
-      for (const food of todaysFood) {
-        results.unshift({
-          contentId: food._id,
-          url: food.url,
-          contentType: "image",
-          categoryName: "food",
-        });
-      }
-
-      if (results.length === 0) {
-        res.status(200).json({
-          error: `You don't have any activity today. Try again after you have completed something.`,
-        });
-        return;
       }
 
       res.status(200).json({ message: results });

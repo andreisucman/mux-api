@@ -51,6 +51,8 @@ route.post(
       timeZone = "America/New_York",
     } = req.body;
 
+    console.log("req.body", req.body);
+
     const { isValidDate, isFutureDate } = checkDateValidity(startDate);
 
     if (
@@ -121,15 +123,22 @@ route.post(
         timeZone,
       });
 
+      console.log("payload", {
+        userId: new ObjectId(req.userId),
+        status: RoutineStatusEnum.ACTIVE,
+        part,
+        $and: [
+          { startsAt: { $gte: todayMidnight } },
+          { startsAt: { $lt: daysFrom({ date: todayMidnight, days: 7 }) } },
+        ],
+      });
+
       const relevantRoutine = await doWithRetries(async () =>
         db.collection("Routine").findOne({
           userId: new ObjectId(req.userId),
           status: RoutineStatusEnum.ACTIVE,
           part,
-          $and: [
-            { startsAt: { $gte: todayMidnight } },
-            { startsAt: { $lt: daysFrom({ date: todayMidnight, days: 7 }) } },
-          ],
+          startsAt: { $lte: todayMidnight },
         })
       );
 
@@ -137,16 +146,6 @@ route.post(
 
       const TaskResponseType = z.object({
         name: z.string().describe("The name of the task in an imperative form"),
-        icon: z
-          .string()
-          .describe(
-            "The closest unicode icon from node-emoji for this activity based on description and instructon"
-          ),
-        // words: z
-        //   .array(z.string())
-        //   .describe(
-        //     "An array of up to 10 most contextually meaningfull node-emoji keywords based on the task's info."
-        //   ),
         requisite: z
           .string()
           .describe(
@@ -158,9 +157,9 @@ route.post(
             "Number of days the user should rest before repeating this activity"
           ),
         productTypes: z
-          .array(z.string())
+          .array(z.string().describe("name of a product or empty string"))
           .describe(
-            'An array of unique in their purpose product types in singular form (example: ["olive oil","tomato","onion"]). If multiple similar product types can be used, pick one - the most relevant.'
+            `An array of unique in their purpose product types in singular form or an empty array if the task doesn't require any products. (example: ["olive oil","tomato","onion"]). If multiple similar product types can be used, pick one - the most relevant.`
           ),
       });
 
@@ -200,16 +199,14 @@ route.post(
         value: 10,
       });
 
-      const { words, ...otherResponse } = response || {};
-
       const color = generateRandomPastelColor();
 
       const generalTaskInfo: TaskType = {
-        ...otherResponse,
+        ...response,
         userId: new ObjectId(req.userId),
         proofEnabled: true,
         status: TaskStatusEnum.ACTIVE,
-        key: toSnakeCase(otherResponse.name),
+        key: toSnakeCase(response.name),
         description,
         instruction,
         userName: userInfo.name,
@@ -218,7 +215,14 @@ route.post(
         part,
         concern,
         nearestConcerns: [concern],
+        productTypes: response.productTypes.filter((s: string) => s),
       };
+
+      const icon = await findEmoji({
+        userId: req.userId,
+        taskName: generalTaskInfo.name,
+      });
+      generalTaskInfo.icon = icon;
 
       const youtubeVideo = await searchYoutubeVideo(
         `How to ${generalTaskInfo.name}`
@@ -264,10 +268,6 @@ route.post(
       const latestDateOfWeeek = daysFrom({ days: 7 });
       const finalStartDate =
         new Date(startDate) > latestDateOfWeeek ? latestDateOfWeeek : startDate;
-
-      const icon = await findEmoji(words);
-
-      generalTaskInfo.icon = icon;
 
       for (let i = 0; i < Math.min(moderatedFrequency, 7); i++) {
         const starts = daysFrom({

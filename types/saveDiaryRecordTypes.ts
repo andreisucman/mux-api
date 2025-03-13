@@ -1,8 +1,9 @@
 import { ObjectId } from "mongodb";
-import { ModerationStatusEnum } from "@/types.js";
+import { ModerationStatusEnum, PartEnum } from "@/types.js";
 
 export type DiaryRecordType = {
   _id: ObjectId;
+  part: PartEnum;
   audio: string;
   embedding: number[];
   activity: DiaryActivityType[];

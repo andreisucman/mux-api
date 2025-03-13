@@ -44,7 +44,6 @@ route.post(
       isVoid,
       timeZone,
     }: Props = req.body;
-
     if (
       (newStatus && !validTaskStatuses.includes(newStatus)) ||
       (routineStatus && !validRoutineStatuses.includes(routineStatus))
@@ -74,6 +73,10 @@ route.post(
         return;
       }
 
+      const taskUpdatePayload: { [key: string]: any } = {
+        $set: { status: newStatus },
+      };
+
       if (newStatus === TaskStatusEnum.CANCELED) {
         await updateTasksAnalytics({
           tasksToInsert: tasksToUpdate,
@@ -81,6 +84,7 @@ route.post(
           keyTwo: "manualTasksCanceled",
           userId: req.userId,
         });
+        taskUpdatePayload.$unset.completedAt = null;
       } else if (newStatus === TaskStatusEnum.DELETED) {
         await updateTasksAnalytics({
           tasksToInsert: tasksToUpdate,
@@ -88,6 +92,14 @@ route.post(
           keyTwo: "manualTasksDeleted",
           userId: req.userId,
         });
+      } else if (newStatus === TaskStatusEnum.COMPLETED) {
+        await updateTasksAnalytics({
+          tasksToInsert: tasksToUpdate,
+          keyOne: "tasksMarkedCompleted",
+          keyTwo: "manualTasksMarkedCompleted",
+          userId: req.userId,
+        });
+        taskUpdatePayload.$set.completedAt = new Date();
       }
 
       const relevantTaskIds = tasksToUpdate.map((tObj) => tObj._id);
@@ -98,7 +110,7 @@ route.post(
             _id: { $in: relevantTaskIds },
             userId: new ObjectId(req.userId),
           },
-          { $set: { status: newStatus } }
+          taskUpdatePayload
         )
       );
 

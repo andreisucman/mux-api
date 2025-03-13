@@ -4,7 +4,6 @@ import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import { z } from "zod";
 import askRepeatedly from "./askRepeatedly.js";
 import httpError from "@/helpers/httpError.js";
-import findEmoji from "@/helpers/findEmoji.js";
 import { generateRandomPastelColor } from "make-random-color";
 import searchYoutubeVideo from "./searchYoutubeVideo.js";
 import generateImage from "./generateImage.js";

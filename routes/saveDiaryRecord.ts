@@ -11,6 +11,7 @@ import {
   ModerationStatusEnum,
   CustomRequest,
   CategoryNameEnum,
+  PartEnum,
 } from "types.js";
 import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
 import { daysFrom } from "@/helpers/utils.js";
@@ -22,12 +23,19 @@ import createTextEmbedding from "@/functions/createTextEmbedding.js";
 
 const route = Router();
 
+const validParts = [
+  PartEnum.BODY,
+  PartEnum.FACE,
+  PartEnum.MOUTH,
+  PartEnum.SCALP,
+];
+
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { audio, activity, timeZone } = req.body;
+    const { audio, activity, part, timeZone } = req.body;
 
-    if (!audio || !activity || !timeZone) {
+    if (!audio || !activity || !timeZone || !validParts.includes(part)) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
@@ -108,6 +116,7 @@ route.post(
 
       const newDiaryRecord: DiaryRecordType = {
         _id: new ObjectId(),
+        part,
         audio,
         activity,
         embedding,
@@ -144,6 +153,7 @@ route.post(
       res.status(200).json({
         message: {
           _id: newDiaryRecord._id,
+          part: newDiaryRecord.part,
           audio: newDiaryRecord.audio,
           createdAt: newDiaryRecord.createdAt,
           transcription: newDiaryRecord.transcription,

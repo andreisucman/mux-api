@@ -6,7 +6,7 @@ import { ObjectId, Sort } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import checkTrackedRBAC from "@/functions/checkTrackedRBAC.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import { ModerationStatusEnum, PrivacyType } from "types.js";
+import { ModerationStatusEnum } from "types.js";
 import { DiaryRecordType } from "@/types/saveDiaryRecordTypes.js";
 import { CustomRequest } from "types.js";
 import { db } from "init.js";
@@ -19,26 +19,20 @@ route.get(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { userName } = req.params;
     const { filter, sort, skip } = aqp(req.query as any) as AqpQuery;
-    const { dateFrom, dateTo } = filter;
+    const { dateFrom, dateTo, part } = filter;
 
     try {
-      let privacy: PrivacyType[] = [];
-
       if (userName) {
-        const { inClub, isSelf, isFollowing, targetUserInfo } =
-          await checkTrackedRBAC({
-            followingUserName: userName,
-            userId: req.userId,
-            throwOnError: false,
-            targetProjection: { club: 1 },
-          });
+        const { inClub, isSelf, isFollowing } = await checkTrackedRBAC({
+          followingUserName: userName,
+          userId: req.userId,
+          throwOnError: false,
+        });
 
         if ((!inClub || !isFollowing) && !isSelf) {
           res.status(200).json({ message: [] });
           return;
         }
-
-        privacy = targetUserInfo.club.privacy;
       }
 
       const filters: { [key: string]: any } = {
@@ -51,6 +45,10 @@ route.get(
         filters.userName = userName;
       } else {
         filters.userId = new ObjectId(req.userId);
+      }
+
+      if (part) {
+        filters.part = part;
       }
 
       if (dateFrom && dateTo) {
@@ -70,25 +68,6 @@ route.get(
           .limit(21)
           .toArray()
       )) as unknown as DiaryRecordType[];
-
-      if (userName) {
-        const relevantPrivacy = privacy.find((p) => p.name === "proof");
-
-        const categoriesToExclude = relevantPrivacy.parts
-          .filter((ob) => !ob.value)
-          .map((r) => r.name);
-
-        if (categoriesToExclude.length > 0) {
-          results = results.map((r) => {
-            return {
-              ...r,
-              activity: r.activity.filter(
-                (a) => !categoriesToExclude.includes(a.categoryName)
-              ),
-            };
-          });
-        }
-      }
 
       res.status(200).json({ message: results });
     } catch (err) {
