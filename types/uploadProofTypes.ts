@@ -13,10 +13,7 @@ export type UploadProofUserType = {
   club: ClubDataType;
   demographics: DemographicsType;
   latestScoresDifference: LatestScoresType;
-  streakDates: {
-    default: { [key: string]: Date };
-    club: { [key: string]: Date };
-  };
+  streakDates: { [key: string]: Date };
   timeZone: string;
   nutrition: {
     dailyCalorieGoal: number;

@@ -4,57 +4,40 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
-import checkTrackedRBAC from "functions/checkTrackedRBAC.js";
-import { CustomRequest, SubscriptionTypeNamesEnum } from "types.js";
-import checkSubscriptionStatus from "@/functions/checkSubscription.js";
+import checkRbac from "functions/checkRbac.js";
+import { CustomRequest, RoutineType } from "types.js";
 import aqp, { AqpQuery } from "api-query-params";
 import { db } from "init.js";
+import { maskAllTasks } from "@/helpers/mask.js";
+import { filterData } from "@/functions/filterData.js";
 
 const route = Router();
 
 route.get(
-  "/:followingUserName?",
+  "/:userName?",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { followingUserName } = req.params;
+    const { userName } = req.params;
     const { filter, skip, sort = {} } = aqp(req.query as any) as AqpQuery;
+    const { part, restOfFilter } = filter;
 
     try {
-      if (followingUserName) {
-        const { inClub, isSelf, isFollowing, subscriptionActive } =
-          await checkTrackedRBAC({
-            userId: req.userId,
-            followingUserName,
-          });
+      const finalFilter: { [key: string]: any } = {
+        ...restOfFilter,
+        isPublic: true,
+      };
 
-        if ((!inClub || !isFollowing || !subscriptionActive) && !isSelf) {
-          res.status(200).json({ message: [] });
-          return;
-        }
-
-        const isSubscriptionValid = await checkSubscriptionStatus({
-          userId: req.userId,
-          subscriptionType: SubscriptionTypeNamesEnum.PEEK,
-        });
-
-        if (!isSubscriptionValid && !isSelf) {
-          res.status(200).json({
-            error: "subscription expired",
-          });
-          return;
-        }
-      }
-
-      const finalFilter: { [key: string]: any } = { ...filter };
-
-      if (followingUserName) {
-        finalFilter.userName = followingUserName;
+      if (userName) {
+        finalFilter.userName = userName;
       } else {
         finalFilter.userId = new ObjectId(req.userId);
       }
 
+      if (part) finalFilter.part = part;
+
       const projection = {
         _id: 1,
         startsAt: 1,
+        userId: 1,
         part: 1,
         allTasks: 1,
         status: 1,
@@ -76,8 +59,27 @@ route.get(
           .toArray()
       );
 
+      // console.log("routines", routines);
+
+      let response = { priceData: null, data: routines };
+
+      if (userName) {
+        if (routines.length) {
+          const result = await filterData({
+            part,
+            array: routines,
+            dateKey: "startsAt",
+            maskFunction: maskAllTasks,
+            userId: req.userId,
+          });
+
+          response.priceData = result.priceData;
+          response.data = result.data;
+        }
+      }
+
       res.status(200).json({
-        message: routines,
+        message: response,
       });
     } catch (err) {
       next(err);

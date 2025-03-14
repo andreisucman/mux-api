@@ -5,7 +5,7 @@ import { ObjectId, Sort } from "mongodb";
 import aqp, { AqpQuery } from "api-query-params";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
-import checkTrackedRBAC from "functions/checkTrackedRBAC.js";
+import checkRbac from "functions/checkRbac.js";
 import { ModerationStatusEnum } from "types.js";
 import { CustomRequest } from "types.js";
 import { db } from "init.js";
@@ -29,22 +29,22 @@ route.get(
         moderationStatus: ModerationStatusEnum.ACTIVE,
       };
 
-      if (followingUserName) {
-        const { inClub, isFollowing, isSelf, subscriptionActive } =
-          await checkTrackedRBAC({
-            userId: req.userId,
-            followingUserName,
-          });
+      // if (followingUserName) {
+      //   const { inClub, isFollowing, isSelf, subscriptionActive } =
+      //     await checkRbac({
+      //       userId: req.userId,
+      //       followingUserName,
+      //     });
 
-        if ((!inClub || !isFollowing || !subscriptionActive) && !isSelf) {
-          res.status(200).json({ message: [] });
-          return;
-        }
+      //   if ((!inClub || !isFollowing || !subscriptionActive) && !isSelf) {
+      //     res.status(200).json({ message: [] });
+      //     return;
+      //   }
 
-        if (!isSelf) {
-          match.isPublic = true;
-        }
-      }
+      //   if (!isSelf) {
+      //     match.isPublic = true;
+      //   }
+      // }
 
       const pipeline: any = [];
 

@@ -58,6 +58,22 @@ export type LatestScoresType = {
   body: FormattedRatingType;
 };
 
+export type PurchaseType = {
+  name: string;
+  part: string;
+  paid: number;
+  isSubscribed: boolean;
+  transactionId: string;
+  createdAt: Date;
+  contentEndDate: Date;
+  sellerId: ObjectId;
+  sellerName: string;
+  sellerAvatar: { [key: string]: any };
+  buyerId: ObjectId;
+  buyerName: string;
+  buyerAvatar: { [key: string]: any };
+};
+
 export type UserType = {
   _id?: ObjectId;
   name: string;
@@ -156,7 +172,6 @@ export type ClubDataType = {
   intro: string;
   socials: { value: string | null; label: string }[];
   payouts: ClubPayoutDataType;
-  privacy: PrivacyType[];
   totalFollowers: number;
 };
 
@@ -256,10 +271,6 @@ export type StreaksType = {
   mouthStreak: number;
   scalpStreak: number;
   bodyStreak: number;
-  clubFaceStreak: number;
-  clubMouthStreak: number;
-  clubScalpStreak: number;
-  clubBodyStreak: number;
 };
 
 export type UserConcernType = {
@@ -388,6 +399,7 @@ export type RoutineType = {
   stolenFrom: string;
   avatar: { [key: string]: any };
   userName: string;
+  isPublic: boolean;
 };
 
 export type ConcernType = {
@@ -399,8 +411,6 @@ export type ConcernType = {
 export type AllTaskType = {
   name: string;
   color: string;
-  description: string;
-  instruction: string;
   key: string;
   icon: string;
   concern: string;
@@ -453,6 +463,7 @@ export type ProofType = {
   avatar: { [key: string]: any } | null;
   userName: string;
   moderationStatus: ModerationStatusEnum;
+  isPublic: boolean;
 };
 
 export type SolutionType = {

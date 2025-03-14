@@ -1,4 +1,4 @@
-import { PartEnum, PrivacyType, TaskStatusEnum } from "types.js";
+import { PartEnum, TaskStatusEnum } from "types.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
 import httpError from "./httpError.js";
 import { daysFrom } from "./utils.js";
@@ -6,35 +6,29 @@ import doWithRetries from "./doWithRetries.js";
 import { db } from "@/init.js";
 import { ObjectId } from "mongodb";
 
-type StreakDatesType = {
-  default: { [key: string]: Date };
-  club: { [key: string]: Date };
-};
-
 type Props = {
   userId: string;
   part: PartEnum;
-  privacy: PrivacyType[];
-  streakDates: StreakDatesType;
   timeZone: string;
+  streakDates: { [key: string]: Date };
 };
 
 type GetCanIncrementProps = {
-  typeStreakDates: { [key: string]: Date };
   part: string;
   timeZone: string;
+  streakDates: { [key: string]: Date };
 };
 
 function getCanIncrement({
-  typeStreakDates,
   part,
   timeZone,
+  streakDates,
 }: GetCanIncrementProps) {
-  if (!typeStreakDates[part]) return true;
+  if (!streakDates) return true;
 
   const todayMidnight = setToMidnight({ date: new Date(), timeZone });
   const streakDate = setToMidnight({
-    date: new Date(typeStreakDates[part]),
+    date: new Date(streakDates[part]),
     timeZone,
   });
 
@@ -45,7 +39,6 @@ export default async function getStreaksToIncrement({
   userId,
   part,
   timeZone,
-  privacy,
   streakDates,
 }: Props) {
   try {
@@ -54,45 +47,6 @@ export default async function getStreaksToIncrement({
 
     const todayMidnight = setToMidnight({ date: new Date(), timeZone });
     const tomorrowMidnight = daysFrom({ days: 1, date: todayMidnight });
-
-    let canIncrementClub = getCanIncrement({
-      typeStreakDates: streakDates.club,
-      part,
-      timeZone,
-    });
-
-    const progressPrivacy = privacy.find((pr) => pr.name === "proof");
-    const relevantPrivacy = progressPrivacy.parts.find(
-      (tp) => tp.name === part
-    );
-
-    if (relevantPrivacy && canIncrementClub) {
-      if (relevantPrivacy.value) {
-        if (part === "face") {
-          streaksToIncrement["streaks.clubFaceStreak"] = 1;
-        }
-
-        if (part === "mouth") {
-          streaksToIncrement["streaks.clubMouthStreak"] = 1;
-        }
-
-        if (part === "scalp") {
-          streaksToIncrement["streaks.clubScalpStreak"] = 1;
-        }
-
-        if (part === "body") {
-          streaksToIncrement["streaks.clubBodyStreak"] = 1;
-        }
-
-        newStreakDates = {
-          ...newStreakDates,
-          club: {
-            ...newStreakDates.club,
-            [part]: todayMidnight,
-          },
-        };
-      }
-    }
 
     const remainingActiveTasksForPart = await doWithRetries(async () =>
       db.collection("Task").countDocuments({
@@ -106,13 +60,13 @@ export default async function getStreaksToIncrement({
 
     if (remainingActiveTasksForPart > 1) return;
 
-    let canIncrementDefault = getCanIncrement({
-      typeStreakDates: streakDates.default,
+    let canIncrement = getCanIncrement({
+      streakDates,
       part,
       timeZone,
     });
 
-    if (canIncrementDefault) {
+    if (canIncrement) {
       if (part === "face") {
         streaksToIncrement["streaks.faceStreak"] = 1;
       }
@@ -131,10 +85,7 @@ export default async function getStreaksToIncrement({
 
       newStreakDates = {
         ...newStreakDates,
-        default: {
-          ...newStreakDates.default,
-          [part]: todayMidnight,
-        },
+        [part]: todayMidnight,
       };
     }
 

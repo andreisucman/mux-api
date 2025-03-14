@@ -6,7 +6,7 @@ import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import { CustomRequest } from "types.js";
 import { ModerationStatusEnum } from "types.js";
-import checkTrackedRBAC from "functions/checkTrackedRBAC.js";
+import checkRbac from "functions/checkRbac.js";
 import { db } from "init.js";
 
 const route = Router();
@@ -43,18 +43,17 @@ route.get(
     const { query, collection } = filter || {};
 
     try {
-      if (followingUserName) {
-        const { inClub, isFollowing, subscriptionActive } =
-          await checkTrackedRBAC({
-            userId: req.userId,
-            followingUserName,
-          });
+      // if (followingUserName) {
+      //   const { inClub, isFollowing, subscriptionActive } = await checkRbac({
+      //     userId: req.userId,
+      //     followingUserName,
+      //   });
 
-        if (!inClub || !isFollowing || !subscriptionActive) {
-          res.status(200).json({ message: [] });
-          return;
-        }
-      }
+      //   if (!inClub || !isFollowing || !subscriptionActive) {
+      //     res.status(200).json({ message: [] });
+      //     return;
+      //   }
+      // }
 
       const pipeline: any = [];
 

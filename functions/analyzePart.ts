@@ -8,14 +8,15 @@ import {
   ClubDataType,
   PartEnum,
   BlurTypeEnum,
-  PrivacyType,
   ProgressImageType,
   BeforeAfterType,
   CategoryNameEnum,
   FormattedRatingType,
 } from "types.js";
 import addModerationAnalyticsData from "./addModerationAnalyticsData.js";
-import addSuspiciousRecord from "./addSuspiciousRecord.js";
+import addSuspiciousRecord, {
+  SuspiciousRecordCollectionEnum,
+} from "./addSuspiciousRecord.js";
 import { ModerationStatusEnum } from "types.js";
 import moderateContent, { ModerationResultType } from "./moderateContent.js";
 import updateProgressImages from "functions/updateProgressImages.js";
@@ -48,7 +49,6 @@ export default async function analyzePart({
   userId,
   name,
   avatar,
-  club,
   part,
   cookies,
   blurType,
@@ -168,6 +168,15 @@ export default async function analyzePart({
       cookies,
     });
 
+    const routineData = await doWithRetries(() =>
+      db
+        .collection("RoutineData")
+        .findOne(
+          { userId: new ObjectId(userId), part },
+          { projection: { status: 1 } }
+        )
+    );
+
     const recordOfProgress: ProgressType = {
       _id: new ObjectId(),
       userId: new ObjectId(userId),
@@ -178,10 +187,12 @@ export default async function analyzePart({
       initialImages: initialProgress?.images || updatedImages,
       initialDate: initialProgress?.createdAt || createdAt,
       createdAt,
+      avatar,
+      userName: name,
       concerns: newConcerns,
       scoresDifference,
       specialConsiderations,
-      isPublic: false,
+      isPublic: routineData.status === "public",
       moderationStatus: ModerationStatusEnum.ACTIVE,
     };
 
@@ -190,29 +201,15 @@ export default async function analyzePart({
       part,
       scores,
       demographics,
-      isPublic: false,
+      isPublic: routineData.status === "public",
       concerns: newConcerns,
       updatedAt: new Date(),
+      avatar,
+      userName: name,
       initialDate: initialProgress?.createdAt || createdAt,
       initialImages: initialProgress?.images || updatedImages,
       scoresDifference,
     };
-
-    if (club) {
-      const progressPrivacy = club.privacy.find(
-        (rec: PrivacyType) => rec.name === "progress"
-      );
-
-      const partPrivacy = progressPrivacy.parts.find((pt) => pt.name === part);
-
-      recordOfProgress.isPublic = partPrivacy.value;
-      beforeAfterUpdate.isPublic = partPrivacy.value;
-
-      recordOfProgress.avatar = avatar;
-      recordOfProgress.userName = name;
-      beforeAfterUpdate.avatar = avatar;
-      beforeAfterUpdate.userName = name;
-    }
 
     const updateOperation: any = {
       $set: beforeAfterUpdate,
@@ -251,7 +248,7 @@ export default async function analyzePart({
 
       if (isSuspicious) {
         addSuspiciousRecord({
-          collection: "Progress",
+          collection: SuspiciousRecordCollectionEnum.PROGRESS,
           moderationResults,
           contentId: String(recordOfProgress._id),
           userId,

@@ -14,14 +14,14 @@ const route = Router();
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { status, part, name, description, oneTimePrice, subscriptionPrice } =
+    const { status, part, name, description, oneTimePrice, updatePrice } =
       req.body;
 
     if (
       Number(oneTimePrice) < 1 ||
-      Number(subscriptionPrice) < 1 ||
+      Number(updatePrice) < 1 ||
       isNaN(Number(oneTimePrice)) ||
-      isNaN(Number(subscriptionPrice))
+      isNaN(Number(updatePrice))
     ) {
       res.status(400).json({ error: "Bad request" });
       return;
@@ -53,8 +53,8 @@ route.post(
               name,
               description,
               oneTimePrice,
-              subscriptionPrice,
-            },
+              updatePrice,
+            },l
           },
           { upsert: true }
         )

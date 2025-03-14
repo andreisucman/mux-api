@@ -2,7 +2,7 @@ import { ObjectId, Sort } from "mongodb";
 import { NextFunction, Router } from "express";
 import aqp, { AqpQuery } from "api-query-params";
 import { ModerationStatusEnum, CustomRequest } from "types.js";
-import checkTrackedRBAC from "functions/checkTrackedRBAC.js";
+import checkRbac from "functions/checkRbac.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { db } from "init.js";
 
@@ -25,22 +25,22 @@ route.get(
         moderationStatus: ModerationStatusEnum.ACTIVE,
       };
 
-      if (followingUserName) {
-        const { inClub, isFollowing, isSelf, subscriptionActive } =
-          await checkTrackedRBAC({
-            userId: req.userId,
-            followingUserName,
-          });
+      // if (followingUserName) {
+      //   const { inClub, isFollowing, isSelf, subscriptionActive } =
+      //     await checkRbac({
+      //       userId: req.userId,
+      //       followingUserName,
+      //     });
 
-        if ((!inClub || !isFollowing || !subscriptionActive) && !isSelf) {
-          res.status(200).json({ message: [] });
-          return;
-        }
+      //   if ((!inClub || !isFollowing || !subscriptionActive) && !isSelf) {
+      //     res.status(200).json({ message: [] });
+      //     return;
+      //   }
 
-        if (!isSelf) {
-          filter.isPublic = true;
-        }
-      }
+      //   if (!isSelf) {
+      //     filter.isPublic = true;
+      //   }
+      // }
 
       if (followingUserName) {
         filter.userName = followingUserName;

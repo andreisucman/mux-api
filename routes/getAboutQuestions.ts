@@ -8,7 +8,7 @@ import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 import { CustomRequest } from "types.js";
 import { ModerationStatusEnum } from "types.js";
-import checkTrackedRBAC from "@/functions/checkTrackedRBAC.js";
+import checkRbac from "@/functions/checkRbac.js";
 import { db } from "init.js";
 
 const route = Router();
@@ -25,27 +25,27 @@ route.get("/:followingUserName?", async (req: CustomRequest, res: Response) => {
       moderationStatus: ModerationStatusEnum.ACTIVE,
     };
 
-    if (followingUserName) {
-      const { inClub, isFollowing, isSelf, subscriptionActive } =
-        await checkTrackedRBAC({
-          userId: req.userId,
-          followingUserName,
-        });
+    // if (followingUserName) {
+    //   const { inClub, isFollowing, isSelf, subscriptionActive } =
+    //     await checkRbac({
+    //       userId: req.userId,
+    //       followingUserName,
+    //     });
 
-      if (!isSelf && (!inClub || !isFollowing || !subscriptionActive)) {
-        res.status(200).json({ message: { questions: [] } });
-        return;
-      }
+    //   if (!isSelf && (!inClub || !isFollowing || !subscriptionActive)) {
+    //     res.status(200).json({ message: { questions: [] } });
+    //     return;
+    //   }
 
-      if (isSelf) {
-        delete match.isPublic;
-        if (showType === "skipped") {
-          delete match.answer;
-          match.skipped = true;
-        }
-        if (showType === "new") match.answer = "";
-      }
-    }
+    //   if (isSelf) {
+    //     delete match.isPublic;
+    //     if (showType === "skipped") {
+    //       delete match.answer;
+    //       match.skipped = true;
+    //     }
+    //     if (showType === "new") match.answer = "";
+    //   }
+    // }
 
     if (onlyCheck) {
       const hasNewQuestionsFilters: { [key: string]: any } = {

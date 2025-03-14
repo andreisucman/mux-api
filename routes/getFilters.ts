@@ -5,7 +5,7 @@ import { ObjectId } from "mongodb";
 import aqp, { AqpQuery } from "api-query-params";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
-import checkTrackedRBAC from "functions/checkTrackedRBAC.js";
+import checkRbac from "functions/checkRbac.js";
 import { ModerationStatusEnum, CustomRequest } from "types.js";
 import { db } from "init.js";
 
@@ -33,18 +33,17 @@ route.get(
     }
 
     try {
-      if (followingUserName) {
-        const { inClub, isFollowing, subscriptionActive } =
-          await checkTrackedRBAC({
-            userId: req.userId,
-            followingUserName,
-          });
+      // if (followingUserName) {
+      //   const { inClub, isFollowing, subscriptionActive } = await checkRbac({
+      //     userId: req.userId,
+      //     followingUserName,
+      //   });
 
-        if (!inClub || !isFollowing || !subscriptionActive) {
-          res.status(200).json({ message: null });
-          return;
-        }
-      }
+      //   if (!inClub || !isFollowing || !subscriptionActive) {
+      //     res.status(200).json({ message: null });
+      //     return;
+      //   }
+      // }
 
       const fields = Object.keys(projection);
 

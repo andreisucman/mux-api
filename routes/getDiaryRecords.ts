@@ -4,7 +4,7 @@ dotenv.config();
 import aqp, { AqpQuery } from "api-query-params";
 import { ObjectId, Sort } from "mongodb";
 import { Router, Response, NextFunction } from "express";
-import checkTrackedRBAC from "@/functions/checkTrackedRBAC.js";
+import checkRbac from "@/functions/checkRbac.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { ModerationStatusEnum } from "types.js";
 import { DiaryRecordType } from "@/types/saveDiaryRecordTypes.js";
@@ -22,18 +22,18 @@ route.get(
     const { dateFrom, dateTo, part } = filter;
 
     try {
-      if (userName) {
-        const { inClub, isSelf, isFollowing } = await checkTrackedRBAC({
-          followingUserName: userName,
-          userId: req.userId,
-          throwOnError: false,
-        });
+      // if (userName) {
+      //   const { inClub, isSelf, isFollowing } = await checkRbac({
+      //     followingUserName: userName,
+      //     userId: req.userId,
+      //     throwOnError: false,
+      //   });
 
-        if ((!inClub || !isFollowing) && !isSelf) {
-          res.status(200).json({ message: [] });
-          return;
-        }
-      }
+      //   if ((!inClub || !isFollowing) && !isSelf) {
+      //     res.status(200).json({ message: [] });
+      //     return;
+      //   }
+      // }
 
       const filters: { [key: string]: any } = {
         moderationStatus: ModerationStatusEnum.ACTIVE,

@@ -1,6 +1,7 @@
 import mime from "mime-types";
 import { DateTime } from "luxon";
 import bcrypt from "bcrypt";
+import { ScheduleTaskType } from "./turnTasksIntoSchedule.js";
 
 export function delayExecution(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -78,7 +79,9 @@ export function calculateDaysDifference(dateFrom: Date, dateTo: Date) {
   }
 }
 
-export function convertKeysAndValuesTotoSnakeCase(obj: { [key: string]: any }) {
+export function convertKeysAndValuesTotoSnakeCase(obj: {
+  [key: string]: ScheduleTaskType[];
+}) {
   const newObj: { [key: string]: any } = {};
 
   for (const key in obj) {
@@ -88,13 +91,10 @@ export function convertKeysAndValuesTotoSnakeCase(obj: { [key: string]: any }) {
 
       if (Array.isArray(obj[key])) {
         toSnakeCaseValues = obj[key].map(
-          ({
-            solution,
-            monthlyFrequency,
-          }: {
-            solution: string;
-            monthlyFrequency: number;
-          }) => ({ solution: toSnakeCase(solution), monthlyFrequency })
+          ({ key, concern }: { key: string; concern: string }) => ({
+            key: toSnakeCase(key),
+            concern,
+          })
         );
       } else {
         toSnakeCaseValues = obj[key];

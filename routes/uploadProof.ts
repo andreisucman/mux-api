@@ -7,7 +7,9 @@ import checkProofImage from "functions/checkProofImage.js";
 import { daysFrom, urlToBase64 } from "helpers/utils.js";
 import isMajorityOfImagesIdentical from "functions/isMajorityOfImagesIdentical.js";
 import { extensionTypeMap } from "data/extensionTypeMap.js";
-import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
+import addSuspiciousRecord, {
+  SuspiciousRecordCollectionEnum,
+} from "@/functions/addSuspiciousRecord.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import {
   CustomRequest,
@@ -352,8 +354,7 @@ route.post(
         requisite,
         routineId,
       } = taskInfo || {};
-      const { name, avatar, demographics, club } = userInfo || {};
-      const { privacy } = club || {};
+      const { name, avatar, demographics } = userInfo || {};
 
       /* add a new proof */
       const newProof: ProofType = {
@@ -378,8 +379,20 @@ route.post(
         proofImages,
         avatar,
         userName: name,
+        isPublic: false,
         moderationStatus: ModerationStatusEnum.ACTIVE,
       };
+
+      const routineData = await doWithRetries(() =>
+        db
+          .collection("RoutineData")
+          .findOne(
+            { userId: new ObjectId(req.userId), part },
+            { projection: { status: 1 } }
+          )
+      );
+
+      newProof.isPublic = routineData.status === "public";
 
       const userUpdatePayload: { [key: string]: any } = {};
 
@@ -387,7 +400,6 @@ route.post(
       const { newStreakDates, streaksToIncrement } =
         (await getStreaksToIncrement({
           userId: req.userId,
-          privacy,
           part,
           timeZone,
           streakDates,
@@ -414,18 +426,6 @@ route.post(
         keyOne: "tasksCompleted",
         keyTwo: "manualTasksCompleted",
       });
-
-      await doWithRetries(async () =>
-        db.collection("Routine").updateOne(
-          { _id: new ObjectId(routineId), "allTasks.key": key },
-          {
-            $inc: {
-              [`allTasks.$.completed`]: 1,
-              [`allTasks.$.unknown`]: -1,
-            },
-          }
-        )
-      );
 
       const isTaskAboutFood = await checkIfTaskIsAboutFood({
         categoryName: CategoryNameEnum.PROOF,
@@ -501,7 +501,7 @@ route.post(
 
         if (isSuspicious) {
           addSuspiciousRecord({
-            collection: "Proof",
+            collection: SuspiciousRecordCollectionEnum.PROOF,
             moderationResults,
             contentId: String(newProof._id),
             userId: req.userId,
