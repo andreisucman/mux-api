@@ -5,7 +5,6 @@ import {
   UserType,
   ClubPayoutDataType,
   ClubDataType,
-  ClubBioType,
   ModerationStatusEnum,
 } from "types.js";
 import { db } from "init.js";
@@ -65,15 +64,11 @@ export default async function createClubProfile({ userId }: Props) {
 
     const randomName = await createRandomName();
 
-    const clubBio: ClubBioType = {
-      intro: "I love working out and eating healthy.",
-      socials: [],
-    };
-
     const defaultClubData: ClubDataType = {
       followingUserName: null,
       followingUserId: null,
-      bio: clubBio,
+      intro: "I love working out and eating healthy.",
+      socials: [],
       payouts: defaultClubPayoutData,
       privacy: defaultClubPrivacy,
       totalFollowers: 0,

@@ -142,11 +142,6 @@ export type PrivacyType = {
   parts: { name: string; value: boolean }[];
 };
 
-export type ClubBioType = {
-  intro: string;
-  socials: { value: string | null; label: string }[];
-};
-
 export type ClubPayoutDataType = {
   connectId: string;
   balance: number;
@@ -158,7 +153,8 @@ export type ClubPayoutDataType = {
 export type ClubDataType = {
   followingUserName: string;
   followingUserId: ObjectId;
-  bio: ClubBioType;
+  intro: string;
+  socials: { value: string | null; label: string }[];
   payouts: ClubPayoutDataType;
   privacy: PrivacyType[];
   totalFollowers: number;

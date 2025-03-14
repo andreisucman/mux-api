@@ -6,6 +6,8 @@ import { db } from "init.js";
 import { Router, Response, NextFunction } from "express";
 import { CustomRequest } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
+import checkTextSafety from "@/functions/checkTextSafety.js";
+import { SuspiciousRecordCollectionEnum } from "@/functions/addSuspiciousRecord.js";
 
 const route = Router();
 
@@ -26,6 +28,22 @@ route.post(
     }
 
     try {
+      for (const text of [name, description]) {
+        const isSafe = await checkTextSafety({
+          userId: req.userId,
+          text,
+          collection: SuspiciousRecordCollectionEnum.ROUTINE_DATA,
+        });
+
+        if (!isSafe) {
+          res.status(200).json({
+            error:
+              "It appears that your text contains profanity. Please revise and try again.",
+          });
+          return;
+        }
+      }
+
       await doWithRetries(async () =>
         db.collection("RoutineData").updateOne(
           { userId: new ObjectId(req.userId), part },
@@ -44,6 +62,7 @@ route.post(
 
       res.status(200).end();
     } catch (err) {
+      console.log("error");
       next(err);
     }
   }

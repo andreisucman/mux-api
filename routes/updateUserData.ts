@@ -12,44 +12,7 @@ import httpError from "@/helpers/httpError.js";
 import isNameUnique from "@/functions/isNameUnique.js";
 import { db, stripe } from "init.js";
 import getUserInfo from "@/functions/getUserInfo.js";
-import moderateContent from "@/functions/moderateContent.js";
-import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
-
-type HandleCheckSafetyProps = {
-  userId: string;
-  text: string;
-  key: string;
-};
-
-const handleCheckSafety = async ({
-  userId,
-  text,
-  key,
-}: HandleCheckSafetyProps) => {
-  try {
-    const { isSafe, isSuspicious, moderationResults } = await moderateContent({
-      content: [{ type: "text", text }],
-    });
-
-    if (!isSafe) return false;
-
-    if (moderationResults.length > 0) {
-      if (isSuspicious) {
-        addSuspiciousRecord({
-          collection: "User",
-          moderationResults,
-          contentId: userId,
-          userId,
-          key,
-        });
-      }
-    }
-
-    return true;
-  } catch (err) {
-    throw httpError(err);
-  }
-};
+import checkTextSafety from "@/functions/checkTextSafety.js";
 
 const route = Router();
 
@@ -102,10 +65,11 @@ route.post(
       }
 
       if (name) {
-        const verdict = await handleCheckSafety({
+        const verdict = await checkTextSafety({
           userId: req.userId,
           text: name,
           key: "name",
+          collection: "User",
         });
 
         if (!verdict) {
@@ -152,10 +116,11 @@ route.post(
       }
 
       if (intro) {
-        const verdict = await handleCheckSafety({
+        const verdict = await checkTextSafety({
           userId: req.userId,
           text: intro,
           key: "club.bio.intro",
+          collection: "User",
         });
 
         if (!verdict) {
@@ -170,10 +135,11 @@ route.post(
       }
 
       if (socials) {
-        const verdict = await handleCheckSafety({
+        const verdict = await checkTextSafety({
           userId: req.userId,
           text: JSON.stringify(socials),
           key: "club.bio.socials",
+          collection: "User",
         });
 
         if (!verdict) {
@@ -191,10 +157,11 @@ route.post(
         for (const key in bio) {
           const text = key === "socials" ? JSON.stringify(socials) : bio[key];
 
-          const verdict = await handleCheckSafety({
+          const verdict = await checkTextSafety({
             userId: req.userId,
             text,
             key: `club.bio.${key}`,
+            collection: "User",
           });
 
           if (!verdict) {
