@@ -7,7 +7,7 @@ import { CustomRequest, ModerationStatusEnum } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { daysFrom } from "helpers/utils.js";
 import formatDate from "helpers/formatDate.js";
-import updatePublicContent from "@/functions/updatePublicContent.js";
+import updateContent from "@/functions/updateContent.js";
 import httpError from "@/helpers/httpError.js";
 import isNameUnique from "@/functions/isNameUnique.js";
 import { db, stripe } from "init.js";
@@ -184,7 +184,7 @@ route.post(
         if (name) updatePublicityPayload.userName = name;
         if (avatar) updatePublicityPayload.avatar = avatar;
 
-        updatePublicContent({
+        updateContent({
           userId: req.userId,
           collections: ["Proof", "Progres", "Diary", "Routine", "BeforeAfter"],
           updatePayload: updatePublicityPayload,

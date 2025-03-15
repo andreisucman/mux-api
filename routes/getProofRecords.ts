@@ -5,21 +5,22 @@ import { ObjectId, Sort } from "mongodb";
 import aqp, { AqpQuery } from "api-query-params";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
-import checkRbac from "functions/checkRbac.js";
 import { ModerationStatusEnum } from "types.js";
 import { CustomRequest } from "types.js";
 import { db } from "init.js";
+import { filterData } from "@/functions/filterData.js";
+import { maskProof } from "@/helpers/mask.js";
 
 const route = Router();
 
 route.get(
-  "/:followingUserName?",
+  "/:userName?",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { followingUserName } = req.params;
+    const { userName } = req.params;
     const { filter, skip, sort } = aqp(req.query as any) as AqpQuery;
     const { routineId, taskKey, concern, type, part, query } = filter || {};
 
-    if (!followingUserName && !req.userId) {
+    if (!userName && !req.userId) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
@@ -28,23 +29,6 @@ route.get(
       const match: { [key: string]: any } = {
         moderationStatus: ModerationStatusEnum.ACTIVE,
       };
-
-      // if (followingUserName) {
-      //   const { inClub, isFollowing, isSelf, subscriptionActive } =
-      //     await checkRbac({
-      //       userId: req.userId,
-      //       followingUserName,
-      //     });
-
-      //   if ((!inClub || !isFollowing || !subscriptionActive) && !isSelf) {
-      //     res.status(200).json({ message: [] });
-      //     return;
-      //   }
-
-      //   if (!isSelf) {
-      //     match.isPublic = true;
-      //   }
-      // }
 
       const pipeline: any = [];
 
@@ -56,8 +40,8 @@ route.get(
         };
       }
 
-      if (followingUserName) {
-        match.userName = followingUserName;
+      if (userName) {
+        match.userName = userName;
       } else {
         match.userId = new ObjectId(req.userId);
       }
@@ -91,7 +75,24 @@ route.get(
         db.collection("Proof").aggregate(pipeline).toArray()
       );
 
-      res.status(200).json({ message: proof });
+      let response = { priceData: null, data: proof };
+
+      if (userName) {
+        if (proof.length) {
+          const result = await filterData({
+            part,
+            array: proof,
+            dateKey: "createdAt",
+            maskFunction: maskProof,
+            userId: req.userId,
+          });
+
+          response.priceData = result.priceData;
+          response.data = result.data;
+        }
+      }
+
+      res.status(200).json({ message: response });
     } catch (err) {
       next(err);
     }

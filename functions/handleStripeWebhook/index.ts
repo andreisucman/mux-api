@@ -156,7 +156,7 @@ async function handleStripeWebhook(event: Stripe.Event) {
     }
 
     for (const [planName, quantity] of Object.entries(planQuantities)) {
-      incrementPayload[`overview.subscription.bought.${planName}`] = quantity;
+      incrementPayload[`overview.subscription.purchased.${planName}`] = quantity;
 
       if (planName === "peek") {
         peekBought = true;

@@ -21,6 +21,7 @@ import { DiaryRecordType } from "@/types/saveDiaryRecordTypes.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import { db } from "init.js";
 import createTextEmbedding from "@/functions/createTextEmbedding.js";
+import { checkIfPublic } from "./checkIfPublic.js";
 
 const route = Router();
 
@@ -121,12 +122,18 @@ route.post(
         audio,
         activity,
         embedding,
+        isPublic: false,
         userName: null,
         userId: new ObjectId(req.userId),
         transcription: body.message,
         createdAt: new Date(),
         moderationStatus: ModerationStatusEnum.ACTIVE,
       };
+
+      newDiaryRecord.isPublic = await checkIfPublic({
+        userId: req.userId,
+        part,
+      });
 
       const { name } = userInfo;
       if (name) newDiaryRecord.userName = name;

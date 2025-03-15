@@ -10,7 +10,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 type Props = {
   accessToken: string | null;
-  emailType: "passwordReset" | "confirmationCode" | "payoutsDisabled";
+  emailType:
+    | "passwordReset"
+    | "confirmationCode"
+    | "payoutsDisabled"
+    | "yourPlanPurchased";
 };
 
 export default async function getEmailContent({
@@ -40,6 +44,10 @@ export default async function getEmailContent({
       case "payoutsDisabled":
         title = "Muxout - Payouts disabled";
         bodyPath = path.join(baseEmailPath, "payoutsDisabled.html");
+        break;
+      case "yourPlanPurchased":
+        title = "Muxout - Sale notification";
+        bodyPath = path.join(baseEmailPath, "saleNotification.html");
         break;
     }
 

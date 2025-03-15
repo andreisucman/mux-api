@@ -22,7 +22,6 @@ route.get(
     try {
       const finalFilter: { [key: string]: any } = {
         ...restOfFilter,
-        isPublic: true,
       };
 
       if (userName) {
@@ -41,8 +40,10 @@ route.get(
         allTasks: 1,
         status: 1,
         lastDate: 1,
+        isPublic: 1,
       };
 
+      console.log("sort", sort);
       const finalSort = { ...(sort || { _id: -1 }), status: 1 };
 
       const routines = await doWithRetries(async () =>
@@ -57,6 +58,8 @@ route.get(
           ])
           .toArray()
       );
+
+      console.log("routines", routines);
 
       let response = { priceData: null, data: routines };
 

@@ -146,21 +146,23 @@ export default async function updateCurrentRoutine({
 
     const { minDate, maxDate } = getMinAndMaxRoutineDates(newAllTasks);
 
+    const routineUpdate = {
+      userName,
+      finalSchedule: mergedSchedule,
+      status: RoutineStatusEnum.ACTIVE,
+      concerns: allUniqueConcerns,
+      allTasks: newAllTasks,
+      startsAt: new Date(minDate),
+      lastDate: new Date(maxDate),
+    };
+
     await doWithRetries(async () =>
       db.collection("Routine").updateOne(
         {
           _id: new ObjectId(currentRoutine._id),
         },
         {
-          $set: {
-            userName,
-            finalSchedule: mergedSchedule,
-            status: RoutineStatusEnum.ACTIVE,
-            concerns: allUniqueConcerns,
-            allTasks: newAllTasks,
-            startsAt: new Date(minDate),
-            lastDate: new Date(maxDate),
-          },
+          $set: routineUpdate,
         }
       )
     );

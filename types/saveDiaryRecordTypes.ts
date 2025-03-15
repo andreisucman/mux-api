@@ -11,6 +11,7 @@ export type DiaryRecordType = {
   transcription: string;
   createdAt: Date;
   userName: string | null;
+  isPublic: boolean;
   moderationStatus: ModerationStatusEnum;
 };
 

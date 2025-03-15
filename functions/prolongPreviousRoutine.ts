@@ -20,6 +20,7 @@ import { db } from "init.js";
 import updateTasksAnalytics from "./updateTasksAnalytics.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
+import { checkIfPublic } from "@/routes/checkIfPublic.js";
 
 type Props = {
   part: PartEnum;
@@ -169,20 +170,28 @@ export default async function prolongPreviousRoutine({
 
     const { minDate, maxDate } = getMinAndMaxRoutineDates(totalAllTasks);
 
+    const newRoutine = {
+      userId: new ObjectId(userId),
+      userName,
+      part,
+      finalSchedule: mergedSchedule,
+      concerns: partConcerns,
+      status: RoutineStatusEnum.ACTIVE,
+      createdAt: new Date(),
+      startsAt: new Date(minDate),
+      lastDate: new Date(maxDate),
+      allTasks: totalAllTasks,
+      isPublic: false,
+    };
+
     const newRoutineObject = await doWithRetries(async () =>
-      db.collection("Routine").insertOne({
-        userId: new ObjectId(userId),
-        userName,
-        finalSchedule: mergedSchedule,
-        concerns: partConcerns,
-        status: RoutineStatusEnum.ACTIVE,
-        createdAt: new Date(),
-        startsAt: new Date(minDate),
-        lastDate: new Date(maxDate),
-        allTasks: totalAllTasks,
-        part,
-      })
+      db.collection("Routine").insertOne(newRoutine)
     );
+
+    newRoutine.isPublic = await checkIfPublic({
+      userId: String(userId),
+      part,
+    });
 
     /* update final tasks */
     const finalTasks = totalTasksToInsert.map((rt, i) => ({

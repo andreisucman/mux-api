@@ -21,6 +21,7 @@ import addDateAndIdsToAllTasks from "@/helpers/addDateAndIdsToAllTasks.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 import getSolutionsAndFrequencies from "./getSolutionsAndFrequencies.js";
+import { checkIfPublic } from "@/routes/checkIfPublic.js";
 
 type Props = {
   userId: string;
@@ -118,19 +119,27 @@ export default async function makeANewRoutine({
       allTasksWithDateAndIds
     );
 
+    const newRoutine = {
+      userId: new ObjectId(userId),
+      userName,
+      part,
+      concerns: partConcerns,
+      finalSchedule,
+      isPublic: false,
+      status: RoutineStatusEnum.ACTIVE,
+      createdAt: new Date(),
+      allTasks: allTasksWithDateAndIds,
+      startsAt: new Date(minDate),
+      lastDate: new Date(maxDate),
+    };
+
+    newRoutine.isPublic = await checkIfPublic({
+      userId,
+      part,
+    });
+
     const newRoutineObject = await doWithRetries(async () =>
-      db.collection("Routine").insertOne({
-        userId: new ObjectId(userId),
-        userName,
-        part,
-        concerns: partConcerns,
-        finalSchedule,
-        status: RoutineStatusEnum.ACTIVE,
-        createdAt: new Date(),
-        allTasks: allTasksWithDateAndIds,
-        startsAt: new Date(minDate),
-        lastDate: new Date(maxDate),
-      })
+      db.collection("Routine").insertOne(newRoutine)
     );
 
     tasksToInsert = tasksToInsert.map((rt) => ({

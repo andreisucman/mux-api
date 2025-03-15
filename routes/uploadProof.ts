@@ -36,6 +36,7 @@ import extractImagesAndTextFromVideo from "@/functions/extractImagesAndTextFromV
 import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.js";
 import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 import checkIfTaskIsAboutFood from "@/functions/checkIfTaskIsRelated.js";
+import { checkIfPublic } from "./checkIfPublic.js";
 
 const route = Router();
 
@@ -100,7 +101,6 @@ route.post(
               name: 1,
               nutrition: 1,
               streakDates: 1,
-              demographics: 1,
               latestScoresDifference: 1,
             },
           }
@@ -326,22 +326,6 @@ route.post(
 
       let mainThumbnail = { name: finalBlurType, url: proofImages[0] };
       let mainUrl = { name: finalBlurType, url };
-      let thumbnails = [mainThumbnail];
-      let urls = [mainUrl];
-
-      if (finalBlurType !== "original") {
-        const response = await getReadyBlurredUrls({
-          url,
-          blurType: finalBlurType,
-          thumbnail: proofImages[0],
-          cookies: req.cookies,
-        });
-
-        mainThumbnail = response.mainThumbnail;
-        mainUrl = response.mainUrl;
-        thumbnails = response.thumbnails;
-        urls = response.urls;
-      }
 
       const {
         name: taskName,
@@ -353,7 +337,7 @@ route.post(
         requisite,
         routineId,
       } = taskInfo || {};
-      const { name, demographics } = userInfo || {};
+      const { name } = userInfo || {};
 
       /* add a new proof */
       const newProof: ProofType = {
@@ -364,33 +348,21 @@ route.post(
         taskKey: key,
         taskName,
         requisite,
-        demographics,
         contentType: urlType as "video",
         mainUrl,
-        urls,
         icon,
         part,
         color,
         taskId: new ObjectId(taskId),
         concern,
         mainThumbnail,
-        thumbnails,
         proofImages,
         userName: name,
         isPublic: false,
         moderationStatus: ModerationStatusEnum.ACTIVE,
       };
 
-      const routineData = await doWithRetries(() =>
-        db
-          .collection("RoutineData")
-          .findOne(
-            { userId: new ObjectId(req.userId), part },
-            { projection: { status: 1 } }
-          )
-      );
-
-      newProof.isPublic = routineData.status === "public";
+      newProof.isPublic = await checkIfPublic({ userId: req.userId, part });
 
       const userUpdatePayload: { [key: string]: any } = {};
 

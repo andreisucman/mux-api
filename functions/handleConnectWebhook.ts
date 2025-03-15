@@ -2,12 +2,11 @@ import * as dotenv from "dotenv";
 dotenv.config();
 import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import updateContentPublicity from "functions/updateContentPublicity.js";
-import { defaultClubPrivacy } from "data/defaultClubPrivacy.js";
 import httpError from "@/helpers/httpError.js";
 import { ModerationStatusEnum } from "@/types.js";
 import getEmailContent from "@/helpers/getEmailContent.js";
 import sendEmail from "./sendEmail.js";
+import updateContent from "./updateContent.js";
 import updateAnalytics from "./updateAnalytics.js";
 import Stripe from "stripe";
 
@@ -15,10 +14,15 @@ import Stripe from "stripe";
 export default async function handleConnectWebhook(event: Stripe.Event) {
   const data = event.data as
     | Stripe.AccountUpdatedEvent.Data
-    | Stripe.TransferUpdatedEvent.Data;
+    | Stripe.TransferUpdatedEvent.Data
+    | Stripe.PaymentIntentSucceededEvent.Data;
   const object = data.object;
 
-  if (event.type !== "account.updated" && event.type !== "transfer.updated")
+  if (
+    event.type !== "account.updated" &&
+    event.type !== "transfer.updated" &&
+    event.type !== "payment_intent.succeeded"
+  )
     return;
 
   const userInfo = await doWithRetries(async () =>
@@ -48,8 +52,7 @@ export default async function handleConnectWebhook(event: Stripe.Event) {
       } = userInfo.club.payouts;
 
       const { object } = data as Stripe.AccountUpdatedEvent.Data;
-      const { payouts_enabled, requirements, details_submitted, email } =
-        object;
+      const { payouts_enabled, requirements, details_submitted } = object;
       const { disabled_reason } = requirements || {};
 
       const updatePayload: { [key: string]: any } = {
@@ -59,7 +62,11 @@ export default async function handleConnectWebhook(event: Stripe.Event) {
       };
 
       if (!payouts_enabled && details_submitted) {
-        updatePayload["club.privacy"] = defaultClubPrivacy;
+        await updateContent({
+          userId: String(userInfo._id),
+          collections: ["BeforeAfter", "Progress", "Proof", "Diary", "Routine"],
+          updatePayload: { isPublic: false },
+        });
 
         if (!payoutsDisabledUserNotifiedOn) {
           const { title, body } = await getEmailContent({
@@ -68,9 +75,18 @@ export default async function handleConnectWebhook(event: Stripe.Event) {
           });
 
           await sendEmail({
-            to: email,
+            to: userInfo.email,
             subject: title,
             html: body,
+          });
+
+          updatePayload.payoutsDisabledUserNotifiedOn = new Date();
+
+          updateAnalytics({
+            userId: String(userInfo._id),
+            incrementPayload: {
+              "overview.club.payoutsDisabled": 1,
+            },
           });
         }
       }
@@ -112,31 +128,93 @@ export default async function handleConnectWebhook(event: Stripe.Event) {
   if (event.type === "transfer.updated") {
     try {
       const { object } = data as Stripe.TransferUpdatedEvent.Data;
-      const { amount } = object || {};
+      const { amount, destination: connectId } = object;
 
-      if (typeof amount !== "number" || amount <= 0) return;
-
-      await doWithRetries(async () =>
-        db.collection("User").updateOne(
+      const userInfo = await doWithRetries(async () =>
+        db.collection("User").findOne(
           {
-            "club.payouts.connectId": object.id,
+            "club.payouts.connectId": connectId,
+            moderationStatus: ModerationStatusEnum.ACTIVE,
           },
-          {
-            $set: {
-              "club.payouts.balance": 0,
-            },
-          }
+          { projection: { _id: 1 } }
         )
       );
 
-      const totalWithdrawn = amount / 100;
+      if (!userInfo) throw new Error("User not found");
+
+      const transferredAmount = amount / 100;
+
+      await doWithRetries(async () =>
+        db
+          .collection("User")
+          .updateOne(
+            { "club.payouts.connectId": connectId },
+            { $inc: { "club.payouts.balance": -transferredAmount } }
+          )
+      );
 
       updateAnalytics({
         userId: String(userInfo._id),
         incrementPayload: {
-          "accounting.totalWithdrawn": totalWithdrawn,
-          "overview.accounting.totalWithdrawn": totalWithdrawn,
+          "accounting.totalWithdrawn": transferredAmount,
+          "overview.accounting.totalWithdrawn": transferredAmount,
           "overview.club.withdrawed": 1,
+        },
+      });
+    } catch (err) {
+      throw httpError(err);
+    }
+  }
+
+  if (event.type === "payment_intent.succeeded") {
+    try {
+      const paymentIntent = event.data.object as Stripe.PaymentIntent;
+      const { application_fee_amount, transfer_data, amount } = paymentIntent;
+      const connectId = transfer_data?.destination;
+
+      if (!connectId) throw new Error("No destination account");
+
+      const userInfo = await doWithRetries(async () =>
+        db
+          .collection("User")
+          .findOne(
+            { "club.payouts.connectId": connectId },
+            { projection: { _id: 1, email: 1 } }
+          )
+      );
+
+      if (!userInfo) throw new Error("User not found");
+
+      const { title, body } = await getEmailContent({
+        accessToken: null,
+        emailType: "yourPlanPurchased",
+      });
+
+      await sendEmail({
+        to: userInfo.email,
+        subject: title,
+        html: body,
+      });
+
+      const appFee = (application_fee_amount || 0) / 100;
+      const transferredAmount = (amount - appFee * 100) / 100;
+
+      await doWithRetries(async () =>
+        db
+          .collection("User")
+          .updateOne(
+            { "club.payouts.connectId": connectId },
+            { $inc: { "club.payouts.balance": transferredAmount } }
+          )
+      );
+
+      updateAnalytics({
+        userId: String(userInfo._id),
+        incrementPayload: {
+          "overview.accounting.totalPlatformFee": appFee,
+          "overview.accounting.totalPayable": transferredAmount,
+          "accounting.totalPlatformFee": appFee,
+          "accounting.totalPayable": transferredAmount,
         },
       });
     } catch (err) {

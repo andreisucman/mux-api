@@ -32,14 +32,11 @@ const allowedReferrers = [
   "scanProgress",
   "analysisProgress",
   "clubRoutines",
-  "clubAbout",
   "clubProgress",
-  "clubAnswers",
   "clubProof",
   "clubDiary",
   "authPage",
   "scanIndex",
-  "plans",
   "rewards",
 ];
 

@@ -52,25 +52,29 @@ export async function filterData({
 
       data = filtered;
     } else {
-      if (maskFunction) {
-        data = array.map((obj) => maskFunction(obj));
-      } else {
-        data = array;
+      array = array.filter((o) => o.isPublic);
+
+      if (array.length > 0) {
+        if (maskFunction) {
+          data = array.map((obj) => maskFunction(obj));
+        } else {
+          data = array;
+        }
+
+        const filter: { [key: string]: any } = {
+          userId: new ObjectId(sellerId),
+          status: "public",
+        };
+
+        priceData = await doWithRetries(async () =>
+          db
+            .collection("RoutineData")
+            .find(filter, {
+              projection: { name: 1, description: 1, price: 1, part: 1 },
+            })
+            .toArray()
+        );
       }
-
-      const filter: { [key: string]: any } = {
-        userId: new ObjectId(sellerId),
-        status: "public",
-      };
-
-      priceData = await doWithRetries(async () =>
-        db
-          .collection("RoutineData")
-          .find(filter, {
-            projection: { name: 1, description: 1, oneTimePrice: 1, part: 1 },
-          })
-          .toArray()
-      );
     }
 
     return { priceData, data };

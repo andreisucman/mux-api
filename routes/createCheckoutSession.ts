@@ -16,13 +16,14 @@ route.post(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { priceId, redirectUrl, cancelUrl, mode } = req.body;
 
-    if (!priceId || !redirectUrl || !cancelUrl || !mode) {
+    if (
+      !priceId ||
+      !redirectUrl ||
+      !cancelUrl ||
+      !mode ||
+      !["subscription", "payment"].includes(mode)
+    ) {
       res.status(400).json("Bad request");
-      return;
-    }
-
-    if (!["subscription", "payment"].includes(mode)) {
-      res.status(400).json("Invalid payment mode");
       return;
     }
 
@@ -77,30 +78,34 @@ route.post(
             });
 
             res.status(200).json({ message: { redirectUrl: session.url } });
+            return;
           }
-        } else {
-          const session = await stripe.checkout.sessions.create({
-            billing_address_collection: "auto",
-            payment_method_types: ["card"],
-            mode: "subscription",
-            line_items: [{ price: priceId, quantity: 1 }],
-            success_url: redirectUrl,
-            cancel_url: cancelUrl,
-            customer: stripeUserId,
-          });
-
-          if (session.url) {
-            updateAnalytics({
-              userId: req.userId,
-              incrementPayload: {
-                [`overview.subscription.added.${relatedPlan.name}`]: 1,
-              },
-            });
-          }
-
-          res.status(200).json({ message: { redirectUrl: session.url } });
         }
-      } else if (mode === "payment") {
+
+        const session = await stripe.checkout.sessions.create({
+          billing_address_collection: "auto",
+          payment_method_types: ["card"],
+          mode: "subscription",
+          line_items: [{ price: priceId, quantity: 1 }],
+          success_url: redirectUrl,
+          cancel_url: cancelUrl,
+          customer: stripeUserId,
+        });
+
+        if (session.url) {
+          updateAnalytics({
+            userId: req.userId,
+            incrementPayload: {
+              [`overview.subscription.added.${relatedPlan.name}`]: 1,
+            },
+          });
+        }
+
+        res.status(200).json({ message: { redirectUrl: session.url } });
+        return;
+      }
+
+      if (mode === "payment") {
         const session = await stripe.checkout.sessions.create({
           customer: stripeUserId,
           payment_method_types: ["card"],

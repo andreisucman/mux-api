@@ -1,6 +1,5 @@
-import { RoutineType } from "@/types.js";
+import { ProofType, RoutineType } from "@/types.js";
 import { DiaryRecordType } from "@/types/saveDiaryRecordTypes.js";
-import { generateRandomPastelColor } from "make-random-color";
 
 export function maskRoutine(routine: RoutineType) {
   return {
@@ -23,13 +22,10 @@ export function maskDiaryRow(diaryRecord: DiaryRecordType) {
     audio: "/",
     embedding: [],
     activity: diaryRecord.activity.map((a) => {
-      const color1 = generateRandomPastelColor().slice(1);
-      const color2 = generateRandomPastelColor().slice(1);
-
-      const thumbnail = `https://placehold.co/480x720/${color1}/${color1}/webp?text=%27&font=poppins`;
+      const thumbnail = `https://placehold.co/480x720/3b3b3b/3b3b3b/webp?text=%27&font=poppins`;
       const placeholder =
         a.contentType === "image"
-          ? `https://placehold.co/480x720/${color2}/${color2}/webp?text=%27&font=poppins`
+          ? `https://placehold.co/480x720/3b3b3b/3b3b3b/webp?text=%27&font=poppins`
           : "https://mux.nyc3.cdn.digitaloceanspaces.com/video.mp4";
 
       return {
@@ -45,30 +41,21 @@ export function maskDiaryRow(diaryRecord: DiaryRecordType) {
   };
 }
 
-export function maskProof(diaryRecord: DiaryRecordType) {
+export function maskProof(proof: ProofType) {
+  const thumbnail = `https://placehold.co/480x720/3b3b3b/3b3b3b/webp?text=%27&font=poppins`;
+  const placeholder =
+    proof.contentType === "image"
+      ? `https://placehold.co/480x720/3b3b3b/3b3b3b/webp?text=%27&font=poppins`
+      : "https://mux.nyc3.cdn.digitaloceanspaces.com/video.mp4";
   return {
-    ...diaryRecord,
-    audio: "/",
-    embedding: [],
-    activity: diaryRecord.activity.map((a) => {
-      const color1 = generateRandomPastelColor().slice(1);
-      const color2 = generateRandomPastelColor().slice(1);
-
-      const thumbnail = `https://placehold.co/480x720/${color1}/${color1}/webp?text=%27&font=poppins`;
-      const placeholder =
-        a.contentType === "image"
-          ? `https://placehold.co/480x720/${color2}/${color2}/webp?text=%27&font=poppins`
-          : "https://mux.nyc3.cdn.digitaloceanspaces.com/video.mp4";
-
-      return {
-        ...a,
-        icon: "❓",
-        url: placeholder,
-        thumbnail: a.contentType === "video" ? thumbnail : "",
-        name: Array(a.name.length).fill("*").join(""),
-        contentId: "*",
-        taskId: "*",
-      };
-    }),
+    ...proof,
+    taskKey: Array(proof.taskKey.length).fill("*").join(""),
+    taskName: Array(proof.taskName.length).fill("*").join(""),
+    requisite: Array(proof.requisite.length).fill("*").join(""),
+    mainUrl: { name: "", url: placeholder },
+    mainThumbnail:
+      proof.contentType === "image" ? null : { name: "", url: thumbnail },
+    icon: "❓",
+    concern: Array(proof.concern.length).fill("*").join(""),
   };
 }

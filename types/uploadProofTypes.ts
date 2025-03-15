@@ -1,16 +1,9 @@
 import { ObjectId } from "mongodb";
-import {
-  ClubDataType,
-  DemographicsType,
-  LatestScoresType,
-  PartEnum,
-  RecipeType,
-} from "types.js";
+import { ClubDataType, LatestScoresType, PartEnum, RecipeType } from "types.js";
 
 export type UploadProofUserType = {
   name: string;
   club: ClubDataType;
-  demographics: DemographicsType;
   latestScoresDifference: LatestScoresType;
   streakDates: { [key: string]: Date };
   timeZone: string;

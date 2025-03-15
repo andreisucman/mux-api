@@ -8,19 +8,20 @@ import { CustomRequest } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import checkTextSafety from "@/functions/checkTextSafety.js";
 import { SuspiciousRecordCollectionEnum } from "@/functions/addSuspiciousRecord.js";
+import updateContent from "@/functions/updateContent.js";
 
 const route = Router();
 
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { status, part, name, description, oneTimePrice, updatePrice } =
-      req.body;
+    const { status, part, name, description, price, updatePrice } = req.body;
 
+    console.log("req.body", req.body);
     if (
-      Number(oneTimePrice) < 1 ||
+      Number(price) < 1 ||
       Number(updatePrice) < 1 ||
-      isNaN(Number(oneTimePrice)) ||
+      isNaN(Number(price)) ||
       isNaN(Number(updatePrice)) ||
       name.length > 50 ||
       description.length > 150
@@ -54,7 +55,7 @@ route.post(
               status,
               name,
               description,
-              oneTimePrice,
+              price,
               updatePrice,
             },
           },
@@ -63,6 +64,13 @@ route.post(
       );
 
       res.status(200).end();
+
+      await updateContent({
+        userId: req.userId,
+        collections: ["BeforeAfter", "Progress", "Proof", "Diary", "Routine"],
+        part,
+        updatePayload: { isPublic: status === "public" },
+      });
     } catch (err) {
       next(err);
     }

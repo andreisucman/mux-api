@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb";
 import doWithRetries from "helpers/doWithRetries.js";
-import updateContentPublicity from "functions/updateContentPublicity.js";
+import updateContent from "@/functions/updateContent.js";
 import { ModerationStatusEnum } from "@/types.js";
 import httpError from "@/helpers/httpError.js";
 import { daysFrom } from "@/helpers/utils.js";
@@ -13,10 +13,10 @@ type Props = {
 
 export default async function removeFromClub({ userId }: Props) {
   try {
-    await updateContentPublicity({
+    await updateContent({
       userId,
-      collections: ["BeforeAfter", "Progress", "Proof", "Diary"],
-      isPublic: false,
+      collections: ["BeforeAfter", "Progress", "Proof", "Diary", "Routine"],
+      updatePayload: { isPublic: false },
     });
 
     const canRejoinClubAfter = daysFrom({ days: 7 });

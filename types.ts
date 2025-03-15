@@ -447,13 +447,9 @@ export type ProofType = {
   routineId: ObjectId;
   createdAt: Date;
   taskKey: string;
-  hash?: string; // hash will only exist when the submission is a video and the blur happened after the upload
   contentType: "video" | "image";
-  demographics: DemographicsType;
   mainUrl: BlurredUrlType;
   mainThumbnail: BlurredUrlType;
-  urls: BlurredUrlType[];
-  thumbnails: BlurredUrlType[];
   part: PartEnum;
   icon: string;
   color: string;
