@@ -143,11 +143,15 @@ app.use("/getAllSolutions", getAllSolutions);
 app.use("/getLatestFoodAnalysis", getLatestFoodAnalysis);
 
 app.use((req, res, next) => checkAccess(req, res, next, false));
+app.use("/getPublicUserData", getPublicUserData);
 app.use("/getRoutines", getRoutines);
+app.use("/getProofRecords", getProofRecords);
+app.use("/getProgress", getProgress);
+app.use("/getDiaryRecords", getDiaryRecords);
+
 app.use("/verifyEmail", verifyEmail);
 app.use("/changeEmailStepOne", changeEmailStepOne);
 app.use("/changeEmailStepTwo", changeEmailStepTwo);
-
 app.use("/startTheFlow", startTheFlow);
 app.use("/analyzeFood", analyzeFood);
 app.use("/checkAnalysisCompletion", checkAnalysisCompletion);
@@ -157,7 +161,6 @@ app.use("/getReviews", getReviews);
 app.use("/getRewards", getRewards);
 app.use("/getBeforeAfters", getBeforeAfters);
 app.use("/getAutocomplete", getAutocomplete);
-app.use("/getProofRecords", getProofRecords);
 app.use("/startProgressAnalysis", startProgressAnalysis);
 app.use("/startSubscriptionTrial", startSubscriptionTrial);
 app.use("/startTheFlow", startTheFlow);
@@ -168,7 +171,6 @@ app.use("/getAllProofRecords", getAllProofRecords);
 
 // protected routes
 app.use((req, res, next) => checkAccess(req, res, next, true));
-app.use("/getPublicUserData", getPublicUserData);
 app.use("/getRoutineData", getRoutineData);
 app.use("/saveRoutineData", saveRoutineData);
 app.use("/getScoresAndFeedback", getScoresAndFeedback);
@@ -179,11 +181,9 @@ app.use("/updateConcernStatus", updateConcernStatus);
 app.use("/changeCountry", changeCountry);
 app.use("/saveDiaryRecord", saveDiaryRecord);
 app.use("/createDiaryRecord", createDiaryRecord);
-app.use("/getDiaryRecords", getDiaryRecords);
 app.use("/checkCountry", checkCountry);
 app.use("/createRoutine", createRoutine);
 app.use("/getFilters", getFilters);
-app.use("/getProgress", getProgress);
 app.use("/sendConfirmationCode", sendConfirmationCode);
 app.use("/stealTask", stealTask);
 app.use("/checkVideoBlurStatus", checkVideoBlurStatus);

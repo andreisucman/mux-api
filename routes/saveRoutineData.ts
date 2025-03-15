@@ -17,7 +17,6 @@ route.post(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { status, part, name, description, price, updatePrice } = req.body;
 
-    console.log("req.body", req.body);
     if (
       Number(price) < 1 ||
       Number(updatePrice) < 1 ||

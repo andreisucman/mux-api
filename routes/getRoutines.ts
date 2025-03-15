@@ -43,7 +43,6 @@ route.get(
         isPublic: 1,
       };
 
-      console.log("sort", sort);
       const finalSort = { ...(sort || { _id: -1 }), status: 1 };
 
       const routines = await doWithRetries(async () =>
@@ -58,8 +57,6 @@ route.get(
           ])
           .toArray()
       );
-
-      console.log("routines", routines);
 
       let response = { priceData: null, data: routines };
 
