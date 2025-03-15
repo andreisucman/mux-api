@@ -21,7 +21,9 @@ import { CheckImageSimilarityProps } from "functions/checkImageSimilarity.js";
 import { db } from "init.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.js";
-import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
+import addSuspiciousRecord, {
+  SuspiciousRecordCollectionEnum,
+} from "@/functions/addSuspiciousRecord.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
 import httpError from "@/helpers/httpError.js";
 import { urlToBase64 } from "@/helpers/utils.js";
@@ -172,7 +174,7 @@ route.post(
 
         if (isSuspicious) {
           addSuspiciousRecord({
-            collection: "FoodAnalysis",
+            collection: SuspiciousRecordCollectionEnum.FOOD,
             moderationResults,
             contentId: String(newRecord._id),
             userId: req.userId,

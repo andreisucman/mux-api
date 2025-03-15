@@ -104,13 +104,6 @@ export default async function handleConnectWebhook(event: Stripe.Event) {
           },
         });
       }
-
-      if (!payouts_enabled) {
-        updateContentPublicity({
-          userId: String(userInfo._id),
-          newPrivacy: defaultClubPrivacy,
-        });
-      }
     } catch (err) {
       throw httpError(err);
     }

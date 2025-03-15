@@ -15,6 +15,7 @@ export enum SuspiciousRecordCollectionEnum {
   DIARY = "Diary",
   USER = "User",
   ROUTINE_DATA = "RoutineData",
+  FOOD = "FoodAnalysis",
 }
 
 type Props = {

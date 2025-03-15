@@ -413,6 +413,8 @@ export type AllTaskType = {
   icon: string;
   concern: string;
   total: number;
+  description: string;
+  instruction: string;
 };
 
 export interface AllTaskTypeWithIds extends AllTaskType {

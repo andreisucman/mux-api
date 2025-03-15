@@ -8,7 +8,6 @@ import getUserInfo from "@/functions/getUserInfo.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
 import { defaultClubPrivacy } from "@/data/defaultClubPrivacy.js";
 import httpError from "@/helpers/httpError.js";
-import updateContentPublicity from "@/functions/updateContentPublicity.js";
 
 const route = Router();
 
@@ -31,11 +30,6 @@ route.post(
       if (!userInfo) throw httpError(`User ${req.userId} not found`);
 
       const { country: existingCountry } = userInfo;
-
-      updateContentPublicity({
-        userId: req.userId,
-        newPrivacy: defaultClubPrivacy,
-      });
 
       await doWithRetries(async () =>
         db.collection("User").updateOne(
