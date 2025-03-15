@@ -52,7 +52,11 @@ export async function filterData({
 
       data = filtered;
     } else {
-      data = array.map((obj) => maskFunction(obj));
+      if (maskFunction) {
+        data = array.map((obj) => maskFunction(obj));
+      } else {
+        data = array;
+      }
 
       const filter: { [key: string]: any } = {
         userId: new ObjectId(sellerId),
@@ -74,6 +78,3 @@ export async function filterData({
     throw httpError(err);
   }
 }
-
-
-

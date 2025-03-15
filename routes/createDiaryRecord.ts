@@ -109,7 +109,6 @@ route.post(
           thumbnail:
             proof.contentType === "video" ? proof.mainThumbnail.url : "",
           icon: proof.icon,
-          categoryName: "proof",
           contentType: proof.contentType,
         });
       }

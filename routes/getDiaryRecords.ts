@@ -4,13 +4,14 @@ dotenv.config();
 import aqp, { AqpQuery } from "api-query-params";
 import { ObjectId, Sort } from "mongodb";
 import { Router, Response, NextFunction } from "express";
-import checkRbac from "@/functions/checkRbac.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { ModerationStatusEnum } from "types.js";
 import { DiaryRecordType } from "@/types/saveDiaryRecordTypes.js";
 import { CustomRequest } from "types.js";
 import { db } from "init.js";
 import { daysFrom } from "@/helpers/utils.js";
+import { maskDiaryRow } from "@/helpers/mask.js";
+import { filterData } from "@/functions/filterData.js";
 
 const route = Router();
 
@@ -22,19 +23,6 @@ route.get(
     const { dateFrom, dateTo, part } = filter;
 
     try {
-      // if (userName) {
-      //   const { inClub, isSelf, isFollowing } = await checkRbac({
-      //     followingUserName: userName,
-      //     userId: req.userId,
-      //     throwOnError: false,
-      //   });
-
-      //   if ((!inClub || !isFollowing) && !isSelf) {
-      //     res.status(200).json({ message: [] });
-      //     return;
-      //   }
-      // }
-
       const filters: { [key: string]: any } = {
         moderationStatus: ModerationStatusEnum.ACTIVE,
       };
@@ -58,7 +46,7 @@ route.get(
         ];
       }
 
-      let results = (await doWithRetries(async () =>
+      let diary = (await doWithRetries(async () =>
         db
           .collection("Diary")
           .find(filters)
@@ -69,7 +57,24 @@ route.get(
           .toArray()
       )) as unknown as DiaryRecordType[];
 
-      res.status(200).json({ message: results });
+      let response = { priceData: null, data: diary };
+
+      if (userName) {
+        if (diary.length) {
+          const result = await filterData({
+            part,
+            array: diary,
+            dateKey: "createdAt",
+            maskFunction: maskDiaryRow,
+            userId: req.userId,
+          });
+
+          response.priceData = result.priceData;
+          response.data = result.data;
+        }
+      }
+
+      res.status(200).json({ message: response });
     } catch (err) {
       next(err);
     }

@@ -13,8 +13,9 @@ import {
   CategoryNameEnum,
   PartEnum,
 } from "types.js";
-import addSuspiciousRecord from "@/functions/addSuspiciousRecord.js";
-import { daysFrom } from "@/helpers/utils.js";
+import addSuspiciousRecord, {
+  SuspiciousRecordCollectionEnum,
+} from "@/functions/addSuspiciousRecord.js";
 import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.js";
 import { DiaryRecordType } from "@/types/saveDiaryRecordTypes.js";
 import getUserInfo from "@/functions/getUserInfo.js";
@@ -121,16 +122,14 @@ route.post(
         activity,
         embedding,
         userName: null,
-        avatar: null,
         userId: new ObjectId(req.userId),
         transcription: body.message,
         createdAt: new Date(),
         moderationStatus: ModerationStatusEnum.ACTIVE,
       };
 
-      const { name, avatar } = userInfo;
+      const { name } = userInfo;
       if (name) newDiaryRecord.userName = name;
-      if (avatar) newDiaryRecord.avatar = avatar;
 
       await doWithRetries(async () =>
         db.collection("Diary").insertOne(newDiaryRecord)
@@ -157,7 +156,7 @@ route.post(
 
         if (isSuspicious) {
           addSuspiciousRecord({
-            collection: "Diary",
+            collection: SuspiciousRecordCollectionEnum.DIARY,
             moderationResults,
             contentId: String(newDiaryRecord._id),
             userId: req.userId,

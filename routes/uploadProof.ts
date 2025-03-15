@@ -98,7 +98,6 @@ route.post(
             projection: {
               club: 1,
               name: 1,
-              avatar: 1,
               nutrition: 1,
               streakDates: 1,
               demographics: 1,
@@ -354,7 +353,7 @@ route.post(
         requisite,
         routineId,
       } = taskInfo || {};
-      const { name, avatar, demographics } = userInfo || {};
+      const { name, demographics } = userInfo || {};
 
       /* add a new proof */
       const newProof: ProofType = {
@@ -377,7 +376,6 @@ route.post(
         mainThumbnail,
         thumbnails,
         proofImages,
-        avatar,
         userName: name,
         isPublic: false,
         moderationStatus: ModerationStatusEnum.ACTIVE,

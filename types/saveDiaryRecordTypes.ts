@@ -11,7 +11,6 @@ export type DiaryRecordType = {
   transcription: string;
   createdAt: Date;
   userName: string | null;
-  avatar: { [key: string]: any } | null;
   moderationStatus: ModerationStatusEnum;
 };
 
@@ -23,5 +22,4 @@ export type DiaryActivityType = {
   thumbnail?: string;
   icon?: string;
   contentType: "image" | "video";
-  categoryName: "proof" | "food";
 };

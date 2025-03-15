@@ -187,7 +187,6 @@ export default async function analyzePart({
       initialImages: initialProgress?.images || updatedImages,
       initialDate: initialProgress?.createdAt || createdAt,
       createdAt,
-      avatar,
       userName: name,
       concerns: newConcerns,
       scoresDifference,

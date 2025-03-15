@@ -2,20 +2,20 @@ import { ObjectId, Sort } from "mongodb";
 import { NextFunction, Router } from "express";
 import aqp, { AqpQuery } from "api-query-params";
 import { ModerationStatusEnum, CustomRequest } from "types.js";
-import checkRbac from "functions/checkRbac.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { db } from "init.js";
+import { filterData } from "@/functions/filterData.js";
 
 const route = Router();
 
 route.get(
-  "/:followingUserName?",
+  "/:userName?",
   async (req: CustomRequest, res, next: NextFunction) => {
-    const { followingUserName } = req.params;
+    const { userName } = req.params;
     const { filter, skip, sort } = aqp(req.query as any) as AqpQuery;
     const { part } = filter;
 
-    if (!followingUserName && !req.userId) {
+    if (!userName && !req.userId) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
@@ -25,25 +25,8 @@ route.get(
         moderationStatus: ModerationStatusEnum.ACTIVE,
       };
 
-      // if (followingUserName) {
-      //   const { inClub, isFollowing, isSelf, subscriptionActive } =
-      //     await checkRbac({
-      //       userId: req.userId,
-      //       followingUserName,
-      //     });
-
-      //   if ((!inClub || !isFollowing || !subscriptionActive) && !isSelf) {
-      //     res.status(200).json({ message: [] });
-      //     return;
-      //   }
-
-      //   if (!isSelf) {
-      //     filter.isPublic = true;
-      //   }
-      // }
-
-      if (followingUserName) {
-        filter.userName = followingUserName;
+      if (userName) {
+        filter.userName = userName;
       } else {
         filter.userId = new ObjectId(req.userId);
       }
@@ -75,7 +58,24 @@ route.get(
           .toArray()
       );
 
-      res.status(200).json({ message: progress });
+      let response = { priceData: null, data: progress };
+
+      if (userName) {
+        if (progress.length) {
+          const result = await filterData({
+            part,
+            array: progress,
+            dateKey: "createdAt",
+            maskFunction: null,
+            userId: req.userId,
+          });
+
+          response.priceData = result.priceData;
+          response.data = result.data;
+        }
+      }
+
+      res.status(200).json({ message: response });
     } catch (err) {
       next(err);
     }

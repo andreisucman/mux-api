@@ -325,7 +325,6 @@ export type ProgressType = {
   scoresDifference?: { [key: string]: any };
   specialConsiderations: string;
   isPublic: boolean;
-  avatar?: { [key: string]: any };
   userName?: string;
   moderationStatus: ModerationStatusEnum;
 };
@@ -397,7 +396,6 @@ export type RoutineType = {
   allTasks: AllTaskTypeWithIds[];
   lastDate: Date;
   stolenFrom: string;
-  avatar: { [key: string]: any };
   userName: string;
   isPublic: boolean;
 };
@@ -460,7 +458,6 @@ export type ProofType = {
   taskId: ObjectId;
   concern: string;
   proofImages: string[];
-  avatar: { [key: string]: any } | null;
   userName: string;
   moderationStatus: ModerationStatusEnum;
   isPublic: boolean;

@@ -6,48 +6,25 @@ import httpError from "helpers/httpError.js";
 type Props = {
   userId: string;
   updatePayload: { [key: string]: any };
+  collections: string[];
 };
 
 export default async function updatePublicContent({
   userId,
   updatePayload,
+  collections,
 }: Props) {
   try {
-    await doWithRetries(async () =>
-      db
-        .collection("Proof")
-        .updateMany({ userId: new ObjectId(userId) }, { $set: updatePayload })
-    );
-
-    await doWithRetries(async () =>
-      db
-        .collection("Progress")
-        .updateMany({ userId: new ObjectId(userId) }, { $set: updatePayload })
-    );
-
-    await doWithRetries(async () =>
-      db
-        .collection("BeforeAfter")
-        .updateMany({ userId: new ObjectId(userId) }, { $set: updatePayload })
-    );
-
-    await doWithRetries(async () =>
-      db
-        .collection("Diary")
-        .updateMany({ userId: new ObjectId(userId) }, { $set: updatePayload })
-    );
-
-    await doWithRetries(async () =>
-      db
-        .collection("FaqAnswer")
-        .updateMany({ userId: new ObjectId(userId) }, { $set: updatePayload })
-    );
-
-    await doWithRetries(async () =>
-      db
-        .collection("Routine")
-        .updateMany({ userId: new ObjectId(userId) }, { $set: updatePayload })
-    );
+    for (const collection of collections) {
+      if (["Proof", "Progres", "Diary", "Routine"].includes(collection)) {
+        delete updatePayload.avatar;
+      }
+      await doWithRetries(async () =>
+        db
+          .collection(collection)
+          .updateMany({ userId: new ObjectId(userId) }, { $set: updatePayload })
+      );
+    }
   } catch (err) {
     throw httpError(err);
   }

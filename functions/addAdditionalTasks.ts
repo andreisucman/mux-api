@@ -8,18 +8,13 @@ import {
   PartEnum,
   CategoryNameEnum,
   ProgressImageType,
-  AllTaskType,
   AllTaskTypeWithIds,
 } from "@/types.js";
 import addAnalysisStatusError from "functions/addAnalysisStatusError.js";
-import {
-  CreateRoutineUserInfoType,
-  CreateRoutineAllSolutionsType,
-} from "types/createRoutineTypes.js";
+import { CreateRoutineUserInfoType } from "types/createRoutineTypes.js";
 import httpError from "@/helpers/httpError.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import addDateAndIdsToAllTasks from "@/helpers/addDateAndIdsToAllTasks.js";
-import getAreCurrentTasksEnough from "./getAreCurrentTasksEnough.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import chooseSolutionsForConcerns from "./chooseSolutionsForConcerns.js";
 import createSolutionData from "./createSolutionData.js";

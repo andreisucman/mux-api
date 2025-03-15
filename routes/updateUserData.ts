@@ -13,6 +13,7 @@ import isNameUnique from "@/functions/isNameUnique.js";
 import { db, stripe } from "init.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import checkTextSafety from "@/functions/checkTextSafety.js";
+import { SuspiciousRecordCollectionEnum } from "@/functions/addSuspiciousRecord.js";
 
 const route = Router();
 
@@ -69,7 +70,7 @@ route.post(
           userId: req.userId,
           text: name,
           key: "name",
-          collection: "User",
+          collection: SuspiciousRecordCollectionEnum.USER,
         });
 
         if (!verdict) {
@@ -119,8 +120,8 @@ route.post(
         const verdict = await checkTextSafety({
           userId: req.userId,
           text: intro,
-          key: "club.bio.intro",
-          collection: "User",
+          key: "club.intro",
+          collection: SuspiciousRecordCollectionEnum.USER,
         });
 
         if (!verdict) {
@@ -131,15 +132,15 @@ route.post(
           return;
         }
 
-        updatePayload["club.bio.intro"] = intro;
+        updatePayload["club.intro"] = intro;
       }
 
       if (socials) {
         const verdict = await checkTextSafety({
           userId: req.userId,
           text: JSON.stringify(socials),
-          key: "club.bio.socials",
-          collection: "User",
+          key: "club.socials",
+          collection: SuspiciousRecordCollectionEnum.USER,
         });
 
         if (!verdict) {
@@ -150,30 +151,7 @@ route.post(
           return;
         }
 
-        updatePayload["club.bio.socials"] = socials;
-      }
-
-      if (bio) {
-        for (const key in bio) {
-          const text = key === "socials" ? JSON.stringify(socials) : bio[key];
-
-          const verdict = await checkTextSafety({
-            userId: req.userId,
-            text,
-            key: `club.bio.${key}`,
-            collection: "User",
-          });
-
-          if (!verdict) {
-            res.status(200).json({
-              error:
-                "It appears that your text contains profanity. Please revise and try again.",
-            });
-            return;
-          }
-
-          updatePayload[`club.bio.${key}`] = bio[key];
-        }
+        updatePayload["club.socials"] = socials;
       }
 
       if (dailyCalorieGoal) {
@@ -208,6 +186,7 @@ route.post(
 
         updatePublicContent({
           userId: req.userId,
+          collections: ["Proof", "Progres", "Diary", "Routine", "BeforeAfter"],
           updatePayload: updatePublicityPayload,
         });
       }

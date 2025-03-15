@@ -5,26 +5,26 @@ import httpError from "@/helpers/httpError.js";
 
 type Props = {
   userId: string;
-  collection: string;
-  part: string;
+  collections: string[];
+  part?: string;
   isPublic: boolean;
 };
 
 export default async function updateContentPublicity({
   userId,
-  collection,
+  collections,
   part,
   isPublic,
 }: Props) {
   try {
-    await doWithRetries(async () =>
-      db
-        .collection(collection)
-        .updateMany(
-          { userId: new ObjectId(userId), part },
-          { $set: { isPublic } }
-        )
-    );
+    for (const collection of collections) {
+      const filter: { [key: string]: any } = { userId: new ObjectId(userId) };
+      if (part) filter.part = part;
+
+      await doWithRetries(async () =>
+        db.collection(collection).updateMany(filter, { $set: { isPublic } })
+      );
+    }
   } catch (err) {
     throw httpError(err);
   }

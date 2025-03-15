@@ -18,7 +18,6 @@ const collectionMap: { [key: string]: string } = {
   progress: "Progress",
   proof: "Proof",
   diary: "Diary",
-  about: "FaqAnswer",
 };
 
 route.post(

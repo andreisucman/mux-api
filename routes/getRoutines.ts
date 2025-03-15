@@ -4,11 +4,10 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
-import checkRbac from "functions/checkRbac.js";
-import { CustomRequest, RoutineType } from "types.js";
+import { CustomRequest } from "types.js";
 import aqp, { AqpQuery } from "api-query-params";
 import { db } from "init.js";
-import { maskAllTasks } from "@/helpers/mask.js";
+import { maskRoutine } from "@/helpers/mask.js";
 import { filterData } from "@/functions/filterData.js";
 
 const route = Router();
@@ -59,8 +58,6 @@ route.get(
           .toArray()
       );
 
-      // console.log("routines", routines);
-
       let response = { priceData: null, data: routines };
 
       if (userName) {
@@ -69,7 +66,7 @@ route.get(
             part,
             array: routines,
             dateKey: "startsAt",
-            maskFunction: maskAllTasks,
+            maskFunction: maskRoutine,
             userId: req.userId,
           });
 

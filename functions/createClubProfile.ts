@@ -1,5 +1,4 @@
 import { ObjectId } from "mongodb";
-import { defaultClubPrivacy } from "data/defaultClubPrivacy.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import {
   UserType,

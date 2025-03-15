@@ -21,7 +21,9 @@ route.post(
       Number(oneTimePrice) < 1 ||
       Number(updatePrice) < 1 ||
       isNaN(Number(oneTimePrice)) ||
-      isNaN(Number(updatePrice))
+      isNaN(Number(updatePrice)) ||
+      name.length > 50 ||
+      description.length > 150
     ) {
       res.status(400).json({ error: "Bad request" });
       return;
@@ -54,7 +56,7 @@ route.post(
               description,
               oneTimePrice,
               updatePrice,
-            },l
+            },
           },
           { upsert: true }
         )
@@ -62,7 +64,6 @@ route.post(
 
       res.status(200).end();
     } catch (err) {
-      console.log("error");
       next(err);
     }
   }
