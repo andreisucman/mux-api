@@ -40,6 +40,7 @@ export default async function prolongPreviousRoutine({
   partConcerns,
   categoryName,
   userInfo,
+  allSolutions,
   incrementMultiplier = 1,
   routineStartDate,
   tasksToProlong,
@@ -148,6 +149,7 @@ export default async function prolongPreviousRoutine({
     let { totalTasksToInsert, totalAllTasks, mergedSchedule, areEnough } =
       (await addAdditionalTasks({
         part,
+        allSolutions,
         userInfo,
         routineStartDate,
         partImages,
