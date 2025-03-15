@@ -25,6 +25,15 @@ export default async function handleConnectWebhook(event: Stripe.Event) {
   )
     return;
 
+  const existingEvent = await db.collection("ProcessedEvent").findOne({
+    eventId: event.id,
+  });
+
+  if (existingEvent) {
+    console.log(`Event ${event.id} already processed, skipping`);
+    return;
+  }
+
   const userInfo = await doWithRetries(async () =>
     db.collection("User").findOne(
       {
@@ -216,6 +225,10 @@ export default async function handleConnectWebhook(event: Stripe.Event) {
           "accounting.totalPlatformFee": appFee,
           "accounting.totalPayable": transferredAmount,
         },
+      });
+
+      await db.collection("ProcessedEvent").insertOne({
+        eventId: event.id,
       });
     } catch (err) {
       throw httpError(err);

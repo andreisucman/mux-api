@@ -10,7 +10,7 @@ const route = express.Router();
 route.post(
   "/",
   express.raw({ type: "application/json" }),
-  (req: Request, res: Response, next: NextFunction) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (req.method !== "POST") {
         throw httpError("Method not allowed", 405);
@@ -24,7 +24,7 @@ route.post(
         process.env.STRIPE_WEBHOOK_SECRET_ACCOUNT
       );
 
-      handleStripeWebhook(event);
+      await handleStripeWebhook(event);
 
       res.status(200).send();
     } catch (err) {

@@ -5,248 +5,229 @@ import { db, stripe } from "init.js";
 import Stripe from "stripe";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
-import updateAnalytics from "../updateAnalytics.js";
 import { ModerationStatusEnum } from "@/types.js";
-import { SubscriptionType } from "@/types.js";
-import createClubProfile from "../createClubProfile.js";
 import { getRevenueAndProcessingFee } from "./getRevenueAndProcessingFee.js";
-import cancelSubscription from "../cancelSubscription.js";
+import getCachedPlans from "./getCachedPlans.js";
+
+// Cache plans for 5 minutes to reduce database load
+let cachedPlans: any[] = [];
+let lastPlanFetch = 0;
 
 async function handleStripeWebhook(event: Stripe.Event) {
   const { type, data } = event;
 
-  if (
-    type !== "invoice.payment_succeeded" &&
-    type !== "checkout.session.completed"
-  )
-    return;
-
-  const session = data.object;
-  const customerId = session.customer;
-  const subscriptionId = session.subscription;
-
-  if (!customerId) return;
-
-  const userInfo = await doWithRetries(async () =>
-    db.collection("User").findOne(
-      {
-        stripeUserId: customerId,
-        moderationStatus: ModerationStatusEnum.ACTIVE,
-      },
-      { projection: { subscriptions: 1, club: 1 } }
-    )
-  );
-
-  if (!userInfo) return;
-
-  const plans = await doWithRetries(async () =>
-    db.collection("Plan").find().toArray()
-  );
-
-  const { subscriptions } = userInfo;
-
-  const { payment_intent } = session;
-
-  let toUpdateObj: { [key: string]: any } = {};
-
-  let totalRevenue = 0;
-  let totalProcessingFee = 0;
-  let totalPayable = 0;
-
-  if (payment_intent) {
-    const revenueAndFee = await getRevenueAndProcessingFee(
-      String(payment_intent)
-    );
-    totalRevenue = revenueAndFee.totalRevenue;
-    totalProcessingFee = revenueAndFee.totalProcessingFee;
-    totalPayable = (totalRevenue - totalProcessingFee) / 2;
-  }
-
-  const incrementPayload: { [key: string]: number } = {
-    "overview.accounting.totalRevenue": totalRevenue,
-    "overview.accounting.totalPayable": totalPayable,
-    "overview.accounting.totalProcessingFee": totalProcessingFee,
-    "accounting.totalRevenue": totalRevenue,
-    "accounting.totalPayable": totalPayable,
-    "accounting.totalProcessingFee": totalProcessingFee,
-  };
-
-  if (type === "invoice.payment_succeeded") {
-    const invoice = data.object as Stripe.Invoice;
-
-    const paymentPrices = invoice.lines.data.map((item) => item.price);
-    const paymentPriceIds = paymentPrices.map((price) => price.id);
-
-    if (!subscriptionId || !customerId)
-      throw httpError(
-        `Missing subscriptionId: ${subscriptionId}, customerId: ${customerId}.`
-      );
-
-    if (!Array.isArray(invoice.lines.data) || invoice.lines.data.length === 0)
-      throw httpError(
-        `Missing lines data items for customerId: ${customerId}.`
-      );
-
-    const relatedPlans = plans.filter((plan) =>
-      paymentPriceIds.includes(plan.priceId)
-    );
-
-    if (relatedPlans.length === 0)
-      throw httpError(
-        `Related plan not found for invoice: ${invoice.id} and customerId: ${customerId}.`
-      );
-
-    const subscriptionsToUpdate = relatedPlans
-      .filter((plan) => subscriptions[plan.name])
-      .map((plan) => ({
-        ...subscriptions[plan.name],
-        name: plan.name,
-        priceId: plan.priceId,
-      }));
-
-    if (subscriptionsToUpdate.length === 0)
-      throw httpError(
-        `No subscriptionsToUpdate for invoiceId ${invoice.id} customerId: ${customerId}.`
-      );
-
-    const subscriptionsToUpdateWithDates = subscriptionsToUpdate
-      .map((item) => {
-        const currentValidUntil = item.validUntil
-          ? new Date(item.validUntil)
-          : new Date();
-
-        const newDate = new Date(currentValidUntil.getTime());
-        newDate.setMonth(newDate.getMonth() + 1);
-
-        const relatedLineItem = invoice.lines.data.find(
-          (lineItem) => lineItem.price.id === item.priceId
-        );
-
-        if (!relatedLineItem)
-          throw httpError(
-            `No line item found for priceId ${item.priceId} and customerId: ${customerId}.`
-          );
-
-        const subscriptionId = relatedLineItem.subscription;
-
-        return {
-          ...item,
-          newDate,
-          subscriptionId,
-        };
-      })
-      .filter(Boolean);
-
-    toUpdateObj.$set = {};
-    for (const item of subscriptionsToUpdateWithDates) {
-      toUpdateObj.$set[`subscriptions.${item.name}.subscriptionId`] =
-        item.subscriptionId;
-      toUpdateObj.$set[`subscriptions.${item.name}.validUntil`] = item.newDate;
+  try {
+    if (
+      type !== "invoice.payment_succeeded" &&
+      type !== "checkout.session.completed" &&
+      type !== "customer.subscription.created"
+    ) {
+      console.log(`Unhandled event type: ${type}`);
+      return;
     }
 
-    let peekBought = false;
+    const existingEvent = await db.collection("ProcessedEvent").findOne({
+      eventId: event.id,
+    });
 
-    const planQuantities: { [planName: string]: number } = {};
-    for (const lineItem of invoice.lines.data) {
-      const plan = plans.find((p) => p.priceId === lineItem.price.id);
-      if (plan) {
-        const quantity = lineItem.quantity || 1;
-        planQuantities[plan.name] = (planQuantities[plan.name] || 0) + quantity;
+    if (existingEvent) {
+      console.log(`Event ${event.id} already processed, skipping`);
+      return;
+    }
+
+    const plans = await getCachedPlans(lastPlanFetch, cachedPlans);
+
+    if (type === "customer.subscription.created") {
+      const subscription = data.object as Stripe.Subscription;
+      const customerId = subscription.customer as string;
+      const priceId = subscription.items.data[0].price.id;
+
+      const plan = plans.find((p) => p.priceId === priceId);
+      if (!plan) return;
+
+      // Use Stripe's period end instead of local calculation
+      const validUntil = new Date(subscription.current_period_end * 1000);
+
+      const updateResult = await doWithRetries(async () =>
+        db.collection("User").updateOne(
+          { stripeUserId: customerId },
+          {
+            $set: {
+              [`subscriptions.${plan.name}`]: {
+                subscriptionId: subscription.id,
+                validUntil: validUntil,
+                priceId: priceId,
+              },
+            },
+          }
+        )
+      );
+
+      if (updateResult.modifiedCount === 0) {
+        console.warn(`No user found for customer ID: ${customerId}`);
+      }
+
+      return;
+    }
+
+    const session = data.object;
+    const customerId = session.customer as string;
+    const subscriptionId = session.subscription as string;
+
+    if (!customerId) {
+      console.warn("Missing customer ID in event");
+      return;
+    }
+
+    const userInfo = await doWithRetries(async () =>
+      db.collection("User").findOne(
+        {
+          stripeUserId: customerId,
+          moderationStatus: ModerationStatusEnum.ACTIVE,
+        },
+        { projection: { subscriptions: 1, club: 1, _id: 1 } }
+      )
+    );
+
+    if (!userInfo) {
+      console.warn(`No active user found for customer ID: ${customerId}`);
+      return;
+    }
+
+    const { subscriptions } = userInfo;
+    let toUpdateObj: { [key: string]: any } = {};
+    let incrementPayload: { [key: string]: number } = {};
+
+    if (type === "invoice.payment_succeeded") {
+      const invoice = data.object as Stripe.Invoice;
+      const paymentPrices = invoice.lines.data.map((item) => item.price.id);
+      const relatedPlans = plans.filter((plan) =>
+        paymentPrices.includes(plan.priceId)
+      );
+
+      if (!subscriptionId) throw httpError("Missing subscription ID");
+
+      const paymentIntentId = invoice.payment_intent as string;
+      const { totalRevenue, totalProcessingFee } =
+        await getRevenueAndProcessingFee(paymentIntentId);
+      const totalPayable = (totalRevenue - totalProcessingFee) / 2;
+
+      incrementPayload = {
+        "overview.accounting.totalRevenue": totalRevenue,
+        "overview.accounting.totalPayable": totalPayable,
+        "overview.accounting.totalProcessingFee": totalProcessingFee,
+        "accounting.totalRevenue": totalRevenue,
+        "accounting.totalPayable": totalPayable,
+        "accounting.totalProcessingFee": totalProcessingFee,
+      };
+
+      const subscriptionsToUpdate = relatedPlans
+        .filter((plan) => subscriptions[plan.name])
+        .map((plan) => ({
+          ...subscriptions[plan.name],
+          name: plan.name,
+          priceId: plan.priceId,
+        }));
+
+      toUpdateObj.$set = {};
+      for (const item of subscriptionsToUpdate) {
+        const subscription = await stripe.subscriptions.retrieve(
+          item.subscriptionId
+        );
+        const validUntil = new Date(subscription.current_period_end * 1000);
+
+        toUpdateObj.$set[`subscriptions.${item.name}.validUntil`] = validUntil;
+        toUpdateObj.$set[`subscriptions.${item.name}.subscriptionId`] =
+          subscriptionId;
+      }
+
+      const planQuantities = invoice.lines.data.reduce((acc, line) => {
+        const plan = plans.find((p) => p.priceId === line.price.id);
+        if (plan) acc[plan.name] = (acc[plan.name] || 0) + (line.quantity || 1);
+        return acc;
+      }, {} as Record<string, number>);
+
+      for (const [planName, quantity] of Object.entries(planQuantities)) {
+        incrementPayload[`overview.subscription.purchased.${planName}`] =
+          quantity;
       }
     }
 
-    for (const [planName, quantity] of Object.entries(planQuantities)) {
-      incrementPayload[`overview.subscription.purchased.${planName}`] = quantity;
+    if (type === "checkout.session.completed") {
+      const checkoutSession = data.object as Stripe.Checkout.Session;
+      const expandedSession = await stripe.checkout.sessions.retrieve(
+        checkoutSession.id,
+        {
+          expand: ["line_items.data.price.product"],
+        }
+      );
 
-      if (planName === "peek") {
-        peekBought = true;
-        const otherActiveSubscriptions = Object.entries(subscriptions).filter(
-          ([name, object]: [string, SubscriptionType]) =>
-            name !== "peek" &&
-            object.validUntil &&
-            new Date() < new Date(object.validUntil)
-        );
+      const relatedPlan = plans.find((p) => p.name === "scan");
+      const lineItems = expandedSession.line_items?.data || [];
+      let totalQuantity = 0;
 
-        if (otherActiveSubscriptions.length > 0) {
-          for (const [name, object] of otherActiveSubscriptions) {
-            await cancelSubscription({
-              userId: String(userInfo._id),
-              subscriptionId: (object as SubscriptionType).subscriptionId,
-              subscriptionName: name,
-            });
-          }
+      for (const item of lineItems) {
+        if (item.price?.id === relatedPlan?.priceId) {
+          totalQuantity += item.quantity || 1;
         }
       }
-    }
 
-    if (peekBought) {
-      const { club } = userInfo;
+      toUpdateObj.$inc = { scanAnalysisQuota: totalQuantity };
+      incrementPayload[`overview.payment.completed.scan`] = totalQuantity;
 
-      if (!club) {
-        await createClubProfile({
-          userId: String(userInfo._id),
+      if (checkoutSession.payment_intent) {
+        const { totalRevenue, totalProcessingFee } =
+          await getRevenueAndProcessingFee(
+            checkoutSession.payment_intent as string
+          );
+        const totalPayable = (totalRevenue - totalProcessingFee) / 2;
+
+        Object.assign(incrementPayload, {
+          "overview.accounting.totalRevenue": totalRevenue,
+          "overview.accounting.totalPayable": totalPayable,
+          "overview.accounting.totalProcessingFee": totalProcessingFee,
+          "accounting.totalRevenue": totalRevenue,
+          "accounting.totalPayable": totalPayable,
+          "accounting.totalProcessingFee": totalProcessingFee,
         });
       }
     }
-  }
 
-  if (type === "checkout.session.completed") {
-    const session = data.object as Stripe.Checkout.Session;
+    const bulkOperations = [];
 
-    const expandedSession = await stripe.checkout.sessions.retrieve(
-      session.id,
-      {
-        expand: ["line_items.data.price.product"],
-      }
-    );
-
-    const relatedPlan = plans.find((plan) => plan.name === "scan");
-    const lineItems = expandedSession.line_items?.data || [];
-    let totalQuantity = 0;
-
-    for (const item of lineItems) {
-      const quantity = item.quantity || 1;
-      const priceId = item.price?.id;
-
-      if (priceId === relatedPlan?.priceId) {
-        totalQuantity += quantity;
-      }
+    if (Object.keys(toUpdateObj).length > 0) {
+      bulkOperations.push({
+        updateOne: {
+          filter: { stripeUserId: customerId },
+          update: toUpdateObj,
+        },
+      });
     }
 
-    toUpdateObj.$inc = { scanAnalysisQuota: totalQuantity };
-    incrementPayload[`overview.payment.completed.${relatedPlan?.name}`] =
-      totalQuantity;
-
-    const paymentIntentId = session.payment_intent;
-    if (paymentIntentId) {
-      const { totalRevenue, totalProcessingFee } =
-        await getRevenueAndProcessingFee(String(paymentIntentId));
-      const totalPayable = (totalRevenue - totalProcessingFee) / 2;
-
-      incrementPayload["overview.accounting.totalRevenue"] += totalRevenue;
-      incrementPayload["overview.accounting.totalPayable"] += totalPayable;
-      incrementPayload["overview.accounting.totalProcessingFee"] +=
-        totalProcessingFee;
-      incrementPayload["accounting.totalRevenue"] += totalRevenue;
-      incrementPayload["accounting.totalPayable"] += totalPayable;
-      incrementPayload["accounting.totalProcessingFee"] += totalProcessingFee;
+    if (Object.keys(incrementPayload).length > 0) {
+      bulkOperations.push({
+        updateOne: {
+          filter: { _id: userInfo._id },
+          update: {
+            $inc: incrementPayload,
+          },
+        },
+      });
     }
+
+    if (bulkOperations.length > 0) {
+      await doWithRetries(async () =>
+        db.collection("User").bulkWrite(bulkOperations, { ordered: false })
+      );
+    }
+
+    await db.collection("ProcessedEvent").insertOne({
+      eventId: event.id,
+    });
+  } catch (err) {
+    console.error(`Webhook error (${event.id}):`, err.stack);
+    throw httpError(`Webhook processing failed: ${err.message}`, 400);
   }
-
-  await doWithRetries(async () =>
-    db.collection("User").updateOne(
-      {
-        stripeUserId: customerId,
-        moderationStatus: ModerationStatusEnum.ACTIVE,
-      },
-      toUpdateObj
-    )
-  );
-
-  await updateAnalytics({
-    userId: String(userInfo._id),
-    incrementPayload,
-  });
 }
 
 export default handleStripeWebhook;

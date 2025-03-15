@@ -10,7 +10,7 @@ const route = Router();
 route.post(
   "/",
   express.raw({ type: "application/json" }),
-  (req: Request, res: Response, next: NextFunction) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (req.method !== "POST") {
         throw httpError("Method not allowed", 405);
@@ -23,7 +23,9 @@ route.post(
         signature,
         process.env.STRIPE_WEBHOOK_SECRET_CONNECT
       );
-      handleConnectWebhook(event);
+
+      await handleConnectWebhook(event);
+
       res.status(200).send();
     } catch (err) {
       next(err);
