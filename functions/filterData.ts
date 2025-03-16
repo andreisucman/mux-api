@@ -32,27 +32,47 @@ export async function filterData({
     let data = [];
 
     if (result.length) {
-      const filtered = [];
+      let filtered = [];
 
       for (const obj of result) {
-        const { isSubscribed, contentEndDate, part: purchasedPart } = obj;
+        const {
+          subscribedUntil,
+          createdAt,
+          contentEndDate,
+          part: purchasedPart,
+        } = obj;
 
-        if (!isSubscribed) {
+        if (!subscribedUntil) {
           filtered.push(
             ...array.filter(
               (obj: any) =>
+                new Date(obj[dateKey]) >= new Date(createdAt) &&
                 new Date(obj[dateKey]) <= new Date(contentEndDate) &&
                 obj.part === purchasedPart
             )
           );
         } else {
-          filtered.push(...array.filter((r) => r.part === purchasedPart));
+          filtered.push(
+            ...array.filter(
+              (r) =>
+                new Date(obj[dateKey]) <= new Date(subscribedUntil) &&
+                r.part === purchasedPart
+            )
+          );
         }
+
+        filtered = filtered.filter(
+          (rec) =>
+            !rec.deletedOn ||
+            (new Date(rec.deletedOn) >= new Date(createdAt) &&
+              new Date(rec.deletedOn) <=
+                new Date(subscribedUntil || contentEndDate))
+        );
       }
 
       data = filtered;
     } else {
-      array = array.filter((o) => o.isPublic);
+      array = array.filter((o) => o.isPublic && !o.deletedOn);
 
       if (array.length > 0) {
         if (maskFunction) {

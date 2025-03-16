@@ -64,6 +64,7 @@ export default async function createClubProfile({ userId }: Props) {
     const randomName = await createRandomName();
 
     const defaultClubData: ClubDataType = {
+      isActive: true,
       followingUserName: null,
       followingUserId: null,
       intro: "I love working out and eating healthy.",

@@ -25,11 +25,16 @@ route.post(
           { projection: { club: 1, canRejoinClubAfter: 1 } }
         )
       );
+      
+      if (!userInfo) {
+        res.status(400).json({ error: "Bad request" });
+        return;
+      }
 
       const { club, canRejoinClubAfter } = userInfo;
 
-      if (!!club) {
-        res.status(400).json({ error: `Bad request` });
+      if (club?.isActive) {
+        res.status(400).json({ error: "Bad request" });
         return;
       }
 

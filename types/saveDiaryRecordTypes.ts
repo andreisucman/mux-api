@@ -13,6 +13,7 @@ export type DiaryRecordType = {
   userName: string | null;
   isPublic: boolean;
   moderationStatus: ModerationStatusEnum;
+  deletedOn?: Date;
 };
 
 export type DiaryActivityType = {

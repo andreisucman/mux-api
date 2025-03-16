@@ -27,8 +27,6 @@ route.get(
         moderationStatus: ModerationStatusEnum.ACTIVE,
       };
 
-      const projection = { collageImage: 0 };
-
       if (userName) {
         filters.userName = userName;
       } else {
@@ -52,7 +50,6 @@ route.get(
           .find(filters)
           .sort((sort as Sort) || { _id: -1 })
           .skip(skip || 0)
-          .project(projection)
           .limit(21)
           .toArray()
       )) as unknown as DiaryRecordType[];

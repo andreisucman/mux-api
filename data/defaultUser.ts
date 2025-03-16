@@ -16,11 +16,6 @@ export const defaultSubscriptions = {
     subscriptionId: null as string | null,
     validUntil: null as Date | null,
   },
-  peek: {
-    isTrialUsed: false,
-    subscriptionId: null as string | null,
-    validUntil: null as Date | null,
-  },
   advisor: {
     isTrialUsed: false,
     subscriptionId: null as string | null,
@@ -30,11 +25,6 @@ export const defaultSubscriptions = {
 
 export const defaultTriedSubscriptions = {
   improvement: {
-    isTrialUsed: true,
-    subscriptionId: null as string | null,
-    validUntil: null as Date | null,
-  },
-  peek: {
     isTrialUsed: true,
     subscriptionId: null as string | null,
     validUntil: null as Date | null,
@@ -164,10 +154,7 @@ export const defaultUser: UserType = {
   tosAccepted: false,
   nextScan: defaultNextAction,
   nextRoutine: defaultNextAction,
-  streakDates: {
-    default: {},
-    club: {},
-  },
+  streakDates: {},
   password: null,
   emailVerified: false,
   concerns: null,

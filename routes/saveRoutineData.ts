@@ -9,6 +9,7 @@ import doWithRetries from "helpers/doWithRetries.js";
 import checkTextSafety from "@/functions/checkTextSafety.js";
 import { SuspiciousRecordCollectionEnum } from "@/functions/addSuspiciousRecord.js";
 import updateContent from "@/functions/updateContent.js";
+import cancelSubscription from "@/functions/cancelSubscription.js";
 
 const route = Router();
 
@@ -46,30 +47,84 @@ route.post(
         }
       }
 
-      await doWithRetries(async () =>
-        db.collection("RoutineData").updateOne(
-          { userId: new ObjectId(req.userId), part },
-          {
-            $set: {
-              status,
-              name,
-              description,
-              price,
-              updatePrice,
-            },
-          },
-          { upsert: true }
-        )
+      const existingRecord = await doWithRetries(async () =>
+        db
+          .collection("RoutineData")
+          .findOne({ userId: new ObjectId(req.userId), part })
       );
+
+      if (existingRecord) {
+        await doWithRetries(async () =>
+          db.collection("RoutineData").updateOne(
+            { userId: new ObjectId(req.userId), part },
+            {
+              $set: {
+                status,
+                name,
+                description,
+                price,
+                updatePrice,
+              },
+            }
+          )
+        );
+      } else {
+        const firstRoutineOfPart = await doWithRetries(async () =>
+          db
+            .collection("Routine")
+            .findOne(
+              { userId: new ObjectId(req.userId), part },
+              { sort: { createdAt: 1 } }
+            )
+        );
+
+        await doWithRetries(async () =>
+          db.collection("RoutineData").updateOne(
+            { userId: new ObjectId(req.userId), part },
+            {
+              $set: {
+                status,
+                name,
+                description,
+                price,
+                updatePrice,
+                contentStartDate: firstRoutineOfPart.createdAt,
+              },
+            },
+            { upsert: true }
+          )
+        );
+      }
 
       res.status(200).end();
 
       await updateContent({
         userId: req.userId,
         collections: ["BeforeAfter", "Progress", "Proof", "Diary", "Routine"],
-        part,
         updatePayload: { isPublic: status === "public" },
+        part,
       });
+
+      if (status !== "public") {
+        const subscribers = await doWithRetries(() =>
+          db
+            .collection("Purchase")
+            .find(
+              {
+                sellerId: new ObjectId(req.userId),
+                subscribedUntil: { $exists: true },
+              },
+              { projection: { subscriptionId: 1 } }
+            )
+            .toArray()
+        );
+
+        for (const subscription of subscribers) {
+          await cancelSubscription({
+            subscriptionId: subscription.subscriptionId,
+          });
+        }
+      }
     } catch (err) {
       next(err);
     }

@@ -7,7 +7,7 @@ import recalculateLatestProgress from "@/functions/recalculateLatestProgress.js"
 import doWithRetries from "@/helpers/doWithRetries.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import { defaultUser } from "@/data/defaultUser.js";
-import { CustomRequest, ProgressType } from "types.js";
+import { CustomRequest, ModerationStatusEnum, ProgressType } from "types.js";
 import httpError from "@/helpers/httpError.js";
 import { DiaryActivityType } from "@/types/saveDiaryRecordTypes.js";
 import { db } from "@/init.js";
@@ -42,9 +42,14 @@ route.post(
       );
 
       await doWithRetries(async () =>
-        db
-          .collection(collectionMap[collectionKey])
-          .deleteOne({ _id: new ObjectId(contentId) })
+        db.collection(collectionMap[collectionKey]).updateOne(
+          { _id: new ObjectId(contentId) },
+          {
+            $set: {
+              deletedOn: new Date(),
+            },
+          }
+        )
       );
 
       switch (collectionKey) {
@@ -62,6 +67,8 @@ route.post(
               .find({
                 userId: new ObjectId(req.userId),
                 part: recordToDelete.part,
+                moderationStatus: ModerationStatusEnum.ACTIVE,
+                deletedOn: { $exists: false },
               })
               .sort({ _id: -1 })
               .next()

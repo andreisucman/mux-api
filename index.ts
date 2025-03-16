@@ -86,6 +86,7 @@ import getScoresAndFeedback from "routes/getScoresAndFeedback.js";
 import getRoutineData from "./routes/getRoutineData.js";
 import saveRoutineData from "./routes/saveRoutineData.js";
 import getPublicUserData from "./routes/getPublicUserData.js";
+import subscribeToUpdates from "./routes/subscribeToUpdates.js";
 
 import { client } from "init.js";
 
@@ -171,6 +172,7 @@ app.use("/getAllProofRecords", getAllProofRecords);
 
 // protected routes
 app.use((req, res, next) => checkAccess(req, res, next, true));
+app.use("/subscribeToUpdates", subscribeToUpdates);
 app.use("/getRoutineData", getRoutineData);
 app.use("/saveRoutineData", saveRoutineData);
 app.use("/getScoresAndFeedback", getScoresAndFeedback);

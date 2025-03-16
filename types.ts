@@ -62,10 +62,12 @@ export type PurchaseType = {
   name: string;
   part: string;
   paid: number;
-  isSubscribed: boolean;
+  subscribedUntil?: Date;
+  subscriptionId?: string;
   transactionId: string;
   createdAt: Date;
-  contentEndDate: Date;
+  contentStartDate: Date;
+  contentEndDate?: Date;
   sellerId: ObjectId;
   sellerName: string;
   sellerAvatar: { [key: string]: any };
@@ -92,14 +94,7 @@ export type UserType = {
   streaks: StreaksType;
   nextScan: NextActionType[];
   nextRoutine: NextActionType[];
-  streakDates: {
-    default: {
-      [key: string]: Date;
-    };
-    club: {
-      [key: string]: Date;
-    };
-  };
+  streakDates: {};
   concerns: UserConcernType[] | null;
   tosAccepted: boolean;
   requiredProgress: RequirementType[];
@@ -111,7 +106,6 @@ export type UserType = {
   deleteOn: Date;
   subscriptions: {
     improvement: SubscriptionType;
-    peek: SubscriptionType;
     advisor: SubscriptionType;
   };
   toAnalyze: ToAnalyzeType[];
@@ -142,7 +136,6 @@ export type ToAnalyzeType = {
 
 export enum SubscriptionTypeNamesEnum {
   IMPROVEMENT = "improvement",
-  PEEK = "peek",
   ADVISOR = "advisor",
 }
 
@@ -167,6 +160,7 @@ export type ClubPayoutDataType = {
 };
 
 export type ClubDataType = {
+  isActive: boolean;
   followingUserName: string;
   followingUserId: ObjectId;
   intro: string;
@@ -326,6 +320,7 @@ export type ProgressType = {
   specialConsiderations: string;
   isPublic: boolean;
   userName?: string;
+  deletedOn?: Date;
   moderationStatus: ModerationStatusEnum;
 };
 
@@ -459,6 +454,7 @@ export type ProofType = {
   userName: string;
   moderationStatus: ModerationStatusEnum;
   isPublic: boolean;
+  deletedOn?: Date;
 };
 
 export type SolutionType = {

@@ -1,19 +1,12 @@
 import httpError from "@/helpers/httpError.js";
 import { stripe } from "init.js";
-import updateAnalytics from "./updateAnalytics.js";
 import doWithRetries from "@/helpers/doWithRetries.js";
 
 type Props = {
-  userId: string;
   subscriptionId: string;
-  subscriptionName: string | null;
 };
 
-export default async function cancelSubscription({
-  userId,
-  subscriptionId,
-  subscriptionName,
-}: Props) {
+export default async function cancelSubscription({ subscriptionId }: Props) {
   if (!subscriptionId) return;
 
   try {
@@ -26,17 +19,6 @@ export default async function cancelSubscription({
       subscription.status === "incomplete"
     ) {
       await doWithRetries(() => stripe.subscriptions.cancel(subscriptionId));
-
-      if (subscriptionName) {
-        const incrementPayload: { [key: string]: number } = {
-          [`overview.subscription.canceled.${subscriptionName}`]: 1,
-        };
-
-        updateAnalytics({
-          userId,
-          incrementPayload,
-        });
-      }
     }
   } catch (err) {
     throw httpError(err);

@@ -27,6 +27,7 @@ route.get(
             taskId: new ObjectId(taskId),
             userId: new ObjectId(req.userId),
             moderationStatus: ModerationStatusEnum.ACTIVE,
+            deletedOn: { $exists: false },
           },
           {
             projection: {

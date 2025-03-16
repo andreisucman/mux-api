@@ -3,7 +3,7 @@ dotenv.config();
 
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
-import { PurchaseType } from "@/types/getBuyersType.js";
+import { PurchaseType } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { CustomRequest } from "types.js";
 import { db } from "init.js";
@@ -17,10 +17,12 @@ route.get(
 
     try {
       const projection: { [key: string]: any } = {
-        name: 1,
         paid: 1,
         part: 1,
-        isSubscribed: 1,
+        subscribedUntil: 1,
+        subscriptionId: 1,
+        contentStartDate: 1,
+        contentEndDate: 1,
       };
 
       if (type === "seller") {

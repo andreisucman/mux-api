@@ -44,6 +44,7 @@ route.get(
         scoresDifference: 1,
         initialDate: 1,
         userId: 1,
+        deletedOn: 1,
       };
 
       const progress = await doWithRetries(async () =>

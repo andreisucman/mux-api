@@ -62,8 +62,6 @@ route.post(
             });
           } else if (subscription.status === "incomplete") {
             await cancelSubscription({
-              userId: req.userId,
-              subscriptionName: null,
               subscriptionId: subscription.id,
             });
 

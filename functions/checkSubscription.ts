@@ -40,13 +40,6 @@ async function checkSubscriptionStatus({
     if (!userInfo) throw httpError(`User ${userId} not found`);
 
     const { subscriptions } = userInfo;
-    const { peek } = subscriptions;
-
-    if (peek.validUntil) {
-      if (new Date() < new Date(peek.validUntil)) {
-        return true;
-      }
-    }
 
     const relevant = subscriptions[subscriptionType];
 
