@@ -38,6 +38,7 @@ route.get(
         userId: 1,
         part: 1,
         allTasks: 1,
+        createdAt: 1,
         status: 1,
         lastDate: 1,
         isPublic: 1,
@@ -65,7 +66,7 @@ route.get(
           const result = await filterData({
             part,
             array: routines,
-            dateKey: "startsAt",
+            dateKey: "createdAt",
             maskFunction: maskRoutine,
             userId: req.userId,
           });

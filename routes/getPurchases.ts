@@ -25,25 +25,25 @@ route.get(
         contentEndDate: 1,
       };
 
+      const filter: { [key: string]: any } = {};
+
       if (type === "seller") {
+        filter.sellerId = new ObjectId(req.userId);
         projection.buyerAvatar = 1;
         projection.buyerName = 1;
       } else {
+        filter.buyerId = new ObjectId(req.userId);
         projection.sellerAvatar = 1;
         projection.sellerName = 1;
+        projection.sellerId = 1;
       }
 
       const purchases = (await doWithRetries(async () =>
         db
           .collection("Purchase")
-          .find(
-            {
-              buyerId: new ObjectId(req.userId),
-            },
-            {
-              projection,
-            }
-          )
+          .find(filter, {
+            projection,
+          })
           .limit(21)
           .skip(Number(skip) || 0)
           .toArray()

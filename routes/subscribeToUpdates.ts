@@ -8,7 +8,7 @@ import getUserInfo from "@/functions/getUserInfo.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
 import doWithRetries from "@/helpers/doWithRetries.js";
 import { ObjectId } from "mongodb";
-import getSubscriptionPriceId from "./getSubscriptionPriceId.js";
+import getSubscriptionPriceId from "../functions/getSubscriptionPriceId.js";
 
 const route = Router();
 
