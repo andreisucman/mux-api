@@ -5,7 +5,11 @@ import { db, stripe } from "init.js";
 import Stripe from "stripe";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
-import { ModerationStatusEnum, PurchaseType } from "@/types.js";
+import {
+  ModerationStatusEnum,
+  PurchaseType,
+  UserPurchaseType,
+} from "@/types.js";
 import { getRevenueAndProcessingFee } from "./getRevenueAndProcessingFee.js";
 import getCachedPlans from "./getCachedPlans.js";
 import { ObjectId } from "mongodb";
@@ -31,6 +35,43 @@ async function handleSubscriptionCreated(
   if (!plan) return;
 
   await updateUserSubscriptionPlan(customerId, subscription, plan);
+}
+
+async function updateUserPurchases(
+  existingPurchases: UserPurchaseType[],
+  sellerId: ObjectId,
+  buyerId: ObjectId,
+  routineDataId: ObjectId,
+  contentEndDate?: Date,
+  subscribedUntil?: Date
+) {
+  const relevantPurchase = existingPurchases.find(
+    (obj) => String(obj.routineDataId) === String(routineDataId)
+  );
+
+  const updateUserPayload: { [key: string]: any } = {};
+
+  if (!relevantPurchase) {
+    updateUserPayload.purchases = [
+      { sellerId, contentEndDate, subscribedUntil },
+    ];
+  } else {
+    const updatedPurchases = existingPurchases.map((obj) =>
+      String(obj.routineDataId) === String(routineDataId)
+        ? { ...obj, contentEndDate, subscribedUntil }
+        : obj
+    );
+    updateUserPayload.purchases = updatedPurchases;
+  }
+
+  await doWithRetries(() =>
+    db.collection("User").updateOne(
+      {
+        _id: new ObjectId(buyerId),
+      },
+      { $set: updateUserPayload }
+    )
+  );
 }
 
 async function createRoutinePurchase(
@@ -59,7 +100,7 @@ async function createRoutinePurchase(
     }),
     getUserInfo({
       userId: buyerId,
-      projection: { name: 1, avatar: 1 },
+      projection: { name: 1, avatar: 1, purchases: 1 },
     }),
   ]);
 
@@ -76,6 +117,7 @@ async function createRoutinePurchase(
     buyerAvatar: buyerInfo.avatar,
     transactionId,
     contentStartDate,
+    routineDataId: new ObjectId(routineDataId),
   };
 
   if (contentEndDate) newPurchase.contentEndDate = contentEndDate;
@@ -83,6 +125,17 @@ async function createRoutinePurchase(
   if (subscribedUntil) newPurchase.subscribedUntil = new Date(subscribedUntil);
 
   await doWithRetries(() => db.collection("Purchase").insertOne(newPurchase));
+
+  await doWithRetries(() =>
+    updateUserPurchases(
+      buyerInfo.purchases,
+      sellerId,
+      new ObjectId(buyerId),
+      new ObjectId(routineDataId),
+      contentEndDate,
+      new Date(subscribedUntil)
+    )
+  );
 
   updateAnalytics({
     userId: String(buyerInfo._id),
@@ -153,7 +206,13 @@ async function handleInvoicePayment(invoice: Stripe.Invoice, plans: any[]) {
   const userInfo = await fetchUserInfo(stripeUserId);
 
   if (routineDataId) {
-    await updatePurchaseSubscriptionDate(subscription);
+    const newSubscribedUntil = new Date(subscription.current_period_end * 1000);
+
+    await updatePurchaseSubscriptionDate(
+      newSubscribedUntil,
+      new ObjectId(routineDataId),
+      userInfo._id
+    );
 
     updateAnalytics({
       userId: String(userInfo._id),
@@ -180,17 +239,44 @@ async function handleInvoicePayment(invoice: Stripe.Invoice, plans: any[]) {
 }
 
 async function updatePurchaseSubscriptionDate(
-  subscription: Stripe.Subscription
+  newSubscribedUntil: Date,
+  routineDataId: ObjectId,
+  buyerId: ObjectId
 ) {
-  const newSubscribedUntil = new Date(subscription.current_period_end * 1000);
-
   await doWithRetries(() =>
     db
       .collection("Purchase")
       .updateOne(
-        { subscriptionId: subscription.id },
+        { routineDataId: new ObjectId(routineDataId) },
         { $set: { subscribedUntil: newSubscribedUntil } }
       )
+  );
+
+  const buyerInfo = await doWithRetries(() =>
+    db
+      .collection("User")
+      .findOne({ _id: new ObjectId(buyerId) }, { projection: { purchases: 1 } })
+  );
+
+  const relevantPurchase = buyerInfo?.purchases?.find(
+    (obj) => String(obj.routineDataId) === String(routineDataId)
+  );
+
+  const updateUserPayload: { [key: string]: any } = {};
+
+  if (!relevantPurchase) {
+    const updatedPurchases = buyerInfo.purchases.map((obj) =>
+      String(obj.routineDataId) === String(routineDataId)
+        ? { ...obj, subscribedUntil: newSubscribedUntil }
+        : obj
+    );
+    updateUserPayload.purchases = updatedPurchases;
+  }
+
+  await doWithRetries(() =>
+    db
+      .collection("User")
+      .updateOne({ _id: new ObjectId(buyerId) }, { $set: updateUserPayload })
   );
 }
 

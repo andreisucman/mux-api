@@ -25,7 +25,7 @@ route.post(
           { projection: { club: 1, canRejoinClubAfter: 1 } }
         )
       );
-      
+
       if (!userInfo) {
         res.status(400).json({ error: "Bad request" });
         return;
@@ -46,19 +46,6 @@ route.post(
         return;
       }
 
-      let incrementPayload: { [key: string]: number } = {};
-
-      if (canRejoinClubAfter) {
-        incrementPayload = { "overview.club.rejoined": 1 };
-      } else {
-        incrementPayload = { "overview.club.joined": 1 };
-      }
-
-      updateAnalytics({
-        userId: req.userId,
-        incrementPayload,
-      });
-
       let clubData = userInfo.club;
       let name = "";
       let avatar = null;
@@ -72,6 +59,19 @@ route.post(
         avatar = response.avatar;
         name = response.name;
       }
+
+      let incrementPayload: { [key: string]: number } = {};
+
+      if (canRejoinClubAfter) {
+        incrementPayload = { "overview.club.rejoined": 1 };
+      } else {
+        incrementPayload = { "overview.club.joined": 1 };
+      }
+
+      updateAnalytics({
+        userId: req.userId,
+        incrementPayload,
+      });
 
       res.status(200).json({ message: { club: clubData, name, avatar } });
     } catch (err) {

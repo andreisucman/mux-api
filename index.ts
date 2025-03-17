@@ -66,7 +66,6 @@ import changeEmailStepOne from "routes/changeEmailStepOne.js";
 import changeEmailStepTwo from "routes/changeEmailStepTwo.js";
 import verifyEmail from "routes/verifyEmail.js";
 import sendConfirmationCode from "routes/sendConfirmationCode.js";
-import getAllProofRecords from "routes/getAllProofRecords.js";
 import getProgress from "@/routes/getProgress.js";
 import getAllSolutions from "routes/getAllSolutions.js";
 import getFilters from "@/routes/getFilters.js";
@@ -144,7 +143,7 @@ app.use("/authenticate", authenticate);
 app.use("/getAllSolutions", getAllSolutions);
 app.use("/getLatestFoodAnalysis", getLatestFoodAnalysis);
 
-app.use((req, res, next) => checkAccess(req, res, next, false));
+app.use((req, res, next) => checkAccess(req, res, next, true));
 app.use("/getPublicUserData", getPublicUserData);
 app.use("/getRoutines", getRoutines);
 app.use("/getProofRecords", getProofRecords);
@@ -164,15 +163,14 @@ app.use("/getRewards", getRewards);
 app.use("/getBeforeAfters", getBeforeAfters);
 app.use("/getAutocomplete", getAutocomplete);
 app.use("/startProgressAnalysis", startProgressAnalysis);
-app.use("/startSubscriptionTrial", startSubscriptionTrial);
 app.use("/startTheFlow", startTheFlow);
 app.use("/uploadProgress", uploadProgress);
 app.use("/uploadToSpaces", uploadToSpaces);
 app.use("/updateSex", updateSex);
-app.use("/getAllProofRecords", getAllProofRecords);
 
 // protected routes
-app.use((req, res, next) => checkAccess(req, res, next, true));
+app.use((req, res, next) => checkAccess(req, res, next, false));
+app.use("/startSubscriptionTrial", startSubscriptionTrial);
 app.use("/subscribeToUpdates", subscribeToUpdates);
 app.use("/getSubscriptionPrice", getSubscriptionPrice);
 app.use("/getRoutineData", getRoutineData);

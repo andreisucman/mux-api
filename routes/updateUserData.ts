@@ -54,7 +54,7 @@ route.post(
         }
 
         updatePayload.avatar = avatar;
-        updatePayload.nextAvatarUpdateAt = daysFrom({ days: 7 });
+        updatePayload.nextAvatarUpdateAt = daysFrom({ days: 30 });
       }
 
       if (name || intro || socials || bio) {

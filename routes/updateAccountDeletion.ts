@@ -7,7 +7,7 @@ import doWithRetries from "helpers/doWithRetries.js";
 import { CustomRequest, ModerationStatusEnum } from "types.js";
 import { daysFrom } from "helpers/utils.js";
 import { db } from "init.js";
-import httpError from "@/helpers/httpError.js";
+import updateContent from "@/functions/updateContent.js";
 
 const route = Router();
 
@@ -21,10 +21,55 @@ route.post(
 
       if (isActivate) {
         payload.deleteOn = null;
+        payload.isPublic = true;
       } else {
-        const deleteOn = daysFrom({ days: 30 });
+        const partsAvailable = await doWithRetries(async () =>
+          db
+            .collection("Routine")
+            .aggregate([
+              {
+                $match: {
+                  _id: new ObjectId(req.userId),
+                },
+              },
+              {
+                $group: {
+                  _id: "$part",
+                },
+              },
+              {
+                $project: {
+                  _id: 0,
+                  part: "$_id",
+                },
+              },
+            ])
+            .toArray()
+        );
+        const isAnythingSold = await doWithRetries(() =>
+          db.collection("Purchase").countDocuments({
+            part: { $in: partsAvailable.map((p) => p.part) },
+            sellerId: new ObjectId(req.userId),
+          })
+        );
+        const days = isAnythingSold ? 365 : 7;
+        const deleteOn = daysFrom({ days });
         payload.deleteOn = deleteOn;
+        payload.isPublic = false;
       }
+
+      await updateContent({
+        userId: req.userId,
+        updatePayload: { isPublic: isActivate },
+        collections: [
+          "User",
+          "Routine",
+          "Progress",
+          "Proof",
+          "BeforeAfter",
+          "Diary",
+        ],
+      });
 
       await doWithRetries(async () =>
         db.collection("User").updateOne(

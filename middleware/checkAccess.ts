@@ -15,24 +15,23 @@ async function checkAccess(
   req: CustomRequest,
   res: Response,
   next: NextFunction,
-  rejectUnauthorized: boolean
+  allowUnauthorized: boolean
 ) {
   const accessToken = req.cookies["MUX_accessToken"];
   const csrfTokenFromClient = req.cookies["MUX_csrfToken"];
   const csrfSecret = req.cookies["MUX_csrfSecret"];
-  const authorizationHeader = req.headers["authorization"];
 
-  if (!rejectUnauthorized && !accessToken) {
+  if (allowUnauthorized && !accessToken) {
     next();
     return;
   }
 
-  if (!accessToken && !authorizationHeader) {
+  if (!allowUnauthorized && !accessToken) {
     res.status(401).json({ error: "No authorization token" });
     return;
   }
 
-  if (rejectUnauthorized && !authorizationHeader) {
+  if (!allowUnauthorized) {
     const csrfVerificationPassed = csrfProtection.verify(
       csrfSecret,
       csrfTokenFromClient as string
@@ -51,7 +50,7 @@ async function checkAccess(
         .findOne({ accessToken }, { projection: { userId: 1, expiresOn: 1 } })
     );
 
-    if (!session && rejectUnauthorized) {
+    if (!session) {
       signOut(res, 403, "Invalid or expired access token");
       return;
     }

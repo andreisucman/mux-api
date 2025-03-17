@@ -74,6 +74,14 @@ export type PurchaseType = {
   buyerId: ObjectId;
   buyerName: string;
   buyerAvatar: { [key: string]: any };
+  routineDataId: ObjectId;
+};
+
+export type UserPurchaseType = {
+  routineDataId: ObjectId;
+  sellerId: ObjectId;
+  contentEndDate: Date;
+  subscribedUntl: Date;
 };
 
 export type UserType = {
@@ -122,6 +130,7 @@ export type UserType = {
     remainingDailyCalories: number;
   };
   lastActiveOn: Date | null;
+  purchases: UserPurchaseType[];
 };
 
 export type ToAnalyzeType = {
