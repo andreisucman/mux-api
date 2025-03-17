@@ -15,7 +15,6 @@ route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { priceId, redirectUrl, cancelUrl, mode } = req.body;
-
     if (
       !priceId ||
       !redirectUrl ||

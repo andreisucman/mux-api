@@ -20,7 +20,7 @@ const route = Router();
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { name, avatar, intro, bio, socials, dailyCalorieGoal } = req.body;
+    const { name, avatar, intro, socials, dailyCalorieGoal } = req.body;
 
     if (Object.keys(req.body).length === 0) {
       res.status(400).json({ error: "Bad request" });
@@ -57,12 +57,11 @@ route.post(
         updatePayload.nextAvatarUpdateAt = daysFrom({ days: 30 });
       }
 
-      if (name || intro || socials || bio) {
+      if (name || intro || socials) {
         let text = "";
         if (name) text += `<-->${name}<-->`;
         if (intro) text += `<-->${intro}<-->`;
         if (socials) text += `<-->${JSON.stringify(socials)}<-->`;
-        if (bio) text += `<-->${JSON.stringify(bio)}<-->`;
       }
 
       if (name) {
@@ -109,7 +108,7 @@ route.post(
           await doWithRetries(() =>
             stripe.accounts.update(connectId, {
               business_profile: {
-                url: `https://muxout.com/club/${name}`,
+                url: `https://muxout.com/club/routines/${name}`,
               },
             })
           );

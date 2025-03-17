@@ -6,8 +6,8 @@ import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import { CustomRequest } from "types.js";
 import { ModerationStatusEnum } from "types.js";
-import checkRbac from "functions/checkRbac.js";
 import { db } from "init.js";
+import { filterData } from "@/functions/filterData.js";
 
 const route = Router();
 
@@ -36,25 +36,13 @@ const indexMap: { [key: string]: string } = {
 };
 
 route.get(
-  "/:followingUserName?",
+  "/:userName?",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { followingUserName } = req.params;
+    const { userName } = req.params;
     const { filter } = aqp(req.query as any) as AqpQuery;
     const { query, collection } = filter || {};
 
     try {
-      // if (followingUserName) {
-      //   const { inClub, isFollowing, subscriptionActive } = await checkRbac({
-      //     userId: req.userId,
-      //     followingUserName,
-      //   });
-
-      //   if (!inClub || !isFollowing || !subscriptionActive) {
-      //     res.status(200).json({ message: [] });
-      //     return;
-      //   }
-      // }
-
       const pipeline: any = [];
 
       if (query) {
@@ -84,8 +72,8 @@ route.get(
         match.moderationStatus = ModerationStatusEnum.ACTIVE;
       }
 
-      if (followingUserName) {
-        match.userName = followingUserName;
+      if (userName) {
+        match.userName = userName;
       }
 
       const projection = projectionMap[collection].reduce(
