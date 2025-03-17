@@ -5,7 +5,6 @@ import { ObjectId } from "mongodb";
 import aqp, { AqpQuery } from "api-query-params";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
-import checkRbac from "functions/checkRbac.js";
 import { ModerationStatusEnum, CustomRequest } from "types.js";
 import { db } from "init.js";
 
@@ -21,30 +20,18 @@ const collectionMap: { [key: string]: string } = {
 const addModerationStatusCollections = ["progress", "proof"];
 
 route.get(
-  "/:followingUserName?",
+  "/:userName?",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { followingUserName } = req.params;
+    const { userName } = req.params;
     const { filter, projection } = aqp(req.query as any) as AqpQuery;
     const { collection, ...rest } = filter;
 
-    if (!collection || (!followingUserName && !req.userId)) {
+    if (!collection || (!userName && !req.userId)) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
 
     try {
-      // if (followingUserName) {
-      //   const { inClub, isFollowing, subscriptionActive } = await checkRbac({
-      //     userId: req.userId,
-      //     followingUserName,
-      //   });
-
-      //   if (!inClub || !isFollowing || !subscriptionActive) {
-      //     res.status(200).json({ message: null });
-      //     return;
-      //   }
-      // }
-
       const fields = Object.keys(projection);
 
       const groupParams = fields.reduce((a: { [key: string]: any }, c) => {
@@ -59,8 +46,8 @@ route.get(
       if (addModerationStatusCollections.includes(collection))
         match.moderationStatus = ModerationStatusEnum.ACTIVE;
 
-      if (followingUserName) {
-        match.userName = followingUserName;
+      if (userName) {
+        match.userName = userName;
       } else {
         match.userId = new ObjectId(req.userId);
       }

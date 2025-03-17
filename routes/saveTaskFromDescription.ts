@@ -67,7 +67,52 @@ route.post(
       return;
     }
 
+    if (description.length < 50 || instruction.length < 50) {
+      res.status(200).json({
+        error:
+          "Make your description and instruction at least 50 characters long.",
+      });
+    }
     try {
+      const userInfo = await getUserInfo({
+        userId: req.userId,
+        projection: { nextScan: 1 },
+      });
+
+      const relevantScanType = userInfo.nextScan.find(
+        (obj) => obj.part === part
+      );
+
+      if (new Date() >= new Date(relevantScanType.date)) {
+        res.status(200).json({
+          error: `You need to scan your ${part} first.`,
+        });
+        return;
+      }
+
+      /* count created tasks */
+      const lastWeekStart = daysFrom({
+        date: setToMidnight({
+          date: new Date(),
+          timeZone,
+        }),
+        days: -7,
+      });
+
+      const tasksCount = await doWithRetries(async () =>
+        db.collection("Task").countDocuments({
+          isCreated: true,
+          startsAt: { $gte: lastWeekStart },
+        })
+      );
+
+      if (tasksCount > 70) {
+        res.status(200).json({
+          error: "You can create only 70 tasks per week. Try again tomorrow.",
+        });
+        return;
+      }
+
       const text = `Description: ${description}.<-->Instruction: ${instruction}.`;
 
       const { isSafe } = await moderateContent({
@@ -98,7 +143,7 @@ route.post(
         );
         res.status(200).json({
           error:
-            "This task violates our ToS or is too dangerous for general use.",
+            "This task violates our ToS or is too dangerous for general use. Please modify your description or instruction and try again.",
         });
         return;
       }
@@ -174,11 +219,6 @@ route.post(
         userId: req.userId,
         categoryName: CategoryNameEnum.TASKS,
         functionName: "saveTaskFromDescription",
-      });
-
-      const userInfo = await getUserInfo({
-        userId: req.userId,
-        projection: { name: 1 },
       });
 
       await incrementProgress({

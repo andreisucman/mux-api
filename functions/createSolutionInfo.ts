@@ -31,11 +31,6 @@ export default async function createSolutionInfo({
 
     const TaskResponseType = z.object({
       name: z.string().describe("The name of the task in imperative form"),
-      // words: z
-      //   .array(z.string())
-      //   .describe(
-      //     "An array of up to 10 most contextually meaningfull node-emoji keywords based on the task's info."
-      //   ),
       icon: z
         .string()
         .describe(
@@ -80,10 +75,6 @@ export default async function createSolutionInfo({
       categoryName,
       functionName: "saveTaskFromDescription",
     });
-
-    // const { words, ...restData } = data;
-
-    // const icon = findEmoji(words);
 
     const color = generateRandomPastelColor();
 
