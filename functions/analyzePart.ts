@@ -28,6 +28,7 @@ import { urlToBase64 } from "@/helpers/utils.js";
 import { CookieOptions } from "express";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import getScoresAndFeedback from "./getScoresAndFeedback.js";
+import { checkIfPublic } from "@/routes/checkIfPublic.js";
 
 type Props = {
   userId: string;
@@ -154,6 +155,7 @@ export default async function analyzePart({
       scores = response.scores;
       scoresDifference = response.scoresDifference;
       newConcerns = response.concerns;
+      partResult.concerns = newConcerns;
     }
 
     const images = partToAnalyze.map((record: ToAnalyzeType) => ({
@@ -168,14 +170,7 @@ export default async function analyzePart({
       cookies,
     });
 
-    const routineData = await doWithRetries(() =>
-      db
-        .collection("RoutineData")
-        .findOne(
-          { userId: new ObjectId(userId), part },
-          { projection: { status: 1 } }
-        )
-    );
+    const isPublic = await checkIfPublic({ userId, part });
 
     const recordOfProgress: ProgressType = {
       _id: new ObjectId(),
@@ -191,7 +186,7 @@ export default async function analyzePart({
       concerns: newConcerns,
       scoresDifference,
       specialConsiderations,
-      isPublic: routineData.status === "public",
+      isPublic,
       moderationStatus: ModerationStatusEnum.ACTIVE,
     };
 
@@ -200,7 +195,7 @@ export default async function analyzePart({
       part,
       scores,
       demographics,
-      isPublic: routineData.status === "public",
+      isPublic,
       concerns: newConcerns,
       updatedAt: new Date(),
       avatar,

@@ -188,29 +188,40 @@ async function handleTransferUpdated(event: Stripe.Event) {
 async function handlePaymentIntentSucceeded(event: Stripe.Event) {
   const paymentIntent = event.data.object as Stripe.PaymentIntent;
   const connectId = paymentIntent.transfer_data?.destination as string;
-  if (!connectId) throw new Error("No destination account");
 
-  const userInfo = await getUserByConnectId(connectId, { _id: 1, email: 1 });
-  if (!userInfo) throw new Error("User not found");
+  let incrementPayload: { [key: string]: any } = {};
 
-  const { title, body } = await getEmailContent({
-    accessToken: null,
-    emailType: "yourPlanPurchased",
-  });
-  await sendEmail({ to: userInfo.email, subject: title, html: body });
+  let userId;
 
-  const appFee = (paymentIntent.application_fee_amount || 0) / 100;
-  const transferredAmount = paymentIntent.amount / 100 - appFee;
+  if (connectId) {
+    const userInfo = await getUserByConnectId(connectId, { _id: 1, email: 1 });
+    if (!userInfo) throw new Error("User not found");
 
-  await updateUserBalance(connectId, transferredAmount);
+    userId = userInfo._id;
 
-  updateAnalytics({
-    userId: String(userInfo._id),
-    incrementPayload: {
+    const { title, body } = await getEmailContent({
+      accessToken: null,
+      emailType: "yourPlanPurchased",
+    });
+    await sendEmail({ to: userInfo.email, subject: title, html: body });
+
+    const appFee = (paymentIntent.application_fee_amount || 0) / 100;
+    const transferredAmount = paymentIntent.amount / 100 - appFee;
+
+    await updateUserBalance(connectId, transferredAmount);
+
+    incrementPayload = {
       "overview.accounting.totalPlatformFee": appFee,
       "overview.accounting.totalPayable": transferredAmount,
       "accounting.totalPlatformFee": appFee,
       "accounting.totalPayable": transferredAmount,
-    },
+    };
+  } else {
+    incrementPayload["overview.accounting.totalRevenue"] = paymentIntent.amount;
+  }
+
+  updateAnalytics({
+    userId,
+    incrementPayload,
   });
 }

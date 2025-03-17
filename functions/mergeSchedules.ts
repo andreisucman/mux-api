@@ -82,7 +82,7 @@ export default async function mergeSchedules({
       });
     }
 
-    if (Object.keys(latestCompletedTasks).length > 0) {
+    if (latestCompletedTasks) {
       userContent.push({
         model: "o3-mini",
         content: [
@@ -116,6 +116,7 @@ export default async function mergeSchedules({
 
     userContent.push({
       model: "gpt-4o-mini",
+      responseFormat: { type: "json_object" },
       content: [
         {
           type: "text",
@@ -125,14 +126,14 @@ export default async function mergeSchedules({
       callback,
     });
 
-    const mergedSchedule: { [key: string]: ScheduleTaskType[] } =
-      await askRepeatedly({
-        userId,
-        categoryName,
-        systemContent,
-        runs: userContent,
-        functionName: "mergeSchedules",
-      });
+    const mergedSchedule = await askRepeatedly({
+      userId,
+      categoryName,
+      systemContent,
+      runs: userContent,
+      functionName: "mergeSchedules",
+    });
+
     return mergedSchedule;
   } catch (error) {
     throw httpError(error);

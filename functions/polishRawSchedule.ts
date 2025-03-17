@@ -106,14 +106,13 @@ export default async function polishRawSchedule({
       callback,
     });
 
-    const polishedSchedule: { [key: string]: ScheduleTaskType[] } =
-      await askRepeatedly({
-        userId,
-        categoryName,
-        systemContent,
-        runs: userContent,
-        functionName: "polishRawSchedule",
-      });
+    const polishedSchedule = await askRepeatedly({
+      userId,
+      categoryName,
+      systemContent,
+      runs: userContent,
+      functionName: "polishRawSchedule",
+    });
 
     return polishedSchedule;
   } catch (error) {

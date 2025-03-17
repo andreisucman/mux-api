@@ -7,6 +7,7 @@ import doWithRetries from "helpers/doWithRetries.js";
 import {
   CategoryNameEnum,
   CustomRequest,
+  FormattedRatingType,
   ModerationStatusEnum,
   ProgressType,
 } from "types.js";
@@ -147,8 +148,8 @@ route.post(
       }
 
       const latestScoresValues = Object.values(latestScores)
-        .filter((v) => typeof v !== "number")
-        .map((object) => object.overall);
+        .filter((v) => typeof v !== "number" && v !== null)
+        .map((object: FormattedRatingType) => object.overall);
 
       latestScores.overall = Math.round(
         latestScoresValues.reduce((a, c) => a + c, 0) /
@@ -156,8 +157,8 @@ route.post(
       );
 
       const latestScoresDifferenceValues = Object.values(latestScoresDifference)
-        .filter((v) => typeof v !== "number")
-        .map((object) => object.overall);
+        .filter((v) => typeof v !== "number" && v !== null)
+        .map((object: FormattedRatingType) => object.overall);
 
       latestScoresDifference.overall = Math.round(
         latestScoresDifferenceValues.reduce((a, c) => a + c, 0) /

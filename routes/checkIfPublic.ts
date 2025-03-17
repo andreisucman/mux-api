@@ -19,7 +19,7 @@ export async function checkIfPublic({ userId, part }: Props) {
         )
     );
 
-    return routineData.status === "public";
+    return routineData?.status === "public";
   } catch (err) {
     throw httpError(err);
   }

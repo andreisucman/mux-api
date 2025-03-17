@@ -321,9 +321,13 @@ route.post(
         });
       }
 
-      let { concerns = [], allTasks = [], createdAt } = relevantRoutine;
-      let finalSchedule: { [key: string]: ScheduleTaskType[] } =
-        relevantRoutine.finalSchedule || {};
+      let { concerns, allTasks, createdAt, finalSchedule } =
+        relevantRoutine || {
+          concerns: [],
+          allTasks: [],
+          createdAt: null,
+          finalSchedule: {},
+        };
 
       for (let i = 0; i < draftTasks.length; i++) {
         const task = draftTasks[i];

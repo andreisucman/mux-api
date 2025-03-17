@@ -170,4 +170,5 @@ export const defaultUser: UserType = {
   lastActiveOn: null,
   isPublic: false,
   moderationStatus: ModerationStatusEnum.ACTIVE,
+  purchases: [],
 };

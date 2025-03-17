@@ -147,7 +147,6 @@ export default async function getScoresAndFeedback({
     const uniqueConcerns = [...currentPartConcerns, ...newConcerns].filter(
       (obj, i, arr) => arr.findIndex((o) => o.name === obj.name) === i
     );
-
     concerns = uniqueConcerns;
   } else {
     concerns = maintenanceConcerns.filter((c) => c.part === part);

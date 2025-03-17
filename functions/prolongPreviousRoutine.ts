@@ -171,9 +171,9 @@ export default async function prolongPreviousRoutine({
     const { minDate, maxDate } = getMinAndMaxRoutineDates(totalAllTasks);
 
     const newRoutine = {
-      userId: new ObjectId(userId),
-      userName,
       part,
+      userName,
+      userId: new ObjectId(userId),
       finalSchedule: mergedSchedule,
       concerns: partConcerns,
       status: RoutineStatusEnum.ACTIVE,

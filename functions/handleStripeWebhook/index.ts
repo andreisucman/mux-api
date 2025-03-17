@@ -232,9 +232,7 @@ async function handleInvoicePayment(invoice: Stripe.Invoice, plans: any[]) {
   );
 
   if (bulkOperations.length > 0) {
-    await doWithRetries(() =>
-      db.collection("User").bulkWrite(bulkOperations, { ordered: false })
-    );
+    await doWithRetries(() => db.collection("User").bulkWrite(bulkOperations));
   }
 }
 
@@ -329,23 +327,14 @@ async function processInvoiceItems(
     await processPlanQuantities(invoice, plans, bulkOperations, customerId);
   }
 
-  bulkOperations.push(
-    createAccountingUpdateOperation(userInfo._id, incrementPayload)
-  );
-
-  return { bulkOperations, incrementPayload };
-}
-
-function createAccountingUpdateOperation(
-  userId: ObjectId,
-  incrementPayload: Record<string, number>
-) {
-  return {
+  bulkOperations.push({
     updateOne: {
-      filter: { _id: userId },
+      filter: { _id: userInfo._id },
       update: { $inc: incrementPayload },
     },
-  };
+  });
+
+  return { bulkOperations, incrementPayload };
 }
 
 async function processPlanQuantities(
@@ -363,28 +352,18 @@ async function processPlanQuantities(
   }, {} as Record<string, number>);
 
   for (const [planName, quantity] of Object.entries(planQuantities)) {
-    bulkOperations.push(
-      createPlanQuantityUpdateOperation(customerId, planName, quantity)
-    );
-  }
-}
-
-function createPlanQuantityUpdateOperation(
-  customerId: string,
-  planName: string,
-  quantity: number
-) {
-  return {
-    updateOne: {
-      filter: { stripeUserId: customerId },
-      update: {
-        $inc: {
-          [`overview.subscription.purchased.${sanitizePlanName(planName)}`]:
-            quantity,
+    bulkOperations.push({
+      updateOne: {
+        filter: { stripeUserId: customerId },
+        update: {
+          $inc: {
+            [`overview.subscription.purchased.${sanitizePlanName(planName)}`]:
+              quantity,
+          },
         },
       },
-    },
-  };
+    });
+  }
 }
 
 async function handleCheckoutSessionCompleted(
@@ -414,11 +393,12 @@ async function handleCheckoutSessionCompleted(
   const lineItems = expandedSession.line_items?.data || [];
   const totalQuantity = calculateTotalScanQuantity(lineItems, relatedPlan);
 
-  const bulkOperations = createScanPlanBulkOperations(session, totalQuantity);
-
-  await doWithRetries(() =>
-    db.collection("User").bulkWrite(bulkOperations, { ordered: false })
+  const bulkOperations = await createScanPlanBulkOperations(
+    session,
+    totalQuantity
   );
+
+  await doWithRetries(() => db.collection("User").bulkWrite(bulkOperations));
 }
 
 function calculateTotalScanQuantity(
@@ -433,7 +413,7 @@ function calculateTotalScanQuantity(
   }, 0);
 }
 
-function createScanPlanBulkOperations(
+async function createScanPlanBulkOperations(
   session: Stripe.Checkout.Session,
   totalQuantity: number
 ) {
@@ -449,7 +429,7 @@ function createScanPlanBulkOperations(
 
   if (session.payment_intent && typeof session.payment_intent === "string") {
     bulkOperations.push(
-      createScanAccountingOperation(
+      await createScanAccountingOperation(
         customerId,
         session.payment_intent,
         totalQuantity
@@ -502,7 +482,6 @@ async function handleStripeWebhook(event: Stripe.Event) {
       type !== "checkout.session.completed" &&
       type !== "customer.subscription.created"
     ) {
-      console.log(`Unhandled event type: ${type}`);
       return;
     }
 
