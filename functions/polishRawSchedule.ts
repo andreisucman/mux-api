@@ -37,12 +37,15 @@ export default async function polishRawSchedule({
 
     const listOfConcerns = JSON.stringify(concerns);
 
-    const systemContent =
+    let systemContent =
       "You are a dermatologist, dentist, and a fitness coach. The user gives you their improvement routine. Your goal is to optimize the order of the tasks for their maximum safety and effectiveness. DON'T REMOVE OR MODIFY THE NAMES OF THE TASKS. MAINTAIN THE SCHEMA FORMAT OF THE SCHEDULE. Be concise and to the point.";
+
+    if (systemContent)
+      systemContent += `The user has the following special consideration: ${specialConsiderations}. Consider it when optimizing the schedule.`;
 
     const userContent: RunType[] = [
       {
-        model: "o3-mini",
+        model: "deepseek-reasoner",
         content: [
           {
             type: "text",
@@ -59,7 +62,7 @@ export default async function polishRawSchedule({
 
     if (part === "body") {
       userContent.push({
-        model: "o3-mini",
+        model: "deepseek-reasoner",
         content: [
           {
             type: "text",
@@ -70,29 +73,16 @@ export default async function polishRawSchedule({
       });
     }
 
-    if (specialConsiderations) {
-      userContent.push({
-        model: "o3-mini",
-        content: [
-          {
-            type: "text",
-            text: `The user has the following special consideration: ${specialConsiderations}. Does the schedule to be changed to account for it? If yes, change it, if not leave as is.`,
-          },
-        ],
-        callback,
-      });
-    }
-
-    userContent.push({
-      model: "gpt-4o-mini",
-      content: [
-        {
-          type: "text",
-          text: `Have you modified the names of the tasks? The names of the tasks must not change.`,
-        },
-      ],
-      callback,
-    });
+    // userContent.push({
+    //   model: "gpt-4o-mini",
+    //   content: [
+    //     {
+    //       type: "text",
+    //       text: `Have you modified the names of the tasks? The names of the tasks must not change.`,
+    //     },
+    //   ],
+    //   callback,
+    // });
 
     userContent.push({
       model: "gpt-4o-mini",

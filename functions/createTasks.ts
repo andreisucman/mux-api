@@ -91,6 +91,7 @@ export default async function createTasks({
             name: draftTask.name,
             instruction: draftTask.instruction,
             description: draftTask.description,
+            concern: draftTask.concern,
           });
 
         await incrementProgress({

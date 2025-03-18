@@ -63,14 +63,19 @@ async function askRepeatedly({
 
       result = await doWithRetries(async () => askAi(payload));
 
+      // conversation.push({
+      //   role: "assistant",
+      //   content: [
+      //     {
+      //       type: "text",
+      //       text: result,
+      //     },
+      //   ],
+      // });
+
       conversation.push({
         role: "assistant",
-        content: [
-          {
-            type: "text",
-            text: result,
-          },
-        ],
+        content: result,
       });
 
       if (runs[i].callback) {

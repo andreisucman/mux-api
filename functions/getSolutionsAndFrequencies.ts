@@ -86,72 +86,69 @@ export default async function getSolutionsAndFrequencies({
 
     const allSolutionsList = allSolutions.map((obj) => obj.key).join(", ");
 
-    let findSolutionsInstruction = `You are a dermatologist, dentist and fitness coach. The user gives you a list of their concerns. Your goal is to select the most effective combination of solutions for each of their concerns from this list of solutions: ${allSolutionsList}. DON'T MODIFY THE NAMES OF THE CONCERNS AND SOLUTIONS. Be concise and to the point.`;
+    let findSolutionsInstruction = `You are a dermatologist, dentist and fitness coach. The user gives you a list of their concerns. Your goal is to select the most effective combination of solutions for each of their concerns from this list of solutions: ${allSolutionsList}. Ensure that your chosen solutions don't clash with each other. DON'T MODIFY THE NAMES OF THE CONCERNS AND SOLUTIONS. Be concise and to the point.`;
 
     if (currentSolutions) {
       findSolutionsInstruction = `You are a dermatologist, dentist and fitness coach. The user gives you a list of their concerns and the current solutions they use to address them. Your goal is to find additional solutions from the list of solutions below that could be added to the user's current solutions to better address their concerns. RESPOND WITH THE ADDITIONAL SOLUTIONS ONLY. DON'T MODIFY THE NAMES OF THE CONCERNS AND SOLUTIONS. Be concise and to the point. ### List of solutions: ${allSolutionsList}.`;
     }
+
+    if (specialConsiderations)
+      findSolutionsInstruction += `The user has this special consideration: ${specialConsiderations}. Consider this when selecting the solutions.`;
 
     const allConcerns = partConcerns.map((co) => ({
       name: co.name,
       importance: co.importance,
     }));
 
+    const allConcernsString = allConcerns.map(
+      (co) => `Concern: ${co.name}. Importance: ${co.importance}\n`
+    );
+
+    console.log("allConcernsString", allConcernsString);
+
     const findSolutionsContentArray: RunType[] = [];
 
     if (currentSolutions) {
+      const currentSolutionsString = Object.entries(currentSolutions).map(
+        (gr) => `Solution: ${gr[0]}. Number of times left to use: ${gr[1]}\n`
+      );
       findSolutionsContentArray.push({
-        model: "o3-mini",
+        model: "deepseek-reasoner",
         content: [
           {
             type: "text",
-            text: `My concerns: ${JSON.stringify(allConcerns)}`,
+            text: `My concerns: ${allConcernsString}`,
           },
           {
             type: "text",
-            text: `My current solutions: ${JSON.stringify(currentSolutions)}`,
+            text: `My current solutions: ${currentSolutionsString}`,
           },
         ],
         callback,
       });
     } else {
       findSolutionsContentArray.push({
-        model: "o3-mini",
+        model: "deepseek-reasoner",
         content: [
           {
             type: "text",
-            text: `The user has these concerns: ${JSON.stringify(
-              allConcerns
-            )}. Select an optimal number of solutions from the list to address each of them.`,
+            text: `The user has these concerns: ${allConcernsString}. Select an optimal number of solutions from the list to address each of them.`,
           },
         ],
         callback,
       });
     }
 
-    findSolutionsContentArray.push({
-      model: "o3-mini",
-      content: [
-        {
-          type: "text",
-          text: `Among your proposed combination are there any solutions that require resting time such that the other solutions can't be used within the same week? If yes, remove the least effective conflicting solutions or replace them with other non-conflicting solutions.`,
-        },
-      ],
-      callback,
-    });
-
-    if (specialConsiderations) {
-      findSolutionsContentArray.push({
-        model: "o3-mini",
-        content: [
-          {
-            type: "text",
-            text: `The user has this special consideration: ${specialConsiderations}. Is it contraindicated for any of the solutions? If yes, remove those solutions.`,
-          },
-        ],
-        callback,
-      });
-    }
+    // findSolutionsContentArray.push({
+    //   model: "deepseek-reasoner",
+    //   content: [
+    //     {
+    //       type: "text",
+    //       text: `Among your proposed combination are there any solutions that require resting time such that the other solutions can't be used within the same week? If yes, remove the least effective conflicting solutions or replace them with other non-conflicting solutions.`,
+    //     },
+    //   ],
+    //   callback,
+    // });
 
     if (checkFacialHair) {
       findSolutionsContentArray.push(facialHairCheck);
@@ -210,21 +207,11 @@ export default async function getSolutionsAndFrequencies({
     /* come up with frequencies for the solutions */
     const findFrequenciesInstruction = `You are a dermatologist, dentist and fitness coach. You are given the concerns of the user and solutions that they are going to use to improve them. Your goal is to tell how many times each solution should be used in a month to most effectively improve their concern based on their image. YOUR RESPONSE IS A TOTAL NUMBER OF APPLICATIONS IN A MONTH, NOT DAY OR WEEK. DON'T MODIFY THE NAMES OF CONCERNS AND SOLUTIONS. Think step-by-step.`;
 
-    const userImages = [];
-
-    for (const partImo of partImages) {
-      userImages.push({
-        type: "image_url" as "image_url",
-        image_url: {
-          url: await urlToBase64(partImo.mainUrl.url),
-          detail: "low" as "low",
-        },
-      });
-    }
+    console.log("findSolutionsResponse", findSolutionsResponse);
 
     const findFrequenciesContentArray: RunType[] = [
       {
-        model: "gpt-4o",
+        model: "deepseek-reasoner",
         content: [
           {
             type: "text",
@@ -232,28 +219,9 @@ export default async function getSolutionsAndFrequencies({
               findSolutionsResponse
             )}. What would be the best usage frequency for each solution?`,
           },
-          {
-            type: "text",
-            text: "Here are the images for your reference:",
-          },
-          ...userImages,
         ],
-        callback,
       },
     ];
-
-    if (specialConsiderations) {
-      findFrequenciesContentArray.push({
-        model: "gpt-4o",
-        content: [
-          {
-            type: "text",
-            text: `The user has the following condition: ${specialConsiderations}. Does it change the frequencies? If yes change the frequencies, if not leave as is.`,
-          },
-        ],
-        callback,
-      });
-    }
 
     const solutionsList = Object.values(findSolutionsResponse).flat();
 
@@ -271,13 +239,48 @@ export default async function getSolutionsAndFrequencies({
       .object(findFrequenciesInstructionMap)
       .describe("solution:monthlyFrequency map");
 
-    const lastMessage =
-      findFrequenciesContentArray[findFrequenciesContentArray.length - 1];
+    // if (part === "body") {
+    //   const isOverweight = concernsNames.includes("excess_weight");
+    //   const isUnderweight = concernsNames.includes("low_body_mass");
 
-    lastMessage.responseFormat = zodResponseFormat(
-      FindFrequenciesInstructionResponse,
-      "FindFrequenciesInstructionResponse"
-    );
+    //   const condition = isOverweight
+    //     ? "overweight"
+    //     : isUnderweight
+    //     ? "underweight"
+    //     : undefined;
+
+    //   const wish = isOverweight
+    //     ? "lose weight"
+    //     : isUnderweight
+    //     ? "gain mass"
+    //     : undefined;
+
+    //   if (condition && wish)
+    //     findFrequenciesContentArray.push({
+    //       model: "gpt-4o",
+    //       content: [
+    //         {
+    //           type: "text" as "text",
+    //           text: `The user is ${condition} and they want to ${wish}. Should the frequencies of any of the solutions be changed to best satisfy their wish for that? If yes, change them, if not leave as is.`,
+    //         },
+    //       ],
+    //       callback,
+    //     });
+    // }
+
+    findFrequenciesContentArray.push({
+      model: "gpt-4o-mini",
+      content: [
+        {
+          type: "text",
+          text: `Format the list as a map.`,
+        },
+      ],
+      responseFormat: zodResponseFormat(
+        FindFrequenciesInstructionResponse,
+        "FindFrequenciesInstructionResponse"
+      ),
+    });
 
     let findFrequencyResponse: { [key: string]: ScheduleTaskType[] } =
       await askRepeatedly({

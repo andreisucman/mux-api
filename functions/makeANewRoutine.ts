@@ -70,7 +70,6 @@ export default async function makeANewRoutine({
         allTasks,
         routineStartDate,
         days: 7,
-        timeZone,
       })
     );
 

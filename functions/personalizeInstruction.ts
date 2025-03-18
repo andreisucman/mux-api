@@ -12,6 +12,7 @@ type Props = {
   instruction: string;
   userInfo: { [key: string]: any };
   name: string;
+  concern: string;
 };
 
 export default async function personalizeInstruction({
@@ -19,6 +20,7 @@ export default async function personalizeInstruction({
   instruction,
   userInfo,
   categoryName,
+  concern,
   name,
 }: Props) {
   const { country, specialConsiderations, _id: userId } = userInfo;
@@ -76,20 +78,31 @@ export default async function personalizeInstruction({
         ),
     });
 
-    userContentArray.push({
-      model: "gpt-4o-mini",
-      content: [
-        {
-          type: "text",
-          text: "While editing the instruction have you considered each detail from the description, such as the type of the product or seasonality, etc...? If not, make your response account for them",
-        },
-      ],
-      responseFormat: zodResponseFormat(
-        PersonalizeResponseType,
-        "PersonalizeResponseType"
-      ),
-      callback,
-    });
+    userContentArray.push(
+      {
+        model: "gpt-4o-mini",
+        content: [
+          {
+            type: "text",
+            text: `This task is supposed to address the following concern of the user ${concern}. Feel free to modify the instruction of the task if it will help better address the concern.`,
+          },
+        ],
+      },
+      {
+        model: "gpt-4o-mini",
+        content: [
+          {
+            type: "text",
+            text: "While editing the instruction have you considered each detail from the description, such as the type of the product or seasonality, etc...? If not, make your response account for them",
+          },
+        ],
+        responseFormat: zodResponseFormat(
+          PersonalizeResponseType,
+          "PersonalizeResponseType"
+        ),
+        callback,
+      }
+    );
 
     const response = await askRepeatedly({
       userId,
@@ -99,7 +112,7 @@ export default async function personalizeInstruction({
       functionName: "personalizeInstruction",
     });
 
-    return response;
+    return response.join("\n");
   } catch (error) {
     throw httpError(error);
   }

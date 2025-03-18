@@ -57,6 +57,7 @@ route.post(
         res.status(200).json({
           message: {
             jobProgress: Math.min(99, job.progress),
+            isRunning: job.isRunning,
           },
         });
         return;

@@ -35,6 +35,10 @@ export default async function mergeSchedules({
 }: Props) {
   try {
     let systemContent = `You are a dermatologist, dentist and a fitness coach. The user gives you two schedules - 1 and 2. Your goal is to merge schedule 2 optimally into schedule 1 without moving the dates of the schedule 1. Your response is the merged schedule in the original JSON object format.`;
+
+    if (specialConsiderations)
+      systemContent += `The user has this special consideration: ${specialConsiderations}. If any tasks contradict it, remove those tasks.`;
+
     const callback = () =>
       incrementProgress({
         operationKey: "routine",
@@ -44,7 +48,7 @@ export default async function mergeSchedules({
 
     const userContent: RunType[] = [
       {
-        model: "o3-mini",
+        model: "deepseek-reasoner",
         content: [
           {
             type: "text",
@@ -57,21 +61,21 @@ export default async function mergeSchedules({
         ],
         callback,
       },
-      {
-        model: "gpt-4o-mini",
-        content: [
-          {
-            type: "text",
-            text: "Can you confirm that the dates of the original tasks in schedule 1 haven't changed? They must not change.",
-          },
-        ],
-        callback,
-      },
+      // {
+      //   model: "gpt-4o-mini",
+      //   content: [
+      //     {
+      //       type: "text",
+      //       text: "Can you confirm that the dates of the original tasks in schedule 1 haven't changed? They must not change.",
+      //     },
+      //   ],
+      //   callback,
+      // },
     ];
 
     if (part === "body") {
       userContent.push({
-        model: "o3-mini",
+        model: "deepseek-reasoner",
         content: [
           {
             type: "text",
@@ -84,7 +88,7 @@ export default async function mergeSchedules({
 
     if (latestCompletedTasks) {
       userContent.push({
-        model: "o3-mini",
+        model: "deepseek-reasoner",
         content: [
           {
             type: "text",
@@ -98,19 +102,6 @@ export default async function mergeSchedules({
           },
         ],
         callback,
-      });
-    }
-
-    if (specialConsiderations) {
-      // this check is needed to ensure that last weeks tasks don't contradict the new special consideration
-      userContent.push({
-        model: "gpt-4o-mini",
-        content: [
-          {
-            type: "text",
-            text: `The user has this special consideration: ${specialConsiderations}. Are there any tasks in the schedule that are clearly contraindicated based on the user's special consideration? If yes, remove them from the schedule, if not, leave as is.`,
-          },
-        ],
       });
     }
 

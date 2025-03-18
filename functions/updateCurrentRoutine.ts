@@ -99,7 +99,6 @@ export default async function updateCurrentRoutine({
         allTasks: additionalAllTasks,
         days: daysDifference,
         routineStartDate,
-        timeZone,
       })
     );
 

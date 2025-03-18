@@ -51,7 +51,10 @@ route.post(
       timeZone = "America/New_York",
     } = req.body;
 
-    const { isValidDate, isFutureDate } = checkDateValidity(startDate);
+    const { isValidDate, isFutureDate } = checkDateValidity(
+      startDate,
+      timeZone
+    );
 
     if (
       !description ||

@@ -15,14 +15,22 @@ import incrementProgress from "@/helpers/incrementProgress.js";
 
 const route = Router();
 
-type Props = { routineIds: string[]; startDate: string; userName: string };
+type Props = {
+  routineIds: string[];
+  startDate: string;
+  userName: string;
+  timeZone: string;
+};
 
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { routineIds, startDate, userName }: Props = req.body;
+    const { routineIds, startDate, userName, timeZone }: Props = req.body;
 
-    const { isValidDate, isFutureDate } = checkDateValidity(startDate);
+    const { isValidDate, isFutureDate } = checkDateValidity(
+      startDate,
+      timeZone
+    );
 
     if (!routineIds || !isValidDate || !isFutureDate || !userName) {
       res.status(400).json({ error: "Bad request" });

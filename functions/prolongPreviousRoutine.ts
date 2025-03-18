@@ -1,6 +1,10 @@
 import { ObjectId } from "mongodb";
 import doWithRetries from "helpers/doWithRetries.js";
-import { daysFrom, calculateDaysDifference } from "helpers/utils.js";
+import {
+  daysFrom,
+  calculateDaysDifference,
+  delayExecution,
+} from "helpers/utils.js";
 import {
   UserConcernType,
   TaskStatusEnum,
@@ -166,6 +170,8 @@ export default async function prolongPreviousRoutine({
     if (areEnough) {
       totalTasksToInsert = resetTasks;
       totalAllTasks = allTasks;
+
+      await delayExecution(120000);
     }
 
     const { minDate, maxDate } = getMinAndMaxRoutineDates(totalAllTasks);

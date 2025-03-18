@@ -29,10 +29,18 @@ const route = Router();
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { concerns, part, routineStartDate, specialConsiderations } =
-      req.body;
+    const {
+      concerns,
+      part,
+      timeZone,
+      routineStartDate,
+      specialConsiderations,
+    } = req.body;
 
-    const { isValidDate, isFutureDate } = checkDateValidity(routineStartDate);
+    const { isValidDate, isFutureDate } = checkDateValidity(
+      routineStartDate,
+      timeZone
+    );
 
     if (
       !concerns ||
@@ -92,8 +100,6 @@ route.post(
         (obj, i, arr) => arr.findIndex((o) => o.name === obj.name) === i
       );
 
-      res.status(200).end();
-
       await doWithRetries(async () =>
         db
           .collection("AnalysisStatus")
@@ -111,6 +117,8 @@ route.post(
           value: 1,
         })
       );
+
+      res.status(200).end();
 
       let updatedNextRoutine;
 

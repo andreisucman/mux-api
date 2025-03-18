@@ -37,7 +37,10 @@ route.post(
       applyToAll,
     } = req.body;
 
-    const { isValidDate, isFutureDate } = checkDateValidity(startDate);
+    const { isValidDate, isFutureDate } = checkDateValidity(
+      startDate,
+      timeZone
+    );
 
     if (!updatedDescription && !updatedInstruction && !startDate && !timeZone) {
       res.status(400).json({ error: "Bad request" });

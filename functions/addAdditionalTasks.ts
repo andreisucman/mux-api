@@ -125,7 +125,6 @@ export default async function addAdditionalTasks({
         allTasks: filteredAllTasks,
         routineStartDate,
         days: 7,
-        timeZone,
       })
     );
 

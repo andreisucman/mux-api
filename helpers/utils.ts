@@ -2,6 +2,7 @@ import mime from "mime-types";
 import { DateTime } from "luxon";
 import bcrypt from "bcrypt";
 import { ScheduleTaskType } from "./turnTasksIntoSchedule.js";
+import setToMidnight from "./setToMidnight.js";
 
 export function delayExecution(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -164,19 +165,25 @@ export async function urlToBase64(url: string): Promise<string> {
 }
 
 export function setToUtcMidnight(date: Date) {
-  return new Date(date.setUTCHours(0, 0, 0, 0));
+  return new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+  );
 }
 
-export function checkDateValidity(date: Date | string): {
+export function checkDateValidity(
+  date: Date | string,
+  timeZone: string
+): {
   isValidDate: boolean;
   isFutureDate: boolean;
 } {
   const dateObj = typeof date === "string" ? new Date(date) : date;
   const isValidDate = !isNaN(dateObj.getTime());
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
 
-  const isFutureDate = isValidDate && dateObj >= setToUtcMidnight(now);
+  const nowUtcMidnight = setToMidnight({ date: new Date(), timeZone });
+  const dateUtcMidnight = setToMidnight({ date: new Date(date), timeZone });
+
+  const isFutureDate = isValidDate && dateUtcMidnight >= nowUtcMidnight;
 
   return { isValidDate, isFutureDate };
 }

@@ -27,16 +27,19 @@ const route = Router();
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { taskKey, routineId, startDate, total, followingUserName } =
+    const { taskKey, routineId, startDate, total, timeZone, userName } =
       req.body;
 
-    const { isValidDate, isFutureDate } = checkDateValidity(startDate);
+    const { isValidDate, isFutureDate } = checkDateValidity(
+      startDate,
+      timeZone
+    );
 
     if (
       !taskKey ||
       !routineId ||
       !total ||
-      !followingUserName ||
+      !userName ||
       !isValidDate ||
       !isFutureDate
     ) {
@@ -64,7 +67,7 @@ route.post(
 
       if (!taskToAdd)
         throw httpError(
-          `No task to add from user ${followingUserName} to user ${req.userId} found.`
+          `No task to add from user ${userName} to user ${req.userId} found.`
         );
 
       /* get the user's current routine */
@@ -85,7 +88,7 @@ route.post(
         proofEnabled: true,
         completedAt: null,
         userName: userInfo.name,
-        stolenFrom: followingUserName,
+        stolenFrom: userName,
       };
 
       if (currentRoutine) {

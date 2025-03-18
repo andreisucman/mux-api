@@ -50,7 +50,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 global.intervalRef = null;
 
-global.startInterval = (callback: (args: any) => any, delay = 3000) => {
+global.startInterval = (callback: (args: any) => any, delay = 5000) => {
   if (global.intervalRef || delay < 1000) return;
   global.intervalRef = setInterval(callback, delay);
 };
