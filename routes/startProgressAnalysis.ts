@@ -17,6 +17,7 @@ import formatDate from "@/helpers/formatDate.js";
 import checkCanScan from "@/helpers/checkCanScan.js";
 import httpError from "@/helpers/httpError.js";
 import { db } from "init.js";
+import incrementProgress from "@/helpers/incrementProgress.js";
 
 const route = Router();
 
@@ -118,6 +119,14 @@ route.post(
           )
       );
 
+      global.startInterval(() =>
+        incrementProgress({
+          operationKey: "progress",
+          userId: req.userId,
+          value: 1,
+        })
+      );
+
       res.status(200).json({
         requiredProgress,
         toAnalyze,
@@ -141,6 +150,7 @@ route.post(
         latestScoresDifference,
         newSpecialConsiderations: specialConsiderations,
       });
+      global.stopInterval();
     } catch (err) {
       await addAnalysisStatusError({
         operationKey: "progress",
@@ -149,6 +159,7 @@ route.post(
           "An unexpected error occured. Please try again and inform us if the error persists.",
         originalMessage: err.message,
       });
+      global.stopInterval();
       next(err);
     }
   }

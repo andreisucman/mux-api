@@ -22,6 +22,7 @@ import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import { db } from "init.js";
 import { validParts } from "@/data/other.js";
 import { checkDateValidity } from "@/helpers/utils.js";
+import incrementProgress from "@/helpers/incrementProgress.js";
 
 const route = Router();
 
@@ -103,6 +104,14 @@ route.post(
           )
       );
 
+      global.startInterval(() =>
+        incrementProgress({
+          operationKey: "routine",
+          userId: req.userId,
+          value: 1,
+        })
+      );
+
       let updatedNextRoutine;
 
       /* to prevent cases when the user creates all routines and routines for not analyzed parts are created too */
@@ -173,7 +182,16 @@ route.post(
             { $set: { isRunning: false, progress: 99 } }
           )
       );
+      global.stopInterval();
     } catch (err) {
+      await addAnalysisStatusError({
+        operationKey: "routine",
+        userId: String(req.userId),
+        message:
+          "An unexpected error occured. Please try again and inform us if the error persists.",
+        originalMessage: err.message,
+      });
+      global.stopInterval();
       next(err);
     }
   }

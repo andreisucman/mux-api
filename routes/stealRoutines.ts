@@ -11,6 +11,7 @@ import httpError from "@/helpers/httpError.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import stealSingleRoutine from "@/functions/stealSingleRoutine.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
+import incrementProgress from "@/helpers/incrementProgress.js";
 
 const route = Router();
 
@@ -61,6 +62,14 @@ route.post(
           )
       );
 
+      global.startInterval(() =>
+        incrementProgress({
+          operationKey: "routine",
+          userId: req.userId,
+          value: 1,
+        })
+      );
+
       res.status(200).end();
 
       const batchSize = 5;
@@ -89,6 +98,7 @@ route.post(
         await doWithRetries(async () => await Promise.all(promises));
         promises.length = 0;
       }
+      global.stopInterval();
     } catch (error) {
       await addAnalysisStatusError({
         userId: String(req.userId),
@@ -96,6 +106,7 @@ route.post(
         originalMessage: error.message,
         operationKey: "routine",
       });
+      global.stopInterval();
       next(error);
     }
   }

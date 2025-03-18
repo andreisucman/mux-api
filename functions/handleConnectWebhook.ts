@@ -84,7 +84,9 @@ async function updateUserBalance(connectId: string, amount: number) {
 }
 
 async function markEventAsProcessed(eventId: string) {
-  await db.collection("ProcessedEvent").insertOne({ eventId });
+  await db
+    .collection("ProcessedEvent")
+    .insertOne({ eventId, createdAt: new Date() });
 }
 
 async function handlePayoutsDisabled(userInfo: any) {

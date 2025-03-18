@@ -48,6 +48,20 @@ const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
+global.intervalRef = null;
+
+global.startInterval = (callback: (args: any) => any, delay = 3000) => {
+  if (global.intervalRef || delay < 1000) return;
+  global.intervalRef = setInterval(callback, delay);
+};
+
+global.stopInterval = () => {
+  if (global.intervalRef) {
+    clearInterval(global.intervalRef);
+    global.intervalRef = null;
+  }
+};
+
 export {
   db,
   deepSeek,

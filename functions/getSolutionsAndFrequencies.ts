@@ -271,35 +271,6 @@ export default async function getSolutionsAndFrequencies({
       .object(findFrequenciesInstructionMap)
       .describe("solution:monthlyFrequency map");
 
-    if (part === "body") {
-      const isOverweight = concernsNames.includes("excess_weight");
-      const isUnderweight = concernsNames.includes("low_body_mass");
-
-      const condition = isOverweight
-        ? "overweight"
-        : isUnderweight
-        ? "underweight"
-        : undefined;
-
-      const wish = isOverweight
-        ? "lose weight"
-        : isUnderweight
-        ? "gain mass"
-        : undefined;
-
-      if (condition && wish)
-        findFrequenciesContentArray.push({
-          model: "gpt-4o",
-          content: [
-            {
-              type: "text" as "text",
-              text: `The user is ${condition} and they want to ${wish} as fast as possible. Should the frequencies of the solutions be changed to best satisfy their wish for that? If yes, change them, if not leave as is. Check each solution.`,
-            },
-          ],
-          callback,
-        });
-    }
-
     const lastMessage =
       findFrequenciesContentArray[findFrequenciesContentArray.length - 1];
 

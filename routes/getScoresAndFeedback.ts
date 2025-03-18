@@ -15,6 +15,7 @@ import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import getScoresAndFeedbackOfAPart from "@/functions/getScoresAndFeedbackOfAPart.js";
 import { GetScoresAndFeedbackUserType } from "@/types/getScoresAndFeedbackTypes.js";
 import { db } from "init.js";
+import incrementProgress from "@/helpers/incrementProgress.js";
 
 const route = Router();
 
@@ -90,6 +91,14 @@ route.post(
             { $set: { isRunning: true, progress: 1, isError: null } },
             { upsert: true }
           )
+      );
+
+      global.startInterval(() =>
+        incrementProgress({
+          operationKey: "progress",
+          userId: req.userId,
+          value: 1,
+        })
       );
 
       res.status(200).end();
@@ -194,6 +203,7 @@ route.post(
             { upsert: true }
           )
       );
+      global.stopInterval();
     } catch (err) {
       await addAnalysisStatusError({
         operationKey: "progress",
@@ -202,6 +212,7 @@ route.post(
           "An unexpected error occured. Please try again and inform us if the error persists.",
         originalMessage: err.message,
       });
+      global.stopInterval();
       next(err);
     }
   }

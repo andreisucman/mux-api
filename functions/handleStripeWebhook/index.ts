@@ -189,10 +189,6 @@ async function updateUserSubscriptionPlan(
       }
     )
   );
-
-  if (updateResult.modifiedCount === 0) {
-    console.warn(`No user found for customer ID: ${customerId}`);
-  }
 }
 
 async function handleInvoicePayment(invoice: Stripe.Invoice, plans: any[]) {
@@ -469,7 +465,9 @@ async function createScanAccountingOperation(
 }
 
 async function markEventAsProcessed(eventId: string) {
-  await db.collection("ProcessedEvent").insertOne({ eventId });
+  await db
+    .collection("ProcessedEvent")
+    .insertOne({ eventId, createdAt: new Date() });
 }
 //#endregion
 
