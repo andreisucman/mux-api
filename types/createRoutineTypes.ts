@@ -18,7 +18,7 @@ export type CreateRoutineUserInfoType = {
   specialConsiderations: string;
 };
 
-type TaskExampleType = { type: string; url: string };
+export type TaskExampleType = { type: string; url: string };
 
 export type CreateRoutineAllSolutionsType = {
   instruction: string;

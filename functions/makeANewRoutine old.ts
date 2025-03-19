@@ -3,7 +3,6 @@ import doWithRetries from "helpers/doWithRetries.js";
 import getRawSchedule from "functions/getRawSchedule.js";
 import polishRawSchedule from "functions/polishRawSchedule.js";
 import createTasks from "functions/createTasks.js";
-import deactivatePreviousRoutineAndTasks from "functions/deactivatePreviousRoutineAndTasks.js";
 import {
   UserConcernType,
   PartEnum,
@@ -11,15 +10,18 @@ import {
   RoutineStatusEnum,
   ProgressImageType,
 } from "types.js";
-import { CreateRoutineUserInfoType } from "types/createRoutineTypes.js";
+import {
+  CreateRoutineAllSolutionsType,
+  CreateRoutineUserInfoType,
+} from "types/createRoutineTypes.js";
 import { db } from "init.js";
 import httpError from "helpers/httpError.js";
 import updateTasksAnalytics from "./updateTasksAnalytics.js";
 import addDateAndIdsToAllTasks from "@/helpers/addDateAndIdsToAllTasks.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
-import createSolutionData from "./createSolutionData.js";
-import chooseSolutionsForConcerns from "./chooseSolutionsForConcerns.js";
+import getSolutionsAndFrequencies from "./getSolutionsAndFrequencies.js";
+import { checkIfPublic } from "@/routes/checkIfPublic.js";
 
 type Props = {
   userId: string;
@@ -30,6 +32,7 @@ type Props = {
   userInfo: CreateRoutineUserInfoType;
   partConcerns: UserConcernType[];
   specialConsiderations: string;
+  allSolutions: CreateRoutineAllSolutionsType[];
   categoryName: CategoryNameEnum;
 };
 
@@ -40,33 +43,27 @@ export default async function makeANewRoutine({
   routineStartDate,
   partImages,
   userInfo,
+  allSolutions,
   partConcerns,
   categoryName,
   specialConsiderations,
 }: Props) {
   try {
-    const { demographics, timeZone, country } = userInfo;
+    const { demographics, timeZone } = userInfo;
 
-    const { concernsSolutionsAndFrequencies } =
-      await chooseSolutionsForConcerns({
-        userId: String(userId),
-        part,
-        timeZone,
-        country,
-        categoryName,
+    const allTasks = await doWithRetries(async () =>
+      getSolutionsAndFrequencies({
+        specialConsiderations,
+        incrementMultiplier,
         demographics,
         partConcerns,
+        allSolutions,
+        categoryName,
         partImages,
-        incrementMultiplier,
-        specialConsiderations,
-      });
-
-    const { allSolutions, allTasks } = await createSolutionData({
-      categoryName,
-      concernsSolutionsAndFrequencies,
-      part,
-      userId: String(userId),
-    });
+        userId,
+        part,
+      })
+    );
 
     const rawSchedule = await doWithRetries(async () =>
       getRawSchedule({
@@ -100,26 +97,6 @@ export default async function makeANewRoutine({
       userId: String(userId),
     });
 
-    const previousRoutineRecord = await doWithRetries(async () =>
-      db
-        .collection("Routine")
-        .find(
-          { userId: new ObjectId(userId) },
-          {
-            projection: {
-              _id: 1,
-            },
-          }
-        )
-        .sort({ createdAt: -1 })
-        .next()
-    );
-
-    if (previousRoutineRecord)
-      await deactivatePreviousRoutineAndTasks(
-        String(previousRoutineRecord._id)
-      );
-
     let tasksToInsert = await doWithRetries(async () =>
       createTasks({
         part,
@@ -141,18 +118,27 @@ export default async function makeANewRoutine({
       allTasksWithDateAndIds
     );
 
+    const newRoutine = {
+      userId: new ObjectId(userId),
+      userName,
+      part,
+      concerns: partConcerns,
+      finalSchedule,
+      isPublic: false,
+      status: RoutineStatusEnum.ACTIVE,
+      createdAt: new Date(),
+      allTasks: allTasksWithDateAndIds,
+      startsAt: new Date(minDate),
+      lastDate: new Date(maxDate),
+    };
+
+    newRoutine.isPublic = await checkIfPublic({
+      userId,
+      part,
+    });
+
     const newRoutineObject = await doWithRetries(async () =>
-      db.collection("Routine").insertOne({
-        userId: new ObjectId(userId),
-        userName,
-        concerns: partConcerns,
-        finalSchedule,
-        status: RoutineStatusEnum.ACTIVE,
-        createdAt: new Date(),
-        allTasks: allTasksWithDateAndIds,
-        startsAt: new Date(minDate),
-        lastDate: new Date(maxDate),
-      })
+      db.collection("Routine").insertOne(newRoutine)
     );
 
     tasksToInsert = tasksToInsert.map((rt) => ({

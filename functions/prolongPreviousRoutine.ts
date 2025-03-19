@@ -3,7 +3,7 @@ import doWithRetries from "helpers/doWithRetries.js";
 import {
   daysFrom,
   calculateDaysDifference,
-  delayExecution,
+  DaysFromProps,
 } from "helpers/utils.js";
 import {
   UserConcernType,
@@ -15,26 +15,22 @@ import {
   ProgressImageType,
 } from "types.js";
 import addAdditionalTasks from "functions/addAdditionalTasks.js";
-import {
-  CreateRoutineAllSolutionsType,
-  CreateRoutineUserInfoType,
-} from "types/createRoutineTypes.js";
+import deactivatePreviousRoutineAndTasks from "functions/deactivatePreviousRoutineAndTasks.js";
+import { CreateRoutineUserInfoType } from "types/createRoutineTypes.js";
 import httpError from "helpers/httpError.js";
 import { db } from "init.js";
 import updateTasksAnalytics from "./updateTasksAnalytics.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
-import { checkIfPublic } from "@/routes/checkIfPublic.js";
 
 type Props = {
   part: PartEnum;
   incrementMultiplier?: number;
   routineStartDate: string;
+  tasksToProlong: TaskType[];
   partImages: ProgressImageType[];
   categoryName: CategoryNameEnum;
   partConcerns: UserConcernType[];
-  tasksToProlong: TaskType[];
-  allSolutions: CreateRoutineAllSolutionsType[];
   userInfo: CreateRoutineUserInfoType;
   latestCompletedTasks: { [key: string]: any };
 };
@@ -44,11 +40,10 @@ export default async function prolongPreviousRoutine({
   partImages,
   partConcerns,
   categoryName,
+  tasksToProlong,
   userInfo,
-  allSolutions,
   incrementMultiplier = 1,
   routineStartDate,
-  tasksToProlong,
   latestCompletedTasks,
 }: Props) {
   const { _id: userId, name: userName } = userInfo;
@@ -58,6 +53,7 @@ export default async function prolongPreviousRoutine({
       throw httpError("No tasks to prolong");
 
     const firstTask = tasksToProlong[0];
+    const previousRoutineId = firstTask.routineId;
 
     const daysDifference = calculateDaysDifference(
       firstTask.startsAt,
@@ -66,7 +62,6 @@ export default async function prolongPreviousRoutine({
 
     const resetTasks: TaskType[] = [];
 
-    /* reset fields */
     const concernsList = partConcerns.map((obj) => obj.name);
 
     for (const draft of tasksToProlong) {
@@ -146,15 +141,18 @@ export default async function prolongPreviousRoutine({
           part: task.part,
           instruction: task.instruction,
           description: task.description,
-          total: ids.length,
+          total: resetTasks.filter((t) => t.key === task.key).length,
+          completed: 0,
+          unknown: 0,
         };
       })
       .filter(Boolean);
 
+    await deactivatePreviousRoutineAndTasks(String(previousRoutineId));
+
     let { totalTasksToInsert, totalAllTasks, mergedSchedule, areEnough } =
       (await addAdditionalTasks({
         part,
-        allSolutions,
         userInfo,
         routineStartDate,
         partImages,
@@ -170,36 +168,25 @@ export default async function prolongPreviousRoutine({
     if (areEnough) {
       totalTasksToInsert = resetTasks;
       totalAllTasks = allTasks;
-
-      await delayExecution(120000);
     }
 
     const { minDate, maxDate } = getMinAndMaxRoutineDates(totalAllTasks);
 
-    const newRoutine = {
-      part,
-      userName,
-      userId: new ObjectId(userId),
-      finalSchedule: mergedSchedule,
-      concerns: partConcerns,
-      status: RoutineStatusEnum.ACTIVE,
-      createdAt: new Date(),
-      startsAt: new Date(minDate),
-      lastDate: new Date(maxDate),
-      allTasks: totalAllTasks,
-      isPublic: false,
-    };
-
     const newRoutineObject = await doWithRetries(async () =>
-      db.collection("Routine").insertOne(newRoutine)
+      db.collection("Routine").insertOne({
+        userId: new ObjectId(userId),
+        userName,
+        finalSchedule: mergedSchedule,
+        concerns: partConcerns,
+        status: RoutineStatusEnum.ACTIVE,
+        createdAt: new Date(),
+        startsAt: new Date(minDate),
+        lastDate: new Date(maxDate),
+        allTasks: totalAllTasks,
+        part,
+      })
     );
 
-    newRoutine.isPublic = await checkIfPublic({
-      userId: String(userId),
-      part,
-    });
-
-    /* update final tasks */
     const finalTasks = totalTasksToInsert.map((rt, i) => ({
       ...rt,
       routineId: newRoutineObject.insertedId,

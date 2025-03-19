@@ -9,10 +9,7 @@ import {
   ModerationStatusEnum,
   CategoryNameEnum,
 } from "@/types.js";
-import {
-  CreateRoutineAllSolutionsType,
-  CreateRoutineUserInfoType,
-} from "@/types/createRoutineTypes.js";
+import { CreateRoutineUserInfoType } from "@/types/createRoutineTypes.js";
 import makeANewRoutine from "functions/makeANewRoutine.js";
 import addAnalysisStatusError from "functions/addAnalysisStatusError.js";
 import prolongPreviousRoutine from "functions/prolongPreviousRoutine.js";
@@ -25,6 +22,7 @@ import { db } from "init.js";
 type Props = {
   userId: string;
   part: PartEnum;
+  creationMode: "scratch" | "continue";
   incrementMultiplier?: number;
   categoryName: CategoryNameEnum;
   concerns: UserConcernType[];
@@ -37,6 +35,7 @@ export default async function createRoutine({
   userId,
   incrementMultiplier = 1,
   categoryName,
+  creationMode,
   concerns,
   routineStartDate,
   specialConsiderations,
@@ -69,59 +68,7 @@ export default async function createRoutine({
 
     const partConcerns = concerns.filter((c) => c.part === part);
 
-    const concernNames = partConcerns.map((obj) => obj.name);
-
-    const allSolutions = (await doWithRetries(async () =>
-      db
-        .collection("Solution")
-        .find(
-          { nearestConcerns: { $in: concernNames } },
-          {
-            projection: {
-              instruction: 1,
-              description: 1,
-              requisite: 1,
-              example: 1,
-              color: 1,
-              name: 1,
-              key: 1,
-              icon: 1,
-              recipe: 1,
-              restDays: 1,
-              isRecipe: 1,
-              suggestions: 1,
-              productTypes: 1,
-              embedding: 1,
-              _id: 0,
-            },
-          }
-        )
-        .toArray()
-    )) as unknown as CreateRoutineAllSolutionsType[];
-
     const partImages = await getUsersImages({ userId, part });
-
-    const latestRelevantTask = await doWithRetries(async () =>
-      db
-        .collection("Task")
-        .find(
-          {
-            userId: new ObjectId(userId),
-            part,
-          },
-          { projection: { startsAt: 1 } }
-        )
-        .sort({ startsAt: -1 })
-        .next()
-    );
-
-    const daysFromPayload: DaysFromProps = {
-      days: -8,
-    };
-
-    if (latestRelevantTask) daysFromPayload.date = latestRelevantTask.startsAt;
-
-    const oneWeekAgo = daysFrom(daysFromPayload);
 
     const existingActiveTasks = await doWithRetries(async () =>
       db
@@ -137,14 +84,13 @@ export default async function createRoutine({
         .toArray()
     );
 
-    const latestCompletedTasks = await doWithRetries(async () =>
-      getLatestCompletedTasks({
-        userId,
-        from: daysFrom({ date: new Date(), days: -14 }),
-      })
-    );
+    const daysFromPayload: DaysFromProps = {
+      days: -8,
+    };
 
-    const draftTasksToProlong = (await doWithRetries(async () =>
+    const oneWeekAgo = daysFrom(daysFromPayload);
+
+    const tasksToProlong = (await doWithRetries(async () =>
       db
         .collection("Task")
         .find(
@@ -174,6 +120,13 @@ export default async function createRoutine({
         .toArray()
     )) as unknown as TaskType[];
 
+    const latestCompletedTasks = await doWithRetries(async () =>
+      getLatestCompletedTasks({
+        userId,
+        from: daysFrom({ date: new Date(), days: -14 }),
+      })
+    );
+
     if (existingActiveTasks.length) {
       const currentSolutions = existingActiveTasks.reduce(
         (a: { [key: string]: number }, c: TaskType) => {
@@ -192,21 +145,19 @@ export default async function createRoutine({
         routineId: existingActiveTasks[0].routineId,
         partConcerns,
         userInfo,
-        allSolutions,
         categoryName,
         currentSolutions,
         routineStartDate,
         incrementMultiplier,
       });
-    } else if (draftTasksToProlong.length > 0) {
+    } else if (creationMode === "continue" && tasksToProlong.length) {
       await prolongPreviousRoutine({
         part,
         partImages,
         partConcerns,
         userInfo,
-        allSolutions,
+        tasksToProlong,
         routineStartDate,
-        tasksToProlong: draftTasksToProlong,
         categoryName,
         latestCompletedTasks,
         incrementMultiplier,
@@ -217,7 +168,6 @@ export default async function createRoutine({
         userId,
         partImages,
         userInfo,
-        allSolutions,
         partConcerns,
         routineStartDate,
         specialConsiderations,

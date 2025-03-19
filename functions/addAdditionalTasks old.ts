@@ -11,13 +11,16 @@ import {
   AllTaskTypeWithIds,
 } from "@/types.js";
 import addAnalysisStatusError from "functions/addAnalysisStatusError.js";
-import { CreateRoutineUserInfoType } from "types/createRoutineTypes.js";
+import {
+  CreateRoutineAllSolutionsType,
+  CreateRoutineUserInfoType,
+} from "types/createRoutineTypes.js";
 import httpError from "@/helpers/httpError.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import addDateAndIdsToAllTasks from "@/helpers/addDateAndIdsToAllTasks.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
-import chooseSolutionsForConcerns from "./chooseSolutionsForConcerns.js";
-import createSolutionData from "./createSolutionData.js";
+import getAreCurrentTasksEnough from "./getAreCurrentTasksEnough.js";
+import getSolutionsAndFrequencies from "./getSolutionsAndFrequencies.js";
 
 type Props = {
   part: PartEnum;
@@ -27,6 +30,7 @@ type Props = {
   incrementMultiplier?: number;
   currentTasks: TaskType[];
   allTasks: AllTaskTypeWithIds[];
+  allSolutions: CreateRoutineAllSolutionsType[];
   currentSchedule: { [key: string]: ScheduleTaskType[] };
   userInfo: CreateRoutineUserInfoType;
   routineStartDate: string;
@@ -37,6 +41,7 @@ export default async function addAdditionalTasks({
   part,
   allTasks,
   userInfo,
+  allSolutions,
   partImages,
   partConcerns,
   currentTasks,
@@ -48,7 +53,6 @@ export default async function addAdditionalTasks({
 }: Props) {
   const {
     _id: userId,
-    country,
     timeZone,
     specialConsiderations,
     demographics,
@@ -72,38 +76,36 @@ export default async function addAdditionalTasks({
       Object.entries(taskFrequencyMap).map(([key, value]) => [key, value * 4])
     );
 
-    const { areEnough, concernsSolutionsAndFrequencies } =
-      await chooseSolutionsForConcerns({
-        userId: String(userId),
-        part,
-        timeZone,
-        country,
-        currentSolutions: taskFrequencyMap,
-        categoryName,
-        demographics,
-        partConcerns,
-        partImages,
-        incrementMultiplier,
-        specialConsiderations,
-      });
+    const areEnough = await getAreCurrentTasksEnough({
+      allSolutions,
+      categoryName,
+      partConcerns,
+      taskFrequencyMap,
+      userId: String(userId),
+    });
 
     if (areEnough) {
       return {
         mergedSchedule: currentSchedule,
-        totalAllTasks: allTasks,
-        totalTasksToInsert: [],
+        additionalAllTasks: [],
+        additionalTasksToInsert: [],
       };
     }
 
-    const {
-      allSolutions: additionalAllSolutions,
-      allTasks: additionalAllTasks,
-    } = await createSolutionData({
-      categoryName,
-      concernsSolutionsAndFrequencies,
-      part,
-      userId: String(userId),
-    });
+    const additionalAllTasks = await doWithRetries(async () =>
+      getSolutionsAndFrequencies({
+        userId: String(userId),
+        part,
+        currentSolutions: taskFrequencyMap,
+        partImages,
+        partConcerns,
+        specialConsiderations,
+        incrementMultiplier,
+        allSolutions,
+        demographics,
+        categoryName,
+      })
+    );
 
     await incrementProgress({
       value: 2 * incrementMultiplier,
@@ -148,8 +150,8 @@ export default async function addAdditionalTasks({
     const additionalTasksToInsert = await doWithRetries(async () =>
       createTasks({
         finalSchedule: mergedSchedule,
-        allSolutions: additionalAllSolutions,
-        createOnlyTheseKeys: additionalAllSolutions.map((o) => o.key),
+        allSolutions,
+        createOnlyTheseKeys: additionalAllTasks.map((o) => o.key),
         categoryName,
         userInfo,
         part,

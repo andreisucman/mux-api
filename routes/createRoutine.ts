@@ -4,7 +4,7 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
-import createRoutine from "functions/createRoutine.js";
+import createRoutine from "@/functions/createRoutine.js";
 import checkSubscriptionStatus from "functions/checkSubscription.js";
 import {
   UserConcernType,
@@ -33,6 +33,7 @@ route.post(
       concerns,
       part,
       timeZone,
+      creationMode = "continue",
       routineStartDate,
       specialConsiderations,
     } = req.body;
@@ -115,14 +116,14 @@ route.post(
           operationKey: "routine",
           userId: req.userId,
           value: 1,
-        })
+        }),
+        12000
       );
 
       res.status(200).end();
 
       let updatedNextRoutine;
 
-      /* to prevent cases when the user creates all routines and routines for not analyzed parts are created too */
       let { canRoutineDate, availableRoutines } = checkCanRoutine({
         nextScan,
         nextRoutine,
@@ -152,6 +153,7 @@ route.post(
             await createRoutine({
               userId: req.userId,
               part: r.part,
+              creationMode,
               concerns: activeConcerns,
               specialConsiderations,
               categoryName: CategoryNameEnum.TASKS,

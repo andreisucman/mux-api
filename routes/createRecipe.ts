@@ -19,10 +19,11 @@ import askRepeatedly from "functions/askRepeatedly.js";
 import generateImage from "functions/generateImage.js";
 import checkSubscriptionStatus from "functions/checkSubscription.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
-import { adminDb, db } from "init.js";
+import { db } from "init.js";
 import httpError from "@/helpers/httpError.js";
-import { urlToBase64 } from "@/helpers/utils.js";
 import findRelevantSuggestions from "@/functions/findRelevantSuggestions.js";
+import extractProductsFromImage from "@/functions/extractProductsFromImage.js";
+import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 
 const route = Router();
 
@@ -30,6 +31,8 @@ route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { constraints, taskId, productsImage } = req.body;
+
+    const analysisType = `createRecipe-${taskId}`;
 
     if (!ObjectId.isValid(taskId)) {
       res.status(400).json({
@@ -105,18 +108,16 @@ route.post(
 
       if (!taskInfo) throw httpError(`Task ${taskId} not found`);
 
-      const { instruction, concern, recipe } = taskInfo;
+      const { name, instruction, concern, recipe } = taskInfo;
 
-      if (recipe) {
+      if (recipe && !recipe?.canPersonalize) {
         res.status(200).json({
-          error: `The recipe for this task already exists.`,
+          error: `You have already generated a new recipe.`,
         });
         return;
       }
 
-      res.status(200).end();
-
-      const analysisType = `createRecipe-${taskId}`;
+      console.log("analysisType", analysisType);
 
       await doWithRetries(async () =>
         db.collection("AnalysisStatus").updateOne(
@@ -129,21 +130,32 @@ route.post(
         )
       );
 
-      /* generate recipe */
-      let systemContent = `You are an experienced cook. Your goal is to come up with a simple recipe with up to 5 steps, that satisfies the following default instruction: <-->Default instruction: ${instruction}.`;
+      global.startInterval(
+        () =>
+          incrementProgress({
+            operationKey: analysisType,
+            userId: req.userId,
+            value: 1,
+          }),
+        3000
+      );
 
-      if (constraints || productsImage) {
-        systemContent += `and is made from the products that the user provides.`;
-      }
+      res.status(200).end();
+
+      /* generate recipe */
+      let systemContent = `You are an experienced cook. The user gives you a recipe they don't like, your goal is to come up with another recipe of a food with similar amount of calories that an average user can cook at home. Your response is a step-by-step recipe instruction where each step is numbered and separated by \n.`;
+
+      if (specialConsiderations)
+        systemContent += `Consider the following special considerations of the user: ${specialConsiderations}.`;
 
       const runs: RunType[] = [];
 
       const initialMessage: RunType = {
-        model: "gpt-4o",
+        model: "deepseek-chat",
         content: [
           {
             type: "text",
-            text: `Please write me a step-by-step recipe instruction where each step is separated by \n.`,
+            text: `Here is the recipe the user didn't like: ${name}. ${instruction} \n.`,
           },
         ],
         callback: () =>
@@ -157,52 +169,32 @@ route.post(
       if (constraints) {
         initialMessage.content.push({
           type: "text",
-          text: `Here is what I have: ${constraints}.`,
+          text: `Here are the user's constraints: ${constraints}. Ensure your recipe accounts for that.`,
         });
       }
 
       if (productsImage) {
-        initialMessage.content.push(
-          {
+        const productsOnTheImage = await extractProductsFromImage({
+          imageUrl: productsImage,
+          userId: req.userId,
+        });
+
+        if (productsOnTheImage.trim()) {
+          initialMessage.content.push({
             type: "text",
-            text: "Here is a picture of the products I have:",
-          },
-          {
-            type: "image_url" as "image_url",
-            image_url: {
-              url: await urlToBase64(productsImage),
-              detail: "low",
-            },
-          }
-        );
+            text: `The user has these products at hand: ${productsOnTheImage}. Your recipe should be primarily made of them.`,
+          });
+        }
       }
 
       runs.push(initialMessage);
 
-      if (specialConsiderations) {
-        runs.push({
-          model: "gpt-4o",
-          content: [
-            {
-              type: "text",
-              text: `Does your recipe satisfy my following special condition: ${specialConsiderations}? If not, change it to do it.`,
-            },
-          ],
-          callback: () =>
-            incrementProgress({
-              value: 15,
-              operationKey: analysisType,
-              userId: req.userId,
-            }),
-        });
-      }
-
       const checkMessage: RunType = {
-        model: "gpt-4o",
+        model: "deepseek-chat",
         content: [
           {
             type: "text",
-            text: `Does your recipe satisfy the number of calories from the default instruction? If not add or remove products to match the calorie count.`,
+            text: `Does your recipe satisfy the number of calories from the default instruction? If not change it to match the approximate calorie count.`,
           },
         ],
         callback: () =>
@@ -241,11 +233,25 @@ route.post(
           ),
       });
 
-      const lastMessage = runs[runs.length - 1];
-      lastMessage.responseFormat = zodResponseFormat(
-        RecipeResponseFormat,
-        "RecipeResponseFormat"
-      );
+      runs.push({
+        model: "gpt-4o-mini",
+        content: [
+          {
+            type: "text",
+            text: `Format the recipe as an object`,
+          },
+        ],
+        responseFormat: zodResponseFormat(
+          RecipeResponseFormat,
+          "RecipeResponseFormat"
+        ),
+        callback: () =>
+          incrementProgress({
+            value: 5,
+            operationKey: analysisType,
+            userId: req.userId,
+          }),
+      });
 
       const response = await askRepeatedly({
         runs,
@@ -285,7 +291,7 @@ route.post(
           {
             $set: {
               recipe: {
-                image,
+                example: { type: "image", url: image },
                 canPersonalize: false,
                 name: response.name,
                 description: response.description,
@@ -298,8 +304,17 @@ route.post(
         )
       );
 
+      global.stopInterval();
       res.status(200).end();
     } catch (err) {
+      await addAnalysisStatusError({
+        operationKey: analysisType,
+        userId: String(req.userId),
+        message:
+          "An unexpected error occured. Please try again and inform us if the error persists.",
+        originalMessage: err.message,
+      });
+      global.stopInterval();
       next(err);
     }
   }

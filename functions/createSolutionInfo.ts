@@ -27,15 +27,19 @@ export default async function createSolutionInfo({
   categoryName,
 }: Props) {
   try {
-    const systemContent = `The user gives you the info about an activity. Your goal is to create a task based on it.`;
+    const systemContent = `The user gives you the info about an activity. Your goal is to create a task based on it. If no products are needed to complete this task return an empty array for productTypes.`;
+
+    const productTypesSchema = z.union([
+      z
+        .array(z.string().describe("name of a product or empty string"))
+        .describe(
+          'An array of product types that are required for completing this task in singular form or empty string if not products are required (example: ["olive oil","tomato","onion",...]).'
+        ),
+      z.null(),
+    ]);
 
     const TaskResponseType = z.object({
       name: z.string().describe("The name of the task in imperative form"),
-      icon: z
-        .string()
-        .describe(
-          "The closest unicode icon from node-emoji for this activity based on description and instructon"
-        ),
       requisite: z
         .string()
         .describe(
@@ -47,11 +51,7 @@ export default async function createSolutionInfo({
           "Number of days the user should rest before repeating this activity"
         ),
       isDish: z.boolean().describe("true if this activity is a food dish"),
-      productTypes: z
-        .array(z.string())
-        .describe(
-          'An array of unique in their purpose product types in singular form (example: ["olive oil","tomato","onion"]). If multiple similar product types can be used, pick one - the most relevant.'
-        ),
+      productTypes: productTypesSchema,
     });
 
     const runs: RunType[] = [
@@ -85,6 +85,7 @@ export default async function createSolutionInfo({
       concern,
       description,
       instruction,
+      productTypes: data.productTypes.filter((s: string) => s),
     };
 
     if (data.isDish) response.recipe = null;
@@ -93,13 +94,6 @@ export default async function createSolutionInfo({
 
     if (youtubeVideo) {
       response.example = { type: "video", url: youtubeVideo };
-    } else {
-      const image = await generateImage({
-        description,
-        userId,
-        categoryName,
-      });
-      response.example = { type: "image", url: image };
     }
 
     const suggestions = await findRelevantSuggestions(data.productTypes);

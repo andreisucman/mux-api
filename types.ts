@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { Request } from "express";
 import { ModerationResultType } from "./functions/moderateContent.js";
+import { TaskExampleType } from "./types/createRoutineTypes.js";
 
 export type SuggestionType = {
   _id: string;
@@ -352,7 +353,7 @@ export type RecipeType = {
   name: string;
   description: string;
   instruction: string;
-  image: string;
+  example: { type: string; url: string };
 };
 
 export type TaskType = {
@@ -375,7 +376,7 @@ export type TaskType = {
   isCreated: boolean;
   isDish: boolean;
   recipe: RecipeType | null;
-  example: { type: string; url: string } | null;
+  example: TaskExampleType | null;
   suggestions: SuggestionType[] | null;
   productTypes: string[] | null;
   startsAt: Date | null;

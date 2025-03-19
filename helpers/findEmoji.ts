@@ -6,26 +6,32 @@ import { CategoryNameEnum } from "@/types.js";
 
 type Props = {
   userId: string;
-  taskName: string;
+  taskNames: string[];
 };
 
-export default async function findEmoji({ taskName, userId }: Props) {
-  const systemContent = `The user gives you the name of an activity. Your goal is to find a related icon for it from node-emoji. Return the icon in the UNICODE format. Make sure that your suggested icon really does exist in node-emoji package in the UNICODE format.`;
+export default async function findEmoji({ taskNames, userId }: Props) {
+  const systemContent = `The user gives you the names of activities. Your goal is to find a related icon for each activity from node-emoji. Return the icon in the UNICODE format. Make sure that your suggested icon really does exist in node-emoji package in the UNICODE format.`;
 
-  const TaskResponseType = z.object({
-    icon: z
+  const taskResponseTypeSchema = taskNames.reduce((a, c) => {
+    a[c] = z
       .string()
       .describe(
-        "An icon from node-emoji that is the closest related to this activity in UNICODE format."
-      ),
-  });
+        `An icon from node-emoji that is the closest related to this ${c} in UNICODE format.`
+      );
+
+    return a;
+  }, {});
+
+  const TaskResponseType = z
+    .object(taskResponseTypeSchema)
+    .describe("name:UNICODE emoji map");
 
   const runs: RunType[] = [
     {
       content: [
         {
           type: "text",
-          text: `Activity: ${taskName}. `,
+          text: `Activities: ${taskNames.join("\n")}. `,
         },
       ],
       model:
@@ -42,5 +48,5 @@ export default async function findEmoji({ taskName, userId }: Props) {
     functionName: "findEmoji",
   });
 
-  return response.icon;
+  return response;
 }

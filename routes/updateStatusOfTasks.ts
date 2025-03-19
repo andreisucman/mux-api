@@ -75,6 +75,7 @@ route.post(
 
       const taskUpdatePayload: { [key: string]: any } = {
         $set: { status: newStatus },
+        $unset: {},
       };
 
       if (newStatus === TaskStatusEnum.CANCELED) {

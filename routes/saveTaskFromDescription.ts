@@ -24,7 +24,6 @@ import { checkDateValidity, daysFrom, toSnakeCase } from "helpers/utils.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import createTextEmbedding from "functions/createTextEmbedding.js";
 import findEmoji from "helpers/findEmoji.js";
-import generateImage from "functions/generateImage.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import moderateContent from "@/functions/moderateContent.js";
@@ -34,7 +33,6 @@ import getUserInfo from "@/functions/getUserInfo.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 import { validParts } from "@/data/other.js";
 import findRelevantSuggestions from "@/functions/findRelevantSuggestions.js";
-import searchYoutubeVideo from "@/functions/searchYoutubeVideo.js";
 
 const route = Router();
 
@@ -178,7 +176,16 @@ route.post(
         })
       );
 
-      const systemContent = `The user gives you the description and instruction of an activity and a list of concerns. Your goal is to create a task based on this info.`;
+      const systemContent = `The user gives you the description and instruction of an activity and a list of concerns. Your goal is to create a task based on this info. If no products are needed to complete this task return an empty array for productTypes.`;
+
+      const productTypesSchema = z.union([
+        z
+          .array(z.string().describe("name of a product or empty string"))
+          .describe(
+            'An array of product types that are required for completing this task in singular form or empty string if not products are required (example: ["olive oil","tomato","onion",...]).'
+          ),
+        z.null(),
+      ]);
 
       const TaskResponseType = z.object({
         name: z.string().describe("The name of the task in an imperative form"),
@@ -192,11 +199,7 @@ route.post(
           .describe(
             "Number of days the user should rest before repeating this activity"
           ),
-        productTypes: z
-          .array(z.string().describe("name of a product or empty string"))
-          .describe(
-            `An array of unique in their purpose product types in singular form or an empty array if the task doesn't require any products. (example: ["olive oil","tomato","onion"]). If multiple similar product types can be used, pick one - the most relevant.`
-          ),
+        productTypes: productTypesSchema,
       });
 
       const runs: RunType[] = [
@@ -246,32 +249,18 @@ route.post(
         part,
         concern,
         nearestConcerns: [concern],
+        example: null,
         productTypes: response.productTypes.filter((s: string) => s),
       };
 
-      const icon = await findEmoji({
+      const iconsMap = await findEmoji({
         userId: req.userId,
-        taskName: generalTaskInfo.name,
+        taskNames: [generalTaskInfo.name],
       });
-      generalTaskInfo.icon = icon;
-
-      const youtubeVideo = await searchYoutubeVideo(
-        `How to ${generalTaskInfo.name}`
-      );
-
-      if (youtubeVideo) {
-        generalTaskInfo.example = { type: "video", url: youtubeVideo };
-      } else {
-        const image = await generateImage({
-          description,
-          userId: req.userId,
-          categoryName: CategoryNameEnum.TASKS,
-        });
-        generalTaskInfo.example = { type: "image", url: image };
-      }
+      generalTaskInfo.icon = iconsMap[generalTaskInfo.name];
 
       const suggestions = await findRelevantSuggestions(
-        generalTaskInfo.productTypes
+        generalTaskInfo.productTypes || []
       );
 
       generalTaskInfo.suggestions = suggestions;

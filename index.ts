@@ -86,6 +86,8 @@ import saveRoutineData from "./routes/saveRoutineData.js";
 import getPublicUserData from "./routes/getPublicUserData.js";
 import subscribeToUpdates from "./routes/subscribeToUpdates.js";
 import getSubscriptionPrice from "./routes/getSubscriptionPrice.js";
+import createTaskFromDescription from "./routes/createTaskFromDescription.js";
+import updateTaskExamples from "./routes/updateTaskExamples.js";
 
 import { client } from "init.js";
 
@@ -148,6 +150,7 @@ app.use("/getRoutines", getRoutines);
 app.use("/getProofRecords", getProofRecords);
 app.use("/getProgress", getProgress);
 app.use("/getDiaryRecords", getDiaryRecords);
+app.use("/updateTaskExamples", updateTaskExamples);
 
 app.use("/verifyEmail", verifyEmail);
 app.use("/changeEmailStepOne", changeEmailStepOne);
@@ -207,6 +210,7 @@ app.use("/leaveClub", leaveClub);
 app.use("/redirectToWallet", redirectToWallet);
 app.use("/stealRoutines", stealRoutines);
 app.use("/saveTaskFromDescription", saveTaskFromDescription);
+app.use("/createTaskFromDescription", createTaskFromDescription);
 app.use("/updateAccountDeletion", updateAccountDeletion);
 app.use("/updateUserData", updateUserData);
 app.use("/updateContentBlurType", updateContentBlurType);

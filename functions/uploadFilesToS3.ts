@@ -6,10 +6,11 @@ import { PutObjectCommand, ObjectCannedACL } from "@aws-sdk/client-s3";
 import { mimeTypeMap } from "data/mimeTypeMap.js";
 import { s3Client } from "init.js";
 import httpError from "@/helpers/httpError.js";
+import doWithRetries from "@/helpers/doWithRetries.js";
 
 async function getFileBufferFromUrl(url: string) {
   try {
-    const response = await fetch(url);
+    const response = await doWithRetries(() => fetch(url));
 
     if (!response.ok) {
       throw httpError(`Failed to fetch the file from URL: ${url}`);
@@ -32,7 +33,9 @@ export default async function uploadFilesToS3(filesOrUrls: string[] | any) {
       if (typeof item === "string") {
         // If the item is a URL
         const url = item;
-        const fetchedFile = await getFileBufferFromUrl(url);
+        const fetchedFile = await doWithRetries(() =>
+          getFileBufferFromUrl(url)
+        );
         buffer = fetchedFile.buffer;
         mimeType = fetchedFile.contentType;
         originalname = url.split("/").pop().split("?")[0];

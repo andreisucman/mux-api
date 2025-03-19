@@ -28,6 +28,10 @@ const {
   DEEPSEEK_REASONER,
   DEEPSEEK_REASONER_INPUT_PRICE,
   DEEPSEEK_REASONER_OUTPUT_PRICE,
+
+  DEEPSEEK_CHAT,
+  DEEPSEEK_CHAT_INPUT_PRICE,
+  DEEPSEEK_CHAT_OUTPUT_PRICE,
 } = process.env;
 
 const priceMap: { [key: string]: { input: number; output: number } } = {
@@ -55,6 +59,10 @@ const priceMap: { [key: string]: { input: number; output: number } } = {
   [DEEPSEEK_REASONER]: {
     input: Number(DEEPSEEK_REASONER_INPUT_PRICE),
     output: Number(DEEPSEEK_REASONER_OUTPUT_PRICE),
+  },
+  [DEEPSEEK_CHAT]: {
+    input: Number(DEEPSEEK_CHAT_INPUT_PRICE),
+    output: Number(DEEPSEEK_CHAT_OUTPUT_PRICE),
   },
 };
 

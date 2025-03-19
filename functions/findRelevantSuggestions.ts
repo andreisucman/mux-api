@@ -7,26 +7,31 @@ export default async function findRelevantSuggestions(
 ): Promise<SuggestionType[]> {
   if (!productTypes.length) return [];
 
-  const relevantSuggestions = (await doWithRetries(async () =>
-    db
-      .collection("Suggestion")
-      .aggregate([
-        {
-          $search: {
-            index: "suggestion_product_types",
-            compound: {
-              should: productTypes.map((type) => ({
-                autocomplete: {
-                  query: type,
-                  path: "suggestion",
-                  tokenOrder: "sequential",
-                },
-              })),
-            },
-          },
+  const shouldClauses = productTypes
+    .filter((t) => Boolean(t?.trim()))
+    .map((type) => ({
+      autocomplete: {
+        query: type,
+        path: "suggestion",
+        tokenOrder: "sequential",
+      },
+    }));
+
+  if (!shouldClauses.length) return [];
+
+  const pipeline = [
+    {
+      $search: {
+        index: "suggestion_product_types",
+        compound: {
+          should: shouldClauses,
         },
-      ])
-      .toArray()
+      },
+    },
+  ];
+
+  const relevantSuggestions = (await doWithRetries(async () =>
+    db.collection("Suggestion").aggregate(pipeline).toArray()
   )) as unknown as SuggestionType[];
 
   const productTypesSet = new Set(
