@@ -104,8 +104,6 @@ export default async function getSolutionsAndFrequencies({
       (co) => `Concern: ${co.name}. Importance: ${co.importance}\n`
     );
 
-    console.log("allConcernsString", allConcernsString);
-
     const findSolutionsContentArray: RunType[] = [];
 
     if (currentSolutions) {
@@ -206,8 +204,6 @@ export default async function getSolutionsAndFrequencies({
 
     /* come up with frequencies for the solutions */
     const findFrequenciesInstruction = `You are a dermatologist, dentist and fitness coach. You are given the concerns of the user and solutions that they are going to use to improve them. Your goal is to tell how many times each solution should be used in a month to most effectively improve their concern based on their image. YOUR RESPONSE IS A TOTAL NUMBER OF APPLICATIONS IN A MONTH, NOT DAY OR WEEK. DON'T MODIFY THE NAMES OF CONCERNS AND SOLUTIONS. Think step-by-step.`;
-
-    console.log("findSolutionsResponse", findSolutionsResponse);
 
     const findFrequenciesContentArray: RunType[] = [
       {

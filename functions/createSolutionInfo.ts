@@ -88,12 +88,22 @@ export default async function createSolutionInfo({
       productTypes: data.productTypes.filter((s: string) => s),
     };
 
-    if (data.isDish) response.recipe = null;
+    if (data.isDish) {
+      response.recipe = null;
+      const dishImage = await generateImage({
+        description,
+        categoryName,
+        userId,
+      });
+      response.example = { type: "image", url: dishImage };
+    }
 
-    const youtubeVideo = await searchYoutubeVideo(`How to ${data.name}`);
+    if (!data.isDish) {
+      const youtubeVideo = await searchYoutubeVideo(`How to ${data.name}`);
 
-    if (youtubeVideo) {
-      response.example = { type: "video", url: youtubeVideo };
+      if (youtubeVideo) {
+        response.example = { type: "video", url: youtubeVideo };
+      }
     }
 
     const suggestions = await findRelevantSuggestions(data.productTypes);

@@ -152,6 +152,7 @@ export default async function makeANewRoutine({
         allTasks: allTasksWithDateAndIds,
         startsAt: new Date(minDate),
         lastDate: new Date(maxDate),
+        part
       })
     );
 

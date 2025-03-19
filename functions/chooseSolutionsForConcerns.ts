@@ -106,65 +106,53 @@ export default async function chooseSolutionsForConcerns({
       .map(([key, value]) => `${toSentenceCase(key)}: ${value}`)
       .join("\n");
 
-    findSolutionsContentArray.push(
-      {
-        model: "deepseek-reasoner",
-        content: [
-          {
-            type: "text",
-            text: `User info: ${userAboutString}.${
-              specialConsiderations
-                ? ` User's special considerations: ${specialConsiderations}`
-                : ""
-            }`,
-          },
-          {
-            type: "text",
-            text: `The user's concerns are: ${JSON.stringify(allConcerns)}`,
-          },
-        ],
-        callback,
-      },
-      {
-        model: "deepseek-reasoner",
-        content: [
-          {
-            type: "text",
-            text: "1) Have you suggested enough tasks for each concern? Your list should have all of the necessary tasks that can improve the concerns on their own assuming that the user is not going to do anything else besides them. 2) If you added any collective tasks such as 'maintain calorie surplus', break them down into specific tasks, such as 'eat xyz meal' or 'drink zyx drink' etc. 3) Ensure that the tasks you suggest are not too exotic, dangerous or extremely difficult to do correctly for the average user.",
-          },
-        ],
-        callback,
-      }
-    );
+    findSolutionsContentArray.push({
+      model: "deepseek-reasoner",
+      content: [
+        {
+          type: "text",
+          text: `User info: ${userAboutString}.${
+            specialConsiderations
+              ? ` User's special considerations: ${specialConsiderations}`
+              : ""
+          }`,
+        },
+        {
+          type: "text",
+          text: `The user's concerns are: ${JSON.stringify(allConcerns)}`,
+        },
+      ],
+      callback,
+    });
+
+    let text =
+      "1) Have you suggested enough tasks for each concern? Your list should have all of the necessary tasks that can improve the concerns on their own assuming that the user is not going to do anything else besides them. 2) If you added any collective tasks such as 'maintain calorie surplus', break them down into specific tasks, such as 'eat xyz meal' or 'drink zyx drink' etc. 3) Ensure that the tasks you suggest are not too exotic, dangerous or extremely difficult to do correctly for the user based on their info.";
 
     if (part === "body") {
       const isOverweight = concernsNames.includes("excess_weight");
       const isUnderweight = concernsNames.includes("low_body_mass");
 
-      const condition = isOverweight
-        ? "overweight"
-        : isUnderweight
-        ? "underweight"
-        : undefined;
+      if (isUnderweight) {
+        text += ` 4) Assume that it's hard for the user to gain weight. Should the tasks or their frequencies be changed? if yes change, if not, leave as is.`;
+      }
 
-      const wish = isOverweight
-        ? "lose weight"
-        : isUnderweight
-        ? "gain mass"
-        : undefined;
-
-      if (condition && wish)
-        findSolutionsContentArray.push({
-          model: "deepseek-reasoner",
-          content: [
-            {
-              type: "text" as "text",
-              text: `Have you considered that the user is ${condition} and they want to ${wish}? If not, should the frequencies of the solutions be changed to best satisfy their wish safely? If yes, change them, if not leave as is.`,
-            },
-          ],
-          callback,
-        });
+      if (isOverweight) {
+        text += ` 4) Assume that it's hard for the user to lose weight. Should the tasks or their frequencies be changed? if yes change, if not, leave as is.`;
+      }
     }
+
+    const checkMessage: RunType = {
+      model: "deepseek-reasoner",
+      content: [
+        {
+          type: "text",
+          text,
+        },
+      ],
+      callback,
+    };
+
+    findSolutionsContentArray.push(checkMessage);
 
     let ChooseSolutonForConcernsResponseType = z.object(
       allConcerns.reduce((a, c) => {

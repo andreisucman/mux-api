@@ -21,8 +21,6 @@ export default async function searchYoutubeVideo(keywords: string) {
     const response = await fetch(`${baseUrl}?${queryString}`);
     const data = await response.json();
 
-    console.log("data", data);
-
     if (!data.items || data.items.length === 0) {
       return null;
     }
