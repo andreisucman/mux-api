@@ -1,7 +1,7 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import { db, stripe } from "init.js";
+import { adminDb, db, stripe } from "init.js";
 import Stripe from "stripe";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
@@ -465,7 +465,7 @@ async function createScanAccountingOperation(
 }
 
 async function markEventAsProcessed(eventId: string) {
-  await db
+  await adminDb
     .collection("ProcessedEvent")
     .insertOne({ eventId, createdAt: new Date() });
 }
@@ -483,7 +483,7 @@ async function handleStripeWebhook(event: Stripe.Event) {
       return;
     }
 
-    const existingEvent = await db.collection("ProcessedEvent").findOne({
+    const existingEvent = await adminDb.collection("ProcessedEvent").findOne({
       eventId: event.id,
     });
 

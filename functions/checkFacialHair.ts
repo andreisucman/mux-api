@@ -21,7 +21,7 @@ export default async function checkFacialHair({
   incrementMultiplier = 1,
 }: Props) {
   try {
-    const relevantImage = partImages.find((imo) => imo.position === "front");
+    const relevantImage = partImages?.find((imo) => imo.position === "front");
 
     const FacialHairCheckResponseType = z.object({
       isGrowingBeard: z.boolean().describe("true if yes, false if not"),

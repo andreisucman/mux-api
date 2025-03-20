@@ -4,7 +4,7 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
-import { CustomRequest } from "types.js";
+import { CustomRequest, RoutineStatusEnum } from "types.js";
 import aqp, { AqpQuery } from "api-query-params";
 import { db } from "init.js";
 import { maskRoutine } from "@/helpers/mask.js";
@@ -16,12 +16,13 @@ route.get(
   "/:userName?",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { userName } = req.params;
-    const { filter, skip, sort = {} } = aqp(req.query as any) as AqpQuery;
+    const { filter, skip, sort } = aqp(req.query as any) as AqpQuery;
     const { part, restOfFilter } = filter;
 
     try {
       const finalFilter: { [key: string]: any } = {
         ...restOfFilter,
+        status: { $ne: RoutineStatusEnum.DELETED },
       };
 
       if (userName) {
@@ -44,7 +45,7 @@ route.get(
         isPublic: 1,
       };
 
-      const finalSort = { ...(sort || { _id: -1 }), status: 1 };
+      const finalSort = { ...(sort || { startsAt: -1 }) };
 
       const routines = await doWithRetries(async () =>
         db

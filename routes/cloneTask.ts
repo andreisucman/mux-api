@@ -62,7 +62,8 @@ route.post(
 
       if (!currentRoutine) throw httpError(`Routine ${routineId} not found`);
 
-      const { allTasks, finalSchedule, status } = currentRoutine || {};
+      const { allTasks, finalSchedule, status, lastDate } =
+        currentRoutine || {};
 
       if (status !== RoutineStatusEnum.ACTIVE) {
         res.status(200).json({ error: `Can't edit an inactive routine` });

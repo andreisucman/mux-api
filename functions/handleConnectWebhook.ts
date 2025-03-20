@@ -1,6 +1,6 @@
 import * as dotenv from "dotenv";
 dotenv.config();
-import { db } from "init.js";
+import { adminDb, db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 import { ModerationStatusEnum } from "@/types.js";
@@ -22,7 +22,7 @@ export default async function handleConnectWebhook(event: Stripe.Event) {
     )
       return;
 
-    const existingEvent = await db
+    const existingEvent = await adminDb
       .collection("ProcessedEvent")
       .findOne({ eventId: event.id });
     if (existingEvent) {
@@ -84,7 +84,7 @@ async function updateUserBalance(connectId: string, amount: number) {
 }
 
 async function markEventAsProcessed(eventId: string) {
-  await db
+  await adminDb
     .collection("ProcessedEvent")
     .insertOne({ eventId, createdAt: new Date() });
 }

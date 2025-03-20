@@ -20,7 +20,7 @@ import checkIfTaskIsSimilar from "@/functions/checkIfTaskIsSimilar.js";
 import moderateContent from "@/functions/moderateContent.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import httpError from "@/helpers/httpError.js";
-import { db } from "init.js";
+import { adminDb, db } from "init.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 
 const route = Router();
@@ -101,7 +101,7 @@ route.post(
 
         if (isHarmful) {
           await doWithRetries(async () =>
-            db.collection("HarmfulTaskDescriptions").insertOne({
+            adminDb.collection("HarmfulTaskDescriptions").insertOne({
               userId: new ObjectId(req.userId),
               response: explanation,
               type: "edit",

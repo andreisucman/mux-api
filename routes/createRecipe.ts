@@ -19,7 +19,7 @@ import askRepeatedly from "functions/askRepeatedly.js";
 import generateImage from "functions/generateImage.js";
 import checkSubscriptionStatus from "functions/checkSubscription.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
-import { db } from "init.js";
+import { adminDb, db } from "init.js";
 import httpError from "@/helpers/httpError.js";
 import findRelevantSuggestions from "@/functions/findRelevantSuggestions.js";
 import extractProductsFromImage from "@/functions/extractProductsFromImage.js";
@@ -60,7 +60,7 @@ route.post(
 
       if (isHarmful) {
         await doWithRetries(async () =>
-          db.collection("HarmfulTaskDescriptions").insertOne({
+          adminDb.collection("HarmfulTaskDescriptions").insertOne({
             userId: new ObjectId(req.userId),
             response: explanation,
             type: "createRecipe",
@@ -116,8 +116,6 @@ route.post(
         });
         return;
       }
-
-      console.log("analysisType", analysisType);
 
       await doWithRetries(async () =>
         db.collection("AnalysisStatus").updateOne(

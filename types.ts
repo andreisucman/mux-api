@@ -260,14 +260,16 @@ export enum TaskStatusEnum {
   COMPLETED = "completed",
   EXPIRED = "expired",
   CANCELED = "canceled",
-  DELETED = "deleted",
   INACTIVE = "inactive",
+  DELETED = "deleted",
 }
 
 export enum RoutineStatusEnum {
   ACTIVE = "active",
-  INACTIVE = "inactive",
+  EXPIRED = "expired",
+  CANCELED = "canceled",
   DELETED = "deleted",
+  INACTIVE = "inactive"
 }
 
 export type StreaksType = {

@@ -12,7 +12,7 @@ import isActivityHarmful from "@/functions/isActivityHarmful.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { daysFrom } from "helpers/utils.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
-import { db } from "init.js";
+import { adminDb, db } from "init.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import { validParts } from "@/data/other.js";
 
@@ -77,7 +77,7 @@ route.post(
 
       if (isHarmful) {
         await doWithRetries(async () =>
-          db.collection("HarmfulTaskDescriptions").insertOne({
+          adminDb.collection("HarmfulTaskDescriptions").insertOne({
             userId: new ObjectId(req.userId),
             response: explanation,
             text: name,

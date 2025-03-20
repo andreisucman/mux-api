@@ -53,12 +53,14 @@ export default async function chooseSolutionsForConcerns({
   timeZone,
   part,
 }: Props) {
-  const callback = () =>
+  const callback = () => {
+    const value = part === "body" ? 7 : 14;
     incrementProgress({
       operationKey: "routine",
-      value: 1 * incrementMultiplier,
+      value: value * incrementMultiplier,
       userId: String(userId),
     });
+  };
 
   const { sex } = demographics;
 

@@ -15,6 +15,7 @@ import { ObjectId } from "mongodb";
 import { db } from "@/init.js";
 import updateAnalytics from "./updateAnalytics.js";
 import updateTasksAnalytics from "./updateTasksAnalytics.js";
+import updateRoutineStatus from "./updateRoutineStatus.js";
 
 type Props = {
   userId: string;
@@ -24,7 +25,7 @@ type Props = {
   hostRoutine: RoutineType;
 };
 
-export default async function stealSingleRoutine({
+export default async function cloneSingleRoutine({
   userId,
   userName,
   timeZone,
@@ -32,43 +33,6 @@ export default async function stealSingleRoutine({
   hostRoutine,
 }: Props) {
   try {
-    const currentRoutine = await doWithRetries(async () =>
-      db
-        .collection("Routine")
-        .find(
-          {
-            userId: new ObjectId(userId),
-            status: RoutineStatusEnum.ACTIVE,
-            part: hostRoutine.part,
-          },
-          { projection: { _id: 1 } }
-        )
-        .sort({ _id: -1 })
-        .next()
-    );
-
-    if (currentRoutine) {
-      await doWithRetries(async () =>
-        db.collection("Routine").updateOne(
-          { _id: new ObjectId(currentRoutine._id) },
-          {
-            $set: {
-              status: RoutineStatusEnum.INACTIVE,
-            },
-          }
-        )
-      );
-
-      await doWithRetries(async () =>
-        db
-          .collection("Task")
-          .updateMany(
-            { routineId: new ObjectId(currentRoutine._id) },
-            { $set: { status: TaskStatusEnum.INACTIVE } }
-          )
-      );
-    }
-
     let replacementTasks = (await doWithRetries(async () =>
       db
         .collection("Task")
@@ -82,16 +46,20 @@ export default async function stealSingleRoutine({
     const newRoutineId = new ObjectId();
 
     /* reset personalized fields */
-    replacementTasks = replacementTasks.map((task) => ({
-      ...task,
-      userId: new ObjectId(userId),
-      routineId: newRoutineId,
-      proofEnabled: true,
-      status: TaskStatusEnum.ACTIVE,
-      completedAt: null,
-      userName,
-      stolenFrom: userName,
-    }));
+    replacementTasks = replacementTasks.map((task) => {
+      const newTask: TaskType = {
+        ...task,
+        _id: new ObjectId(),
+        userId: new ObjectId(userId),
+        routineId: newRoutineId,
+        proofEnabled: true,
+        status: TaskStatusEnum.ACTIVE,
+        completedAt: null,
+        userName,
+      };
+      if (userName) newTask.stolenFrom = userName;
+      return newTask;
+    });
 
     /* get the frequencies for each task */
     const taskFrequencyMap = replacementTasks.reduce(
@@ -144,7 +112,6 @@ export default async function stealSingleRoutine({
 
         replacementTaskWithDates.push({
           ...relevantTaskInfo,
-          _id: new ObjectId(),
           startsAt: starts,
           expiresAt: expires,
           completedAt: null,
@@ -222,8 +189,9 @@ export default async function stealSingleRoutine({
       startsAt: new Date(minDate),
       lastDate: new Date(maxDate),
       status: RoutineStatusEnum.ACTIVE,
-      stolenFrom: hostRoutine.userName,
     };
+
+    if (userName) newRoutine.stolenFrom = hostRoutine.userName;
 
     await doWithRetries(async () =>
       db.collection("Routine").insertOne(newRoutine)
@@ -253,6 +221,8 @@ export default async function stealSingleRoutine({
         [`overview.tasks.part.routinesStolen.${hostRoutine.part}`]: 1,
       },
     });
+
+    return newRoutine;
   } catch (error) {
     throw httpError(error);
   }

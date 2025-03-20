@@ -9,6 +9,7 @@ import setToMidnight from "@/helpers/setToMidnight.js";
 type Props = {
   userId: string;
   timeZone: string;
+  sort?: { [key: string]: any };
   filter?: { [key: string]: any };
   returnOnlyRoutines?: boolean;
 };
@@ -17,6 +18,7 @@ export default async function getLatestRoutinesAndTasks({
   userId,
   timeZone,
   filter = {},
+  sort,
   returnOnlyRoutines,
 }: Props) {
   try {
@@ -26,13 +28,14 @@ export default async function getLatestRoutinesAndTasks({
       ...filter,
     };
 
+
     const routines = await doWithRetries(
       async () =>
         await db
           .collection("Routine")
           .aggregate([
             { $match: match },
-            { $sort: { _id: -1 } },
+            { $sort: sort || { _id: -1 } },
             {
               $group: {
                 _id: "$part",

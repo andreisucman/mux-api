@@ -15,7 +15,7 @@ import {
   TaskStatusEnum,
   TaskType,
 } from "types.js";
-import { db } from "init.js";
+import { adminDb, db } from "init.js";
 import askRepeatedly from "functions/askRepeatedly.js";
 import isActivityHarmful from "@/functions/isActivityHarmful.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
@@ -135,7 +135,7 @@ route.post(
 
       if (isHarmful) {
         await doWithRetries(async () =>
-          db.collection("HarmfulTaskDescriptions").insertOne({
+          adminDb.collection("HarmfulTaskDescriptions").insertOne({
             userId: new ObjectId(req.userId),
             response: explanation,
             type: "save",

@@ -77,7 +77,7 @@ export default async function makeANewRoutine({
     );
 
     await incrementProgress({
-      value: 1 * incrementMultiplier,
+      value: 5 * incrementMultiplier,
       operationKey: "routine",
       userId: String(userId),
     });
@@ -93,12 +93,6 @@ export default async function makeANewRoutine({
         specialConsiderations,
       })
     );
-
-    await incrementProgress({
-      value: 2 * incrementMultiplier,
-      operationKey: "routine",
-      userId: String(userId),
-    });
 
     const previousRoutineRecord = await doWithRetries(async () =>
       db
@@ -152,7 +146,7 @@ export default async function makeANewRoutine({
         allTasks: allTasksWithDateAndIds,
         startsAt: new Date(minDate),
         lastDate: new Date(maxDate),
-        part
+        part,
       })
     );
 

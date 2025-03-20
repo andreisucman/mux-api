@@ -50,7 +50,12 @@ export default async function createSolutionInfo({
         .describe(
           "Number of days the user should rest before repeating this activity"
         ),
-      isDish: z.boolean().describe("true if this activity is a food dish"),
+      isDish: z
+        .boolean()
+        .describe(
+          "true if this activity is a dish that has to be prepared before eating"
+        ),
+      isFood: z.boolean().describe("true if this activity is a food"),
       productTypes: productTypesSchema,
     });
 
@@ -78,8 +83,10 @@ export default async function createSolutionInfo({
 
     const color = generateRandomPastelColor();
 
+    const { isFood, ...restData } = data;
+
     const response = {
-      ...data,
+      ...restData,
       key: solution,
       color,
       concern,
@@ -88,7 +95,7 @@ export default async function createSolutionInfo({
       productTypes: data.productTypes.filter((s: string) => s),
     };
 
-    if (data.isDish) {
+    if (data.isFood) {
       response.recipe = null;
       const dishImage = await generateImage({
         description,
@@ -96,9 +103,7 @@ export default async function createSolutionInfo({
         userId,
       });
       response.example = { type: "image", url: dishImage };
-    }
-
-    if (!data.isDish) {
+    } else {
       const youtubeVideo = await searchYoutubeVideo(`How to ${data.name}`);
 
       if (youtubeVideo) {

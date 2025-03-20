@@ -34,8 +34,16 @@ export default async function findEmoji({ taskNames, userId }: Props) {
           text: `Activities: ${taskNames.join("\n")}. `,
         },
       ],
-      model:
-        "ft:gpt-4o-mini-2024-07-18:personal:save-task-from-description:AIx7makF",
+      model: "gpt-4o-mini",
+    },
+    {
+      content: [
+        {
+          type: "text",
+          text: `Are there any corrupted or missing icons (e.g. 🪥) ? If yes replace them with some other icon or 🚩`,
+        },
+      ],
+      model: "gpt-4o-mini",
       responseFormat: zodResponseFormat(TaskResponseType, "TaskResponseType"),
     },
   ];

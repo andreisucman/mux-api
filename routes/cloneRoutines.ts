@@ -5,34 +5,34 @@ import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import { CustomRequest, RoutineType } from "types.js";
+import { CustomRequest, RoutineStatusEnum, RoutineType } from "types.js";
 import { checkDateValidity } from "helpers/utils.js";
 import httpError from "@/helpers/httpError.js";
 import getUserInfo from "@/functions/getUserInfo.js";
-import stealSingleRoutine from "@/functions/stealSingleRoutine.js";
-import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
-import incrementProgress from "@/helpers/incrementProgress.js";
+import cloneSingleRoutine from "@/functions/cloneSingleRoutine.js";
+import getLatestRoutinesAndTasks from "@/functions/getLatestRoutineAndTasks.js";
 
 const route = Router();
 
 type Props = {
   routineIds: string[];
   startDate: string;
-  userName: string;
   timeZone: string;
+  part?: string;
+  sort?: string;
 };
 
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { routineIds, startDate, userName, timeZone }: Props = req.body;
+    const { routineIds, startDate, timeZone, sort }: Props = req.body;
 
     const { isValidDate, isFutureDate } = checkDateValidity(
       startDate,
       timeZone
     );
 
-    if (!routineIds || !isValidDate || !isFutureDate || !userName) {
+    if (!routineIds || !isValidDate || !isFutureDate) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
@@ -50,43 +50,23 @@ route.post(
       const routinesToAdd = (await doWithRetries(async () =>
         db
           .collection("Routine")
-          .find(
-            { _id: { $in: routineIds.map((id: string) => new ObjectId(id)) } },
-            { projection: { _id: 0 } }
-          )
+          .find({
+            _id: { $in: routineIds.map((id: string) => new ObjectId(id)) },
+          })
           .toArray()
       )) as unknown as RoutineType[];
 
-      if (!routinesToAdd)
-        throw httpError(`Routines ${routinesToAdd.join(", ")} not found`);
-
-      await doWithRetries(async () =>
-        db
-          .collection("AnalysisStatus")
-          .updateOne(
-            { userId: new ObjectId(req.userId), operationKey: "routine" },
-            { $set: { isRunning: true, progress: 1, isError: false } },
-            { upsert: true }
-          )
-      );
-
-      global.startInterval(() =>
-        incrementProgress({
-          operationKey: "routine",
-          userId: req.userId,
-          value: 1,
-        })
-      );
-
-      res.status(200).end();
+      if (!routinesToAdd.length)
+        throw httpError(`Routines ${routineIds.join(", ")} not found`);
 
       const batchSize = 5;
       let promises = [];
+      let clonedRoutines = [];
 
       for (let i = 0; i < routinesToAdd.length; i++) {
         promises.push(
           doWithRetries(() =>
-            stealSingleRoutine({
+            cloneSingleRoutine({
               hostRoutine: routinesToAdd[i],
               startDate,
               timeZone,
@@ -97,24 +77,24 @@ route.post(
         );
 
         if (promises.length === batchSize) {
-          await doWithRetries(async () => await Promise.all(promises));
+          const result = await doWithRetries(
+            async () => await Promise.all(promises)
+          );
+          clonedRoutines.push(...result);
           promises.length = 0;
         }
       }
 
       if (promises.length > 0) {
-        await doWithRetries(async () => await Promise.all(promises));
+        const result = await doWithRetries(
+          async () => await Promise.all(promises)
+        );
+        clonedRoutines.push(...result);
         promises.length = 0;
       }
-      global.stopInterval();
+
+      res.status(200).json({ message: clonedRoutines });
     } catch (error) {
-      await addAnalysisStatusError({
-        userId: String(req.userId),
-        message: "An unexpected error occured. Please try again.",
-        originalMessage: error.message,
-        operationKey: "routine",
-      });
-      global.stopInterval();
       next(error);
     }
   }

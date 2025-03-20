@@ -21,7 +21,7 @@ import checkCanRoutine from "@/helpers/checkCanRoutine.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import { db } from "init.js";
 import { validParts } from "@/data/other.js";
-import { checkDateValidity } from "@/helpers/utils.js";
+import { checkDateValidity, delayExecution } from "@/helpers/utils.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
 
 const route = Router();
@@ -111,12 +111,13 @@ route.post(
           )
       );
 
-      global.startInterval(() =>
-        incrementProgress({
-          operationKey: "routine",
-          userId: req.userId,
-          value: 1,
-        }),
+      global.startInterval(
+        () =>
+          incrementProgress({
+            operationKey: "routine",
+            userId: req.userId,
+            value: 1,
+          }),
         12000
       );
 
@@ -183,6 +184,17 @@ route.post(
           }
         )
       );
+
+      await doWithRetries(async () =>
+        db
+          .collection("AnalysisStatus")
+          .updateOne(
+            { userId: new ObjectId(req.userId), operationKey: "routine" },
+            { $set: { progress: 99 } }
+          )
+      );
+
+      await delayExecution(5000);
 
       await doWithRetries(async () =>
         db
