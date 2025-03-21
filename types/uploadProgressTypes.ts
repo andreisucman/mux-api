@@ -25,7 +25,6 @@ export type UploadProgressUserInfo = {
   demographics: DemographicsType;
   country: string;
   timeZone: string;
-  nextScan: NextActionType[];
   scanAnalysisQuota: number;
   specialConsiderations?: string;
   latestProgress: LatestProgressType;

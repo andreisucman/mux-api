@@ -23,6 +23,7 @@ route.get(
     try {
       const filter: { [key: string]: any } = {
         moderationStatus: ModerationStatusEnum.ACTIVE,
+        deletedOn: { $exists: false },
       };
 
       if (userName) {

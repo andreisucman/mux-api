@@ -33,6 +33,7 @@ import getUserInfo from "@/functions/getUserInfo.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 import { validParts } from "@/data/other.js";
 import findRelevantSuggestions from "@/functions/findRelevantSuggestions.js";
+import getUsersImages from "@/functions/getUserImages.js";
 
 const route = Router();
 
@@ -75,16 +76,12 @@ route.post(
       });
     }
     try {
-      const userInfo = await getUserInfo({
+      const userImages = await getUsersImages({
         userId: req.userId,
-        projection: { nextScan: 1 },
+        part,
       });
 
-      const relevantScanType = userInfo.nextScan.find(
-        (obj) => obj.part === part
-      );
-
-      if (new Date() >= new Date(relevantScanType.date)) {
+      if (!userImages) {
         res.status(200).json({
           error: `You need to scan your ${part} first.`,
         });
@@ -234,6 +231,11 @@ route.post(
       });
 
       const color = generateRandomPastelColor();
+
+      const userInfo = await getUserInfo({
+        userId: req.userId,
+        projection: { name: 1 },
+      });
 
       const generalTaskInfo: TaskType = {
         ...response,

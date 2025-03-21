@@ -16,9 +16,7 @@ import {
   ProgressType,
   UploadProgressUserInfo,
 } from "@/types/uploadProgressTypes.js";
-import checkCanScan from "@/helpers/checkCanScan.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
-import formatDate from "@/helpers/formatDate.js";
 import httpError from "@/helpers/httpError.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
 import checkAndRecordTwin from "@/functions/checkAndRecordTwin.js";
@@ -149,8 +147,6 @@ route.post(
           {
             projection: {
               requiredProgress: 1,
-              toAnalyze: 1,
-              nextScan: 1,
             },
           }
         )
@@ -158,18 +154,7 @@ route.post(
 
       if (!userInfo) throw httpError(`User ${finalUserId} not found`);
 
-      let { requiredProgress, toAnalyze, nextScan } = userInfo;
-
-      const { canScan, filteredToAnalyze, canScanDate } =
-        checkCanScan({ nextScan, toAnalyze }) || {};
-
-      if (!canScan) {
-        const date = formatDate({ date: canScanDate });
-        res.status(200).json({
-          error: `You have already analyzed yourself. Try again after ${date}.`,
-        });
-        return;
-      }
+      let { requiredProgress, toAnalyze } = userInfo;
 
       /* remove the current uploaded info from the remaining requirements */
       const remainingRequirements: ProgressType[] = requiredProgress.filter(
@@ -199,7 +184,7 @@ route.post(
         contentUrlTypes,
       };
 
-      const newToAnalyze = [...filteredToAnalyze, newToAnalyzeObject];
+      const newToAnalyze = [...toAnalyze, newToAnalyzeObject];
 
       let toUpdate: { $set: { [key: string]: any } } = {
         $set: {

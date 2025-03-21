@@ -71,16 +71,12 @@ route.post(
 
       const userInfo = await getUserInfo({
         userId: req.userId,
-        projection: { nextRoutine: 1, nextScan: 1, concerns: 1 },
+        projection: { nextRoutine: 1, concerns: 1 },
       });
 
       if (!userInfo) throw httpError("User not found");
 
-      const {
-        nextRoutine,
-        nextScan,
-        concerns: existingConcerns = [],
-      } = userInfo;
+      const { nextRoutine, concerns: existingConcerns = [] } = userInfo;
 
       if (concerns.length === 0) {
         // if the user disables all concerns
@@ -126,7 +122,6 @@ route.post(
       let updatedNextRoutine;
 
       let { canRoutineDate, availableRoutines } = checkCanRoutine({
-        nextScan,
         nextRoutine,
       });
 

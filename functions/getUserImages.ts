@@ -18,7 +18,7 @@ export default async function getUsersImages({
 
     if (part) filter.part = part;
 
-    const latestHeadProgressRecord = await doWithRetries(async () =>
+    const latestProgressRecord = await doWithRetries(async () =>
       db
         .collection("Progress")
         .find(filter, { projection: { images: 1 } })
@@ -26,9 +26,9 @@ export default async function getUsersImages({
         .next()
     );
 
-    if (!latestHeadProgressRecord) return null;
+    if (!latestProgressRecord) return null;
 
-    const { images } = latestHeadProgressRecord;
+    const { images } = latestProgressRecord;
 
     return images;
   } catch (err) {

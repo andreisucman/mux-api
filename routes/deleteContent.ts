@@ -56,7 +56,6 @@ route.post(
         case "progress":
           const {
             _id: userId,
-            nextScan,
             latestScores,
             latestScoresDifference,
           } = userInfo;
@@ -119,24 +118,11 @@ route.post(
           }
 
           if (substituteProgressRecord) {
-            const relevantScan = nextScan.find(
-              (rec) => rec.part === substituteProgressRecord.part
-            );
-
-            if (!relevantScan) throw httpError("Type scan not found");
-
-            const newPartScans = nextScan.map((rec) =>
-              rec.part === relevantScan.part
-                ? { ...relevantScan, date: new Date() }
-                : rec
-            );
-
             await doWithRetries(async () =>
               db.collection("User").updateOne(
                 { _id: new ObjectId(req.userId) },
                 {
                   $set: recalculatedData,
-                  nextScan: newPartScans,
                 }
               )
             );

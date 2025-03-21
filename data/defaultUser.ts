@@ -152,7 +152,6 @@ export const defaultUser: UserType = {
   streaks: defaultStreaks,
   specialConsiderations: "",
   tosAccepted: false,
-  nextScan: defaultNextAction,
   nextRoutine: defaultNextAction,
   streakDates: {},
   password: null,

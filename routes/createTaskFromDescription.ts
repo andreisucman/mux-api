@@ -14,6 +14,7 @@ import { daysFrom } from "helpers/utils.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
 import { adminDb, db } from "init.js";
 import getUserInfo from "@/functions/getUserInfo.js";
+import getUsersImages from "@/functions/getUserImages.js";
 import { validParts } from "@/data/other.js";
 
 const route = Router();
@@ -30,16 +31,9 @@ route.post(
 
     try {
       /* check if scanned */
-      const userInfo = await getUserInfo({
-        userId: req.userId,
-        projection: { nextScan: 1 },
-      });
+      const relatedImage = await getUsersImages({ userId: req.userId, part });
 
-      const relevantScanType = userInfo.nextScan.find(
-        (obj) => obj.part === part
-      );
-
-      if (new Date() >= new Date(relevantScanType.date)) {
+      if (!relatedImage) {
         res.status(200).json({
           error: `You need to scan your ${part} first.`,
         });

@@ -101,7 +101,6 @@ export type UserType = {
   latestScanImages?: string[];
   specialConsiderations: string;
   streaks: StreaksType;
-  nextScan: NextActionType[];
   nextRoutine: NextActionType[];
   streakDates: {};
   concerns: UserConcernType[] | null;

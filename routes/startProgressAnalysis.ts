@@ -14,7 +14,6 @@ import { UploadProgressUserInfo } from "types/uploadProgressTypes.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import analyzeAppearance from "functions/analyzeAppearance.js";
 import formatDate from "@/helpers/formatDate.js";
-import checkCanScan from "@/helpers/checkCanScan.js";
 import httpError from "@/helpers/httpError.js";
 import { db } from "init.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
@@ -60,7 +59,6 @@ route.post(
               nutrition: 1,
               country: 1,
               timeZone: 1,
-              nextScan: 1,
               latestProgress: 1,
               specialConsiderations: 1,
               latestScoresDifference: 1,
@@ -78,7 +76,6 @@ route.post(
         avatar,
         toAnalyze,
         club,
-        nextScan,
         concerns,
         demographics,
         latestProgress,
@@ -88,17 +85,6 @@ route.post(
         latestScoresDifference,
         specialConsiderations,
       } = userInfo;
-
-      const { canScan, filteredToAnalyze, canScanDate } =
-        checkCanScan({ nextScan, toAnalyze }) || {};
-
-      if (!canScan) {
-        const date = formatDate({ date: canScanDate });
-        res.status(200).json({
-          error: `You have already analyzed yourself. Try again after ${date}.`,
-        });
-        return;
-      }
 
       if (enableScanAnalysis) {
         if (scanAnalysisQuota < 1) {
@@ -139,12 +125,11 @@ route.post(
         avatar,
         cookies: req.cookies,
         concerns: concerns || [],
-        nextScan,
         blurType,
         enableScanAnalysis,
         categoryName: CategoryNameEnum.PROGRESSSCAN,
         demographics,
-        toAnalyze: filteredToAnalyze,
+        toAnalyze,
         latestScores,
         latestProgress,
         latestScoresDifference,

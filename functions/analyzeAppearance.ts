@@ -16,7 +16,6 @@ import {
 } from "types.js";
 import analyzePart from "functions/analyzePart.js";
 import { defaultRequiredProgress } from "data/defaultUser.js";
-import updateNextScan from "helpers/updateNextScan.js";
 import { db } from "init.js";
 import { ModerationStatusEnum } from "types.js";
 import httpError from "@/helpers/httpError.js";
@@ -39,7 +38,6 @@ type Props = {
   newSpecialConsiderations: string;
   latestProgress: LatestProgressType;
   demographics: DemographicsType;
-  nextScan: NextActionType[];
   latestScores: LatestScoresType;
   latestScoresDifference: LatestScoresType;
 };
@@ -53,7 +51,6 @@ export default async function analyzeAppearance({
   blurType,
   concerns = [],
   categoryName,
-  nextScan,
   latestProgress,
   defaultToUpdateUser,
   latestScores,
@@ -88,7 +85,6 @@ export default async function analyzeAppearance({
 
     toUpdateUser.$set = {
       ...toUpdateUser.$set,
-      nextScan,
       toAnalyze,
       latestScores,
       demographics,
@@ -127,7 +123,6 @@ export default async function analyzeAppearance({
     });
 
     toUpdateUser.$set.demographics = demographics;
-    toUpdateUser.$set.nextScan = updateNextScan({ nextScan, toAnalyze });
 
     const analyzePartPromises = parts.map((part) => {
       return doWithRetries(async () =>
