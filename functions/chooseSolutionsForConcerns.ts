@@ -17,6 +17,7 @@ import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import checkFacialHair from "./checkFacialHair.js";
 import { toSentenceCase } from "helpers/utils.js";
 import httpError from "helpers/httpError.js";
+import { ChatCompletionContentPart } from "openai/resources/index.mjs";
 
 type Props = {
   timeZone: string;
@@ -29,6 +30,7 @@ type Props = {
   demographics: DemographicsType;
   incrementMultiplier?: number;
   partImages: ProgressImageType[];
+  latestProgressFeedback?: string;
   currentSolutions?: { [key: string]: number };
 };
 
@@ -51,6 +53,7 @@ export default async function chooseSolutionsForConcerns({
   userId,
   country,
   timeZone,
+  latestProgressFeedback,
   part,
 }: Props) {
   const callback = () => {
@@ -76,8 +79,8 @@ export default async function chooseSolutionsForConcerns({
     <--->Your response is an object where keys are the concerns and values are an array of objects each havng a solution name and frequency. <--->Example of your response format: {chapped_lips: [{solution: lip healing balm, monthlyFrequency: 60}], thinning_hair: [{solution: minoxidil, monthlyFrequency: 60},{solution: scalp massage, monthlyFrequency: 30}, {solution: gentle shampoo, monthlyFrequency: 8}, ...], ...}`;
 
     if (currentSolutions) {
-      findSolutionsInstruction = `You are a dermatologist, dentist and fitness coach. You are given the information about a user, a list of their ${part} concerns and the current solutons that they are using to improve the concerns. Your goal is to check if the number and frequency of their solutions are optimal for addressing the concerns and if not, suggest additional solutions. The additional solutions could include nutrition, skincare or fitness tasks. Each solution must represent a standalone individual task with a monthly frequency of use. The solutions must be compatible with the existing solutions. Don't suggest using apps, or passive tasks such as sleeping. 
-    <--->Your response is an object with this structure: {areEnough: true if current solutions are enough, false if not, additionalSolutions: an object of additional solutions if required, each having a solution name and frequency, or null if no additional solutions are needed.} <--->Example of your response format: {areEnough: false, additionalSolutions: {chapped_lips: [{solution: lip healing balm, monthlyFrequency: 60}], thinning_hair: [{solution: minoxidil, monthlyFrequency: 60},{solution: scalp massage, monthlyFrequency: 30}, {solution: gentle shampoo, monthlyFrequency: 8}, ...], ...}}`;
+      findSolutionsInstruction = `You are a dermatologist, dentist and fitness coach. You are given the information about a user, a list of their ${part} concerns and the information about the solutons that they have used in the past week to improve the concerns. Your goal is to analyze if their solutions are effective in addressing their concerns and if not, update their list of solutons. You can remove the existing and add new solutions. Your suggestions could include nutrition, skincare or fitness tasks. Each of your suggestions must be a standalone individual task with a monthly frequency of use. Don't suggest apps, or passive tasks such as sleeping. 
+    <--->Your response is an object with this structure: {areCurrentSolutionsOkay: true if current solutions are effective at addressing the user's concerns and no changes are needed, updatedListOfSolutions: the updated solutions for each concern if the user's solutions were not effective.} <--->Example of your response format: {areCurrentSolutionsOkay: false, updatedListOfSolutions: {chapped_lips: [{solution: lip healing balm, monthlyFrequency: 60}], thinning_hair: [{solution: minoxidil, monthlyFrequency: 60},{solution: scalp massage, monthlyFrequency: 30}, {solution: gentle shampoo, monthlyFrequency: 8}, ...], ...}}`;
     }
 
     if (shouldCheckFacialHar) {
@@ -108,27 +111,33 @@ export default async function chooseSolutionsForConcerns({
       .map(([key, value]) => `${toSentenceCase(key)}: ${value}`)
       .join("\n");
 
+    const content: ChatCompletionContentPart[] = [
+      {
+        type: "text",
+        text: `User info: ${userAboutString}.${
+          specialConsiderations
+            ? ` User's special considerations: ${specialConsiderations}`
+            : ""
+        }`,
+      },
+      {
+        type: "text",
+        text: `User's concerns are: ${JSON.stringify(allConcerns)}`,
+      },
+    ];
+
+    if (latestProgressFeedback) {
+      content.splice(1, 0, { type: "text", text: latestProgressFeedback });
+    }
+
     findSolutionsContentArray.push({
       model: "deepseek-reasoner",
-      content: [
-        {
-          type: "text",
-          text: `User info: ${userAboutString}.${
-            specialConsiderations
-              ? ` User's special considerations: ${specialConsiderations}`
-              : ""
-          }`,
-        },
-        {
-          type: "text",
-          text: `The user's concerns are: ${JSON.stringify(allConcerns)}`,
-        },
-      ],
+      content,
       callback,
     });
 
     let text =
-      "1) Have you suggested enough tasks for each concern? Your list should have all of the necessary tasks that can improve the concerns on their own assuming that the user is not going to do anything else besides them. 2) If you added any collective tasks such as 'maintain calorie surplus', break them down into specific tasks, such as 'eat xyz meal' or 'drink zyx drink' etc. 3) Ensure that the tasks you suggest are not too exotic, dangerous or extremely difficult to do correctly for the user based on their info.";
+      "1) Does your final list inclue enough tasks for each concern? Your list should have all of the necessary tasks that can improve the concerns on their own assuming that the user is not going to do anything else besides them. 2) If your list has any collective tasks such as 'maintain calorie surplus', break them down into specific tasks, such as 'eat xyz meal' or 'drink zyx drink' etc. 3) Ensure that the tasks you suggest are not too exotic, dangerous or extremely difficult to do correctly for the user based on the user's info.";
 
     if (part === "body") {
       const isOverweight = concernsNames.includes("excess_weight");
@@ -170,20 +179,18 @@ export default async function chooseSolutionsForConcerns({
 
     if (currentSolutions) {
       ChooseSolutonForConcernsResponseType = z.object({
-        areEnough: z
+        areCurrentSolutionsOkay: z
           .boolean()
           .describe(
-            "true if the current tasks are enought and no more solutions are needed, false otherwise"
+            "true if the current solutions are effective and no more solutions are needed, false otherwise"
           ),
-        additionalSolutions: z.object(
+        updatedListOfSolutions: z.object(
           allConcerns.reduce((a, c) => {
             a[c.name] = z
               .array(
                 z.object({ solution: z.string(), monthlyFrequency: z.number() })
               )
-              .describe(
-                `The array of the adtional solutions for the ${c.name} concern`
-              );
+              .describe(`The array of solutions for the ${c.name} concern`);
 
             return a;
           }, {})
@@ -219,7 +226,7 @@ export default async function chooseSolutionsForConcerns({
 
     if (currentSolutions) {
       data =
-        findFrequencyResponse.additionalSolutions as unknown as ConcernsSolutionsAndFrequenciesType;
+        findFrequencyResponse.updatedListOfSolutions as unknown as ConcernsSolutionsAndFrequenciesType;
     }
 
     data = Object.fromEntries(
@@ -235,12 +242,15 @@ export default async function chooseSolutionsForConcerns({
     data = convertKeysAndValuesTotoSnakeCase(findFrequencyResponse);
 
     if (currentSolutions) {
-      const { areEnough } = findFrequencyResponse;
+      const { areCurrentSolutionsOkay } = findFrequencyResponse;
 
-      return { areEnough, concernsSolutionsAndFrequencies: data };
+      return { areCurrentSolutionsOkay, concernsSolutionsAndFrequencies: data };
     }
 
-    return { areEnough: null, concernsSolutionsAndFrequencies: data };
+    return {
+      areCurrentSolutionsOkay: null,
+      updatedListOfSolutions: data,
+    };
   } catch (error) {
     throw httpError(error);
   }

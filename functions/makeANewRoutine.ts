@@ -1,9 +1,5 @@
 import { ObjectId } from "mongodb";
 import doWithRetries from "helpers/doWithRetries.js";
-import getRawSchedule from "functions/getRawSchedule.js";
-import polishRawSchedule from "functions/polishRawSchedule.js";
-import createTasks from "functions/createTasks.js";
-import deactivatePreviousRoutineAndTasks from "functions/deactivatePreviousRoutineAndTasks.js";
 import {
   UserConcernType,
   PartEnum,
@@ -15,11 +11,10 @@ import { CreateRoutineUserInfoType } from "types/createRoutineTypes.js";
 import { db } from "init.js";
 import httpError from "helpers/httpError.js";
 import updateTasksAnalytics from "./updateTasksAnalytics.js";
-import addDateAndIdsToAllTasks from "@/helpers/addDateAndIdsToAllTasks.js";
-import incrementProgress from "@/helpers/incrementProgress.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 import createSolutionData from "./createSolutionData.js";
 import chooseSolutionsForConcerns from "./chooseSolutionsForConcerns.js";
+import createScheduleAndTasks from "./createScheduleAndTasks.js";
 
 type Props = {
   userId: string;
@@ -68,72 +63,24 @@ export default async function makeANewRoutine({
       userId: String(userId),
     });
 
-    const rawSchedule = await doWithRetries(async () =>
-      getRawSchedule({
-        allTasks,
-        routineStartDate,
-        days: 7,
-      })
-    );
-
-    await incrementProgress({
-      value: 5 * incrementMultiplier,
-      operationKey: "routine",
-      userId: String(userId),
-    });
-
-    const finalSchedule = await doWithRetries(async () =>
-      polishRawSchedule({
-        userId,
-        part,
-        concerns: partConcerns,
-        categoryName,
-        rawSchedule,
-        incrementMultiplier,
-        specialConsiderations,
-      })
-    );
-
-    const previousRoutineRecord = await doWithRetries(async () =>
-      db
-        .collection("Routine")
-        .find(
-          { userId: new ObjectId(userId) },
-          {
-            projection: {
-              _id: 1,
-            },
-          }
-        )
-        .sort({ createdAt: -1 })
-        .next()
-    );
-
-    if (previousRoutineRecord)
-      await deactivatePreviousRoutineAndTasks(
-        String(previousRoutineRecord._id)
-      );
-
-    let tasksToInsert = await doWithRetries(async () =>
-      createTasks({
-        part,
+    const { allTasksWithDateAndIds, finalSchedule, tasksToInsert } =
+      await createScheduleAndTasks({
         allSolutions,
-        finalSchedule,
-        userInfo,
+        allTasks,
         categoryName,
-      })
-    );
-
-    const { name: userName } = userInfo;
-
-    const allTasksWithDateAndIds = addDateAndIdsToAllTasks({
-      allTasksWithoutDates: allTasks,
-      tasksToInsert,
-    });
+        incrementMultiplier,
+        part,
+        partConcerns,
+        routineStartDate,
+        userInfo,
+        specialConsiderations,
+      });
 
     const { minDate, maxDate } = getMinAndMaxRoutineDates(
       allTasksWithDateAndIds
     );
+
+    const { name: userName } = userInfo;
 
     const newRoutineObject = await doWithRetries(async () =>
       db.collection("Routine").insertOne({
@@ -150,14 +97,14 @@ export default async function makeANewRoutine({
       })
     );
 
-    tasksToInsert = tasksToInsert.map((rt) => ({
+    const tasksToInsertWithRoutineId = tasksToInsert.map((rt) => ({
       ...rt,
       routineId: newRoutineObject.insertedId,
     }));
 
     if (tasksToInsert.length > 0)
       await doWithRetries(async () =>
-        db.collection("Task").insertMany(tasksToInsert)
+        db.collection("Task").insertMany(tasksToInsertWithRoutineId)
       );
 
     updateTasksAnalytics({

@@ -79,7 +79,7 @@ export default async function updateCurrentRoutine({
       currentRoutine.lastDate
     );
 
-    const { concernsSolutionsAndFrequencies, areEnough } =
+    const { concernsSolutionsAndFrequencies, areCurrentSolutionsOkay } =
       await chooseSolutionsForConcerns({
         userId: String(userId),
         part,
@@ -94,7 +94,7 @@ export default async function updateCurrentRoutine({
         specialConsiderations,
       });
 
-    if (areEnough) return;
+    if (areCurrentSolutionsOkay) return;
 
     const { allSolutions: additionalSolutions, allTasks: additionalTasks } =
       await createSolutionData({

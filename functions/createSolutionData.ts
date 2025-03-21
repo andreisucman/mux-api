@@ -8,6 +8,7 @@ import createSolutionDescriptionAndInstruction from "./createSolutionDescrptionA
 import doWithRetries from "@/helpers/doWithRetries.js";
 import createSolutionInfo from "./createSolutionInfo.js";
 import findEmoji from "@/helpers/findEmoji.js";
+import { CreateRoutineAllSolutionsType } from "@/types/createRoutineTypes.js";
 
 type Props = {
   userId: string;
@@ -80,7 +81,9 @@ export default async function createSolutionData({
       }
     );
 
-    let taskInfoRecords = await Promise.all(taskInfoPromises);
+    let taskInfoRecords: CreateRoutineAllSolutionsType[] = await Promise.all(
+      taskInfoPromises
+    );
 
     const iconsMap = await findEmoji({
       userId,

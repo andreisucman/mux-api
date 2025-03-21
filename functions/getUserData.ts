@@ -25,12 +25,14 @@ async function getUserData({ userId }: Props) {
 
     if (!userInfo) return null;
 
-    const { routines, tasks } = await getLatestRoutinesAndTasks({ userId, timeZone: userInfo.timeZone });
+    const tasks = await getLatestRoutinesAndTasks({
+      userId,
+      timeZone: userInfo.timeZone,
+    });
 
     const payload: any = {
       ...userInfo,
       tasks,
-      routines,
     };
 
     return payload;

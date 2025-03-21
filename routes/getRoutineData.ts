@@ -13,6 +13,22 @@ route.get(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
+      const routines = await doWithRetries(
+        async () =>
+          await db
+            .collection("Routine")
+            .aggregate([
+              {
+                $group: {
+                  _id: "$part",
+                  doc: { $first: "$$ROOT" },
+                },
+              },
+              { $replaceRoot: { newRoot: "$doc" } },
+            ])
+            .toArray()
+      );
+
       const routineData = await doWithRetries(async () =>
         db
           .collection("RoutineData")
@@ -20,7 +36,7 @@ route.get(
           .toArray()
       );
 
-      res.status(200).json({ message: routineData });
+      res.status(200).json({ message: { routines, routineData } });
     } catch (err) {
       next(err);
     }

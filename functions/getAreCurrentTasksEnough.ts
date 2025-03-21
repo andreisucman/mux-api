@@ -36,7 +36,7 @@ export default async function getAreCurrentTasksEnough({
     const concernsNames = partConcerns.map((c) => c.name);
 
     const IsEnoughResponseType = z.object({
-      areEnough: z
+      areCurrentSolutionsOkay: z
         .boolean()
         .describe(
           "True if there is no relevant solutions in the list, or if the current routine is enough to effectively address the concerns. False otherwise."
@@ -70,15 +70,16 @@ export default async function getAreCurrentTasksEnough({
       },
     ];
 
-    const { areEnough }: { [key: string]: string } = await askRepeatedly({
-      userId: String(userId),
-      categoryName,
-      systemContent: checkIfEnoughSystem,
-      runs: checkIfEnoughRuns as RunType[],
-      functionName: "getAreCurrentTasksEnough",
-    });
+    const { areCurrentSolutionsOkay }: { [key: string]: string } =
+      await askRepeatedly({
+        userId: String(userId),
+        categoryName,
+        systemContent: checkIfEnoughSystem,
+        runs: checkIfEnoughRuns as RunType[],
+        functionName: "getAreCurrentTasksEnough",
+      });
 
-    return areEnough;
+    return areCurrentSolutionsOkay;
   } catch (error) {
     throw httpError(error);
   }

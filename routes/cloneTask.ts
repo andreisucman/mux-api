@@ -168,19 +168,14 @@ route.post(
 
       let result: { [key: string]: any } = {};
 
-      const routinesFilter = {
-        part: currentTask.part,
-        status: RoutineStatusEnum.ACTIVE,
-      };
+      const updatedRoutines = await doWithRetries(() =>
+        db
+          .collection("Routine")
+          .find({ _id: new ObjectId(routineId) })
+          .toArray()
+      );
 
-      const { routines } = await getLatestRoutinesAndTasks({
-        userId: req.userId,
-        filter: routinesFilter,
-        returnOnlyRoutines: true,
-        timeZone,
-      });
-
-      if (routines.length > 0) result.routine = routines[0];
+      if (updatedRoutines.length > 0) result.routine = updatedRoutines[0];
       if (returnTask) result.newTask = resetTask;
 
       res.status(200).json({

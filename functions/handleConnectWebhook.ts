@@ -134,7 +134,7 @@ async function handleAccountUpdated(event: Stripe.Event) {
     "club.payouts.payoutsDisabledUserNotifiedOn": 1,
   });
 
-  if (!userInfo) throw new Error("User not found");
+  if (!userInfo) return console.warn(`User ${connectId} not found`);
 
   const currentPayoutsEnabled = userInfo.club.payouts.payoutsEnabled;
   const currentDetailsSubmitted = userInfo.club.payouts.detailsSubmitted;
@@ -174,7 +174,7 @@ async function handleTransferUpdated(event: Stripe.Event) {
   const amount = transfer.amount / 100;
 
   const userInfo = await getUserByConnectId(connectId, { _id: 1 });
-  if (!userInfo) throw new Error("User not found");
+  if (!userInfo) return console.warn(`User ${connectId} not found`);
 
   await updateUserBalance(connectId, -amount);
   updateAnalytics({
@@ -197,7 +197,7 @@ async function handlePaymentIntentSucceeded(event: Stripe.Event) {
 
   if (connectId) {
     const userInfo = await getUserByConnectId(connectId, { _id: 1, email: 1 });
-    if (!userInfo) throw new Error("User not found");
+    if (!userInfo) return console.warn(`User ${connectId} not found`);
 
     userId = userInfo._id;
 

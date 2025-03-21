@@ -3,7 +3,7 @@ import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 import { daysFrom } from "@/helpers/utils.js";
-import { RoutineStatusEnum } from "@/types.js";
+import { RoutineStatusEnum, TaskStatusEnum } from "@/types.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
 
 type Props = {
@@ -14,49 +14,8 @@ type Props = {
   returnOnlyRoutines?: boolean;
 };
 
-export default async function getLatestRoutinesAndTasks({
-  userId,
-  timeZone,
-  filter = {},
-  sort,
-  returnOnlyRoutines,
-}: Props) {
+export default async function getLatestTasks({ userId, timeZone }: Props) {
   try {
-    const match = {
-      userId: new ObjectId(userId),
-      status: RoutineStatusEnum.ACTIVE,
-      ...filter,
-    };
-
-
-    const routines = await doWithRetries(
-      async () =>
-        await db
-          .collection("Routine")
-          .aggregate([
-            { $match: match },
-            { $sort: sort || { _id: -1 } },
-            {
-              $group: {
-                _id: "$part",
-                doc: { $first: "$$ROOT" },
-              },
-            },
-            { $replaceRoot: { newRoot: "$doc" } },
-          ])
-          .toArray()
-    );
-
-    if (routines.length === 0) {
-      return { routines: [], tasks: [] };
-    }
-
-    if (returnOnlyRoutines) {
-      return { routines, tasks: [] };
-    }
-
-    const theEarliestRoutine = routines[0];
-
     const todayMidnight = setToMidnight({
       date: new Date(),
       timeZone,
@@ -65,14 +24,32 @@ export default async function getLatestRoutinesAndTasks({
       date: daysFrom({ days: 2 }),
       timeZone,
     });
-    const startsAtFrom = setToMidnight({
-      date: theEarliestRoutine.startsAt,
-      timeZone,
-    });
-    const startsAtTo = setToMidnight({
-      date: daysFrom({ date: startsAtFrom, days: 2 }),
-      timeZone,
-    });
+
+    const closestActiveTask = await doWithRetries(() =>
+      db
+        .collection("Task")
+        .find({
+          status: { $in: [TaskStatusEnum.ACTIVE, TaskStatusEnum.COMPLETED] },
+          startsAt: { $gt: todayMidnight },
+        })
+        .sort({ startsAt: 1 })
+        .project({ startsAt: 1 })
+        .next()
+    );
+
+    let startsAtFrom;
+    let startsAtTo;
+
+    if (closestActiveTask) {
+      startsAtFrom = setToMidnight({
+        date: closestActiveTask.startsAt || todayMidnight,
+        timeZone,
+      });
+      startsAtTo = setToMidnight({
+        date: daysFrom({ date: startsAtFrom, days: 2 }),
+        timeZone,
+      });
+    }
 
     const project = {
       _id: 1,
@@ -102,7 +79,9 @@ export default async function getLatestRoutinesAndTasks({
             $match: {
               userId: new ObjectId(userId),
               startsAt: { $gte: todayMidnight, $lt: nextMidnight },
-              status: { $in: ["active", "completed"] },
+              status: {
+                $in: [TaskStatusEnum.ACTIVE, TaskStatusEnum.COMPLETED],
+              },
             },
           },
           { $sort: sort },
@@ -112,6 +91,10 @@ export default async function getLatestRoutinesAndTasks({
 
       if (primaryResult.length > 0) {
         return primaryResult;
+      }
+
+      if (!closestActiveTask) {
+        return [];
       }
 
       return db
@@ -124,7 +107,9 @@ export default async function getLatestRoutinesAndTasks({
                 { startsAt: { $gte: startsAtFrom, $lt: startsAtTo } },
                 { startsAt: { $gte: todayMidnight } },
               ],
-              status: { $in: ["active", "completed"] },
+              status: {
+                $in: [TaskStatusEnum.ACTIVE, TaskStatusEnum.COMPLETED],
+              },
             },
           },
           { $sort: sort },
@@ -133,7 +118,7 @@ export default async function getLatestRoutinesAndTasks({
         .toArray();
     });
 
-    return { routines, tasks };
+    return tasks;
   } catch (err) {
     throw httpError(err);
   }

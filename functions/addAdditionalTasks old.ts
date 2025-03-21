@@ -76,7 +76,7 @@ export default async function addAdditionalTasks({
       Object.entries(taskFrequencyMap).map(([key, value]) => [key, value * 4])
     );
 
-    const areEnough = await getAreCurrentTasksEnough({
+    const areCurrentSolutionsOkay = await getAreCurrentTasksEnough({
       allSolutions,
       categoryName,
       partConcerns,
@@ -84,7 +84,7 @@ export default async function addAdditionalTasks({
       userId: String(userId),
     });
 
-    if (areEnough) {
+    if (areCurrentSolutionsOkay) {
       return {
         mergedSchedule: currentSchedule,
         additionalAllTasks: [],
@@ -166,7 +166,7 @@ export default async function addAdditionalTasks({
     });
 
     return {
-      areEnough,
+      areCurrentSolutionsOkay,
       mergedSchedule,
       totalAllTasks: allTasksWithDates,
       totalTasksToInsert,

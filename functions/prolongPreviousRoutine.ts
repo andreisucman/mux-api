@@ -53,7 +53,6 @@ export default async function prolongPreviousRoutine({
       throw httpError("No tasks to prolong");
 
     const firstTask = tasksToProlong[0];
-    const previousRoutineId = firstTask.routineId;
 
     const daysDifference = calculateDaysDifference(
       firstTask.startsAt,
@@ -148,9 +147,12 @@ export default async function prolongPreviousRoutine({
       })
       .filter(Boolean);
 
-    await deactivatePreviousRoutineAndTasks(String(previousRoutineId));
-
-    let { totalTasksToInsert, totalAllTasks, mergedSchedule, areEnough } =
+    let {
+      totalTasksToInsert,
+      totalAllTasks,
+      mergedSchedule,
+      areCurrentSolutionsOkay,
+    } =
       (await addAdditionalTasks({
         part,
         userInfo,
@@ -161,11 +163,10 @@ export default async function prolongPreviousRoutine({
         partConcerns,
         currentTasks: resetTasks,
         currentSchedule: schedule,
-        latestCompletedTasks,
         incrementMultiplier,
       })) || {};
 
-    if (areEnough) {
+    if (areCurrentSolutionsOkay) {
       totalTasksToInsert = resetTasks;
       totalAllTasks = allTasks;
     }

@@ -145,6 +145,7 @@ app.use("/getAllSolutions", getAllSolutions);
 app.use("/getLatestFoodAnalysis", getLatestFoodAnalysis);
 
 app.use((req, res, next) => checkAccess(req, res, next, true));
+app.use("/getUserData", getUserData);
 app.use("/getPublicUserData", getPublicUserData);
 app.use("/getRoutines", getRoutines);
 app.use("/getProofRecords", getProofRecords);
@@ -202,7 +203,6 @@ app.use("/getProofRecord", getProofRecord);
 app.use("/getTaskInfo", getTaskInfo);
 app.use("/editTask", editTask);
 app.use("/getCalendarTasks", getCalendarTasks);
-app.use("/getUserData", getUserData);
 app.use("/joinClub", joinClub);
 app.use("/leaveClub", leaveClub);
 app.use("/redirectToWallet", redirectToWallet);
