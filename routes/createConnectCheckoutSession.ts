@@ -18,6 +18,8 @@ route.post(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { dataId, redirectUrl, cancelUrl, mode } = req.body;
 
+    console.log("createConnectCheckoutSession req.body", req.body);
+
     if (
       !dataId ||
       !redirectUrl ||
@@ -41,6 +43,11 @@ route.post(
 
       if (!routineInfo) {
         res.status(400).json({ error: "Bad request" });
+        return;
+      }
+
+      if (req.userId === String(routineInfo.userId)) {
+        res.status(200).json({ error: "You can't buy from yourself" });
         return;
       }
 
@@ -79,6 +86,7 @@ route.post(
       };
 
       if (mode === "payment") {
+        console.log("payment session created");
         const session = await stripe.checkout.sessions.create({
           customer: stripeUserId,
           payment_method_types: ["card"],
@@ -121,10 +129,14 @@ route.post(
         return;
       }
 
+      console.log("subscription session created");
+
       const priceId = await getSubscriptionPriceId({
         name,
         amount: price,
       });
+
+      console.log("createConnectCheckoutSession priceId", priceId);
 
       const session = await stripe.checkout.sessions.create({
         customer: stripeUserId,

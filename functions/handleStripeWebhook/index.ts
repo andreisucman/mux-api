@@ -42,8 +42,7 @@ async function updateUserPurchases(
   sellerId: ObjectId,
   buyerId: ObjectId,
   routineDataId: ObjectId,
-  contentEndDate?: Date,
-  subscribedUntil?: Date
+  contentEndDate?: Date
 ) {
   const relevantPurchase = existingPurchases.find(
     (obj) => String(obj.routineDataId) === String(routineDataId)
@@ -52,13 +51,11 @@ async function updateUserPurchases(
   const updateUserPayload: { [key: string]: any } = {};
 
   if (!relevantPurchase) {
-    updateUserPayload.purchases = [
-      { sellerId, contentEndDate, subscribedUntil },
-    ];
+    updateUserPayload.purchases = [{ sellerId, contentEndDate }];
   } else {
     const updatedPurchases = existingPurchases.map((obj) =>
       String(obj.routineDataId) === String(routineDataId)
-        ? { ...obj, contentEndDate, subscribedUntil }
+        ? { ...obj, contentEndDate }
         : obj
     );
     updateUserPayload.purchases = updatedPurchases;
@@ -77,20 +74,23 @@ async function updateUserPurchases(
 async function createRoutinePurchase(
   routineDataId: string,
   buyerId: string,
-  transactionId: string,
-  subscriptionId?: string,
-  contentEndDate?: Date,
-  subscribedUntil?: Date
+  transactionId: string
 ) {
-  const relatedRoutineData = await fetchRoutineData(routineDataId);
+  const relatedRoutineData: { [key: string]: any } = await fetchRoutineData(
+    routineDataId
+  );
+
+  console.log("relatedRoutineData", relatedRoutineData);
+
   if (!relatedRoutineData) return;
 
   const {
-    updatePrice,
+    price,
     name,
     part,
     userId: sellerId,
     contentStartDate,
+    contentEndDate,
   } = relatedRoutineData;
 
   const [sellerInfo, buyerInfo] = await Promise.all([
@@ -107,7 +107,7 @@ async function createRoutinePurchase(
   const newPurchase: PurchaseType = {
     name,
     part,
-    paid: updatePrice,
+    paid: price,
     buyerId: new ObjectId(buyerId),
     sellerId: new ObjectId(sellerId),
     createdAt: new Date(),
@@ -117,12 +117,9 @@ async function createRoutinePurchase(
     buyerAvatar: buyerInfo.avatar,
     transactionId,
     contentStartDate,
+    contentEndDate,
     routineDataId: new ObjectId(routineDataId),
   };
-
-  if (contentEndDate) newPurchase.contentEndDate = contentEndDate;
-  if (subscriptionId) newPurchase.subscriptionId = subscriptionId;
-  if (subscribedUntil) newPurchase.subscribedUntil = new Date(subscribedUntil);
 
   await doWithRetries(() => db.collection("Purchase").insertOne(newPurchase));
 
@@ -132,8 +129,7 @@ async function createRoutinePurchase(
       sellerId,
       new ObjectId(buyerId),
       new ObjectId(routineDataId),
-      contentEndDate,
-      new Date(subscribedUntil)
+      contentEndDate
     )
   );
 
@@ -152,6 +148,7 @@ async function fetchRoutineData(routineDataId: string) {
       {
         projection: {
           updatePrice: 1,
+          price: 1,
           name: 1,
           part: 1,
           userId: 1,
@@ -162,9 +159,27 @@ async function fetchRoutineData(routineDataId: string) {
   );
 
   if (!relatedRoutineData) {
-    console.warn(`RoutineData not found for ID: ${routineDataId}`);
+    throw httpError(`RoutineData not found for ID: ${routineDataId}`);
   }
-  return relatedRoutineData;
+
+  const latestCurrentRoutine = await doWithRetries(() =>
+    db
+      .collection("Routine")
+      .find({
+        userId: new ObjectId(relatedRoutineData.userId),
+        part: relatedRoutineData.part,
+      })
+      .project({ createdAt: 1 })
+      .sort({ createdAt: -1 })
+      .next()
+  );
+
+  const result = {
+    ...relatedRoutineData,
+    contentEndDate: latestCurrentRoutine.createdAt,
+  };
+
+  return result;
 }
 
 async function updateUserSubscriptionPlan(
@@ -175,7 +190,7 @@ async function updateUserSubscriptionPlan(
   const validUntil = new Date(subscription.current_period_end * 1000);
   const sanitizedPlanName = sanitizePlanName(plan.name);
 
-  const updateResult = await doWithRetries(() =>
+  await doWithRetries(() =>
     db.collection("User").updateOne(
       { stripeUserId: customerId },
       {
@@ -192,6 +207,7 @@ async function updateUserSubscriptionPlan(
 }
 
 async function handleInvoicePayment(invoice: Stripe.Invoice, plans: any[]) {
+  console.log("handleInvoicePayment ran");
   const subscriptionId = invoice.subscription as string;
   if (!subscriptionId) return;
 
@@ -237,6 +253,18 @@ async function updatePurchaseSubscriptionDate(
   routineDataId: ObjectId,
   buyerId: ObjectId
 ) {
+  console.log(
+    "updatePurchaseSubscriptionDate props",
+    newSubscribedUntil,
+    routineDataId,
+    buyerId
+  );
+  const payload: { [key: string]: any } = {};
+
+  if (newSubscribedUntil) {
+    payload.subscribedUntil = newSubscribedUntil;
+  }
+
   await doWithRetries(() =>
     db
       .collection("Purchase")
@@ -266,6 +294,11 @@ async function updatePurchaseSubscriptionDate(
     );
     updateUserPayload.purchases = updatedPurchases;
   }
+
+  console.log(
+    "updatePurchaseSubscriptionDate updateUserPayload",
+    updateUserPayload
+  );
 
   await doWithRetries(() =>
     db
@@ -364,8 +397,7 @@ async function processPlanQuantities(
 
 async function handleCheckoutSessionCompleted(
   session: Stripe.Checkout.Session,
-  plans: any[],
-  contentEndDate?: Date
+  plans: any[]
 ) {
   const { routineDataId, buyerId } = session.metadata || {};
 
@@ -373,9 +405,7 @@ async function handleCheckoutSessionCompleted(
     await createRoutinePurchase(
       routineDataId,
       buyerId,
-      session.payment_intent as string,
-      session.subscription as string,
-      contentEndDate
+      session.payment_intent as string
     );
   }
 
@@ -496,6 +526,7 @@ async function handleStripeWebhook(event: Stripe.Event) {
 
     switch (type) {
       case "customer.subscription.created":
+        console.log("handleSubscriptionCreated ran");
         await handleSubscriptionCreated(
           data.object as Stripe.Subscription,
           plans
@@ -503,10 +534,12 @@ async function handleStripeWebhook(event: Stripe.Event) {
         break;
 
       case "invoice.payment_succeeded":
+        console.log("handleInvoicePayment ran");
         await handleInvoicePayment(data.object as Stripe.Invoice, plans);
         break;
 
       case "checkout.session.completed":
+        console.log("handleCheckoutSessionCompleted ran");
         await handleCheckoutSessionCompleted(
           data.object as Stripe.Checkout.Session,
           plans

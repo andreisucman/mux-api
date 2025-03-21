@@ -88,6 +88,7 @@ import createTaskFromDescription from "./routes/createTaskFromDescription.js";
 import updateTaskExamples from "./routes/updateTaskExamples.js";
 import updateRoutineStatuses from "./routes/updateRoutineStatuses.js";
 import rescheduleRoutines from "./routes/rescheduleRoutines.js";
+import createConnectCheckoutSession from "./routes/createConnectCheckoutSession.js";
 
 import { client } from "init.js";
 
@@ -145,6 +146,7 @@ app.use("/getAllSolutions", getAllSolutions);
 app.use("/getLatestFoodAnalysis", getLatestFoodAnalysis);
 
 app.use((req, res, next) => checkAccess(req, res, next, true));
+app.use("/createConnectCheckoutSession", createConnectCheckoutSession);
 app.use("/getUserData", getUserData);
 app.use("/getPublicUserData", getPublicUserData);
 app.use("/getRoutines", getRoutines);
@@ -170,6 +172,7 @@ app.use("/startTheFlow", startTheFlow);
 app.use("/uploadProgress", uploadProgress);
 app.use("/uploadToSpaces", uploadToSpaces);
 app.use("/updateSex", updateSex);
+app.use("/getFilters", getFilters);
 
 // protected routes
 app.use((req, res, next) => checkAccess(req, res, next, false));
@@ -187,7 +190,6 @@ app.use("/saveDiaryRecord", saveDiaryRecord);
 app.use("/createDiaryRecord", createDiaryRecord);
 app.use("/checkCountry", checkCountry);
 app.use("/createRoutine", createRoutine);
-app.use("/getFilters", getFilters);
 app.use("/sendConfirmationCode", sendConfirmationCode);
 app.use("/stealTask", stealTask);
 app.use("/checkVideoBlurStatus", checkVideoBlurStatus);

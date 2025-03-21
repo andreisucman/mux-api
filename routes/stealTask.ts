@@ -201,7 +201,7 @@ route.post(
       if (currentRoutine) {
         await doWithRetries(async () =>
           db.collection("Routine").updateOne(
-            { _id: new ObjectId(currentRoutine?._id) },
+            { _id: new ObjectId(currentRoutine._id) },
             {
               $set: {
                 finalSchedule,
@@ -253,17 +253,7 @@ route.post(
       });
 
       res.status(200).json({
-        message: {
-          routine: {
-            ...currentRoutine,
-            finalSchedule,
-            allTasks,
-            concerns,
-            startsAt: new Date(minDate),
-            lastDate: new Date(maxDate),
-          },
-          tasks: draftTasks,
-        },
+        message: draftTasks,
       });
     } catch (err) {
       next(err);

@@ -54,6 +54,8 @@ route.get(
           .toArray()
       )) as unknown as DiaryRecordType[];
 
+      console.log("diary",diary)
+
       let response = { priceData: null, data: diary };
 
       if (userName) {

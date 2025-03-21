@@ -10,6 +10,7 @@ import checkTextSafety from "@/functions/checkTextSafety.js";
 import { SuspiciousRecordCollectionEnum } from "@/functions/addSuspiciousRecord.js";
 import updateContent from "@/functions/updateContent.js";
 import cancelSubscription from "@/functions/cancelSubscription.js";
+import getUserInfo from "@/functions/getUserInfo.js";
 
 const route = Router();
 
@@ -31,6 +32,14 @@ route.post(
     }
 
     try {
+      const updatePayload: { [key: string]: any } = {
+        status,
+        name,
+        description,
+        price,
+        updatePrice,
+      };
+
       for (const text of [name, description]) {
         const isSafe = await checkTextSafety({
           userId: req.userId,
@@ -58,13 +67,7 @@ route.post(
           db.collection("RoutineData").updateOne(
             { userId: new ObjectId(req.userId), part },
             {
-              $set: {
-                status,
-                name,
-                description,
-                price,
-                updatePrice,
-              },
+              $set: updatePayload,
             }
           )
         );
@@ -78,18 +81,13 @@ route.post(
             )
         );
 
+        updatePayload.contentStartDate = firstRoutineOfPart.createdAt;
+
         await doWithRetries(async () =>
           db.collection("RoutineData").updateOne(
             { userId: new ObjectId(req.userId), part },
             {
-              $set: {
-                status,
-                name,
-                description,
-                price,
-                updatePrice,
-                contentStartDate: firstRoutineOfPart.createdAt,
-              },
+              $set: updatePayload,
             },
             { upsert: true }
           )
@@ -98,10 +96,20 @@ route.post(
 
       res.status(200).end();
 
+      const { name: userName, avatar } =
+        (await getUserInfo({
+          userId: req.userId,
+          projection: { name: 1, avatar: 1 },
+        })) || {};
+
       await updateContent({
         userId: req.userId,
         collections: ["BeforeAfter", "Progress", "Proof", "Diary", "Routine"],
-        updatePayload: { isPublic: status === "public" },
+        updatePayload: {
+          isPublic: status === "public",
+          avatar,
+          userName,
+        },
         part,
       });
 

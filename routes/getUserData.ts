@@ -15,7 +15,7 @@ route.get(
       );
 
       if (userData === null) {
-        signOut(res, 404, "Account not found");
+        signOut(res, 400, "Account not found");
         return;
       }
 

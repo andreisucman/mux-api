@@ -268,7 +268,7 @@ export enum RoutineStatusEnum {
   EXPIRED = "expired",
   CANCELED = "canceled",
   DELETED = "deleted",
-  INACTIVE = "inactive"
+  INACTIVE = "inactive",
 }
 
 export type StreaksType = {
@@ -404,6 +404,7 @@ export type RoutineType = {
   stolenFrom: string;
   userName: string;
   isPublic: boolean;
+  deletedOn?: Date;
 };
 
 export type ConcernType = {

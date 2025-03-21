@@ -46,7 +46,7 @@ route.post(
 
       if (avatar) {
         if (nextAvatarUpdateAt > new Date()) {
-          const formattedDate = formatDate({ date: nextNameUpdateAt });
+          const formattedDate = formatDate({ date: nextAvatarUpdateAt });
           res.status(200).json({
             error: `You can update your avatar after ${formattedDate}.`,
           });

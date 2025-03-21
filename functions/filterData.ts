@@ -3,6 +3,7 @@ import checkRbac from "./checkRbac.js";
 import doWithRetries from "@/helpers/doWithRetries.js";
 import { db } from "@/init.js";
 import httpError from "@/helpers/httpError.js";
+import setToMidnight from "@/helpers/setToMidnight.js";
 
 type Props = {
   array: any[];
@@ -28,6 +29,8 @@ export async function filterData({
       part,
     });
 
+    console.log("result", result);
+
     let priceData = null;
     let data = [];
 
@@ -42,32 +45,25 @@ export async function filterData({
           part: purchasedPart,
         } = obj;
 
-        if (!subscribedUntil) {
-          filtered.push(
-            ...array.filter(
-              (obj: any) =>
-                new Date(obj[dateKey]) >= new Date(createdAt) &&
-                new Date(obj[dateKey]) <= new Date(contentEndDate) &&
-                obj.part === purchasedPart
-            )
-          );
-        } else {
-          filtered.push(
-            ...array.filter(
-              (r) =>
-                new Date(obj[dateKey]) <= new Date(subscribedUntil) &&
-                r.part === purchasedPart
-            )
-          );
-        }
+        const filteredArray = array.filter((obj: any) => {
+          const conditionOne =
+            new Date(obj[dateKey]) <=
+              new Date(subscribedUntil || contentEndDate) &&
+            obj.part === purchasedPart;
 
-        filtered = filtered.filter(
-          (rec) =>
-            !rec.deletedOn ||
-            (new Date(rec.deletedOn) >= new Date(createdAt) &&
-              new Date(rec.deletedOn) <=
-                new Date(subscribedUntil || contentEndDate))
-        );
+          console.log("conditionOne", conditionOne);
+
+          const conditionTwo =
+            !obj.deletedOn ||
+            (new Date(obj.deletedOn) >= new Date(createdAt) &&
+              new Date(obj.deletedOn) <=
+                new Date(subscribedUntil || contentEndDate));
+
+          console.log("conditionTwo", conditionTwo);
+          return conditionOne && conditionTwo;
+        });
+
+        filtered.push(...filteredArray);
       }
 
       data = filtered;

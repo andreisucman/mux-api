@@ -20,6 +20,8 @@ export default async function updateRoutineStatus({
       ? TaskStatusEnum.CANCELED
       : TaskStatusEnum.ACTIVE;
 
+  const deletedOn = newStatus === "deleted" ? new Date() : undefined;
+
   try {
     await doWithRetries(async () =>
       db.collection("Routine").updateOne(
@@ -28,6 +30,7 @@ export default async function updateRoutineStatus({
           $set: {
             status: newStatus,
             "allTasks.$[task].ids.$[id].status": newStatus,
+            deletedOn,
           },
         },
         {
