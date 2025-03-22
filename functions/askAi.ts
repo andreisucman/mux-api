@@ -8,6 +8,7 @@ import httpError from "@/helpers/httpError.js";
 import updateSpend from "./updateSpend.js";
 import { ChatCompletionCreateParams } from "openai/resources/index.mjs";
 import getCompletionCost from "@/helpers/getCompletionCost.js";
+import { ChatCompletion } from "openai/src/resources/index.js";
 
 const openAiModels = ["gpt", "o3", "ft:"];
 const llamaModels = ["meta-llama"];
@@ -44,7 +45,7 @@ async function askAi({
       if (responseFormat) options.response_format = responseFormat;
     }
 
-    const completion = await doWithRetries(async () =>
+    const completion: ChatCompletion = await doWithRetries(async () =>
       client.chat.completions.create(options)
     );
 

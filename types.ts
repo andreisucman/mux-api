@@ -62,10 +62,6 @@ export type LatestScoresType = {
 export type PurchaseType = {
   name: string;
   part: string;
-  paid: number;
-  subscribedUntil?: Date;
-  subscriptionId?: string;
-  transactionId: string;
   createdAt: Date;
   contentStartDate: Date;
   contentEndDate?: Date;
@@ -76,13 +72,8 @@ export type PurchaseType = {
   buyerName: string;
   buyerAvatar: { [key: string]: any };
   routineDataId: ObjectId;
-};
-
-export type UserPurchaseType = {
-  routineDataId: ObjectId;
-  sellerId: ObjectId;
-  contentEndDate: Date;
-  subscribedUntl: Date;
+  paymentIntentId: string;
+  subscriptionId?: string;
 };
 
 export type UserType = {
@@ -130,7 +121,6 @@ export type UserType = {
     remainingDailyCalories: number;
   };
   lastActiveOn: Date | null;
-  purchases: UserPurchaseType[];
 };
 
 export type ToAnalyzeType = {
@@ -175,7 +165,6 @@ export type ClubDataType = {
   intro: string;
   socials: { value: string | null; label: string }[];
   payouts: ClubPayoutDataType;
-  totalFollowers: number;
 };
 
 export type DemographicsType = {

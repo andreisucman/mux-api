@@ -13,11 +13,15 @@ export default async function getSubscriptionPriceId({ amount, name }: Props) {
     const currency = "usd";
     const formattedAmount = formatAmountForStripe(amount, currency);
 
-    let storedPrice = await doWithRetries(() =>
+    let priceId = null;
+
+    const storedPrice = await doWithRetries(() =>
       db.collection("StripePrice").findOne({ amount: formattedAmount })
     );
 
-    if (!storedPrice) {
+    priceId = storedPrice.priceId;
+
+    if (!priceId) {
       const interval = "month";
 
       const price = await stripe.prices.create({
@@ -36,10 +40,10 @@ export default async function getSubscriptionPriceId({ amount, name }: Props) {
         })
       );
 
-      storedPrice.priceId = price.id;
+      priceId = price.id;
     }
 
-    return storedPrice.priceId;
+    return priceId;
   } catch (err) {
     throw httpError(err);
   }

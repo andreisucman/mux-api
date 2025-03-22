@@ -5,12 +5,7 @@ import { adminDb, db, stripe } from "init.js";
 import Stripe from "stripe";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
-import {
-  ModerationStatusEnum,
-  PurchaseType,
-  UserPurchaseType,
-} from "@/types.js";
-import { getRevenueAndProcessingFee } from "./getRevenueAndProcessingFee.js";
+import { ModerationStatusEnum, PurchaseType } from "@/types.js";
 import getCachedPlans from "./getCachedPlans.js";
 import { ObjectId } from "mongodb";
 import getUserInfo from "../getUserInfo.js";
@@ -28,6 +23,9 @@ async function handleSubscriptionCreated(
   subscription: Stripe.Subscription,
   plans: any[]
 ) {
+  const { routineDataId } = subscription.metadata || {};
+  if (routineDataId) return;
+
   const customerId = subscription.customer as string;
   const priceId = subscription.items.data[0].price.id;
 
@@ -37,55 +35,18 @@ async function handleSubscriptionCreated(
   await updateUserSubscriptionPlan(customerId, subscription, plan);
 }
 
-async function updateUserPurchases(
-  existingPurchases: UserPurchaseType[],
-  sellerId: ObjectId,
-  buyerId: ObjectId,
-  routineDataId: ObjectId,
-  contentEndDate?: Date
-) {
-  const relevantPurchase = existingPurchases.find(
-    (obj) => String(obj.routineDataId) === String(routineDataId)
-  );
-
-  const updateUserPayload: { [key: string]: any } = {};
-
-  if (!relevantPurchase) {
-    updateUserPayload.purchases = [{ sellerId, contentEndDate }];
-  } else {
-    const updatedPurchases = existingPurchases.map((obj) =>
-      String(obj.routineDataId) === String(routineDataId)
-        ? { ...obj, contentEndDate }
-        : obj
-    );
-    updateUserPayload.purchases = updatedPurchases;
-  }
-
-  await doWithRetries(() =>
-    db.collection("User").updateOne(
-      {
-        _id: new ObjectId(buyerId),
-      },
-      { $set: updateUserPayload }
-    )
-  );
-}
-
 async function createRoutinePurchase(
   routineDataId: string,
   buyerId: string,
-  transactionId: string
+  paymentIntentId: string
 ) {
   const relatedRoutineData: { [key: string]: any } = await fetchRoutineData(
     routineDataId
   );
 
-  console.log("relatedRoutineData", relatedRoutineData);
-
   if (!relatedRoutineData) return;
 
   const {
-    price,
     name,
     part,
     userId: sellerId,
@@ -100,14 +61,13 @@ async function createRoutinePurchase(
     }),
     getUserInfo({
       userId: buyerId,
-      projection: { name: 1, avatar: 1, purchases: 1 },
+      projection: { name: 1, avatar: 1 },
     }),
   ]);
 
   const newPurchase: PurchaseType = {
     name,
     part,
-    paid: price,
     buyerId: new ObjectId(buyerId),
     sellerId: new ObjectId(sellerId),
     createdAt: new Date(),
@@ -115,23 +75,13 @@ async function createRoutinePurchase(
     sellerAvatar: sellerInfo.avatar,
     buyerName: buyerInfo.name,
     buyerAvatar: buyerInfo.avatar,
-    transactionId,
     contentStartDate,
     contentEndDate,
+    paymentIntentId,
     routineDataId: new ObjectId(routineDataId),
   };
 
   await doWithRetries(() => db.collection("Purchase").insertOne(newPurchase));
-
-  await doWithRetries(() =>
-    updateUserPurchases(
-      buyerInfo.purchases,
-      sellerId,
-      new ObjectId(buyerId),
-      new ObjectId(routineDataId),
-      contentEndDate
-    )
-  );
 
   updateAnalytics({
     userId: String(buyerInfo._id),
@@ -139,6 +89,26 @@ async function createRoutinePurchase(
       [`overview.payment.purchase.oneTime`]: 1,
     },
   });
+
+  const paymentIntent = await stripe.paymentIntents.retrieve(
+    paymentIntentId as string
+  );
+  const charge = await stripe.charges.retrieve(
+    paymentIntent.latest_charge as string
+  );
+
+  const amount = charge.amount - charge.application_fee_amount;
+
+  await doWithRetries(() =>
+    db.collection("User").updateOne(
+      { _id: sellerId },
+      {
+        $inc: {
+          "club.payouts.balance": amount / 100,
+        },
+      }
+    )
+  );
 }
 
 async function fetchRoutineData(routineDataId: string) {
@@ -206,24 +176,38 @@ async function updateUserSubscriptionPlan(
   );
 }
 
-async function handleInvoicePayment(invoice: Stripe.Invoice, plans: any[]) {
-  console.log("handleInvoicePayment ran");
-  const subscriptionId = invoice.subscription as string;
+async function handleSubscriptionPayment(
+  session: Stripe.Checkout.Session,
+  plans: any[]
+) {
+  const subscriptionId = session.subscription as string;
   if (!subscriptionId) return;
 
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-  const { routineDataId } = subscription.metadata || {};
+  const { routineDataId, sellerId } = subscription.metadata || {};
 
-  const stripeUserId = invoice.customer as string;
+  const stripeUserId = session.customer as string;
   const userInfo = await fetchUserInfo(stripeUserId);
 
   if (routineDataId) {
     const newSubscribedUntil = new Date(subscription.current_period_end * 1000);
 
-    await updatePurchaseSubscriptionDate(
+    console.log("subscription.latest_invoice", subscription.latest_invoice);
+
+    const invoice = await stripe.invoices.retrieve(
+      subscription.latest_invoice as string
+    );
+    console.log("invoice.charge", invoice.charge);
+    const charge = await stripe.charges.retrieve(invoice.charge as string);
+
+    const amount = charge.amount - charge.application_fee_amount;
+
+    await updatePurchaseSubscriptionData(
       newSubscribedUntil,
       new ObjectId(routineDataId),
-      userInfo._id
+      sellerId,
+      amount,
+      subscription.id
     );
 
     updateAnalytics({
@@ -232,89 +216,139 @@ async function handleInvoicePayment(invoice: Stripe.Invoice, plans: any[]) {
         [`overview.payment.purchase.update`]: 1,
       },
     });
-  }
+  } else {
+    const expandedSession = await stripe.checkout.sessions.retrieve(
+      session.id,
+      {
+        expand: ["line_items.data"],
+      }
+    );
 
-  if (!userInfo) return;
+    const planQuantities = expandedSession.line_items.data.reduce(
+      (acc, line) => {
+        const plan = plans.find((p) => p.priceId === line.price?.id);
+        if (plan) acc[plan.name] = (acc[plan.name] || 0) + (line.quantity ?? 1);
+        return acc;
+      },
+      {} as Record<string, number>
+    );
 
-  const { bulkOperations } = await processInvoiceItems(
-    invoice,
-    plans,
-    userInfo,
-    stripeUserId
-  );
+    const analyticsUpdate = Object.entries(planQuantities).reduce(
+      (a, [planName, quantity]) => {
+        const key = `overview.subscription.purchased.${sanitizePlanName(
+          planName
+        )}`;
+        if (key) {
+          a[key] += quantity;
+        } else {
+          a[key] = quantity;
+        }
+        return a;
+      },
+      {}
+    );
 
-  if (bulkOperations.length > 0) {
-    await doWithRetries(() => db.collection("User").bulkWrite(bulkOperations));
+    updateAnalytics({
+      userId: String(userInfo._id),
+      incrementPayload: analyticsUpdate,
+    });
   }
 }
 
-async function updatePurchaseSubscriptionDate(
+async function handleInvoicePayment(invoice: Stripe.Invoice) {
+  const subscriptionId = invoice.subscription as string;
+  if (!subscriptionId) return;
+
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const { routineDataId, sellerId } = subscription.metadata || {};
+
+  if (!routineDataId) return;
+
+  const newSubscribedUntil = new Date(subscription.current_period_end * 1000);
+
+  const charge = await stripe.charges.retrieve(invoice.charge as string);
+  const transfer = await stripe.transfers.retrieve(charge.transfer as string);
+
+  await updatePurchaseSubscriptionData(
+    newSubscribedUntil,
+    new ObjectId(routineDataId),
+    sellerId,
+    transfer.amount
+  );
+}
+
+async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+  const stripeUserId = subscription.customer as string;
+  const userInfo = await fetchUserInfo(stripeUserId);
+
+  await doWithRetries(() =>
+    db
+      .collection("Purchase")
+      .updateOne(
+        { buyerId: userInfo._id },
+        { $unset: { subscriptionId: null } }
+      )
+  );
+}
+
+async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
+  const stripeUserId = subscription.customer as string;
+  const userInfo = await fetchUserInfo(stripeUserId);
+  let updatePayload: { [key: string]: any } = {};
+
+  if (subscription.cancel_at || subscription.cancel_at_period_end) {
+    updatePayload = { $set: { isDeactivated: true } };
+  } else {
+    updatePayload = { $unset: { isDeactivated: null } };
+  }
+
+  await doWithRetries(() =>
+    db
+      .collection("Purchase")
+      .updateOne({ buyerId: userInfo._id }, updatePayload)
+  );
+}
+
+async function updatePurchaseSubscriptionData(
   newSubscribedUntil: Date,
   routineDataId: ObjectId,
-  buyerId: ObjectId
+  sellerId: string,
+  amount: number,
+  subscriptionId?: string
 ) {
-  console.log(
-    "updatePurchaseSubscriptionDate props",
-    newSubscribedUntil,
-    routineDataId,
-    buyerId
-  );
-  const payload: { [key: string]: any } = {};
+  const updatePurchasePayload: { [key: string]: any } = {
+    contentEndDate: newSubscribedUntil,
+  };
 
-  if (newSubscribedUntil) {
-    payload.subscribedUntil = newSubscribedUntil;
-  }
+  if (subscriptionId) updatePurchasePayload.subscriptionId = subscriptionId;
 
   await doWithRetries(() =>
     db
       .collection("Purchase")
       .updateOne(
         { routineDataId: new ObjectId(routineDataId) },
-        { $set: { subscribedUntil: newSubscribedUntil } }
+        { $set: updatePurchasePayload }
       )
-  );
-
-  const buyerInfo = await doWithRetries(() =>
-    db
-      .collection("User")
-      .findOne({ _id: new ObjectId(buyerId) }, { projection: { purchases: 1 } })
-  );
-
-  const relevantPurchase = buyerInfo?.purchases?.find(
-    (obj) => String(obj.routineDataId) === String(routineDataId)
-  );
-
-  const updateUserPayload: { [key: string]: any } = {};
-
-  if (!relevantPurchase) {
-    const updatedPurchases = buyerInfo.purchases.map((obj) =>
-      String(obj.routineDataId) === String(routineDataId)
-        ? { ...obj, subscribedUntil: newSubscribedUntil }
-        : obj
-    );
-    updateUserPayload.purchases = updatedPurchases;
-  }
-
-  console.log(
-    "updatePurchaseSubscriptionDate updateUserPayload",
-    updateUserPayload
   );
 
   await doWithRetries(() =>
     db
       .collection("User")
-      .updateOne({ _id: new ObjectId(buyerId) }, { $set: updateUserPayload })
+      .updateOne(
+        { _id: new ObjectId(sellerId) },
+        { $inc: { "club.payouts.balance": amount / 100 } }
+      )
   );
 }
 
-async function fetchUserInfo(stripeUserId: string) {
+async function fetchUserInfo(stripeUserId: string, projection = {}) {
   const userInfo = await doWithRetries(() =>
     db.collection("User").findOne(
       {
         stripeUserId,
         moderationStatus: ModerationStatusEnum.ACTIVE,
       },
-      { projection: { subscriptions: 1, club: 1, _id: 1 } }
+      { projection: { _id: 1, ...projection } }
     )
   );
 
@@ -324,78 +358,7 @@ async function fetchUserInfo(stripeUserId: string) {
   return userInfo;
 }
 
-async function processInvoiceItems(
-  invoice: Stripe.Invoice,
-  plans: any[],
-  userInfo: any,
-  customerId: string
-) {
-  const paymentPrices = invoice.lines.data.map((item) => item.price?.id);
-  const relatedPlans = plans.filter((plan) =>
-    paymentPrices.includes(plan.priceId)
-  );
-
-  const bulkOperations: any[] = [];
-  const incrementPayload: Record<string, number> = {};
-
-  if (relatedPlans.length > 0) {
-    const paymentIntentId = invoice.payment_intent as string;
-    const { totalRevenue, totalProcessingFee } =
-      await getRevenueAndProcessingFee(paymentIntentId);
-    const totalPayable = (totalRevenue - totalProcessingFee) / 2;
-
-    Object.assign(incrementPayload, {
-      "overview.accounting.totalRevenue": totalRevenue,
-      "overview.accounting.totalPayable": totalPayable,
-      "overview.accounting.totalProcessingFee": totalProcessingFee,
-      "accounting.totalRevenue": totalRevenue,
-      "accounting.totalPayable": totalPayable,
-      "accounting.totalProcessingFee": totalProcessingFee,
-    });
-
-    await processPlanQuantities(invoice, plans, bulkOperations, customerId);
-  }
-
-  bulkOperations.push({
-    updateOne: {
-      filter: { _id: userInfo._id },
-      update: { $inc: incrementPayload },
-    },
-  });
-
-  return { bulkOperations, incrementPayload };
-}
-
-async function processPlanQuantities(
-  invoice: Stripe.Invoice,
-  plans: any[],
-  bulkOperations: any[],
-  customerId: string
-) {
-  const planQuantities = invoice.lines.data.reduce((acc, line) => {
-    const plan = plans.find((p) => p.priceId === line.price?.id);
-    if (plan) {
-      acc[plan.name] = (acc[plan.name] || 0) + (line.quantity ?? 1);
-    }
-    return acc;
-  }, {} as Record<string, number>);
-
-  for (const [planName, quantity] of Object.entries(planQuantities)) {
-    bulkOperations.push({
-      updateOne: {
-        filter: { stripeUserId: customerId },
-        update: {
-          $inc: {
-            [`overview.subscription.purchased.${sanitizePlanName(planName)}`]:
-              quantity,
-          },
-        },
-      },
-    });
-  }
-}
-
-async function handleCheckoutSessionCompleted(
+async function handleOneTimePayment(
   session: Stripe.Checkout.Session,
   plans: any[]
 ) {
@@ -407,24 +370,31 @@ async function handleCheckoutSessionCompleted(
       buyerId,
       session.payment_intent as string
     );
+  } else {
+    const expandedSession = await stripe.checkout.sessions.retrieve(
+      session.id,
+      {
+        expand: ["line_items.data.price.product"],
+      }
+    );
+
+    const relatedPlan = plans.find((p) => p.name === "scan");
+    if (!relatedPlan) return;
+
+    const lineItems = expandedSession.line_items?.data || [];
+    const totalQuantity = calculateTotalScanQuantity(lineItems, relatedPlan);
+
+    const customerId = session.customer as string;
+
+    await doWithRetries(() =>
+      db
+        .collection("User")
+        .updateOne(
+          { stripeUserId: customerId },
+          { $inc: { scanAnalysisQuota: totalQuantity } }
+        )
+    );
   }
-
-  const expandedSession = await stripe.checkout.sessions.retrieve(session.id, {
-    expand: ["line_items.data.price.product"],
-  });
-
-  const relatedPlan = plans.find((p) => p.name === "scan");
-  if (!relatedPlan) return;
-
-  const lineItems = expandedSession.line_items?.data || [];
-  const totalQuantity = calculateTotalScanQuantity(lineItems, relatedPlan);
-
-  const bulkOperations = await createScanPlanBulkOperations(
-    session,
-    totalQuantity
-  );
-
-  await doWithRetries(() => db.collection("User").bulkWrite(bulkOperations));
 }
 
 function calculateTotalScanQuantity(
@@ -437,61 +407,6 @@ function calculateTotalScanQuantity(
     }
     return total;
   }, 0);
-}
-
-async function createScanPlanBulkOperations(
-  session: Stripe.Checkout.Session,
-  totalQuantity: number
-) {
-  const customerId = session.customer as string;
-  const bulkOperations: any[] = [
-    {
-      updateOne: {
-        filter: { stripeUserId: customerId },
-        update: { $inc: { scanAnalysisQuota: totalQuantity } },
-      },
-    },
-  ];
-
-  if (session.payment_intent && typeof session.payment_intent === "string") {
-    bulkOperations.push(
-      await createScanAccountingOperation(
-        customerId,
-        session.payment_intent,
-        totalQuantity
-      )
-    );
-  }
-
-  return bulkOperations;
-}
-
-async function createScanAccountingOperation(
-  customerId: string,
-  paymentIntentId: string,
-  totalQuantity: number
-) {
-  const { totalRevenue, totalProcessingFee } = await getRevenueAndProcessingFee(
-    paymentIntentId
-  );
-  const totalPayable = (totalRevenue - totalProcessingFee) / 2;
-
-  return {
-    updateOne: {
-      filter: { stripeUserId: customerId },
-      update: {
-        $inc: {
-          "overview.accounting.totalRevenue": totalRevenue,
-          "overview.accounting.totalPayable": totalPayable,
-          "overview.accounting.totalProcessingFee": totalProcessingFee,
-          "accounting.totalRevenue": totalRevenue,
-          "accounting.totalPayable": totalPayable,
-          "accounting.totalProcessingFee": totalProcessingFee,
-          "overview.payment.completed.scan": totalQuantity,
-        },
-      },
-    },
-  };
 }
 
 async function markEventAsProcessed(eventId: string) {
@@ -508,7 +423,9 @@ async function handleStripeWebhook(event: Stripe.Event) {
     if (
       type !== "invoice.payment_succeeded" &&
       type !== "checkout.session.completed" &&
-      type !== "customer.subscription.created"
+      type !== "customer.subscription.created" &&
+      type !== "customer.subscription.deleted" &&
+      type !== "customer.subscription.updated"
     ) {
       return;
     }
@@ -534,16 +451,30 @@ async function handleStripeWebhook(event: Stripe.Event) {
         break;
 
       case "invoice.payment_succeeded":
-        console.log("handleInvoicePayment ran");
-        await handleInvoicePayment(data.object as Stripe.Invoice, plans);
+        await handleInvoicePayment(data.object);
+        break;
+
+      case "customer.subscription.deleted":
+        await handleSubscriptionDeleted(data.object);
+        break;
+
+      case "customer.subscription.updated":
+        await handleSubscriptionUpdated(data.object);
         break;
 
       case "checkout.session.completed":
-        console.log("handleCheckoutSessionCompleted ran");
-        await handleCheckoutSessionCompleted(
-          data.object as Stripe.Checkout.Session,
-          plans
-        );
+        if (data.object.mode === "payment") {
+          await handleOneTimePayment(
+            data.object as Stripe.Checkout.Session,
+            plans
+          );
+        }
+        if (data.object.mode === "subscription") {
+          await handleSubscriptionPayment(
+            data.object as Stripe.Checkout.Session,
+            plans
+          );
+        }
         break;
     }
 

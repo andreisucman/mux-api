@@ -88,7 +88,7 @@ import createTaskFromDescription from "./routes/createTaskFromDescription.js";
 import updateTaskExamples from "./routes/updateTaskExamples.js";
 import updateRoutineStatuses from "./routes/updateRoutineStatuses.js";
 import rescheduleRoutines from "./routes/rescheduleRoutines.js";
-import createConnectCheckoutSession from "./routes/createConnectCheckoutSession.js";
+import createRoutineCheckoutSession from "./routes/createRoutineCheckoutSession.js";
 
 import { client } from "init.js";
 
@@ -146,7 +146,7 @@ app.use("/getAllSolutions", getAllSolutions);
 app.use("/getLatestFoodAnalysis", getLatestFoodAnalysis);
 
 app.use((req, res, next) => checkAccess(req, res, next, true));
-app.use("/createConnectCheckoutSession", createConnectCheckoutSession);
+app.use("/createRoutineCheckoutSession", createRoutineCheckoutSession);
 app.use("/getUserData", getUserData);
 app.use("/getPublicUserData", getPublicUserData);
 app.use("/getRoutines", getRoutines);

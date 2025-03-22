@@ -70,7 +70,6 @@ export default async function createClubProfile({ userId }: Props) {
       intro: "I love working out and eating healthy.",
       socials: [],
       payouts: defaultClubPayoutData,
-      totalFollowers: 0,
     };
 
     await doWithRetries(async () =>

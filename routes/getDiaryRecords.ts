@@ -31,6 +31,7 @@ route.get(
         filters.userName = userName;
       } else {
         filters.userId = new ObjectId(req.userId);
+        filters.deletedOn = { $exists: false };
       }
 
       if (part) {
@@ -53,8 +54,6 @@ route.get(
           .limit(21)
           .toArray()
       )) as unknown as DiaryRecordType[];
-
-      console.log("diary",diary)
 
       let response = { priceData: null, data: diary };
 

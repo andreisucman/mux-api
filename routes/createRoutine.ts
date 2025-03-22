@@ -33,7 +33,7 @@ route.post(
       concerns,
       part,
       timeZone,
-      creationMode = "continue",
+      creationMode = "scratch",
       routineStartDate,
       specialConsiderations,
     } = req.body;
@@ -121,9 +121,12 @@ route.post(
 
       let updatedNextRoutine;
 
-      let { canRoutineDate, availableRoutines } = checkCanRoutine({
+      let { canRoutineDate, availableRoutines } = await checkCanRoutine({
         nextRoutine,
+        userId: req.userId,
       });
+
+      console.log("availableRoutines", availableRoutines);
 
       if (part) {
         availableRoutines = availableRoutines.filter((r) => r.part === part);
@@ -150,6 +153,7 @@ route.post(
               userId: req.userId,
               part: r.part,
               creationMode,
+              incrementMultiplier: 5 - availableRoutines.length,
               concerns: activeConcerns,
               specialConsiderations,
               categoryName: CategoryNameEnum.TASKS,

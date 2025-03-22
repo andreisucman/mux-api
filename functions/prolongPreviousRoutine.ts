@@ -1,10 +1,6 @@
 import { ObjectId } from "mongodb";
 import doWithRetries from "helpers/doWithRetries.js";
-import {
-  daysFrom,
-  calculateDaysDifference,
-  DaysFromProps,
-} from "helpers/utils.js";
+import { daysFrom, calculateDaysDifference } from "helpers/utils.js";
 import {
   UserConcernType,
   TaskStatusEnum,
@@ -15,7 +11,6 @@ import {
   ProgressImageType,
 } from "types.js";
 import addAdditionalTasks from "functions/addAdditionalTasks.js";
-import deactivatePreviousRoutineAndTasks from "functions/deactivatePreviousRoutineAndTasks.js";
 import { CreateRoutineUserInfoType } from "types/createRoutineTypes.js";
 import httpError from "helpers/httpError.js";
 import { db } from "init.js";

@@ -120,7 +120,7 @@ route.post(
             .find(
               {
                 sellerId: new ObjectId(req.userId),
-                subscribedUntil: { $exists: true },
+                subscriptionId: { $exists: true },
               },
               { projection: { subscriptionId: 1 } }
             )

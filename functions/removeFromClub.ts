@@ -26,7 +26,7 @@ export default async function removeFromClub({ userId }: Props) {
         .find(
           {
             sellerId: new ObjectId(userId),
-            subscribedUntil: { $exists: true },
+            subscriptionId: { $exists: true },
           },
           { projection: { subscriptionId: 1 } }
         )

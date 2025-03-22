@@ -23,9 +23,7 @@ export default async function checkRbac({ part, userId, sellerId }: Props) {
         .collection("Purchase")
         .find(filter, {
           projection: {
-            subscribedUntil: 1,
             contentEndDate: 1,
-            createdAt: 1,
             part: 1,
           },
         })

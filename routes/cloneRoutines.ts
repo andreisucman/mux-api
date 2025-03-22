@@ -25,7 +25,7 @@ type Props = {
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { routineIds, startDate, timeZone, sort }: Props = req.body;
+    const { routineIds, startDate, timeZone }: Props = req.body;
 
     const { isValidDate, isFutureDate } = checkDateValidity(
       startDate,

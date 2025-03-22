@@ -3,7 +3,6 @@ import checkRbac from "./checkRbac.js";
 import doWithRetries from "@/helpers/doWithRetries.js";
 import { db } from "@/init.js";
 import httpError from "@/helpers/httpError.js";
-import setToMidnight from "@/helpers/setToMidnight.js";
 
 type Props = {
   array: any[];
@@ -29,8 +28,6 @@ export async function filterData({
       part,
     });
 
-    console.log("result", result);
-
     let priceData = null;
     let data = [];
 
@@ -38,29 +35,16 @@ export async function filterData({
       let filtered = [];
 
       for (const obj of result) {
-        const {
-          subscribedUntil,
-          createdAt,
-          contentEndDate,
-          part: purchasedPart,
-        } = obj;
+        const { contentEndDate, part: purchasedPart } = obj;
 
         const filteredArray = array.filter((obj: any) => {
+          const createdWithinSubscriptionPeriod =
+            new Date(obj[dateKey]) <= new Date(contentEndDate);
+
           const conditionOne =
-            new Date(obj[dateKey]) <=
-              new Date(subscribedUntil || contentEndDate) &&
-            obj.part === purchasedPart;
+            createdWithinSubscriptionPeriod && obj.part === purchasedPart;
 
-          console.log("conditionOne", conditionOne);
-
-          const conditionTwo =
-            !obj.deletedOn ||
-            (new Date(obj.deletedOn) >= new Date(createdAt) &&
-              new Date(obj.deletedOn) <=
-                new Date(subscribedUntil || contentEndDate));
-
-          console.log("conditionTwo", conditionTwo);
-          return conditionOne && conditionTwo;
+          return conditionOne;
         });
 
         filtered.push(...filteredArray);

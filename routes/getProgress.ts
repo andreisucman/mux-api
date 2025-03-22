@@ -60,8 +60,6 @@ route.get(
           .toArray()
       );
 
-      console.log("progress", progress);
-
       let response = { priceData: null, data: progress };
 
       if (userName) {

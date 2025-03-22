@@ -10,13 +10,13 @@ type Props = {
 };
 
 export default async function findEmoji({ taskNames, userId }: Props) {
-  const systemContent = `The user gives you the names of activities. Your goal is to find a related icon for each activity from node-emoji. Return the icon in the UNICODE format. Make sure that your suggested icon really does exist in node-emoji package in the UNICODE format.`;
+  const systemContent = `The user gives you the names of activities. Your goal is to find a related icon for each activity from node-emoji. Return the icon in the UNICODE format. Only return colored, native Unicode emojis.`;
 
   const taskResponseTypeSchema = taskNames.reduce((a, c) => {
     a[c] = z
       .string()
       .describe(
-        `An icon from node-emoji that is the closest related to this ${c} in UNICODE format.`
+        `A colored, native Unicode emoji that is the closest related to this ${c}.`
       );
 
     return a;
@@ -40,7 +40,7 @@ export default async function findEmoji({ taskNames, userId }: Props) {
       content: [
         {
           type: "text",
-          text: `Are there any corrupted or missing icons (e.g. 🪥) ? If yes replace them with some other icon or 🚩`,
+          text: `Are there any or non-native Unicode emojis? If yes replace them with 🚩`,
         },
       ],
       model: "gpt-4o-mini",

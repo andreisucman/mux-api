@@ -58,7 +58,7 @@ export default async function polishRawSchedule({
             text: `It's designed to target the following concerns: ${listOfConcerns}.`,
           },
         ],
-        callback: () => callback(10),
+        callback: () => callback(2),
       },
     ];
 
@@ -71,7 +71,7 @@ export default async function polishRawSchedule({
             text: "Reschedule the exercises into a push-pull-legs split, ensuring pushing exercises are on one day, pulling exercises on another, and leg exercises on a separate day.",
           },
         ],
-        callback: () => callback(10),
+        callback: () => callback(2),
       });
     }
 
@@ -95,7 +95,7 @@ export default async function polishRawSchedule({
           text: `Return the latest updated schedule as JSON in the original format.`,
         },
       ],
-      callback: () => callback(4),
+      callback: () => callback(2),
     });
 
     const polishedSchedule = await askRepeatedly({

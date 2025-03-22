@@ -8,7 +8,6 @@ import doWithRetries from "@/helpers/doWithRetries.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import { defaultUser } from "@/data/defaultUser.js";
 import { CustomRequest, ModerationStatusEnum, ProgressType } from "types.js";
-import httpError from "@/helpers/httpError.js";
 import { DiaryActivityType } from "@/types/saveDiaryRecordTypes.js";
 import { db } from "@/init.js";
 

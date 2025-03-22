@@ -17,13 +17,13 @@ route.post(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { sellerId, part, redirectUrl, cancelUrl } = req.body;
 
-    if (!sellerId || !part || !redirectUrl || !cancelUrl) {
+    if (!ObjectId.isValid(sellerId) || !part || !redirectUrl || !cancelUrl) {
       res.status(400).json("Bad request");
       return;
     }
 
     try {
-      const routineInfo = await doWithRetries(() =>
+      const routineData = await doWithRetries(() =>
         db.collection("RoutineData").findOne(
           { userId: new ObjectId(sellerId), part },
           {
@@ -37,12 +37,12 @@ route.post(
         )
       );
 
-      if (!routineInfo) {
+      if (!routineData) {
         res.status(400).json({ error: "Bad request" });
         return;
       }
 
-      const { updatePrice, userId: sellerId, name, status } = routineInfo;
+      const { updatePrice, name, status } = routineData;
 
       if (status !== "public") {
         res.status(200).json({ error: "The owner has disabled updates." });
@@ -66,8 +66,8 @@ route.post(
       const { connectId: sellerConnectId } = payouts;
 
       const metadata = {
-        routineDataId: String(routineInfo._id),
-        buyerId: String(req.userId),
+        routineDataId: String(routineData._id),
+        sellerId: String(sellerId),
       };
 
       const priceId = await getSubscriptionPriceId({
@@ -85,9 +85,9 @@ route.post(
             quantity: 1,
           },
         ],
-        metadata,
         subscription_data: {
-          application_fee_percent: Number(process.env.PLATFORM_FEE_PERCENT),
+          metadata,
+          application_fee_percent: Number(process.env.PLATFORM_FEE_PERCENT) * 100,
           transfer_data: {
             destination: sellerConnectId,
           },

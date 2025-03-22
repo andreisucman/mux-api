@@ -19,10 +19,9 @@ route.get(
       const projection: { [key: string]: any } = {
         paid: 1,
         part: 1,
-        subscribedUntil: 1,
         subscriptionId: 1,
-        contentStartDate: 1,
         contentEndDate: 1,
+        isDeactivated: 1,
       };
 
       const filter: { [key: string]: any } = {};

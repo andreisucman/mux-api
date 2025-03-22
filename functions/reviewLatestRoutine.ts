@@ -8,78 +8,99 @@ import {
   ProgressImageType,
 } from "types.js";
 import { CreateRoutineUserInfoType } from "types/createRoutineTypes.js";
-import { db } from "init.js";
 import httpError from "helpers/httpError.js";
 import updateTasksAnalytics from "./updateTasksAnalytics.js";
+import { db } from "init.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
+import chooseSolutionsForConcerns, {
+  ConcernsSolutionsAndFrequenciesType,
+} from "./chooseSolutionsForConcerns.js";
+import deactivatePreviousRoutineAndTasks from "./deactivatePreviousRoutineAndTasks.js";
 import createSolutionData from "./createSolutionData.js";
-import chooseSolutionsForConcerns from "./chooseSolutionsForConcerns.js";
 import createScheduleAndTasks from "./createScheduleAndTasks.js";
 
 type Props = {
-  userId: string;
   part: PartEnum;
+  latestRoutineId: string;
   incrementMultiplier?: number;
-  routineStartDate: string;
   partImages: ProgressImageType[];
-  userInfo: CreateRoutineUserInfoType;
   partConcerns: UserConcernType[];
-  specialConsiderations: string;
+  userInfo: CreateRoutineUserInfoType;
+  routineStartDate: string;
+  latestSolutions: { [key: string]: number };
   categoryName: CategoryNameEnum;
 };
 
-export default async function makeANewRoutine({
-  userId,
+export default async function reviewLatestRoutine({
   part,
-  incrementMultiplier,
-  routineStartDate,
   partImages,
-  userInfo,
   partConcerns,
+  latestRoutineId,
+  userInfo,
+  latestSolutions,
   categoryName,
-  specialConsiderations,
+  routineStartDate,
+  incrementMultiplier = 1,
 }: Props) {
+  const {
+    _id: userId,
+    timeZone,
+    name: userName,
+    specialConsiderations,
+    demographics,
+    country,
+  } = userInfo;
+
   try {
-    const { demographics, timeZone, country } = userInfo;
+    if (!latestRoutineId) throw httpError("No latest routineId");
 
-    const { updatedListOfSolutions } = await chooseSolutionsForConcerns({
-      userId: String(userId),
-      part,
-      timeZone,
-      country,
-      categoryName,
-      demographics,
-      partConcerns,
-      partImages,
-      incrementMultiplier,
-      specialConsiderations,
-    });
+    const { updatedListOfSolutions, areCurrentSolutionsOkay } =
+      await chooseSolutionsForConcerns({
+        userId: String(userId),
+        part,
+        timeZone,
+        country,
+        latestSolutions,
+        categoryName,
+        demographics,
+        partConcerns,
+        partImages,
+        incrementMultiplier,
+        specialConsiderations,
+      });
 
-    const { allSolutions, allTasks } = await createSolutionData({
-      categoryName,
-      concernsSolutionsAndFrequencies: updatedListOfSolutions,
-      part,
-      userId: String(userId),
-    });
+    if (areCurrentSolutionsOkay) return;
+
+    const { allSolutions: updatedAllSolutions, allTasks: updatedAllTasks } =
+      await createSolutionData({
+        categoryName,
+        concernsSolutionsAndFrequencies:
+          updatedListOfSolutions as unknown as ConcernsSolutionsAndFrequenciesType,
+        part,
+        userId: String(userId),
+      });
 
     const { allTasksWithDateAndIds, finalSchedule, tasksToInsert } =
       await createScheduleAndTasks({
-        allSolutions,
-        allTasks,
+        part,
+        userInfo,
+        allSolutions: updatedAllSolutions,
+        allTasks: updatedAllTasks,
         categoryName,
         incrementMultiplier,
-        part,
         partConcerns,
         routineStartDate,
-        userInfo,
         specialConsiderations,
       });
+
+    if (tasksToInsert.length > 0)
+      await doWithRetries(async () =>
+        db.collection("Task").insertMany(tasksToInsert)
+      );
 
     const { minDate, maxDate } = getMinAndMaxRoutineDates(
       allTasksWithDateAndIds
     );
-
-    const { name: userName } = userInfo;
 
     const newRoutineObject = await doWithRetries(async () =>
       db.collection("Routine").insertOne({
@@ -106,8 +127,10 @@ export default async function makeANewRoutine({
         db.collection("Task").insertMany(tasksToInsertWithRoutineId)
       );
 
+    deactivatePreviousRoutineAndTasks(latestRoutineId);
+
     updateTasksAnalytics({
-      userId,
+      userId: String(userId),
       tasksToInsert,
       keyOne: "tasksCreated",
       keyTwo: "manualTasksCreated",

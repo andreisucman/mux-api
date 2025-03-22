@@ -211,15 +211,6 @@ async function handlePaymentIntentSucceeded(event: Stripe.Event) {
     const transferredAmount = paymentIntent.amount / 100 - appFee;
 
     await updateUserBalance(connectId, transferredAmount);
-
-    incrementPayload = {
-      "overview.accounting.totalPlatformFee": appFee,
-      "overview.accounting.totalPayable": transferredAmount,
-      "accounting.totalPlatformFee": appFee,
-      "accounting.totalPayable": transferredAmount,
-    };
-  } else {
-    incrementPayload["overview.accounting.totalRevenue"] = paymentIntent.amount;
   }
 
   updateAnalytics({

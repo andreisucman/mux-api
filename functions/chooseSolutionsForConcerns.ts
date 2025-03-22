@@ -31,7 +31,7 @@ type Props = {
   incrementMultiplier?: number;
   partImages: ProgressImageType[];
   latestProgressFeedback?: string;
-  currentSolutions?: { [key: string]: number };
+  latestSolutions?: { [key: string]: number };
 };
 
 export type ConcernsSolutionsAndFrequenciesType = {
@@ -46,7 +46,7 @@ export default async function chooseSolutionsForConcerns({
   specialConsiderations,
   partConcerns,
   categoryName,
-  currentSolutions,
+  latestSolutions,
   incrementMultiplier = 1,
   partImages,
   demographics,
@@ -57,7 +57,7 @@ export default async function chooseSolutionsForConcerns({
   part,
 }: Props) {
   const callback = () => {
-    const value = part === "body" ? 7 : 14;
+    const value = part === "body" ? 2 : 4;
     incrementProgress({
       operationKey: "routine",
       value: value * incrementMultiplier,
@@ -78,7 +78,7 @@ export default async function chooseSolutionsForConcerns({
     let findSolutionsInstruction = `You are a dermatologist, dentist and fitness coach. You are given the information about a user and a list of their ${part} concerns. Your goal is to come up with a combination of the most effective solutions that you know of that the user can do themselves to improve each of their concerns. These could include nutrition, skincare or fitness tasks. Each solution must represent a standalone individual task with a monthly frequency of use. The solutions must be compatible with each other. Don't suggest apps, or passive tasks such as sleeping. 
     <--->Your response is an object where keys are the concerns and values are an array of objects each havng a solution name and frequency. <--->Example of your response format: {chapped_lips: [{solution: lip healing balm, monthlyFrequency: 60}], thinning_hair: [{solution: minoxidil, monthlyFrequency: 60},{solution: scalp massage, monthlyFrequency: 30}, {solution: gentle shampoo, monthlyFrequency: 8}, ...], ...}`;
 
-    if (currentSolutions) {
+    if (latestSolutions) {
       findSolutionsInstruction = `You are a dermatologist, dentist and fitness coach. You are given the information about a user, a list of their ${part} concerns and the information about the solutons that they have used in the past week to improve the concerns. Your goal is to analyze if their solutions are effective in addressing their concerns and if not, update their list of solutons. You can remove the existing and add new solutions. Your suggestions could include nutrition, skincare or fitness tasks. Each of your suggestions must be a standalone individual task with a monthly frequency of use. Don't suggest apps, or passive tasks such as sleeping. 
     <--->Your response is an object with this structure: {areCurrentSolutionsOkay: true if current solutions are effective at addressing the user's concerns and no changes are needed, updatedListOfSolutions: the updated solutions for each concern if the user's solutions were not effective.} <--->Example of your response format: {areCurrentSolutionsOkay: false, updatedListOfSolutions: {chapped_lips: [{solution: lip healing balm, monthlyFrequency: 60}], thinning_hair: [{solution: minoxidil, monthlyFrequency: 60},{solution: scalp massage, monthlyFrequency: 30}, {solution: gentle shampoo, monthlyFrequency: 8}, ...], ...}}`;
     }
@@ -137,18 +137,18 @@ export default async function chooseSolutionsForConcerns({
     });
 
     let text =
-      "1) Does your final list inclue enough tasks for each concern? Your list should have all of the necessary tasks that can improve the concerns on their own assuming that the user is not going to do anything else besides them. 2) If your list has any collective tasks such as 'maintain calorie surplus', break them down into specific tasks, such as 'eat xyz meal' or 'drink zyx drink' etc. 3) Ensure that the tasks you suggest are not too exotic, dangerous or extremely difficult to do correctly for the user based on the user's info.";
+      "1) Does your final list inclue enough tasks for each concern? Your list should have all of the necessary tasks that can improve the concerns on their own assuming that the user is not going to do anything else besides them. 2) If your list has any collective tasks such as 'maintain calorie surplus', break them down into specific tasks, such as 'eat xyz meal' or 'drink zyx drink' etc. 3) Ensure that the tasks you suggest are not too exotic based on the user's info.";
 
     if (part === "body") {
       const isOverweight = concernsNames.includes("excess_weight");
       const isUnderweight = concernsNames.includes("low_body_mass");
 
       if (isUnderweight) {
-        text += ` 4) Assume that it's hard for the user to gain weight. Should the tasks or their frequencies be changed? if yes change, if not, leave as is.`;
+        text += ` 4) Assume that it's hard for the user to gain weight. Should the tasks or their frequencies be changed? if yes change, if not, leave as is. 5) Consider the extent of muscle development when deciding on the content of the tasks.`;
       }
 
       if (isOverweight) {
-        text += ` 4) Assume that it's hard for the user to lose weight. Should the tasks or their frequencies be changed? if yes change, if not, leave as is.`;
+        text += ` 4) Assume that it's hard for the user to lose weight. Should the tasks or their frequencies be changed? if yes change, if not, leave as is. 5) Consider the extent of muscle development when deciding on the content of the tasks.`;
       }
     }
 
@@ -177,7 +177,7 @@ export default async function chooseSolutionsForConcerns({
       }, {})
     );
 
-    if (currentSolutions) {
+    if (latestSolutions) {
       ChooseSolutonForConcernsResponseType = z.object({
         areCurrentSolutionsOkay: z
           .boolean()
@@ -224,13 +224,13 @@ export default async function chooseSolutionsForConcerns({
 
     let data = findFrequencyResponse;
 
-    if (currentSolutions) {
+    if (latestSolutions) {
       data =
         findFrequencyResponse.updatedListOfSolutions as unknown as ConcernsSolutionsAndFrequenciesType;
     }
 
     data = Object.fromEntries(
-      Object.entries(findFrequencyResponse).map(([concern, arrayOfObjects]) => [
+      Object.entries(data).map(([concern, arrayOfObjects]) => [
         concern,
         arrayOfObjects.map((ob) => {
           ob.concern = concern;
@@ -239,12 +239,11 @@ export default async function chooseSolutionsForConcerns({
       ])
     );
 
-    data = convertKeysAndValuesTotoSnakeCase(findFrequencyResponse);
+    data = convertKeysAndValuesTotoSnakeCase(data);
 
-    if (currentSolutions) {
+    if (latestSolutions) {
       const { areCurrentSolutionsOkay } = findFrequencyResponse;
-
-      return { areCurrentSolutionsOkay, concernsSolutionsAndFrequencies: data };
+      return { areCurrentSolutionsOkay, updatedListOfSolutions: data };
     }
 
     return {

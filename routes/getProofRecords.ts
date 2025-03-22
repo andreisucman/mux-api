@@ -44,6 +44,7 @@ route.get(
         match.userName = userName;
       } else {
         match.userId = new ObjectId(req.userId);
+        match.deletedOn = { $exists: false };
       }
 
       if (routineId) {
