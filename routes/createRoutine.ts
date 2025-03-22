@@ -126,8 +126,6 @@ route.post(
         userId: req.userId,
       });
 
-      console.log("availableRoutines", availableRoutines);
-
       if (part) {
         availableRoutines = availableRoutines.filter((r) => r.part === part);
       }

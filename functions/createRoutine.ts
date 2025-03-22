@@ -68,8 +68,6 @@ export default async function createRoutine({
     const partImages = await getUsersImages({ userId, part });
 
     if (creationMode === "continue") {
-      console.log("updateCurrentRoutine ran");
-
       const latestPartRoutine = await doWithRetries(async () =>
         db
           .collection("Routine")
@@ -86,8 +84,6 @@ export default async function createRoutine({
           .next()
       );
 
-      console.log("latestPartRoutine", latestPartRoutine);
-
       const latestTasks = latestPartRoutine ? latestPartRoutine.allTasks : [];
 
       const latestSolutions = latestTasks.reduce(
@@ -102,8 +98,6 @@ export default async function createRoutine({
         {}
       );
 
-      console.log("currentSolutions", latestSolutions);
-
       await reviewLatestRoutine({
         part,
         partImages,
@@ -116,7 +110,6 @@ export default async function createRoutine({
         incrementMultiplier,
       });
     } else {
-      console.log("makeANewRoutine ran");
       await makeANewRoutine({
         part,
         userId,
