@@ -21,6 +21,7 @@ import getUserInfo from "@/functions/getUserInfo.js";
 import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
+import checkPurchaseAccess from "@/functions/checkPurchaseAccess.js";
 
 const route = Router();
 
@@ -70,6 +71,20 @@ route.post(
           `No task to add from user ${userName} to user ${req.userId} found.`
         );
 
+      const part = taskToAdd[0].part;
+      const targetUserId = taskToAdd[0].userId;
+
+      const hasAccessTo = await checkPurchaseAccess({
+        parts: [part],
+        targetUserId,
+        userId: req.userId,
+      });
+
+      if (!hasAccessTo.includes(part)) {
+        res.status(400).json({ error: "Bad request" });
+        return;
+      }
+
       /* get the user's current routine */
       const currentRoutine = (await doWithRetries(async () =>
         db
@@ -95,7 +110,7 @@ route.post(
         taskToAdd.name = taskToAdd.recipe.name;
         taskToAdd.description = taskToAdd.recipe.description;
         taskToAdd.instruction = taskToAdd.recipe.instruction;
-        taskToAdd.productTypes=taskToAdd.recipe.productTypes;
+        taskToAdd.productTypes = taskToAdd.recipe.productTypes;
         taskToAdd.examples = taskToAdd.recipe.examples;
       }
 

@@ -11,6 +11,7 @@ import httpError from "@/helpers/httpError.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import cloneSingleRoutine from "@/functions/cloneSingleRoutine.js";
 import getLatestTasks from "@/functions/getLatestRoutineAndTasks.js";
+import checkPurchaseAccess from "@/functions/checkPurchaseAccess.js";
 
 const route = Router();
 
@@ -59,15 +60,34 @@ route.post(
       if (!routinesToAdd.length)
         throw httpError(`Routines ${routineIds.join(", ")} not found`);
 
+      const targetUserId = routinesToAdd[0].userId;
+      const routineParts = routinesToAdd.map((r) => r.part);
+      const uniqueRoutineParts = [...new Set(routineParts)];
+
+      const hasAccessTo = await checkPurchaseAccess({
+        parts: uniqueRoutineParts,
+        targetUserId: String(targetUserId),
+        userId: req.userId,
+      });
+
+      if (!hasAccessTo.length) {
+        res.status(400).json({ error: "Bad request" });
+        return;
+      }
+
+      const accessibleRoutines = routinesToAdd.filter((r) =>
+        hasAccessTo.includes(r.part)
+      );
+
       const batchSize = 5;
       let promises = [];
       let clonedRoutines = [];
 
-      for (let i = 0; i < routinesToAdd.length; i++) {
+      for (let i = 0; i < accessibleRoutines.length; i++) {
         promises.push(
           doWithRetries(() =>
             cloneSingleRoutine({
-              hostRoutine: routinesToAdd[i],
+              hostRoutine: accessibleRoutines[i],
               startDate,
               timeZone,
               userId: req.userId,

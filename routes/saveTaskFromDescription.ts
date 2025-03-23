@@ -396,6 +396,7 @@ route.post(
         ...relevantRoutine,
         userId: new ObjectId(req.userId),
         concerns,
+        part,
         allTasks,
         finalSchedule,
         startsAt: new Date(minDate),

@@ -26,7 +26,7 @@ export default async function getLatestTasks({ userId, timeZone }: Props) {
         .collection("Task")
         .find({
           status: { $in: [TaskStatusEnum.ACTIVE, TaskStatusEnum.COMPLETED] },
-          startsAt: { $gt: todayMidnight },
+          startsAt: { $gte: todayMidnight },
         })
         .sort({ startsAt: 1 })
         .project({ startsAt: 1 })

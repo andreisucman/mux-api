@@ -57,6 +57,13 @@ export default async function cloneSingleRoutine({
         completedAt: null,
         userName,
       };
+      if (newTask.recipe) {
+        newTask.name = newTask.recipe.name;
+        newTask.description = newTask.recipe.description;
+        newTask.instruction = newTask.recipe.instruction;
+        newTask.productTypes=newTask.recipe.productTypes;
+        newTask.examples = newTask.recipe.examples;
+      }
       if (userName) newTask.stolenFrom = userName;
       return newTask;
     });
