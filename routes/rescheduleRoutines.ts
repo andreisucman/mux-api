@@ -10,7 +10,7 @@ import { calculateDaysDifference, checkDateValidity } from "helpers/utils.js";
 import httpError from "@/helpers/httpError.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import rescheduleSingleRoutine from "@/functions/rescheduleSingleRoutine.js";
-import getLatestRoutinesAndTasks from "@/functions/getLatestRoutineAndTasks.js";
+import getLatestTasks from "@/functions/getLatestRoutineAndTasks.js";
 
 const route = Router();
 

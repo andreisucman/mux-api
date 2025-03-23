@@ -14,7 +14,7 @@ import { checkDateValidity, daysFrom } from "helpers/utils.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 import combineAllTasks from "@/helpers/combineAllTasks.js";
-import getLatestRoutinesAndTasks from "@/functions/getLatestRoutineAndTasks.js";
+import getLatestTasks from "@/functions/getLatestRoutineAndTasks.js";
 import sortTasksInScheduleByDate from "@/helpers/sortTasksInScheduleByDate.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";

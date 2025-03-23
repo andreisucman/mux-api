@@ -5,7 +5,7 @@ import doWithRetries from "helpers/doWithRetries.js";
 import { db } from "init.js";
 import { CustomRequest } from "types.js";
 import getUserData from "functions/getUserData.js";
-import getLatestRoutinesAndTasks from "functions/getLatestRoutineAndTasks.js";
+import getLatestTasks from "functions/getLatestRoutineAndTasks.js";
 
 const route = Router();
 

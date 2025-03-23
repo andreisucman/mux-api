@@ -137,20 +137,7 @@ export default async function chooseSolutionsForConcerns({
     });
 
     let text =
-      "1) Does your final list inclue enough tasks for each concern? Your list should have all of the necessary tasks that can improve the concerns on their own assuming that the user is not going to do anything else besides them. 2) If your list has any collective tasks such as 'maintain calorie surplus', break them down into specific tasks, such as 'eat xyz meal' or 'drink zyx drink' etc. 3) Ensure that the tasks you suggest are not too exotic based on the user's info.";
-
-    if (part === "body") {
-      const isOverweight = concernsNames.includes("excess_weight");
-      const isUnderweight = concernsNames.includes("low_body_mass");
-
-      if (isUnderweight) {
-        text += ` 4) Assume that it's hard for the user to gain weight. Should the tasks or their frequencies be changed? if yes change, if not, leave as is. 5) Consider the extent of muscle development when deciding on the content of the tasks.`;
-      }
-
-      if (isOverweight) {
-        text += ` 4) Assume that it's hard for the user to lose weight. Should the tasks or their frequencies be changed? if yes change, if not, leave as is. 5) Consider the extent of muscle development when deciding on the content of the tasks.`;
-      }
-    }
+      "1) Does your final list inclue enough tasks to effectively improve each concern? Would adding more tasks benefit? If yes, add more if not - don't. 2) If your list has any collective tasks such as 'maintain calorie surplus' or 'eat avocado and cheese', break them down into specific tasks, such as 'eat xyz meal', 'drink zyx drink', 'eat avocado', 'eat cheese' etc. 3) Ensure that the tasks you suggest don't contain products that are hard to procure in the user's location.";
 
     const checkMessage: RunType = {
       model: "o3-mini",

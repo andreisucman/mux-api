@@ -3,7 +3,7 @@ import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 import { daysFrom } from "@/helpers/utils.js";
-import { RoutineStatusEnum, TaskStatusEnum } from "@/types.js";
+import { TaskStatusEnum } from "@/types.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
 
 type Props = {
@@ -18,10 +18,6 @@ export default async function getLatestTasks({ userId, timeZone }: Props) {
   try {
     const todayMidnight = setToMidnight({
       date: new Date(),
-      timeZone,
-    });
-    const nextMidnight = setToMidnight({
-      date: daysFrom({ days: 2 }),
       timeZone,
     });
 
@@ -42,7 +38,7 @@ export default async function getLatestTasks({ userId, timeZone }: Props) {
 
     if (closestActiveTask) {
       startsAtFrom = setToMidnight({
-        date: closestActiveTask.startsAt || todayMidnight,
+        date: closestActiveTask.startsAt,
         timeZone,
       });
       startsAtTo = setToMidnight({
@@ -70,32 +66,7 @@ export default async function getLatestTasks({ userId, timeZone }: Props) {
     };
 
     const tasks = await doWithRetries(async () => {
-      const sort = { startsAt: 1, status: 1, part: -1, name: 1 };
-
-      const primaryResult = await db
-        .collection("Task")
-        .aggregate([
-          {
-            $match: {
-              userId: new ObjectId(userId),
-              startsAt: { $gte: todayMidnight, $lt: nextMidnight },
-              status: {
-                $in: [TaskStatusEnum.ACTIVE, TaskStatusEnum.COMPLETED],
-              },
-            },
-          },
-          { $sort: sort },
-          { $project: project },
-        ])
-        .toArray();
-
-      if (primaryResult.length > 0) {
-        return primaryResult;
-      }
-
-      if (!closestActiveTask) {
-        return [];
-      }
+      const sort = { startsAt: 1, status: 1, name: 1 };
 
       return db
         .collection("Task")
@@ -104,7 +75,7 @@ export default async function getLatestTasks({ userId, timeZone }: Props) {
             $match: {
               userId: new ObjectId(userId),
               $and: [
-                { startsAt: { $gte: startsAtFrom, $lt: startsAtTo } },
+                { startsAt: { $gte: startsAtFrom, $lte: startsAtTo } },
                 { startsAt: { $gte: todayMidnight } },
               ],
               status: {

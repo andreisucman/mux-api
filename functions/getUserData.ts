@@ -1,6 +1,6 @@
 import { db } from "init.js";
 import { ObjectId } from "mongodb";
-import getLatestRoutinesAndTasks from "functions/getLatestRoutineAndTasks.js";
+import getLatestTasks from "functions/getLatestRoutineAndTasks.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { defaultUserProjection } from "./checkIfUserExists.js";
 import httpError from "@/helpers/httpError.js";
@@ -25,7 +25,7 @@ async function getUserData({ userId }: Props) {
 
     if (!userInfo) return null;
 
-    const tasks = await getLatestRoutinesAndTasks({
+    const tasks = await getLatestTasks({
       userId,
       timeZone: userInfo.timeZone,
     });

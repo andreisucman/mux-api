@@ -5,7 +5,7 @@ import httpError from "./httpError.js";
 async function doWithRetries<T>(
   fn: () => Promise<T>,
   attempt = 0,
-  maxAttempts = 3
+  maxAttempts = 5
 ) {
   try {
     await client.connect();
