@@ -65,7 +65,6 @@ import changeEmailStepTwo from "routes/changeEmailStepTwo.js";
 import verifyEmail from "routes/verifyEmail.js";
 import sendConfirmationCode from "routes/sendConfirmationCode.js";
 import getProgress from "@/routes/getProgress.js";
-import getAllSolutions from "routes/getAllSolutions.js";
 import getFilters from "@/routes/getFilters.js";
 import createRoutine from "routes/createRoutine.js";
 import checkCountry from "routes/checkCountry.js";
@@ -142,7 +141,6 @@ app.use("/sendPasswordResetEmail", sendPasswordResetEmail);
 app.use("/setPassword", setPassword);
 app.use("/authorize", authorize);
 app.use("/authenticate", authenticate);
-app.use("/getAllSolutions", getAllSolutions);
 app.use("/getLatestFoodAnalysis", getLatestFoodAnalysis);
 
 app.use((req, res, next) => checkAccess(req, res, next, true));

@@ -153,7 +153,7 @@ export default async function chooseSolutionsForConcerns({
     }
 
     const checkMessage: RunType = {
-      model: "deepseek-reasoner",
+      model: "o3-mini",
       content: [
         {
           type: "text",

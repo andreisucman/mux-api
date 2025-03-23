@@ -5,7 +5,7 @@ import { z } from "zod";
 import askRepeatedly from "./askRepeatedly.js";
 import httpError from "@/helpers/httpError.js";
 import { generateRandomPastelColor } from "make-random-color";
-import searchYoutubeVideo from "./searchYoutubeVideo.js";
+import searchYoutubeVideos from "./searchYoutubeVideos.js";
 import generateImage from "./generateImage.js";
 import findRelevantSuggestions from "./findRelevantSuggestions.js";
 
@@ -102,12 +102,15 @@ export default async function createSolutionInfo({
         categoryName,
         userId,
       });
-      response.example = { type: "image", url: dishImage };
+      response.examples = [{ type: "image", url: dishImage }];
     } else {
-      const youtubeVideo = await searchYoutubeVideo(`How to ${data.name}`);
+      const youtubeVideos = await searchYoutubeVideos(`How to ${data.name}`);
 
-      if (youtubeVideo) {
-        response.example = { type: "video", url: youtubeVideo };
+      if (youtubeVideos.length) {
+        response.examples = youtubeVideos.map((url: string) => ({
+          type: "video",
+          url,
+        }));
       }
     }
 

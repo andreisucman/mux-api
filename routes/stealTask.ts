@@ -91,6 +91,14 @@ route.post(
         stolenFrom: userName,
       };
 
+      if (taskToAdd.recipe) {
+        taskToAdd.name = taskToAdd.recipe.name;
+        taskToAdd.description = taskToAdd.recipe.description;
+        taskToAdd.instruction = taskToAdd.recipe.instruction;
+        taskToAdd.productTypes=taskToAdd.recipe.productTypes;
+        taskToAdd.examples = taskToAdd.recipe.examples;
+      }
+
       if (currentRoutine) {
         taskToAdd.routineId = new ObjectId(currentRoutine._id);
       }

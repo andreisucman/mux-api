@@ -40,7 +40,7 @@ route.post(
             routineId: new ObjectId(taskInfo.routineId),
             key: taskInfo.key,
           },
-          { $set: { example } }
+          { $push: { examples: { $each: [example], $position: 0 } } as any }
         )
       );
 

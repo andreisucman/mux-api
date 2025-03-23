@@ -278,15 +278,15 @@ route.post(
         ...oldProofImages
       );
 
-      // if (!validSubmission) {
-      //   await addAnalysisStatusError({
-      //     message:
-      //       "This appears to be a copy of the previous content. Please upload a new proof.",
-      //     userId: req.userId,
-      //     operationKey: taskId,
-      //   });
-      //   return;
-      // }
+      if (!validSubmission) {
+        await addAnalysisStatusError({
+          message:
+            "This appears to be a copy of the previous content. Please upload a new proof.",
+          userId: req.userId,
+          operationKey: taskId,
+        });
+        return;
+      }
 
       const verdicts = [];
       const explanations = [];
@@ -309,16 +309,14 @@ route.post(
         verdicts.filter((i) => i).length <
         Math.round(selectedProofImages.length / 2);
 
-      // if (checkFailed) {
-      //   await addAnalysisStatusError({
-      //     originalMessage: explanations.join("\n"),
-      //     message:
-      //       "This submission doesn't satisfy the requirements from the instructions.",
-      //     userId: req.userId,
-      //     operationKey: taskId,
-      //   });
-      //   return;
-      // }
+      if (checkFailed) {
+        await addAnalysisStatusError({
+          message: explanations.join("\n"),
+          userId: req.userId,
+          operationKey: taskId,
+        });
+        return;
+      }
 
       const finalBlurType =
         urlType === "image" ? blurType : BlurTypeEnum.ORIGINAL;

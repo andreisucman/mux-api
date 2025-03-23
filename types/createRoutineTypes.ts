@@ -26,7 +26,7 @@ export type CreateRoutineAllSolutionsType = {
   requisite: string;
   icon: string;
   suggestions: SuggestionType[];
-  example: TaskExampleType;
+  examples: TaskExampleType[];
   color: string;
   name: string;
   key: string;

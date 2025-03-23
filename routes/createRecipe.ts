@@ -289,13 +289,13 @@ route.post(
           {
             $set: {
               recipe: {
-                example: { type: "image", url: image },
+                examples: [{ type: "image", url: image }],
                 canPersonalize: false,
                 name: response.name,
+                productTypes: response.productTypes,
                 description: response.description,
                 instruction: response.instruction,
               },
-              productTypes: response.productTypes,
               suggestions,
             },
           }

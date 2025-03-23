@@ -298,8 +298,6 @@ export enum CategoryNameEnum {
   PROGRESSSCAN = "progressScan",
   FOODSCAN = "foodScan",
   PRODUCTS = "products",
-  ADVISOR = "advisor",
-  FAQ = "faq",
   PROOF = "proof",
   DIARY = "diary",
   OTHER = "other",
@@ -343,7 +341,8 @@ export type RecipeType = {
   name: string;
   description: string;
   instruction: string;
-  example: { type: string; url: string };
+  productTypes: string[];
+  examples: { type: string; url: string }[];
 };
 
 export type TaskType = {
@@ -366,7 +365,7 @@ export type TaskType = {
   isCreated: boolean;
   isDish: boolean;
   recipe: RecipeType | null;
-  example: TaskExampleType | null;
+  examples: TaskExampleType[];
   suggestions: SuggestionType[] | null;
   productTypes: string[] | null;
   startsAt: Date | null;

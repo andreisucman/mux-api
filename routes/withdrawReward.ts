@@ -4,10 +4,8 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
-import formatAmountForStripe from "helpers/formatAmountForStripe.js";
 import { CustomRequest, ModerationStatusEnum } from "types.js";
 import { db, stripe } from "init.js";
-import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
@@ -38,7 +36,7 @@ route.post(
       if (!payoutsEnabled) {
         res.status(200).json({
           error:
-            "Your payouts are disabled. Please login into your wallet and complete the necessary requirements for enabling payouts.",
+            "Your payouts are disabled. Please login into your wallet and complete the necessary requirements.",
         });
         return;
       }
@@ -46,21 +44,31 @@ route.post(
       if (balance === 0) {
         res.status(200).json({
           error:
-            "Your balance is zero. Check your wallet for the payout history.",
+            "Your balance is zero. To see the the payout history login to your wallet.",
         });
         return;
       }
 
-      await doWithRetries(async () =>
-        stripe.transfers.create({
-          currency: "usd",
-          destination: connectId,
-          amount: formatAmountForStripe(balance, "usd"),
+      const stripeBalance = await doWithRetries(async () =>
+        stripe.balance.retrieve({
+          stripeAccount: connectId,
         })
+      );
+      const amount = stripeBalance.available[0]?.amount;
+      const currency = stripeBalance.available[0]?.currency;
+
+      await doWithRetries(async () =>
+        stripe.payouts.create(
+          {
+            amount,
+            currency,
+          },
+          { stripeAccount: connectId }
+        )
       );
 
       res.status(200).json({
-        message: `You have initiated a withdrawal of $${balance}. For details check your wallet.`,
+        message: `Withdrawal initiated. Check your wallet for details.`,
       });
     } catch (err) {
       next(err);

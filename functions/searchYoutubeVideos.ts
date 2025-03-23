@@ -1,12 +1,12 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-export default async function searchYoutubeVideo(keywords: string) {
+export default async function searchYoutubeVideos(keywords: string) {
   const baseUrl = "https://www.googleapis.com/youtube/v3/search";
   const params = {
     part: "snippet",
     q: encodeURIComponent(keywords),
-    maxResults: 1,
+    maxResults: 3,
     type: "video",
     videoEmbeddable: "true",
     relevanceLanguage: "en",
@@ -25,9 +25,11 @@ export default async function searchYoutubeVideo(keywords: string) {
       return null;
     }
 
-    const firstItem = data.items[0];
+    const items = data.items.slice(0, 3);
 
-    return `https://www.youtube.com/embed/${firstItem.id.videoId}`;
+    return items.map(
+      (item) => `https://www.youtube.com/embed/${item.id.videoId}`
+    );
   } catch (error) {
     console.error("Error fetching YouTube videos:", error);
     return null;

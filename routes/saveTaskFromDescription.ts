@@ -34,6 +34,7 @@ import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 import { validParts } from "@/data/other.js";
 import findRelevantSuggestions from "@/functions/findRelevantSuggestions.js";
 import getUsersImages from "@/functions/getUserImages.js";
+import generateImage from "@/functions/generateImage.js";
 
 const route = Router();
 
@@ -196,6 +197,12 @@ route.post(
           .describe(
             "Number of days the user should rest before repeating this activity"
           ),
+        isDish: z
+          .boolean()
+          .describe(
+            "true if this activity is a dish that has to be prepared before eating"
+          ),
+        isFood: z.boolean().describe("true if this activity is a food"),
         productTypes: productTypesSchema,
       });
 
@@ -251,9 +258,18 @@ route.post(
         part,
         concern,
         nearestConcerns: [concern],
-        example: null,
+        examples: [],
         productTypes: response.productTypes.filter((s: string) => s),
       };
+
+      if (response.isFood) {
+        const image = await generateImage({
+          categoryName: CategoryNameEnum.TASKS,
+          description,
+          userId: req.userId,
+        });
+        generalTaskInfo.examples = [{ type: "image", url: image }];
+      }
 
       const iconsMap = await findEmoji({
         userId: req.userId,

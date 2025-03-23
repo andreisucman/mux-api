@@ -64,7 +64,7 @@ export default async function polishRawSchedule({
 
     if (part === "body") {
       userContent.push({
-        model: "deepseek-reasoner",
+        model: "o3-mini",
         content: [
           {
             type: "text",

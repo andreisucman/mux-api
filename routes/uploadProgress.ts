@@ -111,13 +111,13 @@ route.post(
         categoryName: CategoryNameEnum.PROGRESSSCAN,
       });
 
-      // if (!isClearlyVisible) {
-      //   res.status(200).json({
-      //     error:
-      //       "The image is not clear. Try taking photos in daylight with no shadows or glitter obscuring your features.",
-      //   });
-      //   return;
-      // }
+      if (!isClearlyVisible) {
+        res.status(200).json({
+          error:
+            "The image is not clear. Try taking photos in daylight with no shadows or glitter obscuring your features.",
+        });
+        return;
+      }
 
       if (numberOfPeople === 0) {
         res.status(200).json({
@@ -147,6 +147,7 @@ route.post(
           {
             projection: {
               requiredProgress: 1,
+              toAnalyze: 1,
             },
           }
         )
@@ -154,7 +155,7 @@ route.post(
 
       if (!userInfo) throw httpError(`User ${finalUserId} not found`);
 
-      let { requiredProgress, toAnalyze } = userInfo;
+      let { requiredProgress, toAnalyze = [] } = userInfo;
 
       /* remove the current uploaded info from the remaining requirements */
       const remainingRequirements: ProgressType[] = requiredProgress.filter(
