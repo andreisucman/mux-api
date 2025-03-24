@@ -456,20 +456,3 @@ export type ProofType = {
   isPublic: boolean;
   deletedOn?: Date;
 };
-
-export type SolutionType = {
-  _id: string;
-  key: string;
-  name: string;
-  icon: string;
-  color: string;
-  instruction: string;
-  description: string;
-  suggestions: SuggestionType[];
-  productTypes: string[];
-  nearestConcerns: string[];
-  embedding: number[];
-  isDish: boolean;
-  recipe: RecipeType | null;
-  restDays: number;
-};

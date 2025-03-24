@@ -19,6 +19,7 @@ import analyzeConcerns from "./analyzeConcerns.js";
 import formatRatings from "@/helpers/formatRatings.js";
 import filterImagesByFeature from "@/helpers/filterImagesByFeature.js";
 import { maintenanceConcerns } from "@/data/maintenanceConcerns.js";
+import { daysFrom } from "@/helpers/utils.js";
 
 export type ImageObject = {
   position: string;
@@ -58,12 +59,17 @@ export default async function getScoresAndFeedback({
 
   let appearanceAnalysisResults: FeatureAnalysisResultType[] = [];
 
+  const minimumDistance = daysFrom({ days: -7 });
+
   const previousScanFilter: { [key: string]: any } = {
     userId: new ObjectId(userId),
+    scores: { $exists: true },
     part,
+    createdAt: { $lte: minimumDistance },
   };
 
-  if (previousScanFilter) previousScanFilter._id = { $ne: progressIdToExclude };
+  if (progressIdToExclude)
+    previousScanFilter._id = { $ne: progressIdToExclude };
 
   const previousScan = await doWithRetries(
     async () =>
@@ -77,29 +83,7 @@ export default async function getScoresAndFeedback({
       }
   );
 
-  if (!previousScan) {
-    // first scan case
-    appearanceAnalysisResults = await doWithRetries(async () =>
-      Promise.all(
-        featuresToAnalyze.map(async (feature: string) => {
-          const filteredToAnalyze = filterImagesByFeature(
-            imageObjects,
-            feature
-          );
-          return doWithRetries(() =>
-            analyzeFeature({
-              part,
-              userId,
-              feature,
-              categoryName,
-              sex,
-              relevantImages: filteredToAnalyze.map((obj) => obj.url),
-            })
-          );
-        })
-      )
-    );
-  } else {
+  if (previousScan) {
     const previousImages = previousScan.images.map((obj) => obj.mainUrl.url);
 
     const allPreviousExplanations = previousScan.scores.explanations;
@@ -127,6 +111,28 @@ export default async function getScoresAndFeedback({
               previousExplanation: relevantPreviousExplanation.explanation,
             });
           });
+        })
+      )
+    );
+  } else {
+    // first scan case
+    appearanceAnalysisResults = await doWithRetries(async () =>
+      Promise.all(
+        featuresToAnalyze.map(async (feature: string) => {
+          const filteredToAnalyze = filterImagesByFeature(
+            imageObjects,
+            feature
+          );
+          return doWithRetries(() =>
+            analyzeFeature({
+              part,
+              userId,
+              feature,
+              categoryName,
+              sex,
+              relevantImages: filteredToAnalyze.map((obj) => obj.url),
+            })
+          );
         })
       )
     );

@@ -15,6 +15,7 @@ type Props = {
   taskIds: string[];
   isVoid?: boolean;
   timeZone?: string;
+  isAll?: boolean;
   returnOnlyRoutines?: boolean;
   newStatus: TaskStatusEnum;
   routineStatus?: RoutineStatusEnum;
@@ -42,6 +43,7 @@ route.post(
       routineStatus,
       returnOnlyRoutines,
       isVoid,
+      isAll,
       timeZone,
     }: Props = req.body;
     if (
@@ -53,11 +55,44 @@ route.post(
     }
 
     try {
-      const tasksToUpdateFilter = {
+      const tasksToUpdateFilter: { [key: string]: any } = {
         _id: { $in: taskIds.map((id: string) => new ObjectId(id)) },
         userId: new ObjectId(req.userId),
         expiresAt: { $gt: new Date() },
       };
+
+      if (isAll) {
+        const keyObjects = await doWithRetries(() =>
+          db
+            .collection("Task")
+            .aggregate([
+              {
+                $match: {
+                  _id: { $in: taskIds.map((id: string) => new ObjectId(id)) },
+                },
+              },
+              {
+                $group: {
+                  _id: "$key",
+                },
+              },
+              { $project: { _id: 1 } },
+            ])
+            .toArray()
+        );
+
+        const keys = [...new Set(keyObjects.map((obj) => obj._id))].filter(
+          Boolean
+        );
+
+        if (!keys.length) {
+          res.status(400).json({ error: "Bad request" });
+          return;
+        }
+
+        delete tasksToUpdateFilter._id;
+        tasksToUpdateFilter.key = { $in: keys };
+      }
 
       const tasksToUpdate = await doWithRetries(async () =>
         db
@@ -69,7 +104,7 @@ route.post(
       );
 
       if (tasksToUpdate.length === 0) {
-        res.status(200).json({ error: "Can't update an expired task." });
+        res.status(400).json({ error: "Bad request" });
         return;
       }
 

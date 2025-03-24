@@ -75,17 +75,6 @@ export default async function polishRawSchedule({
       });
     }
 
-    // userContent.push({
-    //   model: "gpt-4o-mini",
-    //   content: [
-    //     {
-    //       type: "text",
-    //       text: `Have you modified the names of the tasks? The names of the tasks must not change.`,
-    //     },
-    //   ],
-    //   callback,
-    // });
-
     userContent.push({
       model: "gpt-4o-mini",
       responseFormat: { type: "json_object" },

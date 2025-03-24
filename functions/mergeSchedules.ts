@@ -61,16 +61,6 @@ export default async function mergeSchedules({
         ],
         callback,
       },
-      // {
-      //   model: "gpt-4o-mini",
-      //   content: [
-      //     {
-      //       type: "text",
-      //       text: "Can you confirm that the dates of the original tasks in schedule 1 haven't changed? They must not change.",
-      //     },
-      //   ],
-      //   callback,
-      // },
     ];
 
     if (part === "body") {

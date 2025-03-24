@@ -7,7 +7,6 @@ import {
   DemographicsType,
   ToAnalyzeType,
   UserConcernType,
-  NextActionType,
   BlurTypeEnum,
   CategoryNameEnum,
   PartEnum,

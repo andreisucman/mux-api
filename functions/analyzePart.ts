@@ -46,6 +46,13 @@ type Props = {
   categoryName: CategoryNameEnum;
 };
 
+type LocalProgressType = {
+  _id: ObjectId;
+  scores: FormattedRatingType;
+  images: ProgressImageType[];
+  createdAt: Date;
+};
+
 export default async function analyzePart({
   userId,
   name,
@@ -128,12 +135,7 @@ export default async function analyzePart({
         .project({ scores: 1, images: 1, createdAt: 1 })
         .sort({ createdAt: 1 })
         .next()
-    )) as unknown as {
-      _id: ObjectId;
-      scores: FormattedRatingType;
-      images: ProgressImageType[];
-      createdAt: Date;
-    };
+    )) as unknown as LocalProgressType;
 
     if (enableScanAnalysis) {
       const imageObjects = toAnalyze.map((tAo) => ({
