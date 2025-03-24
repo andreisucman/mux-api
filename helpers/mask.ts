@@ -4,6 +4,8 @@ import { DiaryRecordType } from "@/types/saveDiaryRecordTypes.js";
 export function maskRoutine(routine: RoutineType) {
   return {
     ...routine,
+    _id: null,
+    userId: null,
     allTasks: routine.allTasks.map((t) => ({
       ...t,
       icon: "❓",
@@ -19,6 +21,8 @@ export function maskRoutine(routine: RoutineType) {
 export function maskDiaryRow(diaryRecord: DiaryRecordType) {
   return {
     ...diaryRecord,
+    _id: null,
+    userId: null,
     audio: "/",
     embedding: [],
     activity: diaryRecord.activity.map((a) => {
@@ -49,6 +53,8 @@ export function maskProof(proof: ProofType) {
       : "https://mux.nyc3.cdn.digitaloceanspaces.com/video.mp4";
   return {
     ...proof,
+    _id: null,
+    userId: null,
     taskKey: Array(proof.taskKey.length).fill("*").join(""),
     taskName: Array(proof.taskName.length).fill("*").join(""),
     requisite: Array(proof.requisite.length).fill("*").join(""),

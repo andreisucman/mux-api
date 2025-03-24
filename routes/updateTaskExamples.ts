@@ -12,7 +12,7 @@ const route = Router();
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { taskId, example } = req.body;
+    const { taskId, examples } = req.body;
 
     if (!ObjectId.isValid(taskId)) {
       res.status(400).json({ error: "Bad request" });
@@ -40,7 +40,7 @@ route.post(
             routineId: new ObjectId(taskInfo.routineId),
             key: taskInfo.key,
           },
-          { $push: { examples: { $each: [example], $position: 0 } } as any }
+          { $set: { examples } }
         )
       );
 
