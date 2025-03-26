@@ -7,9 +7,9 @@ import {
   CustomRequest,
   ToAnalyzeType,
   PartEnum,
-  BlurTypeEnum,
   ModerationStatusEnum,
   CategoryNameEnum,
+  BlurredUrlType,
 } from "types.js";
 import { db } from "init.js";
 import {
@@ -25,15 +25,23 @@ import { validParts, validPositions } from "@/data/other.js";
 
 const route = Router();
 
+export type BlurDot = {
+  id: string;
+  originalWidth: number;
+  originalHeight: number;
+  scale: number;
+  angle: number;
+  x: number;
+  y: number;
+};
+
 type Props = {
   image: string;
-  blurredImage: string;
-  contentUrlTypes: string[];
   part: PartEnum;
   position: string;
   userId: string;
   specialConsiderations: string;
-  blurType: BlurTypeEnum;
+  blurDots: BlurDot[];
 };
 
 route.post(
@@ -41,11 +49,10 @@ route.post(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const {
       image,
-      blurredImage,
       position,
       part,
       userId,
-      blurType,
+      blurDots,
       specialConsiderations: newSpecialConsiderations,
     }: Props = req.body;
 
@@ -163,17 +170,27 @@ route.post(
           record.part !== part || record.position !== position
       );
 
-      const contentUrlTypes = [];
+      const contentUrlTypes: BlurredUrlType[] = [
+        { name: "original", url: image },
+      ];
 
-      if (blurType) {
-        contentUrlTypes.push({ name: "original", url: image });
-        if (blurType !== "original") {
-          contentUrlTypes.push({
-            // for the is added to appear in the preview on the client
-            name: blurType,
-            url: blurredImage,
-          });
-        }
+      if (blurDots.length) {
+        const response = await doWithRetries(() =>
+          fetch(`${process.env.PROCESSING_SERVER_URL}/blurImageManually`, {
+            method: "POST",
+            body: JSON.stringify({ blurDots, url: image }),
+            headers: { "Content-Type": "application/json" },
+          })
+        );
+
+        if (!response.ok) throw httpError("Network error during blur");
+
+        const json = await response.json();
+
+        contentUrlTypes.push({
+          name: "blurred",
+          url: json.url,
+        });
       }
 
       /* add the current uploaded info to the info to analyze */

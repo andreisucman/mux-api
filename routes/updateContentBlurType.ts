@@ -125,7 +125,7 @@ route.post(
 
     if (
       !ObjectId.isValid(contentId) ||
-      !["face", "eyes", "original"].includes(blurType) ||
+      !["blurred", "original"].includes(blurType) ||
       !["progress", "proof"].includes(contentCategory)
     ) {
       res.status(400).json({ error: "Bad request" });

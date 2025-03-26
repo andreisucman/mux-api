@@ -10,6 +10,8 @@ import getCachedPlans from "./getCachedPlans.js";
 import { ObjectId } from "mongodb";
 import getUserInfo from "../getUserInfo.js";
 import updateAnalytics from "../updateAnalytics.js";
+import getEmailContent from "@/helpers/getEmailContent.js";
+import sendEmail from "../sendEmail.js";
 
 // Cache plans for 5 minutes to reduce database load
 let cachedPlans: any[] = [];
@@ -49,6 +51,7 @@ async function createRoutinePurchase(
   const {
     name,
     part,
+    email: sellerEmail,
     userId: sellerId,
     contentStartDate,
     contentEndDate,
@@ -57,7 +60,7 @@ async function createRoutinePurchase(
   const [sellerInfo, buyerInfo] = await Promise.all([
     getUserInfo({
       userId: sellerId,
-      projection: { name: 1, avatar: 1 },
+      projection: { name: 1, email: 1, avatar: 1 },
     }),
     getUserInfo({
       userId: buyerId,
@@ -109,6 +112,12 @@ async function createRoutinePurchase(
       }
     )
   );
+
+  const { title, body } = await getEmailContent({
+    accessToken: null,
+    emailType: "yourPlanPurchased",
+  });
+  await sendEmail({ to: sellerEmail, subject: title, html: body });
 }
 
 async function fetchRoutineData(routineDataId: string) {
@@ -192,12 +201,9 @@ async function handleSubscriptionPayment(
   if (routineDataId) {
     const newSubscribedUntil = new Date(subscription.current_period_end * 1000);
 
-    console.log("subscription.latest_invoice", subscription.latest_invoice);
-
     const invoice = await stripe.invoices.retrieve(
       subscription.latest_invoice as string
     );
-    console.log("invoice.charge", invoice.charge);
     const charge = await stripe.charges.retrieve(invoice.charge as string);
 
     const amount = charge.amount - charge.application_fee_amount;
@@ -443,7 +449,6 @@ async function handleStripeWebhook(event: Stripe.Event) {
 
     switch (type) {
       case "customer.subscription.created":
-        console.log("handleSubscriptionCreated ran");
         await handleSubscriptionCreated(
           data.object as Stripe.Subscription,
           plans

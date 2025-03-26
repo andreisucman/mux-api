@@ -37,9 +37,6 @@ export default async function handleConnectWebhook(event: Stripe.Event) {
       case "transfer.updated":
         await handleTransferUpdated(event);
         break;
-      case "payment_intent.succeeded":
-        await handlePaymentIntentSucceeded(event);
-        break;
     }
 
     await markEventAsProcessed(event.id);
@@ -184,37 +181,5 @@ async function handleTransferUpdated(event: Stripe.Event) {
       "overview.accounting.totalWithdrawn": amount,
       "overview.club.withdrawed": 1,
     },
-  });
-}
-
-async function handlePaymentIntentSucceeded(event: Stripe.Event) {
-  const paymentIntent = event.data.object as Stripe.PaymentIntent;
-  const connectId = paymentIntent.transfer_data?.destination as string;
-
-  let incrementPayload: { [key: string]: any } = {};
-
-  let userId;
-
-  if (connectId) {
-    const userInfo = await getUserByConnectId(connectId, { _id: 1, email: 1 });
-    if (!userInfo) return console.warn(`User ${connectId} not found`);
-
-    userId = userInfo._id;
-
-    const { title, body } = await getEmailContent({
-      accessToken: null,
-      emailType: "yourPlanPurchased",
-    });
-    await sendEmail({ to: userInfo.email, subject: title, html: body });
-
-    const appFee = (paymentIntent.application_fee_amount || 0) / 100;
-    const transferredAmount = paymentIntent.amount / 100 - appFee;
-
-    await updateUserBalance(connectId, transferredAmount);
-  }
-
-  updateAnalytics({
-    userId,
-    incrementPayload,
   });
 }

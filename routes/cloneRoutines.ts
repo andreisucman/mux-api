@@ -5,12 +5,11 @@ import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import { CustomRequest, RoutineStatusEnum, RoutineType } from "types.js";
-import { checkDateValidity } from "helpers/utils.js";
+import { CustomRequest, RoutineType } from "types.js";
+import { calculateDaysDifference, checkDateValidity } from "helpers/utils.js";
 import httpError from "@/helpers/httpError.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import cloneSingleRoutine from "@/functions/cloneSingleRoutine.js";
-import getLatestTasks from "@/functions/getLatestRoutineAndTasks.js";
 import checkPurchaseAccess from "@/functions/checkPurchaseAccess.js";
 
 const route = Router();
@@ -75,23 +74,30 @@ route.post(
         return;
       }
 
-      const accessibleRoutines = routinesToAdd.filter((r) =>
-        hasAccessTo.includes(r.part)
-      );
+      const accessibleRoutines = routinesToAdd
+        .filter((r) => hasAccessTo.includes(r.part))
+        .sort(
+          (a, b) =>
+            new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime()
+        );
 
       const batchSize = 5;
       let promises = [];
       let clonedRoutines = [];
+
+      const daysDifference = calculateDaysDifference(
+        new Date(accessibleRoutines[0].startsAt),
+        new Date(startDate)
+      );
 
       for (let i = 0; i < accessibleRoutines.length; i++) {
         promises.push(
           doWithRetries(() =>
             cloneSingleRoutine({
               hostRoutine: accessibleRoutines[i],
-              startDate,
-              timeZone,
               userId: req.userId,
               userName: userInfo.name,
+              daysDifference,
             })
           )
         );

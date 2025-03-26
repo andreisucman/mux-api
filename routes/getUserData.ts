@@ -14,16 +14,11 @@ route.get(
         async () => await getUserData({ userId: req.userId })
       );
 
-      if (userData === null) {
-        signOut(res, 400, "Account not found");
-        return;
-      }
-
       if (
-        userData.moderationStatus === ModerationStatusEnum.BLOCKED ||
-        userData.moderationStatus === ModerationStatusEnum.SUSPENDED
+        userData?.moderationStatus === ModerationStatusEnum.BLOCKED ||
+        userData?.moderationStatus === ModerationStatusEnum.SUSPENDED
       ) {
-        signOut(res, 402, `Account ${userData.moderationStatus}`);
+        signOut(res, 402, `Account ${userData?.moderationStatus}`);
         return;
       }
 

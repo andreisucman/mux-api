@@ -113,6 +113,15 @@ route.post(
         part,
       });
 
+      await doWithRetries(() =>
+        db
+          .collection("User")
+          .updateOne(
+            { _id: new ObjectId(req.userId) },
+            { $set: { isPublic: status === "public" } }
+          )
+      );
+
       if (status !== "public") {
         const subscribers = await doWithRetries(() =>
           db

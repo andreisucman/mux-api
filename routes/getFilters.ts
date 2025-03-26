@@ -26,7 +26,7 @@ route.get(
     const { filter, projection } = aqp(req.query as any) as AqpQuery;
     const { collection, ...rest } = filter;
 
-    if (!collection || (!userName && !req.userId)) {
+    if (!collection) {
       res.status(400).json({ error: "Bad request" });
       return;
     }

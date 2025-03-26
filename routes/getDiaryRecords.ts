@@ -55,7 +55,7 @@ route.get(
           .toArray()
       )) as unknown as DiaryRecordType[];
 
-      let response = { priceData: null, data: diary };
+      let response = { priceData: null, data: diary, notPurchased: [] };
 
       if (userName) {
         if (diary.length) {
@@ -69,6 +69,7 @@ route.get(
 
           response.priceData = result.priceData;
           response.data = result.data;
+          response.notPurchased = result.notPurchased;
         }
       }
 

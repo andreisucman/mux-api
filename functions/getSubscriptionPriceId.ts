@@ -19,7 +19,7 @@ export default async function getSubscriptionPriceId({ amount, name }: Props) {
       db.collection("StripePrice").findOne({ amount: formattedAmount })
     );
 
-    priceId = storedPrice.priceId;
+    priceId = storedPrice?.priceId;
 
     if (!priceId) {
       const interval = "month";

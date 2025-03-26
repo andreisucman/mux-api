@@ -83,6 +83,7 @@ export default async function createClubProfile({ userId }: Props) {
             club: defaultClubData,
             name: randomName,
             avatar: avatarConfig,
+            isPublic: false,
           },
         }
       )

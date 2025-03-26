@@ -176,9 +176,8 @@ export type DemographicsType = {
 };
 
 export enum BlurTypeEnum {
-  FACE = "face",
-  EYES = "eyes",
   ORIGINAL = "original",
+  BLURRED = "blurred",
 }
 
 export enum PartEnum {
@@ -277,7 +276,7 @@ export type UserConcernType = {
 };
 
 export type BlurredUrlType = {
-  name: "original" | "eyes" | "face";
+  name: "original" | "blurred";
   url: string;
 };
 

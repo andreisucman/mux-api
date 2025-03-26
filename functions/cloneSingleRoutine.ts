@@ -15,21 +15,18 @@ import { ObjectId } from "mongodb";
 import { db } from "@/init.js";
 import updateAnalytics from "./updateAnalytics.js";
 import updateTasksAnalytics from "./updateTasksAnalytics.js";
-import updateRoutineStatus from "./updateRoutineStatus.js";
 
 type Props = {
   userId: string;
   userName: string;
-  timeZone: string;
-  startDate: string;
+  daysDifference: number;
   hostRoutine: RoutineType;
 };
 
 export default async function cloneSingleRoutine({
   userId,
   userName,
-  timeZone,
-  startDate,
+  daysDifference,
   hostRoutine,
 }: Props) {
   try {
@@ -54,6 +51,8 @@ export default async function cloneSingleRoutine({
         routineId: newRoutineId,
         proofEnabled: true,
         status: TaskStatusEnum.ACTIVE,
+        startsAt: daysFrom({ date: task.startsAt, days: daysDifference }),
+        expiresAt: daysFrom({ date: task.expiresAt, days: daysDifference }),
         completedAt: null,
         userName,
       };
@@ -61,78 +60,20 @@ export default async function cloneSingleRoutine({
         newTask.name = newTask.recipe.name;
         newTask.description = newTask.recipe.description;
         newTask.instruction = newTask.recipe.instruction;
-        newTask.productTypes=newTask.recipe.productTypes;
+        newTask.productTypes = newTask.recipe.productTypes;
         newTask.examples = newTask.recipe.examples;
       }
       if (userName) newTask.stolenFrom = userName;
       return newTask;
     });
 
-    /* get the frequencies for each task */
-    const taskFrequencyMap = replacementTasks.reduce(
-      (a: { [key: string]: any }, c: TaskType) => {
-        if (a[c.key]) {
-          a[c.key] += 1;
-        } else {
-          a[c.key] = 1;
-        }
-        return a;
-      },
-      {}
-    );
-
-    const taskKeys = Object.keys(taskFrequencyMap);
-    const replacementTaskWithDates: TaskType[] = [];
-
-    /* get the updated start and expiry dates for each task */
-    for (let i = 0; i < taskKeys.length; i++) {
-      const frequency = taskFrequencyMap[taskKeys[i]];
-
-      const relevantTaskInfo = replacementTasks.find(
-        (task: TaskType) => task.key === taskKeys[i]
-      );
-
-      const relevantTasks = replacementTasks.filter(
-        (t) => t.key === taskKeys[i]
-      );
-
-      for (let j = 0; j < frequency; j++) {
-        const initialDate = relevantTasks[0].startsAt;
-        const currentDate = relevantTasks[j].startsAt;
-        const daysDifference = calculateDaysDifference(
-          initialDate,
-          currentDate
-        );
-
-        const starts = daysFrom({
-          date: setToMidnight({
-            date: new Date(startDate),
-            timeZone,
-          }),
-          days: daysDifference,
-        });
-
-        const expires = daysFrom({
-          date: new Date(starts),
-          days: 1,
-        });
-
-        replacementTaskWithDates.push({
-          ...relevantTaskInfo,
-          startsAt: starts,
-          expiresAt: expires,
-          completedAt: null,
-        } as unknown as TaskType);
-      }
-    }
-
     let finalSchedule: {
       [key: string]: ScheduleTaskType[];
     } = {};
 
     /* update final schedule */
-    for (let i = 0; i < replacementTaskWithDates.length; i++) {
-      const task = replacementTaskWithDates[i];
+    for (let i = 0; i < replacementTasks.length; i++) {
+      const task = replacementTasks[i];
       const dateString = new Date(task.startsAt).toDateString();
 
       const simpleTaskContent: ScheduleTaskType = {
@@ -150,10 +91,10 @@ export default async function cloneSingleRoutine({
     finalSchedule = sortTasksInScheduleByDate(finalSchedule);
 
     /* update allTasks */
-    const uniqueTaskKeys = [...new Set(taskKeys)];
+    const uniqueTaskKeys = [...new Set(replacementTasks.map((t) => t.key))];
 
     const updatedAllTasks = uniqueTaskKeys.map((taskKey: string) => {
-      const ids = replacementTaskWithDates
+      const ids = replacementTasks
         .filter((t) => t.key === taskKey)
         .map((t) => ({
           _id: t._id,
@@ -161,13 +102,13 @@ export default async function cloneSingleRoutine({
           status: TaskStatusEnum.ACTIVE,
         }));
 
-      const relevantInfoTask = replacementTaskWithDates.find(
+      const relevantInfoTask = replacementTasks.find(
         (task) => task.key === taskKey
       );
       const { name, key, icon, color, concern, description, instruction } =
         relevantInfoTask;
 
-      const total = taskFrequencyMap[key];
+      const total = replacementTasks.filter((t) => t.key === key).length;
 
       return {
         ids,
@@ -192,6 +133,7 @@ export default async function cloneSingleRoutine({
       createdAt: new Date(),
       finalSchedule,
       userName,
+      isPublic: false,
       allTasks: updatedAllTasks,
       startsAt: new Date(minDate),
       lastDate: new Date(maxDate),

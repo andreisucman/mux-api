@@ -76,7 +76,7 @@ route.get(
         db.collection("Proof").aggregate(pipeline).toArray()
       );
 
-      let response = { priceData: null, data: proof };
+      let response = { priceData: null, data: proof, notPurchased: [] };
 
       if (userName) {
         if (proof.length) {
@@ -90,6 +90,7 @@ route.get(
 
           response.priceData = result.priceData;
           response.data = result.data;
+          response.notPurchased = result.notPurchased;
         }
       }
 

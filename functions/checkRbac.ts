@@ -18,7 +18,7 @@ export default async function checkRbac({ part, userId, sellerId }: Props) {
 
     if (part) filter.part = part;
 
-    const result = await doWithRetries(async () =>
+    const purchases = await doWithRetries(async () =>
       db
         .collection("Purchase")
         .find(filter, {
@@ -30,7 +30,25 @@ export default async function checkRbac({ part, userId, sellerId }: Props) {
         .toArray()
     );
 
-    return result;
+    const priceData = await doWithRetries(async () =>
+      db
+        .collection("RoutineData")
+        .find(
+          { userId: new ObjectId(sellerId), status: "public" },
+          {
+            projection: { name: 1, description: 1, price: 1, part: 1 },
+          }
+        )
+        .toArray()
+    );
+
+    const purchasedParts = purchases.map((obj) => obj.part);
+
+    const notPurchased = priceData.filter(
+      (pd) => !purchasedParts.includes(pd.part)
+    );
+
+    return { priceData, purchases, notPurchased };
   } catch (err) {
     throw httpError(err);
   }

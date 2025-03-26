@@ -45,7 +45,9 @@ export default async function removeFromClub({ userId }: Props) {
           _id: new ObjectId(userId),
           moderationStatus: ModerationStatusEnum.ACTIVE,
         },
-        { $set: { "club.isActive": false, canRejoinClubAfter } }
+        {
+          $set: { "club.isActive": false, canRejoinClubAfter, isPublic: false },
+        }
       )
     );
 

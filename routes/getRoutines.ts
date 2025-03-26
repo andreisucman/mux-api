@@ -60,7 +60,7 @@ route.get(
           .toArray()
       );
 
-      let response = { priceData: null, data: routines };
+      let response = { priceData: null, data: routines, notPurchased: [] };
 
       if (userName) {
         if (routines.length) {
@@ -74,6 +74,7 @@ route.get(
 
           response.priceData = result.priceData;
           response.data = result.data;
+          response.notPurchased = result.notPurchased;
         }
       }
 
