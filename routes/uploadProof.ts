@@ -60,6 +60,35 @@ route.post(
     }
 
     try {
+      const taskInfo = (await doWithRetries(() =>
+        db.collection("Task").findOne(
+          { _id: new ObjectId(taskId), status: TaskStatusEnum.ACTIVE },
+          {
+            projection: {
+              startsAt: 1,
+              name: 1,
+              key: 1,
+              color: 1,
+              part: 1,
+              icon: 1,
+              concern: 1,
+              instruction: 1,
+              requisite: 1,
+              routineId: 1,
+              restDays: 1,
+              isCreated: 1,
+            },
+          }
+        )
+      )) as unknown as UploadProofTaskType;
+
+      if (!taskInfo) throw httpError(`Task ${taskId} not found`);
+
+      if (taskInfo.startsAt > new Date()) {
+        res.status(400).json({ error: "Bad request" });
+        return;
+      }
+
       const analysisAlreadyStarted = await doWithRetries(async () =>
         db.collection("AnalysisStatus").countDocuments({
           userId: new ObjectId(req.userId),
@@ -107,29 +136,6 @@ route.post(
       )) as unknown as UploadProofUserType;
 
       if (!userInfo) throw httpError(`User ${req.userId} not found`);
-
-      const taskInfo = (await doWithRetries(async () =>
-        db.collection("Task").findOne(
-          { _id: new ObjectId(taskId), status: TaskStatusEnum.ACTIVE },
-          {
-            projection: {
-              name: 1,
-              key: 1,
-              color: 1,
-              part: 1,
-              icon: 1,
-              concern: 1,
-              instruction: 1,
-              requisite: 1,
-              routineId: 1,
-              restDays: 1,
-              isCreated: 1,
-            },
-          }
-        )
-      )) as unknown as UploadProofTaskType;
-
-      if (!taskInfo) throw httpError(`Task ${taskId} not found`);
 
       /* get the previous images of the same task */
       const oldProofsArray = await doWithRetries(async () =>

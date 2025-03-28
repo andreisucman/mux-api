@@ -28,4 +28,5 @@ export type UploadProofTaskType = {
   recipe: RecipeType;
   restDays: number;
   isCreated: boolean;
+  startsAt: Date;
 };

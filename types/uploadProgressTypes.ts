@@ -6,7 +6,6 @@ import {
   ClubDataType,
   DemographicsType,
   LatestScoresType,
-  NextActionType,
 } from "types.js";
 
 export type ProgressType = {

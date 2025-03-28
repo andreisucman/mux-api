@@ -153,7 +153,7 @@ export type PrivacyType = {
 
 type BalanceRecordType = {
   amount: number;
-  currency: number;
+  currency: string;
 };
 
 export type ClubPayoutDataType = {

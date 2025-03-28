@@ -118,32 +118,32 @@ route.post(
         categoryName: CategoryNameEnum.PROGRESSSCAN,
       });
 
-      // if (!isClearlyVisible) {
-      //   res.status(200).json({
-      //     error:
-      //       "The image is not clear. Try taking photos in daylight with no shadows or glitter obscuring your features.",
-      //   });
-      //   return;
-      // }
+      if (!isClearlyVisible) {
+        res.status(200).json({
+          error:
+            "The image is not clear. Try taking photos in daylight with no shadows or glitter obscuring your features.",
+        });
+        return;
+      }
 
-      // if (numberOfPeople === 0) {
-      //   res.status(200).json({
-      //     error: "Can't see anyone on the photo.",
-      //   });
-      //   return;
-      // }
+      if (numberOfPeople === 0) {
+        res.status(200).json({
+          error: "Can't see anyone on the photo.",
+        });
+        return;
+      }
 
-      // if (numberOfPeople > 1) {
-      //   res.status(200).json({
-      //     error: "There can only be one person on the photo.",
-      //   });
-      //   return;
-      // }
+      if (numberOfPeople > 1) {
+        res.status(200).json({
+          error: "There can only be one person on the photo.",
+        });
+        return;
+      }
 
-      // if (!isPositionValid) {
-      //   res.status(200).json({ error: changePositionMessage });
-      //   return;
-      // }
+      if (!isPositionValid) {
+        res.status(200).json({ error: changePositionMessage });
+        return;
+      }
 
       const userInfo = (await doWithRetries(async () =>
         db.collection("User").findOne(

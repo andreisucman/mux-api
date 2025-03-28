@@ -34,7 +34,10 @@ const avatarSexMap: { [key: string]: string } = {
 
 export const defaultClubPayoutData: ClubPayoutDataType = {
   connectId: null,
-  balance: 0,
+  balance: {
+    pending: { amount: 0, currency: "" },
+    available: { amount: 0, currency: "" },
+  },
   payoutsEnabled: false,
   detailsSubmitted: false,
   disabledReason: null,

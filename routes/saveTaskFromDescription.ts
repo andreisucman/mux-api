@@ -89,29 +89,6 @@ route.post(
         return;
       }
 
-      /* count created tasks */
-      const lastWeekStart = daysFrom({
-        date: setToMidnight({
-          date: new Date(),
-          timeZone,
-        }),
-        days: -7,
-      });
-
-      const tasksCount = await doWithRetries(async () =>
-        db.collection("Task").countDocuments({
-          isCreated: true,
-          startsAt: { $gte: lastWeekStart },
-        })
-      );
-
-      if (tasksCount > 70) {
-        res.status(200).json({
-          error: "You can create only 70 tasks per week. Try again tomorrow.",
-        });
-        return;
-      }
-
       const text = `Description: ${description}.<-->Instruction: ${instruction}.`;
 
       const { isSafe } = await moderateContent({

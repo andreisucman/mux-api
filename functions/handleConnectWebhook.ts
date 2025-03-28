@@ -66,79 +66,87 @@ async function markEventAsProcessed(eventId: string) {
 }
 
 async function handlePayoutsDisabled(userInfo: any) {
-  const updatePayload: { [key: string]: any } = {};
+  try {
+    const updatePayload: { [key: string]: any } = {};
 
-  await updateContent({
-    userId: String(userInfo._id),
-    collections: ["BeforeAfter", "Progress", "Proof", "Diary", "Routine"],
-    updatePayload: { isPublic: false },
-  });
-
-  if (!userInfo.club.payouts.payoutsDisabledUserNotifiedOn) {
-    const { title, body } = await getEmailContent({
-      accessToken: null,
-      emailType: "payoutsDisabled",
-    });
-
-    await sendEmail({
-      to: userInfo.email,
-      subject: title,
-      html: body,
-    });
-
-    updatePayload.payoutsDisabledUserNotifiedOn = new Date();
-    updateAnalytics({
+    await updateContent({
       userId: String(userInfo._id),
-      incrementPayload: { "overview.club.payoutsDisabled": 1 },
+      collections: ["BeforeAfter", "Progress", "Proof", "Diary", "Routine"],
+      updatePayload: { isPublic: false },
     });
-  }
 
-  return updatePayload;
+    if (!userInfo.club.payouts.payoutsDisabledUserNotifiedOn) {
+      const { title, body } = await getEmailContent({
+        accessToken: null,
+        emailType: "payoutsDisabled",
+      });
+
+      await sendEmail({
+        to: userInfo.email,
+        subject: title,
+        html: body,
+      });
+
+      updatePayload.payoutsDisabledUserNotifiedOn = new Date();
+      updateAnalytics({
+        userId: String(userInfo._id),
+        incrementPayload: { "overview.club.payoutsDisabled": 1 },
+      });
+    }
+
+    return updatePayload;
+  } catch (err) {
+    throw httpError(err);
+  }
 }
 
 /* Event Handlers */
 async function handleAccountUpdated(event: Stripe.Event) {
-  const data = event.data as Stripe.AccountUpdatedEvent.Data;
-  const account = data.object;
-  const connectId = account.id;
+  try {
+    const data = event.data as Stripe.AccountUpdatedEvent.Data;
+    const account = data.object;
+    const connectId = account.id;
 
-  const userInfo = await getUserByConnectId(connectId, {
-    _id: 1,
-    email: 1,
-    "club.payouts.detailsSubmitted": 1,
-    "club.payouts.payoutsEnabled": 1,
-    "club.payouts.payoutsDisabledUserNotifiedOn": 1,
-  });
-
-  if (!userInfo) return console.warn(`User ${connectId} not found`);
-
-  const currentPayoutsEnabled = userInfo.club.payouts.payoutsEnabled;
-  const currentDetailsSubmitted = userInfo.club.payouts.detailsSubmitted;
-
-  const updatePayload: { [key: string]: any } = {
-    "club.payouts.payoutsEnabled": account.payouts_enabled,
-    "club.payouts.detailsSubmitted": account.details_submitted,
-    "club.payouts.disabledReason": account.requirements?.disabled_reason,
-  };
-
-  if (!account.payouts_enabled && account.details_submitted) {
-    const payoutUpdates = await handlePayoutsDisabled(userInfo);
-    Object.assign(updatePayload, payoutUpdates);
-  }
-
-  await updateUserPayouts(connectId, updatePayload);
-
-  if (!currentDetailsSubmitted && account.details_submitted) {
-    updateAnalytics({
-      userId: String(userInfo._id),
-      incrementPayload: { "overview.club.detailsSubmitted": 1 },
+    const userInfo = await getUserByConnectId(connectId, {
+      _id: 1,
+      email: 1,
+      "club.payouts.detailsSubmitted": 1,
+      "club.payouts.payoutsEnabled": 1,
+      "club.payouts.payoutsDisabledUserNotifiedOn": 1,
     });
-  }
 
-  if (!currentPayoutsEnabled && account.payouts_enabled) {
-    updateAnalytics({
-      userId: String(userInfo._id),
-      incrementPayload: { "overview.club.payoutsEnabled": 1 },
-    });
+    if (!userInfo) return console.warn(`User ${connectId} not found`);
+
+    const currentPayoutsEnabled = userInfo.club.payouts.payoutsEnabled;
+    const currentDetailsSubmitted = userInfo.club.payouts.detailsSubmitted;
+
+    const updatePayload: { [key: string]: any } = {
+      "club.payouts.payoutsEnabled": account.payouts_enabled,
+      "club.payouts.detailsSubmitted": account.details_submitted,
+      "club.payouts.disabledReason": account.requirements?.disabled_reason,
+    };
+
+    if (!account.payouts_enabled && account.details_submitted) {
+      const payoutUpdates = await handlePayoutsDisabled(userInfo);
+      Object.assign(updatePayload, payoutUpdates);
+    }
+
+    await updateUserPayouts(connectId, updatePayload);
+
+    if (!currentDetailsSubmitted && account.details_submitted) {
+      updateAnalytics({
+        userId: String(userInfo._id),
+        incrementPayload: { "overview.club.detailsSubmitted": 1 },
+      });
+    }
+
+    if (!currentPayoutsEnabled && account.payouts_enabled) {
+      updateAnalytics({
+        userId: String(userInfo._id),
+        incrementPayload: { "overview.club.payoutsEnabled": 1 },
+      });
+    }
+  } catch (err) {
+    throw httpError(err);
   }
 }

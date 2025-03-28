@@ -25,16 +25,20 @@ async function handleSubscriptionCreated(
   subscription: Stripe.Subscription,
   plans: any[]
 ) {
-  const { routineDataId } = subscription.metadata || {};
-  if (routineDataId) return;
+  try {
+    const { routineDataId } = subscription.metadata || {};
+    if (routineDataId) return;
 
-  const customerId = subscription.customer as string;
-  const priceId = subscription.items.data[0].price.id;
+    const customerId = subscription.customer as string;
+    const priceId = subscription.items.data[0].price.id;
 
-  const plan = plans.find((p) => p.priceId === priceId);
-  if (!plan) return;
+    const plan = plans.find((p) => p.priceId === priceId);
+    if (!plan) return;
 
-  await updateUserSubscriptionPlan(customerId, subscription, plan);
+    await updateUserSubscriptionPlan(customerId, subscription, plan);
+  } catch (err) {
+    throw httpError(err);
+  }
 }
 
 async function createRoutinePurchase(
@@ -42,123 +46,135 @@ async function createRoutinePurchase(
   buyerId: string,
   paymentIntentId: string
 ) {
-  const relatedRoutineData: { [key: string]: any } = await fetchRoutineData(
-    routineDataId
-  );
+  try {
+    const relatedRoutineData: { [key: string]: any } = await fetchRoutineData(
+      routineDataId
+    );
 
-  if (!relatedRoutineData) return;
+    if (!relatedRoutineData) return;
 
-  const {
-    name,
-    part,
-    email: sellerEmail,
-    userId: sellerId,
-    contentStartDate,
-    contentEndDate,
-  } = relatedRoutineData;
-
-  const [sellerInfo, buyerInfo] = await Promise.all([
-    getUserInfo({
+    const {
+      name,
+      part,
       userId: sellerId,
-      projection: { name: 1, email: 1, avatar: 1, "club.payouts.connectId": 1 },
-    }),
-    getUserInfo({
-      userId: buyerId,
-      projection: { name: 1, avatar: 1 },
-    }),
-  ]);
+      contentStartDate,
+      contentEndDate,
+    } = relatedRoutineData;
 
-  const newPurchase: PurchaseType = {
-    name,
-    part,
-    buyerId: new ObjectId(buyerId),
-    sellerId: new ObjectId(sellerId),
-    createdAt: new Date(),
-    sellerName: sellerInfo.name,
-    sellerAvatar: sellerInfo.avatar,
-    buyerName: buyerInfo.name,
-    buyerAvatar: buyerInfo.avatar,
-    contentStartDate,
-    contentEndDate,
-    paymentIntentId,
-    routineDataId: new ObjectId(routineDataId),
-  };
-
-  await doWithRetries(() => db.collection("Purchase").insertOne(newPurchase));
-
-  updateAnalytics({
-    userId: String(buyerInfo._id),
-    incrementPayload: {
-      [`overview.payment.purchase.oneTime`]: 1,
-    },
-  });
-
-  const stripeBalance = await doWithRetries(async () =>
-    stripe.balance.retrieve({
-      stripeAccount: sellerInfo.club.payouts.connectId,
-    })
-  );
-
-  const available = stripeBalance.available[0];
-  const pending = stripeBalance.pending[0];
-
-  await doWithRetries(() =>
-    db.collection("User").updateOne(
-      { _id: sellerId },
-      {
-        $set: {
-          "club.payouts.balance": { available, pending },
+    const [sellerInfo, buyerInfo] = await Promise.all([
+      getUserInfo({
+        userId: sellerId,
+        projection: {
+          name: 1,
+          email: 1,
+          avatar: 1,
+          "club.payouts.connectId": 1,
         },
-      }
-    )
-  );
+      }),
+      getUserInfo({
+        userId: buyerId,
+        projection: { name: 1, avatar: 1 },
+      }),
+    ]);
 
-  const { title, body } = await getEmailContent({
-    accessToken: null,
-    emailType: "yourPlanPurchased",
-  });
-  await sendEmail({ to: sellerEmail, subject: title, html: body });
+    const newPurchase: PurchaseType = {
+      name,
+      part,
+      buyerId: new ObjectId(buyerId),
+      sellerId: new ObjectId(sellerId),
+      createdAt: new Date(),
+      sellerName: sellerInfo.name,
+      sellerAvatar: sellerInfo.avatar,
+      buyerName: buyerInfo.name,
+      buyerAvatar: buyerInfo.avatar,
+      contentStartDate,
+      contentEndDate,
+      paymentIntentId,
+      routineDataId: new ObjectId(routineDataId),
+    };
+
+    await doWithRetries(() => db.collection("Purchase").insertOne(newPurchase));
+
+    updateAnalytics({
+      userId: String(buyerInfo._id),
+      incrementPayload: {
+        [`overview.payment.purchase.oneTime`]: 1,
+      },
+    });
+
+    const stripeBalance = await doWithRetries(async () =>
+      stripe.balance.retrieve({
+        stripeAccount: sellerInfo.club.payouts.connectId,
+      })
+    );
+
+    const available = stripeBalance.available[0];
+    const pending = stripeBalance.pending[0];
+
+    await doWithRetries(() =>
+      db.collection("User").updateOne(
+        { _id: sellerId },
+        {
+          $set: {
+            "club.payouts.balance": { available, pending },
+          },
+        }
+      )
+    );
+
+    const { title, body } = await getEmailContent({
+      accessToken: null,
+      emailType: "yourPlanPurchased",
+    });
+    await sendEmail({ to: sellerInfo.email, subject: title, html: body });
+  } catch (err) {
+    throw httpError(err);
+  }
 }
 
 async function fetchRoutineData(routineDataId: string) {
-  const relatedRoutineData = await doWithRetries(() =>
-    db.collection("RoutineData").findOne(
-      { _id: new ObjectId(routineDataId) },
-      {
-        projection: {
-          updatePrice: 1,
-          price: 1,
-          name: 1,
-          part: 1,
-          userId: 1,
-          contentStartDate: 1,
-        },
-      }
-    )
-  );
+  try {
+    const relatedRoutineData = await doWithRetries(() =>
+      db.collection("RoutineData").findOne(
+        { _id: new ObjectId(routineDataId) },
+        {
+          projection: {
+            updatePrice: 1,
+            price: 1,
+            name: 1,
+            part: 1,
+            userId: 1,
+            contentStartDate: 1,
+          },
+        }
+      )
+    );
 
-  if (!relatedRoutineData) {
-    throw httpError(`RoutineData not found for ID: ${routineDataId}`);
+    if (!relatedRoutineData) {
+      throw httpError(`RoutineData not found for ID: ${routineDataId}`);
+    }
+
+    const latestCurrentRoutine = await doWithRetries(() =>
+      db
+        .collection("Routine")
+        .find({
+          userId: new ObjectId(relatedRoutineData.userId),
+          part: relatedRoutineData.part,
+        })
+        .project({ createdAt: 1 })
+        .sort({ createdAt: -1 })
+        .next()
+    );
+
+    const result = {
+      ...relatedRoutineData,
+      contentEndDate: latestCurrentRoutine.createdAt,
+    };
+
+    return result;
+  } catch (err) {
+    throw httpError(err);
   }
-
-  const latestCurrentRoutine = await doWithRetries(() =>
-    db
-      .collection("Routine")
-      .find({
-        userId: new ObjectId(relatedRoutineData.userId),
-        part: relatedRoutineData.part,
-      })
-      .project({ createdAt: 1 })
-      .sort({ createdAt: -1 })
-      .next()
-  );
-
-  const result = {
-    ...relatedRoutineData,
-    contentEndDate: latestCurrentRoutine.createdAt,
-  };
-
-  return result;
 }
 
 async function updateUserSubscriptionPlan(
@@ -166,128 +182,183 @@ async function updateUserSubscriptionPlan(
   subscription: Stripe.Subscription,
   plan: any
 ) {
-  const validUntil = new Date(subscription.current_period_end * 1000);
-  const sanitizedPlanName = sanitizePlanName(plan.name);
+  try {
+    const validUntil = new Date(subscription.current_period_end * 1000);
+    const sanitizedPlanName = sanitizePlanName(plan.name);
 
-  await doWithRetries(() =>
-    db.collection("User").updateOne(
-      { stripeUserId: customerId },
-      {
-        $set: {
-          [`subscriptions.${sanitizedPlanName}`]: {
-            subscriptionId: subscription.id,
-            validUntil,
-            priceId: plan.priceId,
+    await doWithRetries(() =>
+      db.collection("User").updateOne(
+        { stripeUserId: customerId },
+        {
+          $set: {
+            [`subscriptions.${sanitizedPlanName}`]: {
+              subscriptionId: subscription.id,
+              validUntil,
+              priceId: plan.priceId,
+            },
           },
-        },
-      }
-    )
-  );
+        }
+      )
+    );
+  } catch (err) {
+    throw httpError(err);
+  }
 }
 
 async function handleSubscriptionPayment(
   session: Stripe.Checkout.Session,
   plans: any[]
 ) {
-  const subscriptionId = session.subscription as string;
-  if (!subscriptionId) return;
+  try {
+    const subscriptionId = session.subscription as string;
+    if (!subscriptionId) return;
 
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-  const { routineDataId } = subscription.metadata || {};
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    const { routineDataId } = subscription.metadata || {};
 
-  if (routineDataId) return;
+    if (routineDataId) return;
 
-  const buyerInfo = await fetchUserInfo(
-    { stripeUserId: session.customer },
-    { _id: 1 }
-  );
+    const buyerInfo = await fetchUserInfo(
+      { stripeUserId: session.customer },
+      { _id: 1 }
+    );
 
-  const expandedSession = await stripe.checkout.sessions.retrieve(session.id, {
-    expand: ["line_items.data"],
-  });
-
-  const planQuantities = expandedSession.line_items.data.reduce((acc, line) => {
-    const plan = plans.find((p) => p.priceId === line.price?.id);
-    if (plan) acc[plan.name] = (acc[plan.name] || 0) + (line.quantity ?? 1);
-    return acc;
-  }, {} as Record<string, number>);
-
-  const analyticsUpdate = Object.entries(planQuantities).reduce(
-    (a, [planName, quantity]) => {
-      const key = `overview.subscription.purchased.${sanitizePlanName(
-        planName
-      )}`;
-      if (key) {
-        a[key] += quantity;
-      } else {
-        a[key] = quantity;
+    const expandedSession = await stripe.checkout.sessions.retrieve(
+      session.id,
+      {
+        expand: ["line_items.data"],
       }
-      return a;
-    },
-    {}
-  );
+    );
 
-  updateAnalytics({
-    userId: String(buyerInfo._id),
-    incrementPayload: analyticsUpdate,
-  });
-  // }
+    const planQuantities = expandedSession.line_items.data.reduce(
+      (acc, line) => {
+        const plan = plans.find((p) => p.priceId === line.price?.id);
+        if (plan) acc[plan.name] = (acc[plan.name] || 0) + (line.quantity ?? 1);
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+
+    const analyticsUpdate = Object.entries(planQuantities).reduce(
+      (a, [planName, quantity]) => {
+        const key = `overview.subscription.purchased.${sanitizePlanName(
+          planName
+        )}`;
+        if (key) {
+          a[key] += quantity;
+        } else {
+          a[key] = quantity;
+        }
+        return a;
+      },
+      {}
+    );
+
+    updateAnalytics({
+      userId: String(buyerInfo._id),
+      incrementPayload: analyticsUpdate,
+    });
+  } catch (err) {
+    throw httpError(err);
+  }
 }
 
 async function handleInvoicePayment(invoice: Stripe.Invoice) {
-  const subscriptionId = invoice.subscription as string;
-  if (!subscriptionId) return;
+  try {
+    const subscriptionId = invoice.subscription as string;
+    if (!subscriptionId) return;
 
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-  const { routineDataId, sellerId } = subscription.metadata || {};
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    const { routineDataId, sellerId } = subscription.metadata || {};
 
-  if (!routineDataId) return;
+    if (!routineDataId) return;
 
-  const newSubscribedUntil = new Date(subscription.current_period_end * 1000);
+    const newSubscribedUntil = new Date(subscription.current_period_end * 1000);
 
-  const sellerInfo = await fetchUserInfo(
-    { _id: new ObjectId(sellerId) },
-    { "club.payouts.connectId": 1 }
-  );
+    const sellerInfo = await fetchUserInfo(
+      { _id: new ObjectId(sellerId) },
+      { "club.payouts.connectId": 1 }
+    );
 
-  await updatePurchaseSubscriptionData(
-    newSubscribedUntil,
-    new ObjectId(routineDataId),
-    sellerId,
-    sellerInfo.club.payouts.connectId
-  );
+    await updatePurchaseSubscriptionData(
+      newSubscribedUntil,
+      new ObjectId(routineDataId),
+      sellerId,
+      sellerInfo.club.payouts.connectId
+    );
+  } catch (err) {
+    throw httpError(err);
+  }
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
-  const stripeUserId = subscription.customer as string;
-  const buyerInfo = await fetchUserInfo({ stripeUserId }, { _id: 1 });
+  try {
+    const stripeUserId = subscription.customer as string;
+    const buyerInfo = await fetchUserInfo({ stripeUserId }, { _id: 1 });
 
-  await doWithRetries(() =>
-    db
-      .collection("Purchase")
-      .updateOne(
-        { buyerId: buyerInfo._id },
-        { $unset: { subscriptionId: null } }
-      )
-  );
+    await doWithRetries(() =>
+      db
+        .collection("Purchase")
+        .updateOne(
+          { buyerId: buyerInfo._id },
+          { $unset: { subscriptionId: null } }
+        )
+    );
+  } catch (err) {
+    throw httpError(err);
+  }
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
-  const stripeUserId = subscription.customer as string;
-  const buyerInfo = await fetchUserInfo({ stripeUserId });
-  let updatePayload: { [key: string]: any } = {};
+  try {
+    const stripeUserId = subscription.customer as string;
+    const buyerInfo = await fetchUserInfo({ stripeUserId });
+    let updatePayload: { [key: string]: any } = {};
 
-  if (subscription.cancel_at || subscription.cancel_at_period_end) {
-    updatePayload = { $set: { isDeactivated: true } };
-  } else {
-    updatePayload = { $unset: { isDeactivated: null } };
+    if (subscription.cancel_at || subscription.cancel_at_period_end) {
+      updatePayload = { $set: { isDeactivated: true } };
+    } else {
+      updatePayload = { $unset: { isDeactivated: null } };
+    }
+
+    await doWithRetries(() =>
+      db
+        .collection("Purchase")
+        .updateOne({ buyerId: buyerInfo._id }, updatePayload)
+    );
+  } catch (err) {
+    throw httpError(err);
   }
+}
 
-  await doWithRetries(() =>
-    db
-      .collection("Purchase")
-      .updateOne({ buyerId: buyerInfo._id }, updatePayload)
-  );
+async function handleBalanceAvailable(connectId: string) {
+  try {
+    const userInfo = await fetchUserInfo({
+      "club.payouts.connectId": connectId,
+    });
+
+    const stripeBalance = await doWithRetries(async () =>
+      stripe.balance.retrieve({
+        stripeAccount: connectId,
+      })
+    );
+
+    const available = stripeBalance.available[0];
+    const pending = stripeBalance.pending[0];
+
+    await doWithRetries(() =>
+      db.collection("User").updateOne(
+        { _id: new ObjectId(userInfo._id) },
+        {
+          $set: {
+            "club.payouts.balance": { available, pending },
+          },
+        }
+      )
+    );
+  } catch (err) {
+    throw httpError(err);
+  }
 }
 
 async function updatePurchaseSubscriptionData(
@@ -297,95 +368,107 @@ async function updatePurchaseSubscriptionData(
   sellerConnectId: string,
   subscriptionId?: string
 ) {
-  const updatePurchasePayload: { [key: string]: any } = {
-    contentEndDate: newSubscribedUntil,
-  };
+  try {
+    const updatePurchasePayload: { [key: string]: any } = {
+      contentEndDate: newSubscribedUntil,
+    };
 
-  if (subscriptionId) updatePurchasePayload.subscriptionId = subscriptionId;
+    if (subscriptionId) updatePurchasePayload.subscriptionId = subscriptionId;
 
-  await doWithRetries(() =>
-    db
-      .collection("Purchase")
-      .updateOne(
-        { routineDataId: new ObjectId(routineDataId) },
-        { $set: updatePurchasePayload }
+    await doWithRetries(() =>
+      db
+        .collection("Purchase")
+        .updateOne(
+          { routineDataId: new ObjectId(routineDataId) },
+          { $set: updatePurchasePayload }
+        )
+    );
+
+    const stripeBalance = await doWithRetries(async () =>
+      stripe.balance.retrieve({
+        stripeAccount: sellerConnectId,
+      })
+    );
+
+    const available = stripeBalance.available[0];
+    const pending = stripeBalance.pending[0];
+
+    await doWithRetries(() =>
+      db.collection("User").updateOne(
+        { _id: new ObjectId(sellerId) },
+        {
+          $set: {
+            "club.payouts.balance": { available, pending },
+          },
+        }
       )
-  );
-
-  const stripeBalance = await doWithRetries(async () =>
-    stripe.balance.retrieve({
-      stripeAccount: sellerConnectId,
-    })
-  );
-
-  const available = stripeBalance.available[0];
-  const pending = stripeBalance.pending[0];
-
-  await doWithRetries(() =>
-    db.collection("User").updateOne(
-      { _id: new ObjectId(sellerId) },
-      {
-        $set: {
-          "club.payouts.balance": { available, pending },
-        },
-      }
-    )
-  );
+    );
+  } catch (err) {
+    throw httpError(err);
+  }
 }
 
 async function fetchUserInfo(filter: { [key: string]: any }, projection = {}) {
-  const userInfo = await doWithRetries(() =>
-    db.collection("User").findOne(
-      {
-        ...filter,
-        moderationStatus: ModerationStatusEnum.ACTIVE,
-      },
-      { projection: { _id: 1, ...projection } }
-    )
-  );
+  try {
+    const userInfo = await doWithRetries(() =>
+      db.collection("User").findOne(
+        {
+          ...filter,
+          moderationStatus: ModerationStatusEnum.ACTIVE,
+        },
+        { projection: { _id: 1, ...projection } }
+      )
+    );
 
-  if (!userInfo) {
-    console.warn(`No active user found`);
+    if (!userInfo) {
+      console.warn(`No active user found`);
+    }
+    return userInfo;
+  } catch (err) {
+    throw httpError(err);
   }
-  return userInfo;
 }
 
 async function handleOneTimePayment(
   session: Stripe.Checkout.Session,
   plans: any[]
 ) {
-  const { routineDataId, buyerId } = session.metadata || {};
+  try {
+    const { routineDataId, buyerId } = session.metadata || {};
 
-  if (routineDataId) {
-    await createRoutinePurchase(
-      routineDataId,
-      buyerId,
-      session.payment_intent as string
-    );
-  } else {
-    const expandedSession = await stripe.checkout.sessions.retrieve(
-      session.id,
-      {
-        expand: ["line_items.data.price.product"],
-      }
-    );
+    if (routineDataId) {
+      await createRoutinePurchase(
+        routineDataId,
+        buyerId,
+        session.payment_intent as string
+      );
+    } else {
+      const expandedSession = await stripe.checkout.sessions.retrieve(
+        session.id,
+        {
+          expand: ["line_items.data.price.product"],
+        }
+      );
 
-    const relatedPlan = plans.find((p) => p.name === "scan");
-    if (!relatedPlan) return;
+      const relatedPlan = plans.find((p) => p.name === "scan");
+      if (!relatedPlan) return;
 
-    const lineItems = expandedSession.line_items?.data || [];
-    const totalQuantity = calculateTotalScanQuantity(lineItems, relatedPlan);
+      const lineItems = expandedSession.line_items?.data || [];
+      const totalQuantity = calculateTotalScanQuantity(lineItems, relatedPlan);
 
-    const customerId = session.customer as string;
+      const customerId = session.customer as string;
 
-    await doWithRetries(() =>
-      db
-        .collection("User")
-        .updateOne(
-          { stripeUserId: customerId },
-          { $inc: { scanAnalysisQuota: totalQuantity } }
-        )
-    );
+      await doWithRetries(() =>
+        db
+          .collection("User")
+          .updateOne(
+            { stripeUserId: customerId },
+            { $inc: { scanAnalysisQuota: totalQuantity } }
+          )
+      );
+    }
+  } catch (err) {
+    throw httpError(err);
   }
 }
 
@@ -417,7 +500,8 @@ async function handleStripeWebhook(event: Stripe.Event) {
       type !== "checkout.session.completed" &&
       type !== "customer.subscription.created" &&
       type !== "customer.subscription.deleted" &&
-      type !== "customer.subscription.updated"
+      type !== "customer.subscription.updated" &&
+      type !== "balance.available"
     ) {
       return;
     }
@@ -451,6 +535,10 @@ async function handleStripeWebhook(event: Stripe.Event) {
 
       case "customer.subscription.updated":
         await handleSubscriptionUpdated(data.object);
+        break;
+
+      case "balance.available":
+        await handleBalanceAvailable(event.account);
         break;
 
       case "checkout.session.completed":

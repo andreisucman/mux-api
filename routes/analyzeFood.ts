@@ -159,7 +159,7 @@ route.post(
 
       if (req.userId) newRecord.userId = new ObjectId(req.userId);
 
-      doWithRetries(async () =>
+      await doWithRetries(async () =>
         db.collection("FoodAnalysis").insertOne(newRecord)
       );
 
