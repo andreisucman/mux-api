@@ -7,12 +7,13 @@ import doWithRetries from "helpers/doWithRetries.js";
 import { CustomRequest, ModerationStatusEnum } from "types.js";
 import formatDate from "helpers/formatDate.js";
 import { daysFrom } from "helpers/utils.js";
-import { db } from "init.js";
+import { db, stripe } from "init.js";
 import checkRewardCompletion from "@/helpers/checkRewardRequirement.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
 import httpError from "@/helpers/httpError.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import findLatestRewards from "@/functions/findLatestRewards.js";
+import formatAmountForStripe from "@/helpers/formatAmountForStripe.js";
 
 const route = Router();
 
@@ -72,6 +73,20 @@ route.post(
 
       if (!userInfo) throw httpError(`User not found`);
 
+      if (!userInfo.club) {
+        res.status(200).json({
+          error: `no club`,
+        });
+        return;
+      }
+
+      if (!userInfo.club.payouts.connectId) {
+        res.status(200).json({
+          error: `no bank`,
+        });
+        return;
+      }
+
       const completionPercentage = checkRewardCompletion(requisite, userInfo);
 
       if (Number(completionPercentage) < 100) {
@@ -81,15 +96,15 @@ route.post(
         return;
       }
 
-      await doWithRetries(async () =>
-        db.collection("User").updateOne(
-          {
-            _id: new ObjectId(req.userId),
-            moderationStatus: ModerationStatusEnum.ACTIVE,
-          },
-          { $inc: { "club.payouts.balance": rewardValue } }
-        )
-      );
+      const connectId = userInfo.club.payouts.connectId;
+
+      const formattedAmount = formatAmountForStripe(rewardValue, "usd");
+
+      await stripe.transfers.create({
+        amount: formattedAmount,
+        currency: "usd",
+        destination: connectId,
+      });
 
       await doWithRetries(async () =>
         db.collection("RewardCooldown").updateOne(
@@ -133,7 +148,7 @@ route.post(
       const rewards = await findLatestRewards({ userId: req.userId });
 
       res.status(200).json({
-        message: { rewards, rewardValue },
+        message: rewards,
       });
     } catch (err) {
       next(err);

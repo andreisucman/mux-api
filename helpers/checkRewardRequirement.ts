@@ -16,7 +16,7 @@ export default function checkRewardCompletion(
   ) {
     for (const [key, reqValue] of Object.entries(reqObj)) {
       if (payloadObj.hasOwnProperty(key)) {
-        const payloadVal = payloadObj[key];
+        const payloadVal = payloadObj[key] || 0;
 
         if (isPrimitive(reqValue) && isPrimitive(payloadVal)) {
           result.push((payloadVal / reqValue) * 100);
@@ -33,7 +33,7 @@ export default function checkRewardCompletion(
   }
 
   for (const [reqKey, reqValue] of Object.entries(requirement)) {
-    if (payload.hasOwnProperty(reqKey)) {
+    if (payload && payload.hasOwnProperty(reqKey)) {
       processObject(reqValue, payload[reqKey]);
     }
   }
