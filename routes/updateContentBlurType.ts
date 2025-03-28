@@ -2,96 +2,20 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import { ObjectId } from "mongodb";
-import { Router, Response, NextFunction, CookieOptions } from "express";
-import {
-  BlurredUrlType,
-  BlurTypeEnum,
-  CustomRequest,
-  ProgressImageType,
-  ProgressType,
-} from "types.js";
+import { Router, Response, NextFunction } from "express";
+import { CustomRequest, ProgressType } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import blurContent from "functions/blurContent.js";
 import { db } from "init.js";
+import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
-type UpdateProgressRecordProps = {
-  images: ProgressImageType[];
-  blurType: BlurTypeEnum;
-  cookies: CookieOptions;
-};
-
-async function getUpdatedProgressRecord({
-  images,
-  cookies,
-  blurType,
-}: UpdateProgressRecordProps) {
-  const image = images[0];
-  const { urls } = image;
-
-  const existingBlurRecord = urls.find(
-    (rec: { name: string }) => rec.name === blurType
-  );
-
-  if (existingBlurRecord) {
-    const newImages = [];
-
-    for (const imageObject of images) {
-      const newMainUrl = imageObject.urls.find((obj) => obj.name === blurType);
-
-      if (newMainUrl) {
-        newImages.push({
-          ...imageObject,
-          mainUrl: newMainUrl,
-          urls: imageObject.urls,
-        });
-      }
-    }
-
-    return { images: newImages };
-  } else {
-    const promises = images.map((obj: ProgressImageType) => {
-      const original = obj.urls.find((urlObj) => urlObj.name === "original");
-
-      return blurContent({
-        blurType,
-        cookies,
-        endpoint: "blurImage",
-        originalUrl: original.url,
-      });
-    });
-
-    const blurredImages = await Promise.all(promises);
-
-    const newImages = [];
-
-    for (let i = 0; i < blurredImages.length; i++) {
-      const newUrl = { name: blurType, url: blurredImages[i].url };
-
-      const updatedUrls = images[i].urls.filter((obj) => obj.name !== blurType);
-      updatedUrls.push(newUrl);
-
-      newImages.push({
-        ...images[i],
-        mainUrl: newUrl,
-        urls: updatedUrls,
-      });
-    }
-
-    return { images: newImages };
-  }
-}
-
 type UpdateDiaryRecordProps = {
   contentId: string;
-  newUrl: string;
+  url: string;
 };
 
-async function updateDiaryRecord({
-  contentId,
-  newUrl,
-}: UpdateDiaryRecordProps) {
+async function updateDiaryRecord({ contentId, url }: UpdateDiaryRecordProps) {
   /* update diary activities */
   const relevantDiaryRecord = await doWithRetries(async () =>
     db
@@ -104,7 +28,7 @@ async function updateDiaryRecord({
 
   if (relevantDiaryRecord) {
     const activity = relevantDiaryRecord.activity.map((a) =>
-      a.contentId === contentId ? { ...a, url: newUrl } : a
+      a.contentId === contentId ? { ...a, url: url } : a
     );
 
     await doWithRetries(async () =>
@@ -121,161 +45,148 @@ async function updateDiaryRecord({
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { blurType, contentCategory, contentId } = req.body;
+    const { url, position, contentId, blurDots } = req.body;
 
-    if (
-      !ObjectId.isValid(contentId) ||
-      !["blurred", "original"].includes(blurType) ||
-      !["progress", "proof"].includes(contentCategory)
-    ) {
+    if (!ObjectId.isValid(contentId)) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
 
-    const collection = contentCategory === "progress" ? "Progress" : "Proof";
-
     try {
-      const relevantRecord = await doWithRetries(async () =>
-        db.collection(collection).findOne(
+      const relevantRecord = (await doWithRetries(async () =>
+        db.collection("Progress").findOne(
           { _id: new ObjectId(contentId), userId: new ObjectId(req.userId) },
           {
             projection: {
               images: 1,
-              urls: 1,
-              thumbnails: 1,
-              initialImages: 1,
-              type: 1,
               part: 1,
             },
           }
         )
+      )) as unknown as ProgressType;
+
+      const { images, part } = relevantRecord as ProgressType;
+
+      const relevantImageObject = images.find((imageObj) =>
+        imageObj.urls.some((urlObj) => urlObj.url === url)
       );
 
-      let message: { [key: string]: any } = {};
+      const updatePayload: { [key: string]: any } = {};
+      let updatedImages;
+      let newMainUrl;
 
-      if (contentCategory === "progress") {
-        const { images, initialImages, part } = relevantRecord as ProgressType;
+      if (blurDots.length) {
+        const cookieString = Object.entries(req.cookies)
+          .map(([name, value]) => `${name}=${value}`)
+          .join("; ");
 
-        const originalImage = images
-          .filter((im) => im.position === "front")
-          .flatMap((io) => io.urls.map((obj) => obj))
-          .find((obj) => obj.name === "original");
-
-        const { images: updatedImages } = await getUpdatedProgressRecord({
-          images,
-          blurType,
-          cookies: req.cookies,
-        });
-
-        const { images: updatedInitialImages } = await getUpdatedProgressRecord(
-          {
-            images: initialImages,
-            blurType,
-            cookies: req.cookies,
-          }
+        const response = await doWithRetries(() =>
+          fetch(`${process.env.PROCESSING_SERVER_URL}/blurImageManually`, {
+            method: "POST",
+            body: JSON.stringify({ blurDots, url }),
+            headers: {
+              "Content-Type": "application/json",
+              Cookie: cookieString,
+            },
+          })
         );
 
-        message = {
-          images: updatedImages,
-          initialImages: updatedInitialImages,
+        if (!response.ok) throw httpError("Network error during blur");
+
+        const json = await response.json();
+        newMainUrl = { name: "blurred", url: json.url };
+
+        const newUrls = [{ name: "original", url }, newMainUrl];
+
+        const newRelevantImageObject = {
+          ...relevantImageObject,
+          mainUrl: newMainUrl,
+          urls: newUrls,
         };
 
-        await doWithRetries(() =>
-          db
-            .collection("Progress")
-            .updateOne(
-              { _id: new ObjectId(relevantRecord._id) },
-              { $set: message }
-            )
-        );
-
-        await doWithRetries(() =>
-          db.collection("BeforeAfter").updateOne(
-            {
-              userId: new ObjectId(req.userId),
-              part,
-              "images.urls.url": originalImage.url,
-            },
-            { $set: { images: updatedImages } }
-          )
-        );
-
-        await doWithRetries(() =>
-          db.collection("BeforeAfter").updateOne(
-            {
-              userId: new ObjectId(req.userId),
-              part,
-              "initialImages.urls.url": originalImage.url,
-            },
-            { $set: { initialImages: updatedImages } }
-          )
+        updatedImages = images.map((io) =>
+          io.position === position ? { ...io, ...newRelevantImageObject } : io
         );
       } else {
-        const { urls, thumbnails } = relevantRecord;
-
-        const existingBlurRecord = urls.find(
-          (rec: { name: string; url: string }) => rec.name === blurType
+        const newMainUrlObject = relevantImageObject.urls.find(
+          (urlObj) => urlObj.url === url
         );
+        newMainUrl = relevantImageObject.mainUrl;
+        if (newMainUrlObject) newMainUrl = newMainUrlObject;
 
-        const existingThumbnailRecord = thumbnails.find(
-          (rec: { name: string; url: string }) => rec.name === blurType
+        const newRelevantImageObject = {
+          ...relevantImageObject,
+          mainUrl: newMainUrl,
+        };
+
+        updatedImages = images.map((io) =>
+          io.position === position ? { ...io, ...newRelevantImageObject } : io
         );
-
-        if (existingBlurRecord) {
-          message.mainUrl = existingBlurRecord;
-          message.mainThumbnail = existingThumbnailRecord;
-
-          await doWithRetries(async () =>
-            db
-              .collection(collection)
-              .updateOne({ _id: new ObjectId(contentId) }, { $set: message })
-          );
-
-          await updateDiaryRecord({
-            contentId,
-            newUrl: existingBlurRecord.url,
-          });
-        } else {
-          const originalUrl = urls.find(
-            (r: BlurredUrlType) => r.name === "original"
-          );
-          const extension = originalUrl.url.split(".").pop();
-          const isVideo = extension === "webm" || extension === "mp4";
-
-          const blurredVideoResponse = await blurContent({
-            blurType,
-            endpoint: isVideo ? "blurVideo" : "blurImage",
-            originalUrl: originalUrl.url,
-            cookies: req.cookies,
-          });
-
-          const { hash, url, thumbnail } = blurredVideoResponse || {};
-
-          if (url) {
-            const newMainUrl = { name: blurType, url };
-            const newUrls = [...urls, newMainUrl];
-            const newMainThumbnail = { name: blurType, url: thumbnail };
-            const newThumbnails = [...thumbnails, newMainThumbnail];
-
-            message.mainUrl = newMainUrl;
-            message.urls = newUrls;
-            message.mainThumbnail = newMainThumbnail;
-            message.thumbnails = newThumbnails;
-
-            await doWithRetries(async () =>
-              db
-                .collection(collection)
-                .updateOne({ _id: new ObjectId(contentId) }, { $set: message })
-            );
-
-            await updateDiaryRecord({ contentId, newUrl: newMainUrl.url });
-          } else {
-            message.hash = hash;
-          }
-        }
       }
 
-      res.status(200).json({ message });
+      updatePayload.$set = { images: updatedImages };
+
+      await updateDiaryRecord({ contentId, url: newMainUrl.url });
+
+      await doWithRetries(async () =>
+        db
+          .collection("Progress")
+          .updateOne(
+            { _id: new ObjectId(contentId), userId: new ObjectId(req.userId) },
+            updatePayload
+          )
+      );
+
+      await doWithRetries(() =>
+        db.collection("Progress").updateOne(
+          {
+            userId: new ObjectId(req.userId),
+            "initialImages.urls.url": url,
+          },
+          { $set: { initialImages: updatedImages } }
+        )
+      );
+
+      await doWithRetries(() =>
+        db.collection("BeforeAfter").updateOne(
+          {
+            userId: new ObjectId(req.userId),
+            part,
+            "images.urls.url": url,
+          },
+          { $set: { images: updatedImages } }
+        )
+      );
+
+      await doWithRetries(() =>
+        db.collection("BeforeAfter").updateOne(
+          {
+            userId: new ObjectId(req.userId),
+            part,
+            "initialImages.urls.url": url,
+          },
+          { $set: { initialImages: updatedImages } }
+        )
+      );
+
+      const finalRecord = (await doWithRetries(async () =>
+        db.collection("Progress").findOne(
+          { _id: new ObjectId(contentId), userId: new ObjectId(req.userId) },
+          {
+            projection: {
+              images: 1,
+              initialImages: 1,
+            },
+          }
+        )
+      )) as unknown as ProgressType;
+
+      res.status(200).json({
+        message: {
+          images: finalRecord.images,
+          initialImages: finalRecord.initialImages,
+        },
+      });
     } catch (err) {
       next(err);
     }

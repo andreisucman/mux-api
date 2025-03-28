@@ -13,14 +13,7 @@ import Stripe from "stripe";
 /* Stripe requires the raw body to construct the event */
 export default async function handleConnectWebhook(event: Stripe.Event) {
   try {
-    if (
-      ![
-        "account.updated",
-        "transfer.updated",
-        "payment_intent.succeeded",
-      ].includes(event.type)
-    )
-      return;
+    if (event.type !== "account.updated") return;
 
     const existingEvent = await adminDb
       .collection("ProcessedEvent")
@@ -33,9 +26,6 @@ export default async function handleConnectWebhook(event: Stripe.Event) {
     switch (event.type) {
       case "account.updated":
         await handleAccountUpdated(event);
-        break;
-      case "transfer.updated":
-        await handleTransferUpdated(event);
         break;
     }
 
@@ -65,17 +55,6 @@ async function updateUserPayouts(connectId: string, updatePayload: object) {
       .updateOne(
         { "club.payouts.connectId": connectId },
         { $set: updatePayload }
-      )
-  );
-}
-
-async function updateUserBalance(connectId: string, amount: number) {
-  await doWithRetries(() =>
-    db
-      .collection("User")
-      .updateOne(
-        { "club.payouts.connectId": connectId },
-        { $inc: { "club.payouts.balance": amount } }
       )
   );
 }
@@ -162,24 +141,4 @@ async function handleAccountUpdated(event: Stripe.Event) {
       incrementPayload: { "overview.club.payoutsEnabled": 1 },
     });
   }
-}
-
-async function handleTransferUpdated(event: Stripe.Event) {
-  const data = event.data as Stripe.TransferUpdatedEvent.Data;
-  const transfer = data.object;
-  const connectId = transfer.destination as string;
-  const amount = transfer.amount / 100;
-
-  const userInfo = await getUserByConnectId(connectId, { _id: 1 });
-  if (!userInfo) return console.warn(`User ${connectId} not found`);
-
-  await updateUserBalance(connectId, -amount);
-  updateAnalytics({
-    userId: String(userInfo._id),
-    incrementPayload: {
-      "accounting.totalWithdrawn": amount,
-      "overview.accounting.totalWithdrawn": amount,
-      "overview.club.withdrawed": 1,
-    },
-  });
 }

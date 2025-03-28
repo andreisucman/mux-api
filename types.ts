@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import { Request } from "express";
 import { ModerationResultType } from "./functions/moderateContent.js";
 import { TaskExampleType } from "./types/createRoutineTypes.js";
+import { BlurDotType } from "./routes/uploadProgress.js";
 
 export type SuggestionType = {
   _id: string;
@@ -150,9 +151,14 @@ export type PrivacyType = {
   parts: { name: string; value: boolean }[];
 };
 
+type BalanceRecordType = {
+  amount: number;
+  currency: number;
+};
+
 export type ClubPayoutDataType = {
   connectId: string;
-  balance: number;
+  balance: { pending: BalanceRecordType; available: BalanceRecordType };
   payoutsEnabled: boolean;
   detailsSubmitted: boolean;
   disabledReason: string;
@@ -430,7 +436,6 @@ export type BeforeAfterType = {
   avatar?: { [key: string]: any };
   userName?: string;
   part: PartEnum;
-  progresses?: { progressId: ObjectId; createdAt: Date }[];
 };
 
 export type ProofType = {

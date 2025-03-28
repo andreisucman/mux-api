@@ -1,10 +1,10 @@
-import { ObjectId, Sort } from "mongodb";
+import { ObjectId } from "mongodb";
 import { NextFunction, Router } from "express";
 import aqp, { AqpQuery } from "api-query-params";
 import { ModerationStatusEnum, CustomRequest } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import { db } from "init.js";
 import { filterData } from "@/functions/filterData.js";
+import { db } from "init.js";
 
 const route = Router();
 
@@ -26,12 +26,6 @@ route.get(
         deletedOn: { $exists: false },
       };
 
-      if (userName) {
-        filter.userName = userName;
-      } else {
-        filter.userId = new ObjectId(req.userId);
-      }
-
       if (part) filter.part = part;
 
       const projection: { [key: string]: any } = {
@@ -48,15 +42,31 @@ route.get(
         deletedOn: 1,
       };
 
+      if (userName) {
+        filter.userName = userName;
+        projection.images = {
+          $filter: {
+            input: "$images",
+            as: "image",
+            cond: { $eq: ["$$image.name", "original"] },
+          },
+        };
+      } else {
+        filter.userId = new ObjectId(req.userId);
+      }
+
       const progress = await doWithRetries(async () =>
         db
           .collection("Progress")
-          .find(filter, {
-            projection,
-          })
-          .sort((sort as Sort) || { createdAt: -1 })
-          .skip(Number(skip) || 0)
-          .limit(21)
+          .aggregate([
+            { $match: filter },
+            {
+              $project: projection,
+            },
+            { $sort: sort || { createdAt: -1 } },
+            { $skip: Number(skip) || 0 },
+            { $limit: 21 },
+          ])
           .toArray()
       );
 

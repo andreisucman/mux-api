@@ -209,12 +209,6 @@ export default async function analyzePart({
 
     const updateOperation: any = {
       $set: beforeAfterUpdate,
-      $push: {
-        progresses: {
-          progressId: recordOfProgress._id,
-          createdAt: recordOfProgress.createdAt,
-        },
-      },
     };
 
     await doWithRetries(async () =>

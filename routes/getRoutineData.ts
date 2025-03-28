@@ -19,6 +19,11 @@ route.get(
             .collection("Routine")
             .aggregate([
               {
+                $match: {
+                  userId: new ObjectId(req.userId),
+                },
+              },
+              {
                 $group: {
                   _id: "$part",
                   doc: { $first: "$$ROOT" },

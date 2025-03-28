@@ -54,6 +54,7 @@ route.post(
           stripeAccount: connectId,
         })
       );
+
       const amount = stripeBalance.available[0]?.amount;
       const currency = stripeBalance.available[0]?.currency;
 

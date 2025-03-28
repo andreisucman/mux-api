@@ -10,10 +10,7 @@ import { RunType } from "@/types/askOpenaiTypes.js";
 import askRepeatedly from "functions/askRepeatedly.js";
 import isActivityHarmful from "@/functions/isActivityHarmful.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import { daysFrom } from "helpers/utils.js";
-import setToMidnight from "@/helpers/setToMidnight.js";
-import { adminDb, db } from "init.js";
-import getUserInfo from "@/functions/getUserInfo.js";
+import { adminDb } from "init.js";
 import getUsersImages from "@/functions/getUserImages.js";
 import { validParts } from "@/data/other.js";
 
@@ -22,7 +19,7 @@ const route = Router();
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { name, part, concern, timeZone = "America/New_York" } = req.body;
+    const { name, part, concern } = req.body;
 
     if (!name || !validParts.includes(part)) {
       res.status(400).json({ error: "Bad request" });
@@ -36,29 +33,6 @@ route.post(
       if (!relatedImage) {
         res.status(200).json({
           error: `You need to scan your ${part} first.`,
-        });
-        return;
-      }
-
-      /* count created tasks */
-      const lastWeekStart = daysFrom({
-        date: setToMidnight({
-          date: new Date(),
-          timeZone,
-        }),
-        days: -7,
-      });
-
-      const tasksCount = await doWithRetries(async () =>
-        db.collection("Task").countDocuments({
-          isCreated: true,
-          startsAt: { $gte: lastWeekStart },
-        })
-      );
-
-      if (tasksCount > 70) {
-        res.status(200).json({
-          error: "You can create only 70 tasks per week. Try again tomorrow.",
         });
         return;
       }
