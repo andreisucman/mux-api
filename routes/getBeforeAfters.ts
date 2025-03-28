@@ -17,18 +17,13 @@ route.get("/", async (req: CustomRequest, res, next: NextFunction) => {
       isPublic: true,
     };
 
-    if (concern) filter.concerns.name = concern;
+    if (concern) filter["concerns.name"] = concern;
     if (part) filter.part = part;
 
-    const demographics: { [key: string]: any } = {};
-
-    if (sex) demographics.sex = sex;
-    if (bodyType) demographics.bodyType = bodyType;
-    if (ageInterval) demographics.ageInterval = ageInterval;
-    if (ethnicity) demographics.ethnicity = ethnicity;
-
-    if (Object.keys(demographics).length > 0)
-      filter.demographics = demographics;
+    if (sex) filter["demographics.sex"] = sex;
+    if (bodyType) filter["demographics.bodyType"] = bodyType;
+    if (ageInterval) filter["demographics.ageInterval"] = ageInterval;
+    if (ethnicity) filter["demographics.ethnicity"] = ethnicity;
 
     pipeline.push(
       { $match: filter },
