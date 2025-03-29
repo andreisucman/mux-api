@@ -247,7 +247,7 @@ route.post(
         });
       }
 
-      const sessionExpiry = daysFrom({ days: 720 });
+      const sessionExpiry = daysFrom({ days: 7 });
 
       await doWithRetries(
         async () =>

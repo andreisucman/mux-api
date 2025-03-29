@@ -8,6 +8,7 @@ import { db } from "init.js";
 import signOut from "functions/signOut.js";
 import { CustomRequest } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
+import { daysFrom } from "@/helpers/utils.js";
 
 const csrfProtection = new csrf();
 
@@ -71,6 +72,20 @@ async function checkAccess(
           .updateOne(
             { _id: new ObjectId(req.userId) },
             { $set: { lastActiveOn: new Date() } }
+          )
+      );
+
+      const tomorrow = daysFrom({ days: 1 });
+      const newExpirationDate = Math.max(
+        tomorrow.getTime(),
+        session.expiresOn.getTime()
+      );
+      doWithRetries(async () =>
+        db
+          .collection("Session")
+          .updateOne(
+            { accessToken },
+            { $set: { expiresOn: new Date(newExpirationDate) } }
           )
       );
     }

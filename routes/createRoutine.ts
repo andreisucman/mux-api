@@ -156,6 +156,7 @@ route.post(
               specialConsiderations,
               categoryName: CategoryNameEnum.TASKS,
               routineStartDate,
+              timeZone
             })
         )
       );

@@ -435,6 +435,7 @@ export type BeforeAfterType = {
   isPublic: boolean;
   avatar?: { [key: string]: any };
   userName?: string;
+  routineName?:string;
   part: PartEnum;
 };
 

@@ -25,11 +25,13 @@ type Props = {
   concerns: UserConcernType[];
   specialConsiderations: string;
   routineStartDate: string;
+  timeZone:string;
 };
 
 export default async function createRoutine({
   part,
   userId,
+  timeZone,
   incrementMultiplier = 1,
   categoryName,
   creationMode,

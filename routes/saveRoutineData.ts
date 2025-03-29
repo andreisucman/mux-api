@@ -102,6 +102,15 @@ route.post(
           projection: { name: 1, avatar: 1 },
         })) || {};
 
+      await doWithRetries(async () =>
+        db.collection("BeforeAfter").updateOne(
+          { userId: new ObjectId(req.userId), part },
+          {
+            $set: { routineName: name },
+          }
+        )
+      );
+
       await updateContent({
         userId: req.userId,
         collections: ["BeforeAfter", "Progress", "Proof", "Diary", "Routine"],

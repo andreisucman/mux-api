@@ -44,6 +44,7 @@ export default async function createScheduleAndTasks({
         allTasks,
         routineStartDate,
         days: 7,
+        timeZone: userInfo.timeZone
       })
     );
 

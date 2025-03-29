@@ -19,7 +19,6 @@ route.get("/", async (req: CustomRequest, res, next: NextFunction) => {
 
     if (concern) filter["concerns.name"] = concern;
     if (part) filter.part = part;
-
     if (sex) filter["demographics.sex"] = sex;
     if (bodyType) filter["demographics.bodyType"] = bodyType;
     if (ageInterval) filter["demographics.ageInterval"] = ageInterval;
