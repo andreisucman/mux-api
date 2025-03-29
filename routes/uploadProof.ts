@@ -454,13 +454,24 @@ route.post(
       );
 
       await doWithRetries(async () =>
-        db.collection("AnalysisStatus").updateOne(
-          { userId: new ObjectId(req.userId), operationKey: taskId },
-          {
-            $set: { isRunning: false, progress: 0 },
-            $unset: { isError: "", message: "" },
-          }
-        )
+        db.collection("Proof").insertOne(newProof)
+      );
+
+      await doWithRetries(async () =>
+        db
+          .collection("Routine")
+          .updateOne(
+            {
+              _id: new ObjectId(routineId),
+              "allTasks.ids._id": new ObjectId(taskId),
+            },
+            {
+              $set: {
+                "allTasks.$.ids.$[element].status": TaskStatusEnum.COMPLETED,
+              },
+            },
+            { arrayFilters: [{ "element._id": new ObjectId(taskId) }] }
+          )
       );
 
       if (moderationResults.length > 0) {
@@ -483,7 +494,13 @@ route.post(
       }
 
       await doWithRetries(async () =>
-        db.collection("Proof").insertOne(newProof)
+        db.collection("AnalysisStatus").updateOne(
+          { userId: new ObjectId(req.userId), operationKey: taskId },
+          {
+            $set: { isRunning: false, progress: 0 },
+            $unset: { isError: "", message: "" },
+          }
+        )
       );
     } catch (err) {
       await addAnalysisStatusError({

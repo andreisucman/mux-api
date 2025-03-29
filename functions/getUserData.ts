@@ -1,6 +1,6 @@
 import { db } from "init.js";
 import { ObjectId } from "mongodb";
-import getLatestTasks from "functions/getLatestRoutineAndTasks.js";
+import getLatestTasks from "functions/getLatestTasks.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { defaultUserProjection } from "./checkIfUserExists.js";
 import httpError from "@/helpers/httpError.js";

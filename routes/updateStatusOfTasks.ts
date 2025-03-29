@@ -5,18 +5,19 @@ import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import { Router, Response, NextFunction } from "express";
 import { CustomRequest, RoutineStatusEnum, TaskStatusEnum } from "types.js";
-import getLatestRoutineAndTasks from "functions/getLatestRoutineAndTasks.js";
+import getLatestTasks from "@/functions/getLatestTasks.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
+import recalculateAllTaskCountAndRoutineDates from "@/functions/recalculateAllTaskCountAndRoutineDates.js";
 
 const route = Router();
 
 type Props = {
   taskIds: string[];
-  isVoid?: boolean;
   timeZone?: string;
   isAll?: boolean;
-  returnOnlyRoutines?: boolean;
+  returnRoutines?: boolean;
+  returnTasks?: boolean;
   newStatus: TaskStatusEnum;
   routineStatus?: RoutineStatusEnum;
 };
@@ -41,9 +42,9 @@ route.post(
       taskIds,
       newStatus,
       routineStatus,
-      returnOnlyRoutines,
-      isVoid,
+      returnTasks,
       isAll,
+      returnRoutines,
       timeZone,
     }: Props = req.body;
     if (
@@ -58,7 +59,6 @@ route.post(
       const tasksToUpdateFilter: { [key: string]: any } = {
         _id: { $in: taskIds.map((id: string) => new ObjectId(id)) },
         userId: new ObjectId(req.userId),
-        expiresAt: { $gt: new Date() },
       };
 
       if (isAll) {
@@ -150,19 +150,21 @@ route.post(
         )
       );
 
-      const routineUpdateOps: any[] = relevantTaskIds.map((taskId) => ({
-        updateOne: {
-          filter: {
-            "allTasks.ids._id": new ObjectId(taskId),
-          },
-          update: {
-            $set: {
-              "allTasks.$.ids.$[element].status": newStatus,
+      const routineTaskStatusUpdateOps: any[] = relevantTaskIds.map(
+        (taskId) => ({
+          updateOne: {
+            filter: {
+              "allTasks.ids._id": new ObjectId(taskId),
             },
+            update: {
+              $set: {
+                "allTasks.$.ids.$[element].status": newStatus,
+              },
+            },
+            arrayFilters: [{ "element._id": new ObjectId(taskId) }],
           },
-          arrayFilters: [{ "element._id": new ObjectId(taskId) }],
-        },
-      }));
+        })
+      );
 
       const relevantRoutineIds = tasksToUpdate.map((t) => t.routineId);
 
@@ -189,7 +191,7 @@ route.post(
         );
 
         if (routinesToDelete.length > 0)
-          routineUpdateOps.push(
+          routineTaskStatusUpdateOps.push(
             ...routinesToDelete.map((id) => ({
               updateOne: {
                 filter: { _id: new ObjectId(id) },
@@ -200,10 +202,10 @@ route.post(
       }
 
       await doWithRetries(async () =>
-        db.collection("Routine").bulkWrite(routineUpdateOps)
+        db.collection("Routine").bulkWrite(routineTaskStatusUpdateOps)
       );
 
-      if (isVoid) {
+      if (!returnTasks && !returnRoutines) {
         res.status(200).end();
         return;
       }
@@ -216,12 +218,26 @@ route.post(
 
       if (routineStatus) filter.status = routineStatus;
 
-      const response = await getLatestRoutineAndTasks({
-        userId: req.userId,
-        filter,
-        returnOnlyRoutines,
-        timeZone,
-      });
+      let response = { routines: [], tasks: [] };
+
+      if (returnTasks) {
+        response.tasks = await getLatestTasks({
+          userId: req.userId,
+          filter,
+          timeZone,
+        });
+      }
+
+      if (returnRoutines) {
+        response.routines = await doWithRetries(() =>
+          db
+            .collection("Routine")
+            .find({ _id: { $in: relevantRoutineIds } })
+            .toArray()
+        );
+      }
+
+      recalculateAllTaskCountAndRoutineDates(relevantRoutineIds);
 
       res.status(200).json({ message: response });
     } catch (err) {

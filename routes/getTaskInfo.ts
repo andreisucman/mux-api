@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import { Router, NextFunction } from "express";
 import { db } from "init.js";
-import { CustomRequest } from "types.js";
+import { CustomRequest, TaskStatusEnum } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 
 const route = Router();
@@ -16,7 +16,12 @@ route.get("/:taskId", async (req: CustomRequest, res, next: NextFunction) => {
 
   try {
     const taskInfo = await doWithRetries(async () =>
-      db.collection("Task").findOne({ _id: new ObjectId(taskId as string) })
+      db
+        .collection("Task")
+        .findOne({
+          _id: new ObjectId(taskId as string),
+          status: { $ne: TaskStatusEnum.DELETED },
+        })
     );
 
     res.status(200).json({ message: taskInfo });

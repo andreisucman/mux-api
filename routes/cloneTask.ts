@@ -14,7 +14,6 @@ import { checkDateValidity, daysFrom } from "helpers/utils.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 import combineAllTasks from "@/helpers/combineAllTasks.js";
-import getLatestTasks from "@/functions/getLatestRoutineAndTasks.js";
 import sortTasksInScheduleByDate from "@/helpers/sortTasksInScheduleByDate.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
@@ -62,8 +61,7 @@ route.post(
 
       if (!currentRoutine) throw httpError(`Routine ${routineId} not found`);
 
-      const { allTasks, finalSchedule, status, lastDate } =
-        currentRoutine || {};
+      const { allTasks, finalSchedule, status } = currentRoutine || {};
 
       if (status !== RoutineStatusEnum.ACTIVE) {
         res.status(200).json({ error: `Can't edit an inactive routine` });
