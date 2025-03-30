@@ -6,7 +6,6 @@ import doWithRetries from "helpers/doWithRetries.js";
 import { db, stripe } from "init.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
-import { defaultClubPrivacy } from "@/data/defaultClubPrivacy.js";
 import httpError from "@/helpers/httpError.js";
 
 const route = Router();
@@ -67,9 +66,7 @@ route.post(
 
       updateAnalytics(payload);
 
-      res
-        .status(200)
-        .json({ message: { defaultClubPayoutData, defaultClubPrivacy } });
+      res.status(200).json({ message: { defaultClubPayoutData } });
     } catch (err) {
       next(err);
     }

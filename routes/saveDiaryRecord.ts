@@ -106,7 +106,7 @@ route.post(
 
       const userInfo = await getUserInfo({
         userId: req.userId,
-        projection: { name: 1, avatar: 1, "club.privacy": 1 },
+        projection: { name: 1, avatar: 1 },
       });
 
       const embedding = await createTextEmbedding({

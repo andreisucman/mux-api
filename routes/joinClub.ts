@@ -46,9 +46,11 @@ route.post(
         return;
       }
 
+      let incrementPayload: { [key: string]: number } = {};
+
       let clubData = userInfo.club;
-      let name = "";
-      let avatar = null;
+      let name = userInfo.name;
+      let avatar = userInfo.avatar;
 
       if (!clubData) {
         const response = await createClubProfile({
@@ -58,14 +60,20 @@ route.post(
         clubData = response.clubData;
         avatar = response.avatar;
         name = response.name;
-      }
 
-      let incrementPayload: { [key: string]: number } = {};
-
-      if (canRejoinClubAfter) {
-        incrementPayload = { "overview.club.rejoined": 1 };
-      } else {
         incrementPayload = { "overview.club.joined": 1 };
+      } else {
+        clubData.isActive = true;
+
+        await doWithRetries(() =>
+          db
+            .collection("User")
+            .updateOne(
+              { _id: new ObjectId(req.userId) },
+              { $set: { "club.isActive": true } }
+            )
+        );
+        incrementPayload = { "overview.club.rejoined": 1 };
       }
 
       updateAnalytics({

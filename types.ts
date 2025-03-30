@@ -145,12 +145,6 @@ export type SubscriptionType = {
   isTrialUsed: boolean;
 };
 
-export type PrivacyType = {
-  name: string;
-  value: boolean;
-  parts: { name: string; value: boolean }[];
-};
-
 type BalanceRecordType = {
   amount: number;
   currency: string;
@@ -166,8 +160,6 @@ export type ClubPayoutDataType = {
 
 export type ClubDataType = {
   isActive: boolean;
-  followingUserName: string;
-  followingUserId: ObjectId;
   intro: string;
   socials: { value: string | null; label: string }[];
   payouts: ClubPayoutDataType;
@@ -435,7 +427,7 @@ export type BeforeAfterType = {
   isPublic: boolean;
   avatar?: { [key: string]: any };
   userName?: string;
-  routineName?:string;
+  routineName?: string;
   part: PartEnum;
 };
 

@@ -295,7 +295,7 @@ route.post(
       }
 
       const verdicts = [];
-      const explanations = [];
+      let explanation = "";
       const selectedProofImages = selectItemsAtEqualDistances(proofImages, 4);
 
       for (const image of selectedProofImages) {
@@ -308,7 +308,7 @@ route.post(
           });
 
         verdicts.push(proofAccepted);
-        explanations.push(verdictExplanation);
+        if (!proofAccepted) explanation = verdictExplanation;
       }
 
       const checkFailed =
@@ -317,7 +317,7 @@ route.post(
 
       if (checkFailed) {
         await addAnalysisStatusError({
-          message: explanations.join("\n"),
+          message: explanation,
           userId: req.userId,
           operationKey: taskId,
         });
@@ -458,20 +458,18 @@ route.post(
       );
 
       await doWithRetries(async () =>
-        db
-          .collection("Routine")
-          .updateOne(
-            {
-              _id: new ObjectId(routineId),
-              "allTasks.ids._id": new ObjectId(taskId),
+        db.collection("Routine").updateOne(
+          {
+            _id: new ObjectId(routineId),
+            "allTasks.ids._id": new ObjectId(taskId),
+          },
+          {
+            $set: {
+              "allTasks.$.ids.$[element].status": TaskStatusEnum.COMPLETED,
             },
-            {
-              $set: {
-                "allTasks.$.ids.$[element].status": TaskStatusEnum.COMPLETED,
-              },
-            },
-            { arrayFilters: [{ "element._id": new ObjectId(taskId) }] }
-          )
+          },
+          { arrayFilters: [{ "element._id": new ObjectId(taskId) }] }
+        )
       );
 
       if (moderationResults.length > 0) {

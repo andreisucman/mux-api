@@ -7,29 +7,15 @@ import {
   ModerationStatusEnum,
 } from "types.js";
 import { db } from "init.js";
-import { Sex } from "react-nice-avatar";
 import getUserInfo from "./getUserInfo.js";
 import createRandomName from "./createRandomName.js";
 import httpError from "@/helpers/httpError.js";
-import * as reactNiceAvatar from "react-nice-avatar";
+import { createAvatar } from "@dicebear/core";
+import { micah } from "@dicebear/collection";
+import generateAvatarParams from "@/helpers/avatar.js";
 
 type Props = {
   userId: string;
-};
-
-const avatarSkinColorMap = {
-  white: "#f5e6da",
-  asian: "#d1a67c",
-  black: "#5b3a29",
-  hispanic: "#a47448",
-  arab: "#c89f7c",
-  south_asian: "#8c6239",
-  native_american: "#b57c53",
-};
-
-const avatarSexMap: { [key: string]: string } = {
-  male: "man",
-  female: "woman",
 };
 
 export const defaultClubPayoutData: ClubPayoutDataType = {
@@ -47,29 +33,25 @@ export default async function createClubProfile({ userId }: Props) {
   try {
     const userInfo = await getUserInfo({
       userId,
-      projection: { demographics: 1 },
+      projection: { "demographics.ethnicity": 1 },
     });
 
     if (!userInfo) throw httpError(`User ${userId} not found`);
 
     const { demographics } = (userInfo as unknown as Partial<UserType>) || {};
-    const { sex, ethnicity } = demographics;
+    const { ethnicity } = demographics;
 
-    const avatarConfig = reactNiceAvatar.default.genConfig({
-      sex: avatarSexMap[sex || "male"] as Sex,
-      faceColor: avatarSkinColorMap[ethnicity],
-      mouthStyle: "peace",
-      glassesStyle: "none",
-      hairColorRandom: true,
-      isGradient: true,
-    });
+    const avatarParams = generateAvatarParams(ethnicity);
+    const avatarConfig = createAvatar(micah, avatarParams as any);
+
+    const imageAvatar = avatarConfig.toDataUri();
+
+    const avatar = { config: avatarParams, image: imageAvatar };
 
     const randomName = await createRandomName();
 
     const defaultClubData: ClubDataType = {
       isActive: true,
-      followingUserName: null,
-      followingUserId: null,
       intro: "I love working out and eating healthy.",
       socials: [],
       payouts: defaultClubPayoutData,
@@ -85,7 +67,7 @@ export default async function createClubProfile({ userId }: Props) {
           $set: {
             club: defaultClubData,
             name: randomName,
-            avatar: avatarConfig,
+            avatar,
             isPublic: false,
           },
         }
@@ -112,7 +94,7 @@ export default async function createClubProfile({ userId }: Props) {
 
     return {
       clubData: defaultClubData,
-      avatar: avatarConfig,
+      avatar,
       name: randomName,
     };
   } catch (err) {

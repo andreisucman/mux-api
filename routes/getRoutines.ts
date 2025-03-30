@@ -47,6 +47,7 @@ route.get(
 
       const finalSort = { ...(sort || { startsAt: -1 }) };
 
+      console.log("finalFilter", finalFilter);
       const routines = await doWithRetries(async () =>
         db
           .collection("Routine")
@@ -59,6 +60,8 @@ route.get(
           ])
           .toArray()
       );
+
+      console.log("routines", routines);
 
       let response = { priceData: null, data: routines, notPurchased: [] };
 
