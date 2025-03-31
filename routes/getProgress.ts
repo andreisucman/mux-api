@@ -32,9 +32,6 @@ route.get(
         _id: 1,
         part: 1,
         isPublic: 1,
-        images: 1,
-        initialImages: 1,
-        scores: 1,
         createdAt: 1,
         scoresDifference: 1,
         initialDate: 1,
@@ -44,15 +41,12 @@ route.get(
 
       if (userName) {
         filter.userName = userName;
-        projection.images = {
-          $filter: {
-            input: "$images",
-            as: "image",
-            cond: { $eq: ["$$image.name", "original"] },
-          },
-        };
+        projection["images.mainUrl"] = 1;
+        projection["initialImages.mainUrl"] = 1;
       } else {
         filter.userId = new ObjectId(req.userId);
+        projection["images"] = 1;
+        projection["initialImages"] = 1;
       }
 
       const progress = await doWithRetries(async () =>
