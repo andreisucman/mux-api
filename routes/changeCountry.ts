@@ -1,11 +1,11 @@
 import { ObjectId } from "mongodb";
 import { CustomRequest, ModerationStatusEnum } from "types.js";
-import { defaultClubPayoutData } from "@/functions/createClubProfile.js";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import { db, stripe } from "init.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
+import { defaultClubPayoutData } from "@/data/other.js";
 import httpError from "@/helpers/httpError.js";
 
 const route = Router();

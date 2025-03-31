@@ -63,7 +63,7 @@ route.get(
             {
               $project: projection,
             },
-            { $sort: sort || { createdAt: -1 } },
+            { $sort: sort || { _id: -1 } },
             { $skip: Number(skip) || 0 },
             { $limit: 21 },
           ])

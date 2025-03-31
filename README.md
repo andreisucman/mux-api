@@ -28,16 +28,4 @@ chmod +x ./script.sh
 
 ./script.sh
 
-docker system prune -a --volumes -f
-
-db["Task"].updateMany(
-{},
-[{ $set: { status: "expired", startsAt: { $dateSubtract: { startDate: { $toDate: "$startsAt" }, unit: "day", amount: 7 } } } }]
-)
-
-db["Task"].updateMany(
-{},
-[{ $set: {status: "expired", expiresAt: { $dateSubtract: { startDate: { $toDate: "$expiresAt" }, unit: "day", amount: 7 } } } }]
-)
-
-db["Task"].deleteMany({routineId:ObjectId("67b895bee243b84ed3b0178d")})
+curl -X DELETE https://api.stripe.com/v1/accounts/acct_1R8Nck2fhqcHNyzq -u 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

@@ -11,7 +11,7 @@ route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
-      await removeFromClub({ userId: req.userId });
+      await removeFromClub(req.userId);
       res.status(200).end();
     } catch (err) {
       next(err);

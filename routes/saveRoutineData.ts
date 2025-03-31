@@ -11,6 +11,7 @@ import { SuspiciousRecordCollectionEnum } from "@/functions/addSuspiciousRecord.
 import updateContent from "@/functions/updateContent.js";
 import cancelSubscription from "@/functions/cancelSubscription.js";
 import getUserInfo from "@/functions/getUserInfo.js";
+import cancelRoutineSubscribers from "@/functions/cancelRoutineSubscribers.js";
 
 const route = Router();
 
@@ -132,24 +133,7 @@ route.post(
       );
 
       if (status !== "public") {
-        const subscribers = await doWithRetries(() =>
-          db
-            .collection("Purchase")
-            .find(
-              {
-                sellerId: new ObjectId(req.userId),
-                subscriptionId: { $exists: true },
-              },
-              { projection: { subscriptionId: 1 } }
-            )
-            .toArray()
-        );
-
-        for (const subscription of subscribers) {
-          await cancelSubscription({
-            subscriptionId: subscription.subscriptionId,
-          });
-        }
+        await cancelRoutineSubscribers(req.userId);
       }
     } catch (err) {
       next(err);

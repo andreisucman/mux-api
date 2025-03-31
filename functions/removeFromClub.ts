@@ -6,37 +6,10 @@ import httpError from "@/helpers/httpError.js";
 import { daysFrom } from "@/helpers/utils.js";
 import { db } from "init.js";
 import updateAnalytics from "./updateAnalytics.js";
-import cancelSubscription from "./cancelSubscription.js";
+import cancelRoutineSubscribers from "./cancelRoutineSubscribers.js";
 
-type Props = {
-  userId: string;
-};
-
-export default async function removeFromClub({ userId }: Props) {
+export default async function removeFromClub(userId: string) {
   try {
-    await updateContent({
-      userId,
-      collections: ["BeforeAfter", "Progress", "Proof", "Diary", "Routine"],
-      updatePayload: { isPublic: false },
-    });
-
-    const subscribers = await doWithRetries(() =>
-      db
-        .collection("Purchase")
-        .find(
-          {
-            sellerId: new ObjectId(userId),
-            subscriptionId: { $exists: true },
-          },
-          { projection: { subscriptionId: 1 } }
-        )
-        .toArray()
-    );
-
-    for (const subscription of subscribers) {
-      await cancelSubscription({ subscriptionId: subscription.subscriptionId });
-    }
-
     const canRejoinClubAfter = daysFrom({ days: 7 });
 
     await doWithRetries(async () =>
@@ -46,7 +19,23 @@ export default async function removeFromClub({ userId }: Props) {
           moderationStatus: ModerationStatusEnum.ACTIVE,
         },
         {
-          $set: { "club.isActive": false, canRejoinClubAfter, isPublic: false },
+          $set: {
+            "club.isActive": false,
+            "club.socials": [],
+            canRejoinClubAfter,
+            isPublic: false,
+          },
+        }
+      )
+    );
+
+    await doWithRetries(async () =>
+      db.collection("RoutineData").updateMany(
+        {
+          userId: new ObjectId(userId),
+        },
+        {
+          $set: { status: "hidden" },
         }
       )
     );
@@ -55,6 +44,14 @@ export default async function removeFromClub({ userId }: Props) {
       userId: String(userId),
       incrementPayload: { "overview.club.left": 1 },
     });
+
+    updateContent({
+      userId,
+      collections: ["BeforeAfter", "Progress", "Proof", "Diary", "Routine"],
+      updatePayload: { isPublic: false, userName: null, avatar: null },
+    });
+
+    cancelRoutineSubscribers(userId);
   } catch (err) {
     throw httpError(err);
   }

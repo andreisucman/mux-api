@@ -7,7 +7,6 @@ import rateLimit from "express-rate-limit";
 import authorize from "routes/authorize.js";
 import authenticate from "routes/authenticate.js";
 import stripeWebhook from "webhooks/stripeWebhook.js";
-import connectWebhook from "webhooks/connectWebhook.js";
 import setHeaders from "middleware/setHeaders.js";
 import checkAccess from "middleware/checkAccess.js";
 import getBeforeAfters from "routes/getBeforeAfters.js";
@@ -121,7 +120,6 @@ app.use(logCapturer);
 app.use(metricCapturer);
 
 app.use("/stripeWebhook", stripeWebhook);
-app.use("/connectWebhook", connectWebhook);
 
 app.use(cookieParser());
 app.use(express.json({ limit: "50mb" }));

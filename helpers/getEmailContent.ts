@@ -14,7 +14,8 @@ type Props = {
     | "passwordReset"
     | "confirmationCode"
     | "payoutsDisabled"
-    | "yourPlanPurchased";
+    | "yourPlanPurchased"
+    | "payoutsRejected";
 };
 
 export default async function getEmailContent({

@@ -49,6 +49,7 @@ route.post(
       instruction,
       startDate,
       frequency,
+      exampleVideoId,
       timeZone = "America/New_York",
     } = req.body;
 
@@ -247,6 +248,15 @@ route.post(
           userId: req.userId,
         });
         generalTaskInfo.examples = [{ type: "image", url: image }];
+      }
+
+      if (exampleVideoId) {
+        generalTaskInfo.examples = [
+          {
+            type: "video",
+            url: `https://www.youtube.com/embed/${exampleVideoId}`,
+          },
+        ];
       }
 
       const iconsMap = await findEmoji({

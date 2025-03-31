@@ -23,7 +23,7 @@ export default async function updateContent({
 
       let update = {};
 
-      if (collection === "BeforeAfter") {
+      if (collection !== "BeforeAfter") {
         const { avatar, ...rest } = updatePayload;
         update = { ...rest };
       } else {

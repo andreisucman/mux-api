@@ -4,7 +4,7 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import { Router, Response, NextFunction } from "express";
-import { CustomRequest } from "types.js";
+import { CustomRequest, RoutineStatusEnum } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 
 const route = Router();
@@ -13,7 +13,7 @@ route.get(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
-      const routines = await doWithRetries(
+      const routinePartObjects = await doWithRetries(
         async () =>
           await db
             .collection("Routine")
@@ -21,15 +21,20 @@ route.get(
               {
                 $match: {
                   userId: new ObjectId(req.userId),
+                  status: {
+                    $nin: [
+                      RoutineStatusEnum.DELETED,
+                      RoutineStatusEnum.CANCELED,
+                    ],
+                  },
                 },
               },
               {
                 $group: {
                   _id: "$part",
-                  doc: { $first: "$$ROOT" },
                 },
               },
-              { $replaceRoot: { newRoot: "$doc" } },
+              { $project: { _id: 1 } },
             ])
             .toArray()
       );
@@ -41,7 +46,14 @@ route.get(
           .toArray()
       );
 
-      res.status(200).json({ message: { routines, routineData } });
+      res
+        .status(200)
+        .json({
+          message: {
+            parts: routinePartObjects.map((o) => o._id),
+            routineData,
+          },
+        });
     } catch (err) {
       next(err);
     }

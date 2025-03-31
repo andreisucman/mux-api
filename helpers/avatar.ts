@@ -1,3 +1,5 @@
+import { generateRandomPastelColor } from "make-random-color";
+
 const skinColorMap = {
   white: "f5e6da",
   asian: "d1a67c",
@@ -37,7 +39,7 @@ const shirtCollection = ["open", "crew", "collared"];
 
 const earringsCollection = ["stud", "hoop"];
 
-const noseCollection = ["curve", "pointed", "round"];
+const noseCollection = ["curve", "pointed", "tound"];
 
 const earsCollection = ["attached", "detached"];
 
@@ -51,6 +53,8 @@ const pickRandomValue = (array: string[]) => {
   return array[Math.floor(randomValue)];
 };
 
+const randomColor = generateRandomPastelColor();
+
 export default function generateAvatarParams(ethnicity: string) {
   return {
     baseColor: skinColorMap[ethnicity] ? [skinColorMap[ethnicity]] : ["f5e6da"],
@@ -62,6 +66,7 @@ export default function generateAvatarParams(ethnicity: string) {
     eyes: [pickRandomValue(eyesCollection)],
     eyebrows: [pickRandomValue(eyeBrowsCollection)],
     shirt: [pickRandomValue(shirtCollection)],
+    shirtColor: [randomColor.slice(1)],
     earrings: [pickRandomValue(earringsCollection)],
     facialHair: [pickRandomValue(facialHairCollection)],
     backgroundColor: ["dc2d3c", "fc8c0c"],

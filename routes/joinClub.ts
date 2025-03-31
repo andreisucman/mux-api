@@ -4,11 +4,14 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import { CustomRequest, ModerationStatusEnum } from "types.js";
-import createClubProfile from "functions/createClubProfile.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import formatDate from "@/helpers/formatDate.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
 import { db } from "init.js";
+import updateContent from "@/functions/updateContent.js";
+import createRandomAvatar from "@/helpers/createAvatar.js";
+import createRandomName from "@/functions/createRandomName.js";
+import { defaultClubPayoutData } from "@/data/other.js";
 
 const route = Router();
 
@@ -22,7 +25,13 @@ route.post(
             _id: new ObjectId(req.userId),
             moderationStatus: ModerationStatusEnum.ACTIVE,
           },
-          { projection: { club: 1, canRejoinClubAfter: 1 } }
+          {
+            projection: {
+              club: 1,
+              "demographics.ethnicity": 1,
+              canRejoinClubAfter: 1,
+            },
+          }
         )
       );
 
@@ -47,34 +56,47 @@ route.post(
       }
 
       let incrementPayload: { [key: string]: number } = {};
-
       let clubData = userInfo.club;
-      let name = userInfo.name;
-      let avatar = userInfo.avatar;
 
-      if (!clubData) {
-        const response = await createClubProfile({
-          userId: req.userId,
-        });
+      const avatar = createRandomAvatar(userInfo.demographics.ethnicity);
+      const name = await createRandomName();
 
-        clubData = response.clubData;
-        avatar = response.avatar;
-        name = response.name;
+      if (clubData) {
+        clubData.isActive = true;
+        incrementPayload = { "overview.club.rejoined": 1 };
+      } else {
+        clubData = {
+          isActive: true,
+          intro: "I love working out and eating healthy.",
+          socials: [],
+          payouts: defaultClubPayoutData,
+        };
 
         incrementPayload = { "overview.club.joined": 1 };
-      } else {
-        clubData.isActive = true;
-
-        await doWithRetries(() =>
-          db
-            .collection("User")
-            .updateOne(
-              { _id: new ObjectId(req.userId) },
-              { $set: { "club.isActive": true } }
-            )
-        );
-        incrementPayload = { "overview.club.rejoined": 1 };
       }
+
+      await doWithRetries(() =>
+        db.collection("User").updateOne(
+          {
+            _id: new ObjectId(req.userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
+          { $set: { club: clubData, name } }
+        )
+      );
+
+      updateContent({
+        userId: req.userId,
+        collections: [
+          "BeforeAfter",
+          "Progress",
+          "Proof",
+          "Diary",
+          "Routine",
+          "Task",
+        ],
+        updatePayload: { userName: name, avatar },
+      });
 
       updateAnalytics({
         userId: req.userId,

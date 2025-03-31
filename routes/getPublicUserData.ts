@@ -3,7 +3,7 @@ dotenv.config();
 
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
-import { ModerationStatusEnum } from "types.js";
+import { ModerationStatusEnum, UserType } from "types.js";
 import { CustomRequest } from "types.js";
 import { db } from "init.js";
 
@@ -25,7 +25,7 @@ route.get(
         moderationStatus: ModerationStatusEnum.ACTIVE,
       };
 
-      const publicUserData = await doWithRetries(async () =>
+      const publicUserData = (await doWithRetries(async () =>
         db.collection("User").findOne(filter, {
           projection: {
             avatar: 1,
@@ -35,10 +35,10 @@ route.get(
             _id: 0,
           },
         })
-      );
+      )) as unknown as Partial<UserType>;
 
-      const { club, avatar, latestScoresDifference } = publicUserData;
-      const { intro, socials } = club;
+      const { club, avatar, latestScoresDifference } = publicUserData || {};
+      const { intro, socials } = club || {};
 
       const data = {
         name: userName,
