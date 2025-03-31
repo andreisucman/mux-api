@@ -74,10 +74,7 @@ export default async function getLatestTasks({ userId, timeZone }: Props) {
           {
             $match: {
               userId: new ObjectId(userId),
-              $and: [
-                { startsAt: { $gte: startsAtFrom, $lte: startsAtTo } },
-                { startsAt: { $gte: todayMidnight } },
-              ],
+              startsAt: { $gte: startsAtFrom, $lte: startsAtTo },
               status: {
                 $in: [TaskStatusEnum.ACTIVE, TaskStatusEnum.COMPLETED],
               },

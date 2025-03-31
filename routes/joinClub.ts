@@ -81,7 +81,7 @@ route.post(
             _id: new ObjectId(req.userId),
             moderationStatus: ModerationStatusEnum.ACTIVE,
           },
-          { $set: { club: clubData, name } }
+          { $set: { club: clubData, name, avatar } }
         )
       );
 
