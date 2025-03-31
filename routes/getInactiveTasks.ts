@@ -54,7 +54,7 @@ route.get(
             },
             { $sort: finalSort },
             { $skip: skip || 0 },
-            { $limit: 61 },
+            { $limit: 41 },
             { $sort: finalSort },
           ])
           .toArray()

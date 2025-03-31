@@ -38,18 +38,22 @@ route.post(
       specialConsiderations,
     } = req.body;
 
+    if (
+      !concerns ||
+      !concerns.length ||
+      !timeZone ||
+      (part && !validParts.includes(part))
+    ) {
+      res.status(400).json({ error: "Bad request" });
+      return;
+    }
+
     const { isValidDate, isFutureDate } = checkDateValidity(
       routineStartDate,
       timeZone
     );
 
-    if (
-      !concerns ||
-      !concerns.length ||
-      !isValidDate ||
-      !isFutureDate ||
-      (part && !validParts.includes(part))
-    ) {
+    if (!isValidDate || !isFutureDate) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
@@ -156,7 +160,6 @@ route.post(
               specialConsiderations,
               categoryName: CategoryNameEnum.TASKS,
               routineStartDate,
-              timeZone
             })
         )
       );

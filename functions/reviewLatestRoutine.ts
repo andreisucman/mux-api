@@ -93,11 +93,6 @@ export default async function reviewLatestRoutine({
         specialConsiderations,
       });
 
-    if (tasksToInsert.length > 0)
-      await doWithRetries(async () =>
-        db.collection("Task").insertMany(tasksToInsert)
-      );
-
     const { minDate, maxDate } = getMinAndMaxRoutineDates(
       allTasksWithDateAndIds
     );
@@ -126,8 +121,6 @@ export default async function reviewLatestRoutine({
       await doWithRetries(async () =>
         db.collection("Task").insertMany(tasksToInsertWithRoutineId)
       );
-
-    deactivatePreviousRoutineAndTasks(latestRoutineId);
 
     updateTasksAnalytics({
       userId: String(userId),

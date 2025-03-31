@@ -137,7 +137,7 @@ export default async function chooseSolutionsForConcerns({
     });
 
     let text =
-      "1) Does your final list inclue enough tasks to effectively improve each concern? Would adding more tasks benefit? If yes, add more if not - don't. 2) If your list has any collective tasks such as 'maintain calorie surplus' or 'eat avocado and cheese', break them down into specific tasks, such as 'eat xyz meal', 'drink zyx drink', 'eat avocado', 'eat cheese' etc. 3) Ensure that the tasks you suggest don't contain products that are hard to procure in the user's location.";
+      "1) Is the number of tasks and their frequencies optmal based on the user's concerns? If not, make them optimal. 2) Does your list have any collective tasks such as 'maintain calorie surplus' or 'eat avocado and cheese', break them down into specific tasks, such as 'eat xyz meal', 'drink zyx drink', 'eat avocado', 'eat cheese' etc.";
 
     const checkMessage: RunType = {
       model: "o3-mini",

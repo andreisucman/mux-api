@@ -25,13 +25,11 @@ type Props = {
   concerns: UserConcernType[];
   specialConsiderations: string;
   routineStartDate: string;
-  timeZone:string;
 };
 
 export default async function createRoutine({
   part,
   userId,
-  timeZone,
   incrementMultiplier = 1,
   categoryName,
   creationMode,
@@ -69,23 +67,22 @@ export default async function createRoutine({
 
     const partImages = await getUsersImages({ userId, part });
 
-    if (creationMode === "continue") {
-      const latestPartRoutine = await doWithRetries(async () =>
-        db
-          .collection("Routine")
-          .find({
-            userId: new ObjectId(userId),
-            part,
-            moderationStatus: ModerationStatusEnum.ACTIVE,
-            status: {
-              $nin: [RoutineStatusEnum.CANCELED, RoutineStatusEnum.DELETED],
-            },
-            startsAt: { $lte: new Date() },
-          })
-          .sort({ startsAt: -1 })
-          .next()
-      );
+    const latestPartRoutine = await doWithRetries(async () =>
+      db
+        .collection("Routine")
+        .find({
+          userId: new ObjectId(userId),
+          part,
+          status: {
+            $nin: [RoutineStatusEnum.CANCELED, RoutineStatusEnum.DELETED],
+          },
+          startsAt: { $lte: new Date() },
+        })
+        .sort({ startsAt: -1 })
+        .next()
+    );
 
+    if (creationMode === "continue" && latestPartRoutine) {
       const latestTasks = latestPartRoutine ? latestPartRoutine.allTasks : [];
 
       const latestSolutions = latestTasks.reduce(
@@ -103,7 +100,7 @@ export default async function createRoutine({
       await reviewLatestRoutine({
         part,
         partImages,
-        latestRoutineId: latestPartRoutine.routineId,
+        latestRoutineId: String(latestPartRoutine._id),
         partConcerns,
         userInfo,
         categoryName,
