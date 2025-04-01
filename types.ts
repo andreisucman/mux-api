@@ -246,14 +246,12 @@ export enum TaskStatusEnum {
   EXPIRED = "expired",
   CANCELED = "canceled",
   INACTIVE = "inactive",
-  DELETED = "deleted",
 }
 
 export enum RoutineStatusEnum {
   ACTIVE = "active",
   EXPIRED = "expired",
   CANCELED = "canceled",
-  DELETED = "deleted",
   INACTIVE = "inactive",
 }
 
@@ -410,7 +408,12 @@ export type AllTaskType = {
 };
 
 export interface AllTaskTypeWithIds extends AllTaskType {
-  ids: { _id: ObjectId; startsAt: Date; status: TaskStatusEnum }[];
+  ids: {
+    _id: ObjectId;
+    startsAt: Date;
+    status: TaskStatusEnum;
+    deletedOn?: Date;
+  }[];
 }
 
 export type BeforeAfterType = {

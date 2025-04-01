@@ -6,15 +6,17 @@ export function maskRoutine(routine: RoutineType) {
     ...routine,
     _id: null,
     userId: null,
-    allTasks: routine.allTasks.map((t) => ({
-      ...t,
-      icon: "❓",
-      name: Array(t.name.length).fill("*").join(""),
-      key: Array(t.key.length).fill("*").join(""),
-      description: Array(10).fill("*").join("") + "...",
-      instruction: Array(15).fill("*").join("") + "...",
-      ids: t.ids.map((obj) => ({ ...obj, _id: null })),
-    })),
+    allTasks: routine.allTasks.map((t) => {
+      return {
+        ...t,
+        icon: "❓",
+        name: Array(t.name.length).fill("*").join(""),
+        key: Array(t.key.length).fill("*").join(""),
+        description: Array(10).fill("*").join("") + "...",
+        instruction: Array(15).fill("*").join("") + "...",
+        ids: t.ids.map((obj) => ({ ...obj, _id: null })),
+      };
+    }),
   };
 }
 

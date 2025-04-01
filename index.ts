@@ -86,6 +86,8 @@ import updateTaskExamples from "./routes/updateTaskExamples.js";
 import updateRoutineStatuses from "./routes/updateRoutineStatuses.js";
 import rescheduleRoutines from "./routes/rescheduleRoutines.js";
 import createRoutineCheckoutSession from "./routes/createRoutineCheckoutSession.js";
+import deleteTasks from "./routes/deleteTasks.js";
+import deleteRoutines from "./routes/deleteRoutines.js";
 
 import { client } from "init.js";
 
@@ -171,6 +173,8 @@ app.use("/getFilters", getFilters);
 
 // protected routes
 app.use((req, res, next) => checkAccess(req, res, next, false));
+app.use("/deleteTasks", deleteTasks);
+app.use("/deleteRoutines", deleteRoutines);
 app.use("/startSubscriptionTrial", startSubscriptionTrial);
 app.use("/subscribeToUpdates", subscribeToUpdates);
 app.use("/getSubscriptionPrice", getSubscriptionPrice);

@@ -3,8 +3,8 @@ import { NextFunction, Router } from "express";
 import aqp, { AqpQuery } from "api-query-params";
 import { ModerationStatusEnum, CustomRequest } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import { filterData } from "@/functions/filterData.js";
 import { db } from "init.js";
+import getPurchasedFilters from "@/functions/getPurchasedFilters.js";
 
 const route = Router();
 
@@ -13,7 +13,6 @@ route.get(
   async (req: CustomRequest, res, next: NextFunction) => {
     const { userName } = req.params;
     const { filter, skip, sort } = aqp(req.query as any) as AqpQuery;
-    const { part } = filter;
 
     if (!userName && !req.userId) {
       res.status(400).json({ error: "Bad request" });
@@ -21,12 +20,14 @@ route.get(
     }
 
     try {
-      const filter: { [key: string]: any } = {
-        moderationStatus: ModerationStatusEnum.ACTIVE,
-        deletedOn: { $exists: false },
-      };
+      let purchases = [];
+      let progress = [];
+      let notPurchased = [];
+      let priceData = [];
 
-      if (part) filter.part = part;
+      let finalFilter: { [key: string]: any } = {
+        moderationStatus: ModerationStatusEnum.ACTIVE,
+      };
 
       const projection: { [key: string]: any } = {
         _id: 1,
@@ -43,13 +44,23 @@ route.get(
         filter.userName = userName;
         projection["images.mainUrl"] = 1;
         projection["initialImages.mainUrl"] = 1;
+
+        const response = await getPurchasedFilters({
+          userId: req.userId,
+          userName,
+          part: filter.part,
+        });
+        purchases = response.purchases;
+        priceData = response.priceData;
+        notPurchased = response.notPurchased;
+        finalFilter = { ...finalFilter, ...response.additionalFilters };
       } else {
         filter.userId = new ObjectId(req.userId);
         projection["images"] = 1;
         projection["initialImages"] = 1;
       }
 
-      const progress = await doWithRetries(async () =>
+      progress = await doWithRetries(async () =>
         db
           .collection("Progress")
           .aggregate([
@@ -64,25 +75,9 @@ route.get(
           .toArray()
       );
 
-      let response = { priceData: null, data: progress, notPurchased: [] };
-
-      if (userName) {
-        if (progress.length) {
-          const result = await filterData({
-            part,
-            array: progress,
-            dateKey: "createdAt",
-            maskFunction: null,
-            userId: req.userId,
-          });
-
-          response.priceData = result.priceData;
-          response.data = result.data;
-          response.notPurchased = result.notPurchased;
-        }
-      }
-
-      res.status(200).json({ message: response });
+      res.status(200).json({
+        message: { data: progress, purchases, notPurchased, priceData },
+      });
     } catch (err) {
       next(err);
     }

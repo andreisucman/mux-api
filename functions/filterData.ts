@@ -6,6 +6,7 @@ type Props = {
   userId: string;
   part: string;
   dateKey: string;
+  collectionType?: "routine" | "proof" | "progress" | "diary";
   maskFunction: (args: any) => any;
 };
 
@@ -13,6 +14,7 @@ export async function filterData({
   array,
   userId,
   part,
+  collectionType,
   dateKey,
   maskFunction,
 }: Props) {
@@ -33,7 +35,7 @@ export async function filterData({
       for (const obj of purchases) {
         const { contentEndDate, part: purchasedPart } = obj;
 
-        const filteredArray = array.filter((obj: any) => {
+        let filteredArray = array.filter((obj: any) => {
           const createdWithinSubscriptionPeriod =
             new Date(obj[dateKey]) <= new Date(contentEndDate);
 
@@ -42,6 +44,29 @@ export async function filterData({
 
           return conditionOne;
         });
+
+        if (collectionType === "routine") {
+          filteredArray = filteredArray.map((routine) => {
+            return {
+              ...routine,
+              allTasks: routine.allTasks.map((t) => {
+                const filteredIds = t.ids.map((obj) => {
+                  const deletedWithinSubscriptionPeriod =
+                    !obj.deletedOn ||
+                    new Date(obj.deletedOn) <= new Date(contentEndDate);
+
+                  if (deletedWithinSubscriptionPeriod) delete obj.deleteOn;
+
+                  return obj;
+                });
+                return {
+                  ...t,
+                  ids: filteredIds,
+                };
+              }),
+            };
+          });
+        }
 
         filtered.push(...filteredArray);
       }

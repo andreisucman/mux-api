@@ -40,12 +40,10 @@ route.post(
     try {
       const userInfo = await getUserInfo({
         userId: req.userId,
-        projection: { timeZone: 1, name: 1 },
+        projection: { name: 1 },
       });
 
       if (!userInfo) throw httpError(`User ${req.userId} not found`);
-
-      const { timeZone } = userInfo;
 
       const routinesToAdd = (await doWithRetries(async () =>
         db

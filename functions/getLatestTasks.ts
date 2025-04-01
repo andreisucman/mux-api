@@ -27,6 +27,7 @@ export default async function getLatestTasks({ userId, timeZone }: Props) {
         .find({
           status: { $in: [TaskStatusEnum.ACTIVE, TaskStatusEnum.COMPLETED] },
           startsAt: { $gte: todayMidnight },
+          deletedOn: { $exists: false },
         })
         .sort({ startsAt: 1 })
         .project({ startsAt: 1 })
@@ -78,6 +79,7 @@ export default async function getLatestTasks({ userId, timeZone }: Props) {
               status: {
                 $in: [TaskStatusEnum.ACTIVE, TaskStatusEnum.COMPLETED],
               },
+              deletedOn: { $exists: false },
             },
           },
           { $sort: sort },

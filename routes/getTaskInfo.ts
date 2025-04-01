@@ -16,12 +16,10 @@ route.get("/:taskId", async (req: CustomRequest, res, next: NextFunction) => {
 
   try {
     const taskInfo = await doWithRetries(async () =>
-      db
-        .collection("Task")
-        .findOne({
-          _id: new ObjectId(taskId as string),
-          status: { $ne: TaskStatusEnum.DELETED },
-        })
+      db.collection("Task").findOne({
+        _id: new ObjectId(taskId as string),
+        deletedOn: { $exists: false },
+      })
     );
 
     res.status(200).json({ message: taskInfo });

@@ -10,8 +10,8 @@ import { DiaryRecordType } from "@/types/saveDiaryRecordTypes.js";
 import { CustomRequest } from "types.js";
 import { db } from "init.js";
 import { daysFrom } from "@/helpers/utils.js";
+import getPurchasedFilters from "@/functions/getPurchasedFilters.js";
 import { maskDiaryRow } from "@/helpers/mask.js";
-import { filterData } from "@/functions/filterData.js";
 
 const route = Router();
 
@@ -23,57 +23,59 @@ route.get(
     const { dateFrom, dateTo, part } = filter;
 
     try {
-      const filters: { [key: string]: any } = {
+      let purchases = [];
+      let diary = [];
+      let notPurchased = [];
+      let priceData = [];
+
+      let finalFilters: { [key: string]: any } = {
         moderationStatus: ModerationStatusEnum.ACTIVE,
       };
 
       if (userName) {
-        filters.userName = userName;
+        finalFilters.userName = userName;
+
+        const response = await getPurchasedFilters({
+          userId: req.userId,
+          userName,
+          part: filter.part,
+        });
+        purchases = response.purchases;
+        priceData = response.priceData;
+        notPurchased = response.notPurchased;
+        finalFilters = { ...finalFilters, ...response.additionalFilters };
       } else {
-        filters.userId = new ObjectId(req.userId);
-        filters.deletedOn = { $exists: false };
+        finalFilters.userId = new ObjectId(req.userId);
+        finalFilters.deletedOn = { $exists: false };
       }
 
       if (part) {
-        filters.part = part;
+        finalFilters.part = part;
       }
 
       if (dateFrom && dateTo) {
-        filters.$and = [
+        finalFilters.$and = [
           { createdAt: { $gte: dateFrom } },
           { createdAt: { $lte: daysFrom({ date: dateTo, days: 1 }) } },
         ];
       }
 
-      let diary = (await doWithRetries(async () =>
+      diary = (await doWithRetries(async () =>
         db
           .collection("Diary")
-          .find(filters)
+          .find(finalFilters)
           .sort((sort as Sort) || { _id: -1 })
           .skip(skip || 0)
           .limit(21)
           .toArray()
       )) as unknown as DiaryRecordType[];
 
-      let response = { priceData: null, data: diary, notPurchased: [] };
+      if (!purchases.length)
+        diary = diary.map((r) => maskDiaryRow(r as DiaryRecordType));
 
-      if (userName) {
-        if (diary.length) {
-          const result = await filterData({
-            part,
-            array: diary,
-            dateKey: "createdAt",
-            maskFunction: maskDiaryRow,
-            userId: req.userId,
-          });
-
-          response.priceData = result.priceData;
-          response.data = result.data;
-          response.notPurchased = result.notPurchased;
-        }
-      }
-
-      res.status(200).json({ message: response });
+      res.status(200).json({
+        message: { data: diary, purchases, notPurchased, priceData },
+      });
     } catch (err) {
       next(err);
     }

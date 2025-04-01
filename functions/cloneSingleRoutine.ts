@@ -1,10 +1,9 @@
 import doWithRetries from "@/helpers/doWithRetries.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 import httpError from "@/helpers/httpError.js";
-import setToMidnight from "@/helpers/setToMidnight.js";
 import sortTasksInScheduleByDate from "@/helpers/sortTasksInScheduleByDate.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
-import { calculateDaysDifference, daysFrom } from "@/helpers/utils.js";
+import { daysFrom } from "@/helpers/utils.js";
 import {
   RoutineStatusEnum,
   RoutineType,
@@ -139,6 +138,8 @@ export default async function cloneSingleRoutine({
       lastDate: new Date(maxDate),
       status: RoutineStatusEnum.ACTIVE,
     };
+
+    delete newRoutine.deletedOn;
 
     if (userName) newRoutine.stolenFrom = hostRoutine.userName;
 

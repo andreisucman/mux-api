@@ -5,11 +5,11 @@ import { ObjectId, Sort } from "mongodb";
 import aqp, { AqpQuery } from "api-query-params";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
-import { ModerationStatusEnum } from "types.js";
+import { ModerationStatusEnum, ProofType } from "types.js";
 import { CustomRequest } from "types.js";
 import { db } from "init.js";
-import { filterData } from "@/functions/filterData.js";
 import { maskProof } from "@/helpers/mask.js";
+import getPurchasedFilters from "@/functions/getPurchasedFilters.js";
 
 const route = Router();
 
@@ -26,7 +26,12 @@ route.get(
     }
 
     try {
-      const match: { [key: string]: any } = {
+      let purchases = [];
+      let proof = [];
+      let notPurchased = [];
+      let priceData = [];
+
+      let match: { [key: string]: any } = {
         moderationStatus: ModerationStatusEnum.ACTIVE,
       };
 
@@ -42,6 +47,16 @@ route.get(
 
       if (userName) {
         match.userName = userName;
+
+        const response = await getPurchasedFilters({
+          userId: req.userId,
+          userName,
+          part: filter.part,
+        });
+        purchases = response.purchases;
+        priceData = response.priceData;
+        notPurchased = response.notPurchased;
+        match = { ...match, ...response.additionalFilters };
       } else {
         match.userId = new ObjectId(req.userId);
         match.deletedOn = { $exists: false };
@@ -72,29 +87,16 @@ route.get(
 
       pipeline.push({ $limit: 21 });
 
-      const proof = await doWithRetries(async () =>
+      proof = await doWithRetries(async () =>
         db.collection("Proof").aggregate(pipeline).toArray()
       );
 
-      let response = { priceData: null, data: proof, notPurchased: [] };
+      if (!purchases.length)
+        proof = proof.map((r) => maskProof(r as ProofType));
 
-      if (userName) {
-        if (proof.length) {
-          const result = await filterData({
-            part,
-            array: proof,
-            dateKey: "createdAt",
-            maskFunction: maskProof,
-            userId: req.userId,
-          });
-
-          response.priceData = result.priceData;
-          response.data = result.data;
-          response.notPurchased = result.notPurchased;
-        }
-      }
-
-      res.status(200).json({ message: response });
+      res.status(200).json({
+        message: { data: proof, purchases, notPurchased, priceData },
+      });
     } catch (err) {
       next(err);
     }

@@ -73,9 +73,8 @@ export default async function createRoutine({
         .find({
           userId: new ObjectId(userId),
           part,
-          status: {
-            $nin: [RoutineStatusEnum.CANCELED, RoutineStatusEnum.DELETED],
-          },
+          status: { $ne: RoutineStatusEnum.CANCELED },
+          deletedOn: { $exists: false },
           startsAt: { $lte: new Date() },
         })
         .sort({ startsAt: -1 })

@@ -26,7 +26,6 @@ type Props = {
 const validTaskStatuses = [
   TaskStatusEnum.ACTIVE,
   TaskStatusEnum.CANCELED,
-  TaskStatusEnum.DELETED,
   TaskStatusEnum.COMPLETED,
   TaskStatusEnum.INACTIVE,
 ];
@@ -34,18 +33,17 @@ const validRoutineStatuses = [
   RoutineStatusEnum.ACTIVE,
   RoutineStatusEnum.INACTIVE,
   RoutineStatusEnum.CANCELED,
-  RoutineStatusEnum.DELETED,
 ];
 
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const {
+      isAll,
       taskIds,
       newStatus,
       routineStatus,
       returnTasks,
-      isAll,
       returnRoutines,
       timeZone,
     }: Props = req.body;
@@ -102,7 +100,7 @@ route.post(
         db
           .collection("Task")
           .find(tasksToUpdateFilter, {
-            projection: { part: 1, isCreated: 1, routineId: 1, type: 1 },
+            projection: { part: 1, isCreated: 1, routineId: 1 },
           })
           .toArray()
       );
@@ -125,13 +123,6 @@ route.post(
           userId: req.userId,
         });
         taskUpdatePayload.$unset.completedAt = null;
-      } else if (newStatus === TaskStatusEnum.DELETED) {
-        await updateTasksAnalytics({
-          tasksToInsert: tasksToUpdate,
-          keyOne: "tasksDeleted",
-          keyTwo: "manualTasksDeleted",
-          userId: req.userId,
-        });
       } else if (newStatus === TaskStatusEnum.COMPLETED) {
         await updateTasksAnalytics({
           tasksToInsert: tasksToUpdate,
@@ -172,9 +163,7 @@ route.post(
         ...new Set(tasksToUpdate.map((t) => t.routineId)),
       ];
 
-      if (
-        [TaskStatusEnum.DELETED, TaskStatusEnum.CANCELED].includes(newStatus)
-      ) {
+      if (newStatus === TaskStatusEnum.CANCELED) {
         const routinesWithActiveTasks = await doWithRetries(async () =>
           db
             .collection("Task")
@@ -207,19 +196,30 @@ route.post(
         );
 
         if (routinesWithoutActiveTasks.length > 0) {
-          routineTaskStatusUpdateOps.push(
-            ...routinesWithoutActiveTasks.map((id) => ({
-              updateOne: {
-                filter: { _id: new ObjectId(id) },
-                update: { $set: { status: newStatus } },
-              },
-            }))
-          );
+          if (newStatus === TaskStatusEnum.CANCELED) {
+            routineTaskStatusUpdateOps.push(
+              ...routinesWithoutActiveTasks.map((id) => ({
+                updateOne: {
+                  filter: { _id: new ObjectId(id) },
+                  update: { $set: { status: newStatus } },
+                },
+              }))
+            );
 
-          await deactivateHangingBaAndRoutineData({
-            routineIds: routinesWithoutActiveTasks,
-            userId: req.userId,
-          });
+            await deactivateHangingBaAndRoutineData({
+              routineIds: routinesWithoutActiveTasks,
+              userId: req.userId,
+            });
+          } else {
+            routineTaskStatusUpdateOps.push(
+              ...routinesWithoutActiveTasks.map((id) => ({
+                updateOne: {
+                  filter: { _id: new ObjectId(id) },
+                  update: { $set: { deletedOn: new Date() } },
+                },
+              }))
+            );
+          }
         }
       } else if (newStatus === TaskStatusEnum.ACTIVE) {
         routineTaskStatusUpdateOps = routineTaskStatusUpdateOps.map((obj) => ({
@@ -243,13 +243,9 @@ route.post(
         return;
       }
 
-      const typesUpdated = [...new Set(tasksToUpdate.map((t) => t.type))];
-
       const filter: { [key: string]: any } = {
-        type: { $in: typesUpdated },
+        _id: { $in: taskIds.map((id) => new ObjectId(id)) },
       };
-
-      if (routineStatus) filter.status = routineStatus;
 
       await recalculateAllTaskCountAndRoutineDates(relevantRoutineIds);
 
@@ -267,7 +263,10 @@ route.post(
         response.routines = await doWithRetries(() =>
           db
             .collection("Routine")
-            .find({ _id: { $in: relevantRoutineIds } })
+            .find({
+              _id: { $in: relevantRoutineIds },
+              deletedOn: { $exists: false },
+            })
             .toArray()
         );
       }

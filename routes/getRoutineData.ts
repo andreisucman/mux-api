@@ -22,11 +22,9 @@ route.get(
                 $match: {
                   userId: new ObjectId(req.userId),
                   status: {
-                    $nin: [
-                      RoutineStatusEnum.DELETED,
-                      RoutineStatusEnum.CANCELED,
-                    ],
+                    $ne: RoutineStatusEnum.CANCELED,
                   },
+                  deletedOn: { $exists: false },
                 },
               },
               {
@@ -46,14 +44,12 @@ route.get(
           .toArray()
       );
 
-      res
-        .status(200)
-        .json({
-          message: {
-            parts: routinePartObjects.map((o) => o._id),
-            routineData,
-          },
-        });
+      res.status(200).json({
+        message: {
+          parts: routinePartObjects.map((o) => o._id),
+          routineData,
+        },
+      });
     } catch (err) {
       next(err);
     }

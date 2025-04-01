@@ -48,9 +48,8 @@ export default async function deactivateHangingBaAndRoutineData({
             $match: {
               userId: new ObjectId(userId),
               part: { $in: partsDeleted },
-              status: {
-                $nin: [RoutineStatusEnum.DELETED, RoutineStatusEnum.CANCELED],
-              },
+              status: { $ne: RoutineStatusEnum.CANCELED },
+              deletedOn: { $exists: false },
             },
           },
           {

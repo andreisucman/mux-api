@@ -3,31 +3,25 @@ dotenv.config();
 
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
-import { CustomRequest, RoutineStatusEnum } from "types.js";
-import updateRoutineStatus from "@/functions/updateRoutineStatus.js";
+import { CustomRequest } from "types.js";
 import { db } from "@/init.js";
 import { ObjectId } from "mongodb";
 import deactivateHangingBaAndRoutineData from "@/functions/deactivateHangingBaAndRoutineData.js";
+import deleteRoutine from "@/functions/deleteRoutine.js";
 
 const route = Router();
 
 type Props = {
   timeZone: string;
   routineIds: string[];
-  newStatus: "active" | "canceled";
 };
 
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { routineIds, newStatus, timeZone }: Props = req.body;
+    const { routineIds, timeZone }: Props = req.body;
 
     if (!routineIds || !timeZone) {
-      res.status(400).json({ error: "Bad request" });
-      return;
-    }
-
-    if (!["active", "deleted", "canceled"].includes(newStatus)) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
@@ -39,8 +33,7 @@ route.post(
       for (let i = 0; i < routineIds.length; i++) {
         promises.push(
           doWithRetries(() =>
-            updateRoutineStatus({
-              newStatus: newStatus as RoutineStatusEnum,
+            deleteRoutine({
               routineId: routineIds[i],
             })
           )
@@ -57,12 +50,10 @@ route.post(
         promises.length = 0;
       }
 
-      if (newStatus === RoutineStatusEnum.CANCELED) {
-        await deactivateHangingBaAndRoutineData({
-          routineIds,
-          userId: req.userId,
-        });
-      }
+      await deactivateHangingBaAndRoutineData({
+        routineIds,
+        userId: req.userId,
+      });
 
       const updatedRoutines = await doWithRetries(() =>
         db

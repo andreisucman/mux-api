@@ -4,11 +4,11 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
-import { CustomRequest, RoutineStatusEnum } from "types.js";
+import { CustomRequest, RoutineType } from "types.js";
 import aqp, { AqpQuery } from "api-query-params";
 import { db } from "init.js";
 import { maskRoutine } from "@/helpers/mask.js";
-import { filterData } from "@/functions/filterData.js";
+import getPurchasedFilters from "@/functions/getPurchasedFilters.js";
 
 const route = Router();
 
@@ -17,21 +17,31 @@ route.get(
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { userName } = req.params;
     const { filter, skip, sort } = aqp(req.query as any) as AqpQuery;
-    const { part, restOfFilter } = filter;
 
     try {
-      const finalFilter: { [key: string]: any } = {
-        ...restOfFilter,
-        status: { $ne: RoutineStatusEnum.DELETED },
+      let purchases = [];
+      let routines = [];
+      let notPurchased = [];
+      let priceData = [];
+
+      let finalFilter: { [key: string]: any } = {
+        ...filter,
       };
 
       if (userName) {
-        finalFilter.userName = userName;
+        const response = await getPurchasedFilters({
+          userId: req.userId,
+          userName,
+          part: filter.part,
+        });
+        purchases = response.purchases;
+        priceData = response.priceData;
+        notPurchased = response.notPurchased;
+        finalFilter = { ...finalFilter, ...response.additionalFilters };
       } else {
         finalFilter.userId = new ObjectId(req.userId);
+        finalFilter.deletedOn = { $exists: false };
       }
-
-      if (part) finalFilter.part = part;
 
       const projection = {
         _id: 1,
@@ -47,7 +57,7 @@ route.get(
 
       const finalSort = { ...(sort || { startsAt: -1 }) };
 
-      const routines = await doWithRetries(async () =>
+      routines = await doWithRetries(async () =>
         db
           .collection("Routine")
           .aggregate([
@@ -60,26 +70,39 @@ route.get(
           .toArray()
       );
 
-      let response = { priceData: null, data: routines, notPurchased: [] };
-
       if (userName) {
-        if (routines.length) {
-          const result = await filterData({
-            part,
-            array: routines,
-            dateKey: "createdAt",
-            maskFunction: maskRoutine,
-            userId: req.userId,
-          });
+        if (purchases.length) {
+          for (const obj of purchases) {
+            const { contentEndDate } = obj;
 
-          response.priceData = result.priceData;
-          response.data = result.data;
-          response.notPurchased = result.notPurchased;
+            routines = routines.map((routine) => {
+              return {
+                ...routine,
+                allTasks: routine.allTasks.map((t) => {
+                  const filteredIds = t.ids.map((obj) => {
+                    const deletedWithinSubscriptionPeriod =
+                      !obj.deletedOn ||
+                      new Date(obj.deletedOn) <= new Date(contentEndDate);
+
+                    if (deletedWithinSubscriptionPeriod) delete obj.deleteOn;
+
+                    return obj;
+                  });
+                  return {
+                    ...t,
+                    ids: filteredIds,
+                  };
+                }),
+              };
+            });
+          }
+        } else {
+          routines = routines.map((r) => maskRoutine(r as RoutineType));
         }
       }
 
       res.status(200).json({
-        message: response,
+        message: { data: routines, purchases, notPurchased, priceData },
       });
     } catch (err) {
       next(err);

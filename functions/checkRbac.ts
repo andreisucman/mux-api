@@ -44,9 +44,9 @@ export default async function checkRbac({ part, userId, sellerId }: Props) {
 
     const purchasedParts = purchases.map((obj) => obj.part);
 
-    const notPurchased = priceData.filter(
-      (pd) => !purchasedParts.includes(pd.part)
-    );
+    const notPurchased = priceData
+      .filter((pd) => !purchasedParts.includes(pd.part))
+      .map((obj) => obj.part);
 
     return { priceData, purchases, notPurchased };
   } catch (err) {
