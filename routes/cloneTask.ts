@@ -43,25 +43,54 @@ route.post(
           .findOne({ _id: new ObjectId(taskId) }, { projection: { _id: 0 } })
       )) as unknown as TaskType;
 
-      const { routineId } = currentTask;
+      const { routineId: taskRoutineId } = currentTask || {};
+      const projection = {
+        allTasks: 1,
+        finalSchedule: 1,
+        lastDate: 1,
+        status: 1,
+      };
 
-      const currentRoutine = (await doWithRetries(async () =>
+      let relevantRoutine = (await doWithRetries(async () =>
         db.collection("Routine").findOne(
-          { _id: new ObjectId(routineId), userId: new ObjectId(req.userId) },
           {
-            projection: {
-              allTasks: 1,
-              finalSchedule: 1,
-              lastDate: 1,
-              status: 1,
-            },
+            _id: taskRoutineId,
+            userId: new ObjectId(req.userId),
+            status: RoutineStatusEnum.ACTIVE,
+          },
+          {
+            projection,
           }
         )
       )) as unknown as RoutineType;
 
-      if (!currentRoutine) throw httpError(`Routine ${routineId} not found`);
+      if (!relevantRoutine) {
+        relevantRoutine = (await doWithRetries(async () =>
+          db
+            .collection("Routine")
+            .find(
+              {
+                part: currentTask.part,
+                userId: new ObjectId(req.userId),
+                status: RoutineStatusEnum.ACTIVE,
+              },
+              {
+                projection,
+              }
+            )
+            .sort({ startsAt: 1 })
+            .next()
+        )) as unknown as RoutineType;
+      }
 
-      const { allTasks, finalSchedule, status } = currentRoutine || {};
+      if (!relevantRoutine) throw httpError(`Routine not found`);
+
+      const {
+        _id: routineId,
+        allTasks,
+        finalSchedule,
+        status,
+      } = relevantRoutine || {};
 
       if (status !== RoutineStatusEnum.ACTIVE) {
         res.status(200).json({ error: `Can't edit an inactive routine` });
@@ -104,7 +133,7 @@ route.post(
         db.collection("Task").insertOne(resetTask)
       );
 
-      let updatedSchedule = { ...finalSchedule };
+      let updatedSchedule = { ...(finalSchedule || {}) };
       const dateKey = newStartsAt.toDateString();
 
       const newFinalScheduleRecord = {
@@ -166,14 +195,11 @@ route.post(
 
       let result: { [key: string]: any } = {};
 
-      const updatedRoutines = await doWithRetries(() =>
-        db
-          .collection("Routine")
-          .find({ _id: new ObjectId(routineId) })
-          .toArray()
+      const updatedRoutine = await doWithRetries(() =>
+        db.collection("Routine").findOne({ _id: new ObjectId(routineId) })
       );
 
-      if (updatedRoutines.length > 0) result.routine = updatedRoutines[0];
+      if (updatedRoutine) result.routine = updatedRoutine;
       if (returnTask) result.newTask = resetTask;
 
       res.status(200).json({

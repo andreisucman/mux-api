@@ -7,6 +7,7 @@ import { CustomRequest, RoutineStatusEnum } from "types.js";
 import updateRoutineStatus from "@/functions/updateRoutineStatus.js";
 import { db } from "@/init.js";
 import { ObjectId } from "mongodb";
+import deactivateHangingBaAndRoutineData from "@/functions/deactivateHangingBaAndRoutineData.js";
 
 const route = Router();
 
@@ -57,86 +58,10 @@ route.post(
       }
 
       if (newStatus === RoutineStatusEnum.DELETED) {
-        const partsDeletedObjects = await doWithRetries(() =>
-          db
-            .collection("Routine")
-            .aggregate([
-              {
-                $match: {
-                  _id: { $in: routineIds.map((id) => new ObjectId(id)) },
-                  userId: new ObjectId(req.userId),
-                },
-              },
-              {
-                $group: {
-                  _id: "$part",
-                },
-              },
-              {
-                $project: {
-                  _id: 1,
-                },
-              },
-            ])
-            .toArray()
-        );
-
-        const partsDeleted = partsDeletedObjects.map((obj) => obj._id);
-
-        const remainingPartRoutines = await doWithRetries(() =>
-          db
-            .collection("Routine")
-            .aggregate([
-              {
-                $match: {
-                  userId: new ObjectId(req.userId),
-                  part: { $in: partsDeleted },
-                  status: {
-                    $nin: [
-                      RoutineStatusEnum.DELETED,
-                      RoutineStatusEnum.CANCELED,
-                    ],
-                  },
-                },
-              },
-              {
-                $group: {
-                  _id: "$part",
-                },
-              },
-            ])
-            .toArray()
-        );
-
-        const partsRemaining = remainingPartRoutines.map((obj) => obj._id);
-
-        const noRoutineParts = partsDeleted.filter(
-          (part) => !partsRemaining.includes(part)
-        );
-
-        const routineDataUpdateOps = noRoutineParts.map((part) => ({
-          updateOne: {
-            filter: { part, userId: new ObjectId(req.userId) },
-            update: { $set: { status: "hidden" } },
-          },
-        }));
-
-        const baUpdateOps = noRoutineParts.map((part) => ({
-          updateOne: {
-            filter: { part, userId: new ObjectId(req.userId) },
-            update: { $set: { isPublic: false } },
-          },
-        }));
-
-        if (routineDataUpdateOps.length)
-          doWithRetries(() =>
-            db.collection("RoutineData").bulkWrite(routineDataUpdateOps)
-          );
-
-        if (baUpdateOps.length)
-          doWithRetries(() =>
-            db.collection("BeforeAfter").bulkWrite(baUpdateOps)
-          );
+        await deactivateHangingBaAndRoutineData({
+          routineIds,
+          userId: req.userId,
+        });
       }
 
       const updatedRoutines = await doWithRetries(() =>

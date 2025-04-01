@@ -26,7 +26,7 @@ export default async function recalculateAllTaskCountAndRoutineDates(
                             $filter: {
                               input: "$$group.ids",
                               as: "id",
-                              cond: { $eq: ["$$id.status", "active"] },
+                              cond: { $ne: ["$$id.status", "deleted"] },
                             },
                           },
                         },
@@ -48,9 +48,8 @@ export default async function recalculateAllTaskCountAndRoutineDates(
                               input: "$$task.ids",
                               as: "id",
                               cond: {
-                                $or: [
-                                  { $eq: ["$$id.status", "active"] },
-                                  { $eq: ["$$id.status", "completed"] },
+                                $and: [
+                                  { $ne: ["$$id.status", "deleted"] },
                                 ],
                               },
                             },
@@ -63,7 +62,7 @@ export default async function recalculateAllTaskCountAndRoutineDates(
                   },
                 },
               },
-              startDate: {
+              startsAt: {
                 $min: {
                   $map: {
                     input: "$allTasks",
@@ -76,9 +75,8 @@ export default async function recalculateAllTaskCountAndRoutineDates(
                               input: "$$task.ids",
                               as: "id",
                               cond: {
-                                $or: [
-                                  { $eq: ["$$id.status", "active"] },
-                                  { $eq: ["$$id.status", "completed"] },
+                                $and: [
+                                  { $ne: ["$$id.status", "deleted"] },
                                 ],
                               },
                             },

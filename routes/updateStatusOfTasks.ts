@@ -9,6 +9,7 @@ import getLatestTasks from "@/functions/getLatestTasks.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 import recalculateAllTaskCountAndRoutineDates from "@/functions/recalculateAllTaskCountAndRoutineDates.js";
+import deactivateHangingBaAndRoutineData from "@/functions/deactivateHangingBaAndRoutineData.js";
 
 const route = Router();
 
@@ -32,6 +33,7 @@ const validTaskStatuses = [
 const validRoutineStatuses = [
   RoutineStatusEnum.ACTIVE,
   RoutineStatusEnum.INACTIVE,
+  RoutineStatusEnum.CANCELED,
   RoutineStatusEnum.DELETED,
 ];
 
@@ -47,6 +49,7 @@ route.post(
       returnRoutines,
       timeZone,
     }: Props = req.body;
+
     if (
       (newStatus && !validTaskStatuses.includes(newStatus)) ||
       (routineStatus && !validRoutineStatuses.includes(routineStatus))
@@ -59,6 +62,7 @@ route.post(
       const tasksToUpdateFilter: { [key: string]: any } = {
         _id: { $in: taskIds.map((id: string) => new ObjectId(id)) },
         userId: new ObjectId(req.userId),
+        expiresAt: { $gte: new Date() },
       };
 
       if (isAll) {
@@ -104,7 +108,7 @@ route.post(
       );
 
       if (tasksToUpdate.length === 0) {
-        res.status(400).json({ error: "Bad request" });
+        res.status(200).json({ error: "No active tasks to update" });
         return;
       }
 
@@ -150,55 +154,84 @@ route.post(
         )
       );
 
-      const routineTaskStatusUpdateOps: any[] = relevantTaskIds.map(
-        (taskId) => ({
-          updateOne: {
-            filter: {
-              "allTasks.ids._id": new ObjectId(taskId),
-            },
-            update: {
-              $set: {
-                "allTasks.$.ids.$[element].status": newStatus,
-              },
-            },
-            arrayFilters: [{ "element._id": new ObjectId(taskId) }],
+      let routineTaskStatusUpdateOps: any[] = relevantTaskIds.map((taskId) => ({
+        updateOne: {
+          filter: {
+            "allTasks.ids._id": new ObjectId(taskId),
           },
-        })
-      );
+          update: {
+            $set: {
+              "allTasks.$.ids.$[element].status": newStatus,
+            },
+          },
+          arrayFilters: [{ "element._id": new ObjectId(taskId) }],
+        },
+      }));
 
-      const relevantRoutineIds = tasksToUpdate.map((t) => t.routineId);
+      const relevantRoutineIds = [
+        ...new Set(tasksToUpdate.map((t) => t.routineId)),
+      ];
 
-      if (newStatus === TaskStatusEnum.DELETED) {
+      if (
+        [TaskStatusEnum.DELETED, TaskStatusEnum.CANCELED].includes(newStatus)
+      ) {
         const routinesWithActiveTasks = await doWithRetries(async () =>
           db
             .collection("Task")
-            .find(
+            .aggregate([
               {
-                routineId: { $in: relevantRoutineIds },
-                status: TaskStatusEnum.ACTIVE,
+                $match: {
+                  routineId: { $in: relevantRoutineIds },
+                  status: {
+                    $in: [
+                      TaskStatusEnum.ACTIVE,
+                      TaskStatusEnum.COMPLETED,
+                      TaskStatusEnum.INACTIVE,
+                      TaskStatusEnum.EXPIRED,
+                    ],
+                  },
+                },
               },
-              { projection: { routineId: 1 } }
-            )
+              { $group: { _id: "$routineId" } },
+              { $project: { _id: 1 } },
+            ])
             .toArray()
         );
 
-        const activeRoutineIds = routinesWithActiveTasks
-          .map((r) => r.routineId)
-          .map((id) => String(id));
+        const activeRoutineIds = routinesWithActiveTasks.map((r) =>
+          String(r._id)
+        );
 
-        const routinesToDelete = relevantRoutineIds.filter(
+        const routinesWithoutActiveTasks = relevantRoutineIds.filter(
           (id) => !activeRoutineIds.includes(String(id))
         );
 
-        if (routinesToDelete.length > 0)
+        if (routinesWithoutActiveTasks.length > 0) {
           routineTaskStatusUpdateOps.push(
-            ...routinesToDelete.map((id) => ({
+            ...routinesWithoutActiveTasks.map((id) => ({
               updateOne: {
                 filter: { _id: new ObjectId(id) },
-                update: { $set: { status: RoutineStatusEnum.DELETED } },
+                update: { $set: { status: newStatus } },
               },
             }))
           );
+
+          await deactivateHangingBaAndRoutineData({
+            routineIds: routinesWithoutActiveTasks,
+            userId: req.userId,
+          });
+        }
+      } else if (newStatus === TaskStatusEnum.ACTIVE) {
+        routineTaskStatusUpdateOps = routineTaskStatusUpdateOps.map((obj) => ({
+          ...obj,
+          updateOne: {
+            ...obj.updateOne,
+            update: {
+              ...obj.updateOne.update,
+              $set: { ...obj.updateOne.update.$set, status: newStatus },
+            },
+          },
+        }));
       }
 
       await doWithRetries(async () =>
@@ -218,6 +251,8 @@ route.post(
 
       if (routineStatus) filter.status = routineStatus;
 
+      await recalculateAllTaskCountAndRoutineDates(relevantRoutineIds);
+
       let response = { routines: [], tasks: [] };
 
       if (returnTasks) {
@@ -236,8 +271,6 @@ route.post(
             .toArray()
         );
       }
-
-      recalculateAllTaskCountAndRoutineDates(relevantRoutineIds);
 
       res.status(200).json({ message: response });
     } catch (err) {

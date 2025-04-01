@@ -41,7 +41,7 @@ function deepMerge(target: any, source: any, sortKey?: string): any {
   return source;
 }
 
-export default function combineAllTasks({ oldAllTasks, newAllTasks }: Props) {
+export default function combineAllTasks({ oldAllTasks = [], newAllTasks }: Props) {
   if (!newAllTasks || newAllTasks.length === 0) return oldAllTasks;
 
   const mergedTasksMap = new Map<string, AllTaskTypeWithIds>();
