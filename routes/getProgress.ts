@@ -25,7 +25,7 @@ route.get(
       let notPurchased = [];
       let priceData = [];
 
-      let finalFilter: { [key: string]: any } = {
+      let finalFilters: { [key: string]: any } = {
         moderationStatus: ModerationStatusEnum.ACTIVE,
       };
 
@@ -41,21 +41,27 @@ route.get(
       };
 
       if (userName) {
-        filter.userName = userName;
-        projection["images.mainUrl"] = 1;
-        projection["initialImages.mainUrl"] = 1;
+        finalFilters.userName = userName;
 
-        const response = await getPurchasedFilters({
-          userId: req.userId,
-          userName,
-          part: filter.part,
-        });
-        purchases = response.purchases;
-        priceData = response.priceData;
-        notPurchased = response.notPurchased;
-        finalFilter = { ...finalFilter, ...response.additionalFilters };
+        if (req.userId) {
+          projection["images.mainUrl"] = 1;
+          projection["initialImages.mainUrl"] = 1;
+
+          const response = await getPurchasedFilters({
+            userId: req.userId,
+            userName,
+            part: filter.part,
+          });
+          purchases = response.purchases;
+          priceData = response.priceData;
+          notPurchased = response.notPurchased;
+          finalFilters = { ...finalFilters, ...response.additionalFilters };
+        } else {
+          finalFilters.isPublic = true;
+          finalFilters.deletedOn = { $exists: false };
+        }
       } else {
-        filter.userId = new ObjectId(req.userId);
+        finalFilters.userId = new ObjectId(req.userId);
         projection["images"] = 1;
         projection["initialImages"] = 1;
       }
@@ -64,7 +70,7 @@ route.get(
         db
           .collection("Progress")
           .aggregate([
-            { $match: filter },
+            { $match: finalFilters },
             {
               $project: projection,
             },

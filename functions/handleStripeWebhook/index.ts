@@ -13,6 +13,7 @@ import updateAnalytics from "../updateAnalytics.js";
 import getEmailContent from "@/helpers/getEmailContent.js";
 import sendEmail from "../sendEmail.js";
 import updateContent from "../updateContent.js";
+import cancelRoutineSubscribers from "../cancelRoutineSubscribers.js";
 
 // Cache plans for 5 minutes to reduce database load
 let cachedPlans: any[] = [];
@@ -493,41 +494,6 @@ async function markEventAsProcessed(eventId: string) {
     .insertOne({ eventId, createdAt: new Date() });
 }
 
-async function handlePayoutsDisabled(userInfo: any) {
-  try {
-    const updatePayload: { [key: string]: any } = {};
-
-    await updateContent({
-      userId: String(userInfo._id),
-      collections: ["BeforeAfter", "Progress", "Proof", "Diary", "Routine"],
-      updatePayload: { isPublic: false },
-    });
-
-    if (!userInfo.club.payouts.payoutsDisabledUserNotifiedOn) {
-      const { title, body } = await getEmailContent({
-        accessToken: null,
-        emailType: "payoutsDisabled",
-      });
-
-      await sendEmail({
-        to: userInfo.email,
-        subject: title,
-        html: body,
-      });
-
-      updatePayload.payoutsDisabledUserNotifiedOn = new Date();
-      updateAnalytics({
-        userId: String(userInfo._id),
-        incrementPayload: { "overview.club.payoutsDisabled": 1 },
-      });
-    }
-
-    return updatePayload;
-  } catch (err) {
-    throw httpError(err);
-  }
-}
-
 async function handleAccountUpdated(event: Stripe.AccountUpdatedEvent) {
   try {
     const connectId = event.account;
@@ -541,7 +507,7 @@ async function handleAccountUpdated(event: Stripe.AccountUpdatedEvent) {
         email: 1,
         "club.payouts.detailsSubmitted": 1,
         "club.payouts.payoutsEnabled": 1,
-        "club.payouts.payoutsDisabledUserNotifiedOn": 1,
+        "club.payouts.lastInformed": 1,
       }
     );
 
@@ -556,9 +522,80 @@ async function handleAccountUpdated(event: Stripe.AccountUpdatedEvent) {
       "club.payouts.disabledReason": account.requirements?.disabled_reason,
     };
 
-    if (!account.payouts_enabled && account.details_submitted) {
-      const payoutUpdates = await handlePayoutsDisabled(userInfo);
-      Object.assign(updatePayload, payoutUpdates);
+    const analyticsUpdate: { [key: string]: any } = {};
+
+    let emailType = "payoutsEnabled";
+    let shouldSendEmail = false;
+
+    if (currentPayoutsEnabled && !account.payouts_enabled) {
+      emailType = "payoutsDisabled";
+
+      const isRejected = [
+        "rejected.other",
+        "rejected.fraud",
+        "rejected.tos",
+      ].includes(account.requirements?.disabled_reason);
+
+      const isPaused =
+        account.requirements?.disabled_reason === "platform_paused";
+
+      if (isRejected) {
+        emailType = "payoutsRejected";
+        shouldSendEmail = userInfo.club.payouts?.lastInformed !== "rejected";
+        Object.assign(analyticsUpdate, { "overview.club.payoutsRejected": 1 });
+        Object.assign(updatePayload, {
+          "club.payouts.lastInformed": "rejected",
+        });
+      } else if (isPaused) {
+        emailType = "payoutsPaused";
+        shouldSendEmail = userInfo.club.payouts?.lastInformed !== "paused";
+        Object.assign(analyticsUpdate, { "overview.club.payoutsPaused": 1 });
+        Object.assign(updatePayload, { "club.payouts.lastInformed": "paused" });
+      } else {
+        shouldSendEmail = userInfo.club.payouts?.lastInformed !== "disabled";
+        Object.assign(analyticsUpdate, { "overview.club.payoutsDisabled": 1 });
+        Object.assign(updatePayload, {
+          "club.payouts.lastInformed": "disabled",
+        });
+      }
+
+      if (isRejected) {
+        await updateContent({
+          userId: String(userInfo._id),
+          collections: ["BeforeAfter", "Progress", "Proof", "Diary", "Routine"],
+          updatePayload: { isPublic: false },
+        });
+
+        await doWithRetries(() =>
+          db
+            .collection("RoutineData")
+            .updateMany(
+              { userId: new ObjectId(userInfo._id) },
+              { $set: { status: "hidden" } }
+            )
+        );
+
+        await cancelRoutineSubscribers(String(userInfo._id));
+      }
+    }
+
+    if (!currentPayoutsEnabled && account.payouts_enabled) {
+      shouldSendEmail = userInfo.club.payouts?.lastInformed !== "enabled";
+      Object.assign(analyticsUpdate, { "overview.club.payoutsEnabled": 1 });
+      Object.assign(updatePayload, { "club.payouts.lastInformed": "enabled" });
+    }
+
+    if (shouldSendEmail) {
+      const { title, body } = await getEmailContent({
+        accessToken: null,
+        emailType: emailType as "payoutsEnabled",
+      });
+
+      await sendEmail({
+        to: userInfo.email,
+        subject: title,
+        html: body,
+      });
     }
 
     await doWithRetries(() =>
@@ -571,71 +608,17 @@ async function handleAccountUpdated(event: Stripe.AccountUpdatedEvent) {
     );
 
     if (!currentDetailsSubmitted && account.details_submitted) {
-      updateAnalytics({
-        userId: String(userInfo._id),
-        incrementPayload: { "overview.club.detailsSubmitted": 1 },
-      });
+      Object.assign(analyticsUpdate, { "overview.club.detailsSubmitted": 1 });
     }
-
-    if (!currentPayoutsEnabled && account.payouts_enabled) {
-      updateAnalytics({
-        userId: String(userInfo._id),
-        incrementPayload: { "overview.club.payoutsEnabled": 1 },
-      });
-    }
-  } catch (err) {
-    throw httpError(err);
-  }
-}
-
-async function handleAccountDeauthorized(connectId: string) {
-  if (!connectId) return;
-  
-  try {
-    const userInfo = await fetchUserInfo(
-      { "club.payouts.connectId": connectId },
-      {
-        _id: 1,
-        email: 1,
-      }
-    );
-
-    const updatePayload: { [key: string]: any } = {
-      "club.payouts.payoutsEnabled": false,
-      "club.payouts.disabledReason": "rejected",
-    };
-
-    if (!userInfo) return console.warn(`User ${connectId} not found`);
-
-    const { title, body } = await getEmailContent({
-      accessToken: null,
-      emailType: "payoutsRejected",
-    });
-
-    await sendEmail({
-      to: userInfo.email,
-      subject: title,
-      html: body,
-    });
-
-    await doWithRetries(() =>
-      db
-        .collection("User")
-        .updateOne(
-          { "club.payouts.connectId": connectId },
-          { $set: updatePayload }
-        )
-    );
 
     updateAnalytics({
       userId: String(userInfo._id),
-      incrementPayload: { "overview.club.rejected": 1 },
+      incrementPayload: analyticsUpdate,
     });
   } catch (err) {
     throw httpError(err);
   }
 }
-
 //#endregion
 
 async function handleStripeWebhook(event: Stripe.Event) {
@@ -649,8 +632,7 @@ async function handleStripeWebhook(event: Stripe.Event) {
       type !== "customer.subscription.deleted" &&
       type !== "customer.subscription.updated" &&
       type !== "balance.available" &&
-      type !== "account.updated" &&
-      type !== "account.application.deauthorized"
+      type !== "account.updated"
     ) {
       return;
     }
@@ -688,10 +670,6 @@ async function handleStripeWebhook(event: Stripe.Event) {
 
       case "balance.available":
         await handleBalanceAvailable(event.account);
-        break;
-
-      case "account.application.deauthorized":
-        await handleAccountDeauthorized(event.account);
         break;
 
       case "account.updated":

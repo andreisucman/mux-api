@@ -35,15 +35,20 @@ route.get(
       if (userName) {
         finalFilters.userName = userName;
 
-        const response = await getPurchasedFilters({
-          userId: req.userId,
-          userName,
-          part: filter.part,
-        });
-        purchases = response.purchases;
-        priceData = response.priceData;
-        notPurchased = response.notPurchased;
-        finalFilters = { ...finalFilters, ...response.additionalFilters };
+        if (req.userId) {
+          const response = await getPurchasedFilters({
+            userId: req.userId,
+            userName,
+            part: filter.part,
+          });
+          purchases = response.purchases;
+          priceData = response.priceData;
+          notPurchased = response.notPurchased;
+          finalFilters = { ...finalFilters, ...response.additionalFilters };
+        } else {
+          finalFilters.isPublic = true;
+          finalFilters.deletedOn = { $exists: false };
+        }
       } else {
         finalFilters.userId = new ObjectId(req.userId);
         finalFilters.deletedOn = { $exists: false };

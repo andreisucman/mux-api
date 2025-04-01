@@ -27,3 +27,6 @@ docker run -d --restart=always -p 80:3001 --env-file env.list.txt sunchainltd/mu
 chmod +x ./script.sh
 
 ./script.sh
+
+
+acct_1R97iFGf3ibGpOtQ

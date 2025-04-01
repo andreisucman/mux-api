@@ -15,7 +15,9 @@ type Props = {
     | "confirmationCode"
     | "payoutsDisabled"
     | "yourPlanPurchased"
-    | "payoutsRejected";
+    | "payoutsRejected"
+    | "payoutsPaused"
+    | "payoutsEnabled";
 };
 
 export default async function getEmailContent({
@@ -45,6 +47,18 @@ export default async function getEmailContent({
       case "payoutsDisabled":
         title = "Muxout - Payouts disabled";
         bodyPath = path.join(baseEmailPath, "payoutsDisabled.html");
+        break;
+      case "payoutsRejected":
+        title = "Muxout - Payouts rejected";
+        bodyPath = path.join(baseEmailPath, "payoutsRejected.html");
+        break;
+      case "payoutsPaused":
+        title = "Muxout - Payouts paused";
+        bodyPath = path.join(baseEmailPath, "payoutsPaused.html");
+        break;
+      case "payoutsEnabled":
+        title = "Muxout - Payouts enabled";
+        bodyPath = path.join(baseEmailPath, "payoutsEnabled.html");
         break;
       case "yourPlanPurchased":
         title = "Muxout - Sale notification";

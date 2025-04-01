@@ -29,15 +29,22 @@ route.get(
       };
 
       if (userName) {
-        const response = await getPurchasedFilters({
-          userId: req.userId,
-          userName,
-          part: filter.part,
-        });
-        purchases = response.purchases;
-        priceData = response.priceData;
-        notPurchased = response.notPurchased;
-        finalFilter = { ...finalFilter, ...response.additionalFilters };
+        finalFilter.userName = userName;
+
+        if (req.userId) {
+          const response = await getPurchasedFilters({
+            userId: req.userId,
+            userName,
+            part: filter.part,
+          });
+          purchases = response.purchases;
+          priceData = response.priceData;
+          notPurchased = response.notPurchased;
+          finalFilter = { ...finalFilter, ...response.additionalFilters };
+        } else {
+          finalFilter.isPublic = true;
+          finalFilter.deletedOn = { $exists: false };
+        }
       } else {
         finalFilter.userId = new ObjectId(req.userId);
         finalFilter.deletedOn = { $exists: false };

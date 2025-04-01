@@ -52,9 +52,6 @@ export default async function getPurchasedFilters({
 
       additionalFilters.part = { $in: purchasedParts };
       additionalFilters.createdAt = withinPurchasedPeriod;
-    } else {
-      additionalFilters.isPublic = true;
-      additionalFilters.deletedOn = { $exists: false };
     }
 
     return { purchases, priceData, notPurchased, additionalFilters };

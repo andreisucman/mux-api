@@ -32,6 +32,15 @@ route.post(
     }
 
     try {
+      const userInfo = await getUserInfo({
+        userId: req.userId,
+        projection: { "club.payouts.payoutsEnabled": 1 },
+      });
+
+      if (!userInfo.club) {
+        res.status(400).json({ error: "Bad request" });
+      }
+
       const updatePayload: { [key: string]: any } = {
         status,
         name,
@@ -39,6 +48,18 @@ route.post(
         price,
         updatePrice,
       };
+
+      if (status === "public") {
+        if (!userInfo.club.payouts.payoutsEnabled) {
+          res
+            .status(200)
+            .json({
+              error:
+                "You can't publish a routine while your payouts are disabled.",
+            });
+          return;
+        }
+      }
 
       for (const text of [name, description]) {
         const isSafe = await checkTextSafety({
