@@ -9,7 +9,6 @@ import doWithRetries from "helpers/doWithRetries.js";
 import checkTextSafety from "@/functions/checkTextSafety.js";
 import { SuspiciousRecordCollectionEnum } from "@/functions/addSuspiciousRecord.js";
 import updateContent from "@/functions/updateContent.js";
-import cancelSubscription from "@/functions/cancelSubscription.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import cancelRoutineSubscribers from "@/functions/cancelRoutineSubscribers.js";
 
@@ -21,8 +20,8 @@ route.post(
     const { status, part, name, description, price, updatePrice } = req.body;
 
     if (
-      Number(price) < 1 ||
-      Number(updatePrice) < 1 ||
+      Number(price) < 5 ||
+      Number(updatePrice) < 2 ||
       isNaN(Number(price)) ||
       isNaN(Number(updatePrice)) ||
       name.length > 50 ||

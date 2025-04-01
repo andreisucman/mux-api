@@ -125,8 +125,6 @@ route.post(
         ...new Set(tasksToDelete.map((t) => t.routineId)),
       ];
 
-      console.log("relevantRoutineIds", relevantRoutineIds);
-
       const routinesWithActiveTasks = await doWithRetries(async () =>
         db
           .collection("Task")

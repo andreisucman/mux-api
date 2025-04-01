@@ -21,6 +21,7 @@ route.get(
       const finalFilter: { [key: string]: any } = {
         userId: new ObjectId(req.userId),
         expiresAt: { $lte: daysFrom({ days: 1 }) },
+        deletedOn: { $exists: false },
       };
 
       const projection = {

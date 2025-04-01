@@ -43,11 +43,6 @@ route.post(
         return;
       }
 
-      if (req.userId === String(routineInfo.userId)) {
-        res.status(200).json({ error: "You can't buy from yourself" });
-        return;
-      }
-
       const {
         price,
         name,
@@ -55,6 +50,11 @@ route.post(
         userId: sellerId,
         _id: routineDataId,
       } = routineInfo;
+
+      if (String(req.userId) === String(sellerId)) {
+        res.status(200).json({ error: "You can't buy from yourself" });
+        return;
+      }
 
       const userInfo = await getUserInfo({
         userId: req.userId,
