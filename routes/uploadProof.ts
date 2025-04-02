@@ -71,6 +71,7 @@ route.post(
               color: 1,
               part: 1,
               icon: 1,
+              examples: 1,
               concern: 1,
               instruction: 1,
               requisite: 1,
@@ -382,8 +383,13 @@ route.post(
       if (newStreakDates)
         userUpdatePayload.$set = { streakDates: newStreakDates };
 
+      const examplesWithoutYoutubeVideos = taskInfo.examples.filter(
+        (example) => !example.url.includes("https://www.youtu")
+      );
+
       const taskUpdate = {
         $set: {
+          examples: examplesWithoutYoutubeVideos,
           proofId: newProof._id,
           completedAt: new Date(),
           status: TaskStatusEnum.COMPLETED,

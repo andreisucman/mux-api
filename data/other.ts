@@ -13,3 +13,26 @@ export const defaultClubPayoutData: ClubPayoutDataType = {
   detailsSubmitted: false,
   disabledReason: null,
 };
+
+export const fullServceAgreementCountries = [
+  "US",
+  "CA",
+  "AU",
+  "NZ",
+  "GB",
+  "IE",
+  "AT",
+  "BE",
+  "DK",
+  "FI",
+  "FR",
+  "DE",
+  "IT",
+  "LU",
+  "NL",
+  "NO",
+  "PT",
+  "SE",
+  "CH",
+  "ES",
+];

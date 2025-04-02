@@ -1,5 +1,6 @@
 import { ObjectId } from "mongodb";
 import { ClubDataType, LatestScoresType, PartEnum, RecipeType } from "types.js";
+import { TaskExampleType } from "./createRoutineTypes.js";
 
 export type UploadProofUserType = {
   name: string;
@@ -29,4 +30,5 @@ export type UploadProofTaskType = {
   restDays: number;
   isCreated: boolean;
   startsAt: Date;
+  examples: TaskExampleType[];
 };

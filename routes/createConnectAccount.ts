@@ -9,18 +9,31 @@ import { CustomRequest, ModerationStatusEnum } from "types.js";
 import { ConnectParamsType } from "types/createConnectAccountTypes.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
+import { fullServceAgreementCountries } from "@/data/other.js";
 
 const route = Router();
 
 type Props = {
   userId: string;
   params: ConnectParamsType;
+  country: string;
 };
 
-async function createAccountAndLink({ userId, params }: Props) {
+async function createAccountAndLink({ userId, params, country }: Props) {
   let account;
   let accLink;
   let errorText;
+
+  const requiresRecipientAgreement = !fullServceAgreementCountries.includes(
+    country.toUpperCase()
+  );
+
+  const updatedParams = {
+    ...params,
+    tos_acceptance: { service_agreement: "recipient" },
+  };
+
+  if (requiresRecipientAgreement) params = updatedParams;
 
   try {
     account = await stripe.accounts.create(params as any);
@@ -34,7 +47,7 @@ async function createAccountAndLink({ userId, params }: Props) {
   } catch (err) {
     const contryUnavailable =
       err.raw.message.includes("Connected accounts in") &&
-      err.raw.message.includes("cannot be created by platforms in US");
+      err.raw.message.includes("cannot be created");
 
     if (contryUnavailable) {
       await doWithRetries(async () =>
@@ -50,27 +63,28 @@ async function createAccountAndLink({ userId, params }: Props) {
         )
       );
 
-      errorText =
-        "We cannot accept bank accounts from this country. However, if you have an online bank account based in a Western country (such as Wise, Payoneer, or similar services), you may enter the corresponding country.";
+      errorText = "Our payment processor doesn't support the selected country.";
+
+      updateAnalytics({
+        userId,
+        incrementPayload: {
+          [`overview.club.unsupportedCountry.${country}`]: 1,
+        },
+      });
 
       return { account, accLink, errorText };
     }
 
-    const agreementMustBeRecipient =
-      err.raw.message.includes(
-        "you must either specify the `recipient` service agreement"
-      ) ||
-      err.raw.message.includes(
-        "`recipient` service agreement is required for accounts"
-      );
+    const agreementMustBeRecipient = err.raw.message.includes(
+      "`recipient` service agreement"
+    );
 
     if (agreementMustBeRecipient) {
-      const updatedParams = {
-        ...params,
-        tos_acceptance: { service_agreement: "recipient" },
-      };
-
-      return await createAccountAndLink({ userId, params: updatedParams });
+      return await createAccountAndLink({
+        userId,
+        params: updatedParams,
+        country,
+      });
     }
 
     throw err;
@@ -102,7 +116,7 @@ route.post(
 
           country: country?.toUpperCase(),
           capabilities: {
-            transfers: { requested: true },
+            transfers: { requested: false },
             card_payments: { requested: false },
           },
           business_profile: {
@@ -111,7 +125,7 @@ route.post(
           },
           settings: {
             payments: {
-              statement_descriptor: "MUXOUT REWARD",
+              statement_descriptor: "MUX",
             },
           },
         };
@@ -119,6 +133,7 @@ route.post(
         const { accLink, account, errorText } = await createAccountAndLink({
           userId: req.userId,
           params,
+          country,
         });
 
         if (errorText) {

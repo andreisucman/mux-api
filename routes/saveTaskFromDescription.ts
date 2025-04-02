@@ -36,6 +36,7 @@ import { validParts } from "@/data/other.js";
 import findRelevantSuggestions from "@/functions/findRelevantSuggestions.js";
 import getUsersImages from "@/functions/getUserImages.js";
 import generateImage from "@/functions/generateImage.js";
+import searchYoutubeVideos from "@/functions/searchYoutubeVideos.js";
 
 const route = Router();
 
@@ -248,21 +249,29 @@ route.post(
           userId: req.userId,
         });
         generalTaskInfo.examples = [{ type: "image", url: image }];
-      }
-
-      if (exampleVideoId) {
+      } else if (exampleVideoId) {
         generalTaskInfo.examples = [
           {
             type: "video",
             url: `https://www.youtube.com/embed/${exampleVideoId}`,
           },
         ];
+      } else {
+        const relatedYoutubeVideos = await searchYoutubeVideos(
+          generalTaskInfo.name
+        );
+
+        generalTaskInfo.examples = relatedYoutubeVideos.map((url) => ({
+          type: "video",
+          url,
+        }));
       }
 
       const iconsMap = await findEmoji({
         userId: req.userId,
         taskNames: [generalTaskInfo.name],
       });
+      
       generalTaskInfo.icon = iconsMap[generalTaskInfo.name];
 
       const suggestions = await findRelevantSuggestions(
