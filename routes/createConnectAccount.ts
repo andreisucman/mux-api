@@ -9,7 +9,7 @@ import { CustomRequest, ModerationStatusEnum } from "types.js";
 import { ConnectParamsType } from "types/createConnectAccountTypes.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
-import { fullServceAgreementCountries } from "@/data/other.js";
+import { fullServiceAgreementCountries } from "@/data/other.js"; // Fixed spelling
 
 const route = Router();
 
@@ -17,80 +17,82 @@ type Props = {
   userId: string;
   params: ConnectParamsType;
   country: string;
+  disableRepetition?: boolean;
 };
 
-async function createAccountAndLink({ userId, params, country }: Props) {
+async function createAccountAndLink({
+  userId,
+  params,
+  country,
+  disableRepetition,
+}: Props) {
   let account;
-  let accLink;
+  let accountLink;
   let errorText;
 
-  const requiresRecipientAgreement = !fullServceAgreementCountries.includes(
+  const requiresRecipientAgreement = !fullServiceAgreementCountries.includes(
     country.toUpperCase()
   );
 
-  const updatedParams = {
-    ...params,
-    tos_acceptance: { service_agreement: "recipient" },
-  };
-
-  if (requiresRecipientAgreement) params = updatedParams;
+  const createParams = requiresRecipientAgreement
+    ? {
+        ...params,
+        tos_acceptance: { service_agreement: "recipient" },
+      }
+    : params;
 
   try {
-    account = await stripe.accounts.create(params as any);
+    account = await stripe.accounts.create(createParams as any);
 
-    accLink = await stripe.accountLinks.create({
+    accountLink = await stripe.accountLinks.create({
       account: account.id,
-      return_url: process.env.CLIENT_URL + "/club",
-      refresh_url: process.env.CLIENT_URL + "/club",
+      return_url: `${process.env.CLIENT_URL}/club`,
+      refresh_url: `${process.env.CLIENT_URL}/club`,
       type: "account_onboarding",
     });
   } catch (err) {
-    const contryUnavailable =
-      err.raw.message.includes("Connected accounts in") &&
+    console.log("err", err);
+    const countryUnavailable =
+      err.raw?.message?.includes("Connected accounts in") &&
       err.raw.message.includes("cannot be created");
 
-    if (contryUnavailable) {
-      await doWithRetries(async () =>
-        db.collection("User").updateOne(
-          {
-            _id: new ObjectId(userId),
-          },
-          {
-            $set: {
-              country: null,
-            },
-          }
-        )
+    if (countryUnavailable) {
+      await doWithRetries(() =>
+        db
+          .collection("User")
+          .updateOne({ _id: new ObjectId(userId) }, { $set: { country: null } })
       );
 
       errorText = "Our payment processor doesn't support the selected country.";
-
       updateAnalytics({
         userId,
         incrementPayload: {
           [`overview.club.unsupportedCountry.${country}`]: 1,
         },
       });
-
-      return { account, accLink, errorText };
+      return { account, accountLink, errorText };
     }
 
-    const agreementMustBeRecipient = err.raw.message.includes(
+    const agreementMustBeRecipient = err.raw?.message?.includes(
       "`recipient` service agreement"
     );
 
-    if (agreementMustBeRecipient) {
-      return await createAccountAndLink({
+    if (agreementMustBeRecipient && !disableRepetition) {
+      return createAccountAndLink({
         userId,
-        params: updatedParams,
+        params: {
+          ...params,
+          tos_acceptance: { service_agreement: "recipient" },
+        },
         country,
+        disableRepetition: true,
       });
     }
 
     throw err;
   }
 
-  return { account, accLink, errorText };
+  return { account, accountLink, errorText };
 }
 
 route.post(
@@ -104,80 +106,75 @@ route.post(
 
       const { email, club, country, name } = userInfo;
       const { payouts } = club || {};
-      let { connectId } = payouts || {};
+      const { connectId } = payouts || {};
 
-      if (!connectId) {
-        const params: ConnectParamsType = {
-          type: "express",
-          business_type: "individual",
-          individual: {
-            email,
-          },
-
-          country: country?.toUpperCase(),
-          capabilities: {
-            transfers: { requested: false },
-            card_payments: { requested: false },
-          },
-          business_profile: {
-            mcc: "5734",
-            url: `https://muxout.com/club/progress/${name}`,
-          },
-          settings: {
-            payments: {
-              statement_descriptor: "MUX",
-            },
-          },
-        };
-
-        const { accLink, account, errorText } = await createAccountAndLink({
-          userId: req.userId,
-          params,
-          country,
-        });
-
-        if (errorText) {
-          res.status(200).json({ error: errorText });
-          return;
-        }
-
-        await doWithRetries(async () =>
-          db.collection("User").updateOne(
-            {
-              _id: new ObjectId(req.userId),
-              moderationStatus: ModerationStatusEnum.ACTIVE,
-            },
-            { $set: { "club.payouts.connectId": account.id } }
-          )
-        );
-
-        if (country) {
-          updateAnalytics({
-            userId: req.userId,
-            incrementPayload: { [`overview.club.country.${country}`]: 1 },
-          });
-        }
-
-        res.status(200).json({ message: accLink.url });
+      if (!country) {
+        res.status(400).json({ error: "Country information is required" });
         return;
-      } else {
-        const account = await stripe.accounts.retrieve(connectId);
+      }
 
+      if (connectId) {
+        const account = await stripe.accounts.retrieve(connectId);
         if (!account.details_submitted) {
-          const accLink = await stripe.accountLinks.create({
+          const accountLink = await stripe.accountLinks.create({
             account: connectId,
-            return_url: process.env.CLIENT_URL + "/club",
-            refresh_url: process.env.CLIENT_URL + "/club",
+            return_url: `${process.env.CLIENT_URL}/club`,
+            refresh_url: `${process.env.CLIENT_URL}/club`,
             type: "account_onboarding",
           });
-          res.status(200).json({ message: accLink.url });
-          return;
-        } else {
-          const loginLink = await stripe.accounts.createLoginLink(connectId);
-          res.status(200).json({ message: loginLink.url });
+          res.json({ message: accountLink.url });
           return;
         }
+        const loginLink = await stripe.accounts.createLoginLink(connectId);
+        res.json({ message: loginLink.url });
+        return;
       }
+
+      const params: ConnectParamsType = {
+        type: "express",
+        business_type: "individual",
+        individual: { email },
+        country: country.toUpperCase(),
+        capabilities: {
+          transfers: { requested: true },
+          card_payments: { requested: false },
+        },
+        business_profile: {
+          mcc: "5734",
+          url: `https://muxout.com/club/progress/${name}`,
+        },
+        settings: {
+          payments: { statement_descriptor: "MUXOUT" },
+        },
+      };
+
+      const { accountLink, account, errorText } = await createAccountAndLink({
+        userId: req.userId,
+        params,
+        country,
+      });
+
+      if (errorText) {
+        res.status(400).json({ error: errorText });
+        return;
+      }
+
+      await doWithRetries(() =>
+        db.collection("User").updateOne(
+          {
+            _id: new ObjectId(req.userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
+          { $set: { "club.payouts.connectId": account.id } }
+        )
+      );
+
+      updateAnalytics({
+        userId: req.userId,
+        incrementPayload: { [`overview.club.country.${country}`]: 1 },
+      });
+
+      res.json({ message: accountLink.url });
     } catch (err) {
       next(err);
     }

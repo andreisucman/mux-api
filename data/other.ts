@@ -14,7 +14,7 @@ export const defaultClubPayoutData: ClubPayoutDataType = {
   disabledReason: null,
 };
 
-export const fullServceAgreementCountries = [
+export const fullServiceAgreementCountries = [
   "US",
   "CA",
   "AU",
