@@ -1,7 +1,7 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 import express, { NextFunction, Request, Response } from "express";
-import handleStripeWebhook from "functions/handleStripeWebhook/index.js";
+import handleConnectWebhook from "@/functions/handleConnectWebhook.js";
 import { stripe } from "init.js";
 import httpError from "@/helpers/httpError.js";
 
@@ -21,10 +21,10 @@ route.post(
       const event = stripe.webhooks.constructEvent(
         req.body,
         signature,
-        process.env.STRIPE_WEBHOOK_SECRET_ACCOUNT
+        process.env.STRIPE_WEBHOOK_SECRET_CONNECT
       );
 
-      await handleStripeWebhook(event);
+      await handleConnectWebhook(event);
 
       res.status(200).send();
     } catch (err) {
