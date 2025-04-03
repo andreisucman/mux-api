@@ -4,8 +4,11 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "../helpers/doWithRetries.js";
-import setToMidnight from "@/helpers/setToMidnight.js";
-import { checkDateValidity, daysFrom } from "helpers/utils.js";
+import {
+  calculateDaysDifference,
+  checkDateValidity,
+  daysFrom,
+} from "helpers/utils.js";
 import sortTasksInScheduleByDate from "helpers/sortTasksInScheduleByDate.js";
 import {
   AllTaskTypeWithIds,
@@ -22,28 +25,28 @@ import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 import checkPurchaseAccess from "@/functions/checkPurchaseAccess.js";
+import setToMidnight from "@/helpers/setToMidnight.js";
 
 const route = Router();
 
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { taskKey, routineId, startDate, total, timeZone, userName } =
-      req.body;
+    const {
+      taskKey,
+      routineId,
+      ignoreInactiveTasks,
+      startDate,
+      timeZone,
+      userName,
+    } = req.body;
 
     const { isValidDate, isFutureDate } = checkDateValidity(
       startDate,
       timeZone
     );
 
-    if (
-      !taskKey ||
-      !routineId ||
-      !total ||
-      !userName ||
-      !isValidDate ||
-      !isFutureDate
-    ) {
+    if (!taskKey || !routineId || !userName || !isValidDate || !isFutureDate) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
@@ -56,27 +59,72 @@ route.post(
 
       if (!userInfo) throw httpError(`User ${req.userId} not found`);
 
-      const { timeZone } = userInfo;
-
-      let taskToAdd = (await doWithRetries(async () =>
+      let taskInfo = (await doWithRetries(async () =>
         db
           .collection("Task")
           .find({ routineId: new ObjectId(routineId), key: taskKey })
-          .sort({ expiresAt: -1 })
+          .sort({ expiresAt: 1 })
           .next()
       )) as unknown as TaskType;
 
-      if (!taskToAdd)
+      if (!taskInfo)
         throw httpError(
           `No task to add from user ${userName} to user ${req.userId} found.`
         );
 
-      const part = taskToAdd[0].part;
-      const targetUserId = taskToAdd[0].userId;
+      const hostRoutine = (await doWithRetries(async () =>
+        db
+          .collection("Routine")
+          .findOne(
+            { _id: new ObjectId(routineId) },
+            { projection: { allTasks: 1 } }
+          )
+      )) as unknown as RoutineType;
+
+      if (!hostRoutine) throw httpError(`${routineId} routine not found.`);
+
+      const relevantAllTask = hostRoutine.allTasks.find(
+        (allTask) => allTask.key === taskKey
+      );
+
+      const earliestTask = relevantAllTask.ids.sort(
+        (a, b) =>
+          new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime()
+      )[0];
+
+      const differenceInDays = calculateDaysDifference(
+        earliestTask.startsAt,
+        setToMidnight({ date: startDate, timeZone })
+      );
+
+      const updatedIds = relevantAllTask.ids.filter((id) => {
+        let criteria = !id.deletedOn;
+        if (ignoreInactiveTasks) {
+          criteria =
+            criteria &&
+            [TaskStatusEnum.COMPLETED, TaskStatusEnum.ACTIVE].includes(
+              id.status
+            );
+        }
+        return criteria;
+      });
+
+      const updatedAllTask = {
+        ...relevantAllTask,
+        ids: updatedIds.map((obj) => ({
+          ...obj,
+          _id: new ObjectId(),
+          status: TaskStatusEnum.ACTIVE,
+          startsAt: daysFrom({ date: obj.startsAt, days: differenceInDays }),
+        })),
+      };
+
+      const part = taskInfo.part;
+      const targetUserId = taskInfo.userId;
 
       const hasAccessTo = await checkPurchaseAccess({
         parts: [part],
-        targetUserId,
+        targetUserId: String(targetUserId),
         userId: req.userId,
       });
 
@@ -91,60 +139,64 @@ route.post(
           .collection("Routine")
           .find({
             userId: new ObjectId(req.userId),
-            part: taskToAdd.part,
+            part,
             status: RoutineStatusEnum.ACTIVE,
           })
+          .sort({ startsAt: 1 })
           .next()
       )) as unknown as RoutineType;
 
       /* reset personalized fields */
-      taskToAdd = {
-        ...taskToAdd,
+      taskInfo = {
+        ...taskInfo,
         proofEnabled: true,
         completedAt: null,
+        proofId: null,
         userName: userInfo.name,
-        stolenFrom: userName,
+        copiedFrom: userName,
+        userId: new ObjectId(req.userId),
       };
 
-      if (taskToAdd.recipe) {
-        taskToAdd.name = taskToAdd.recipe.name;
-        taskToAdd.description = taskToAdd.recipe.description;
-        taskToAdd.instruction = taskToAdd.recipe.instruction;
-        taskToAdd.productTypes = taskToAdd.recipe.productTypes;
-        taskToAdd.examples = taskToAdd.recipe.examples;
+      if (taskInfo.recipe) {
+        taskInfo.name = taskInfo.recipe.name;
+        taskInfo.description = taskInfo.recipe.description;
+        taskInfo.instruction = taskInfo.recipe.instruction;
+        taskInfo.productTypes = taskInfo.recipe.productTypes;
+        taskInfo.examples = taskInfo.recipe.examples;
       }
 
       if (currentRoutine) {
-        taskToAdd.routineId = new ObjectId(currentRoutine._id);
+        taskInfo.routineId = new ObjectId(currentRoutine._id);
       }
 
-      let draftTasks: TaskType[] = [];
+      const restDays = await doWithRetries(() =>
+        db
+          .collection("Task")
+          .find(
+            { _id: { $in: updatedIds.map((obj) => obj._id) } },
+            { projection: { restDays: 1 } }
+          )
+          .toArray()
+      );
 
-      /* get the updated start and expiry dates */
-      const distanceInDays = Math.round(Math.max(7 / total, 1));
+      let draftTasks: TaskType[] = updatedAllTask.ids.map((obj) => {
+        const relevantRestDay = restDays.find(
+          (eObj) => String(eObj._id) === String(obj._id)
+        );
 
-      for (let j = 0; j < Math.min(total, 7); j++) {
-        const starts = daysFrom({
-          date: setToMidnight({
-            date: new Date(startDate),
-            timeZone,
-          }),
-          days: distanceInDays * j,
+        const newNextCanStartDate = daysFrom({
+          date: obj.startsAt,
+          days: relevantRestDay.restDays,
         });
 
-        const expires = daysFrom({
-          date: new Date(starts),
-          days: 1,
-        });
-
-        draftTasks.push({
-          ...(taskToAdd as TaskType),
-          _id: new ObjectId(),
-          startsAt: starts,
-          expiresAt: expires,
-          completedAt: null,
-        });
-      }
+        return {
+          ...taskInfo,
+          _id: obj._id,
+          startsAt: obj.startsAt,
+          status: obj.status,
+          nextCanStartDate: newNextCanStartDate,
+        };
+      });
 
       let {
         concerns,
@@ -187,37 +239,7 @@ route.post(
         }
       }
 
-      /* update allTasks */
-      const uniqueKeys = [...new Set(draftTasks.map((dt) => dt.key))];
-
-      const newAllTasks = uniqueKeys.map((key) => {
-        const relevantTaskInfo = draftTasks.find((t) => t.key === key);
-
-        const ids = draftTasks
-          .filter((t) => t.key === key)
-          .map((t) => ({
-            _id: t._id,
-            startsAt: t.startsAt,
-            status: TaskStatusEnum.ACTIVE,
-          }));
-
-        const { name, icon, color, concern, description, instruction } =
-          relevantTaskInfo || {};
-
-        return {
-          ids,
-          name,
-          key,
-          icon,
-          color,
-          concern,
-          description,
-          instruction,
-          total,
-        };
-      });
-
-      allTasks.push(...newAllTasks);
+      allTasks.push(updatedAllTask);
 
       const { minDate, maxDate } = getMinAndMaxRoutineDates(allTasks);
 
@@ -238,7 +260,6 @@ route.post(
         );
       } else {
         const routineId = new ObjectId();
-
         draftTasks = draftTasks.map((t) => ({ ...t, routineId }));
 
         await doWithRetries(async () =>
@@ -247,12 +268,13 @@ route.post(
             userId: new ObjectId(req.userId),
             allTasks,
             finalSchedule,
-            part: taskToAdd.part,
-            concerns: [taskToAdd.concern],
+            part: taskInfo.part,
+            concerns: [taskInfo.concern],
             status: RoutineStatusEnum.ACTIVE,
             startsAt: new Date(minDate),
             lastDate: new Date(maxDate),
             createdAt: new Date(),
+            copiedFrom: userName,
             userName: userInfo.name,
           })
         );
@@ -271,7 +293,7 @@ route.post(
       updateTasksAnalytics({
         userId: req.userId,
         tasksToInsert: draftTasks,
-        keyOne: "tasksStolen",
+        keyOne: "tasksCloned",
         keyTwo: "manualTasksStolen",
       });
 

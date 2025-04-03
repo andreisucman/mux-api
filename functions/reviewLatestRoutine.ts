@@ -15,7 +15,6 @@ import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 import chooseSolutionsForConcerns, {
   ConcernsSolutionsAndFrequenciesType,
 } from "./chooseSolutionsForConcerns.js";
-import deactivatePreviousRoutineAndTasks from "./deactivatePreviousRoutineAndTasks.js";
 import createSolutionData from "./createSolutionData.js";
 import createScheduleAndTasks from "./createScheduleAndTasks.js";
 

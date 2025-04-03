@@ -36,6 +36,7 @@ import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.j
 import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 import checkIfTaskIsAboutFood from "@/functions/checkIfTaskIsRelated.js";
 import { checkIfPublic } from "./checkIfPublic.js";
+import createImageCollage from "@/functions/createImageCollage.js";
 
 const route = Router();
 
@@ -44,7 +45,7 @@ const validExtensions = ["jpg", "webm", "mp4", "webp"];
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { taskId, url, blurType, timeZone } = req.body;
+    const { taskId, url, timeZone } = req.body;
 
     const urlExtension = url.includes(".") ? url.split(".").pop() : "";
 
@@ -295,41 +296,37 @@ route.post(
         return;
       }
 
-      const verdicts = [];
-      let explanation = "";
-      const selectedProofImages = selectItemsAtEqualDistances(proofImages, 4);
+      let proofImage = proofImages[0];
 
-      for (const image of selectedProofImages) {
-        const { verdict: proofAccepted, message: verdictExplanation } =
-          await checkProofImage({
-            userId: req.userId,
-            requisite: taskInfo.requisite,
-            image,
-            categoryName: CategoryNameEnum.PROOF,
-          });
+      if (proofImages.length > 1) {
+        const selectedProofImages = selectItemsAtEqualDistances(proofImages, 9);
 
-        verdicts.push(proofAccepted);
-        if (!proofAccepted) explanation = verdictExplanation;
+        proofImage = await createImageCollage({
+          images: selectedProofImages,
+          collageSize: 1024,
+          isGrid: true,
+        });
       }
 
-      const checkFailed =
-        verdicts.filter((i) => i).length <
-        Math.round(selectedProofImages.length / 2);
-
-      if (checkFailed) {
-        await addAnalysisStatusError({
-          message: explanation,
+      const { verdict: proofAccepted, message: verdictExplanation } =
+        await checkProofImage({
           userId: req.userId,
+          requisite: taskInfo.requisite,
+          image: proofImage,
+          categoryName: CategoryNameEnum.PROOF,
+        });
+
+      if (!proofAccepted) {
+        await addAnalysisStatusError({
+          userId: String(req.userId),
           operationKey: taskId,
+          message: verdictExplanation,
         });
         return;
       }
 
-      const finalBlurType =
-        urlType === "image" ? blurType : BlurTypeEnum.ORIGINAL;
-
-      let mainThumbnail = { name: finalBlurType, url: proofImages[0] };
-      let mainUrl = { name: finalBlurType, url };
+      let mainThumbnail = { name: BlurTypeEnum.ORIGINAL, url: proofImages[0] };
+      let mainUrl = { name: BlurTypeEnum.ORIGINAL, url };
 
       const {
         name: taskName,
@@ -383,13 +380,8 @@ route.post(
       if (newStreakDates)
         userUpdatePayload.$set = { streakDates: newStreakDates };
 
-      const examplesWithoutYoutubeVideos = taskInfo.examples.filter(
-        (example) => !example.url.includes("https://www.youtu")
-      );
-
       const taskUpdate = {
         $set: {
-          examples: examplesWithoutYoutubeVideos,
           proofId: newProof._id,
           completedAt: new Date(),
           status: TaskStatusEnum.COMPLETED,
@@ -420,7 +412,7 @@ route.post(
 
         const foodAnalysis = await analyzeCalories({
           userId: req.userId,
-          url: selectedProofImages[0],
+          url: proofImage,
           categoryName: CategoryNameEnum.PROOF,
           onlyCalories: true,
           taskDescription: taskInfo.description,

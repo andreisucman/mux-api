@@ -18,14 +18,14 @@ type Props = {
   routineIds: string[];
   startDate: string;
   timeZone: string;
-  part?: string;
-  sort?: string;
+  ignoreIncompleteTasks?: boolean;
 };
 
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { routineIds, startDate, timeZone }: Props = req.body;
+    const { routineIds, startDate, ignoreIncompleteTasks, timeZone }: Props =
+      req.body;
 
     const { isValidDate, isFutureDate } = checkDateValidity(
       startDate,
@@ -95,6 +95,7 @@ route.post(
               hostRoutine: accessibleRoutines[i],
               userId: req.userId,
               userName: userInfo.name,
+              ignoreIncompleteTasks,
               daysDifference,
             })
           )

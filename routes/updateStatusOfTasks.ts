@@ -27,11 +27,9 @@ const validTaskStatuses = [
   TaskStatusEnum.ACTIVE,
   TaskStatusEnum.CANCELED,
   TaskStatusEnum.COMPLETED,
-  TaskStatusEnum.INACTIVE,
 ];
 const validRoutineStatuses = [
   RoutineStatusEnum.ACTIVE,
-  RoutineStatusEnum.INACTIVE,
   RoutineStatusEnum.CANCELED,
 ];
 
@@ -175,7 +173,6 @@ route.post(
                     $in: [
                       TaskStatusEnum.ACTIVE,
                       TaskStatusEnum.COMPLETED,
-                      TaskStatusEnum.INACTIVE,
                       TaskStatusEnum.EXPIRED,
                     ],
                   },

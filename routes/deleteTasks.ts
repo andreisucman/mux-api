@@ -136,7 +136,6 @@ route.post(
                   $in: [
                     TaskStatusEnum.ACTIVE,
                     TaskStatusEnum.COMPLETED,
-                    TaskStatusEnum.INACTIVE,
                     TaskStatusEnum.EXPIRED,
                   ],
                 },

@@ -245,14 +245,12 @@ export enum TaskStatusEnum {
   COMPLETED = "completed",
   EXPIRED = "expired",
   CANCELED = "canceled",
-  INACTIVE = "inactive",
 }
 
 export enum RoutineStatusEnum {
   ACTIVE = "active",
   EXPIRED = "expired",
   CANCELED = "canceled",
-  INACTIVE = "inactive",
 }
 
 export type StreaksType = {
@@ -369,7 +367,7 @@ export type TaskType = {
   nextCanStartDate: Date | null;
   restDays: number;
   embedding: number[];
-  stolenFrom?: string;
+  copiedFrom?: string;
 };
 
 export type RoutineType = {
@@ -384,7 +382,7 @@ export type RoutineType = {
   startsAt: Date;
   allTasks: AllTaskTypeWithIds[];
   lastDate: Date;
-  stolenFrom: string;
+  copiedFrom: string;
   userName: string;
   isPublic: boolean;
   deletedOn?: Date;

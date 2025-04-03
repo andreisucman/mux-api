@@ -17,24 +17,33 @@ import updateTasksAnalytics from "./updateTasksAnalytics.js";
 
 type Props = {
   userId: string;
-  userName: string;
+  userName?: string;
   daysDifference: number;
   hostRoutine: RoutineType;
+  ignoreIncompleteTasks?: boolean;
 };
 
 export default async function cloneSingleRoutine({
   userId,
   userName,
   daysDifference,
+  ignoreIncompleteTasks,
   hostRoutine,
 }: Props) {
   try {
+    const filter: { [key: string]: any } = {
+      routineId: new ObjectId(hostRoutine._id),
+    };
+
+    if (ignoreIncompleteTasks) {
+      filter.$or = [
+        { status: TaskStatusEnum.COMPLETED },
+        { status: TaskStatusEnum.ACTIVE },
+      ];
+    }
+
     let replacementTasks = (await doWithRetries(async () =>
-      db
-        .collection("Task")
-        .find({ routineId: new ObjectId(hostRoutine._id) })
-        .sort({ _id: 1 })
-        .toArray()
+      db.collection("Task").find(filter).sort({ _id: 1 }).toArray()
     )) as unknown as TaskType[];
 
     if (replacementTasks.length === 0) throw httpError(`No tasks to add`);
@@ -62,7 +71,6 @@ export default async function cloneSingleRoutine({
         newTask.productTypes = newTask.recipe.productTypes;
         newTask.examples = newTask.recipe.examples;
       }
-      if (userName) newTask.stolenFrom = userName;
       return newTask;
     });
 
@@ -141,7 +149,7 @@ export default async function cloneSingleRoutine({
 
     delete newRoutine.deletedOn;
 
-    if (userName) newRoutine.stolenFrom = hostRoutine.userName;
+    if (userName) newRoutine.copiedFrom = hostRoutine.userName;
 
     await doWithRetries(async () =>
       db.collection("Routine").insertOne(newRoutine)
@@ -160,8 +168,8 @@ export default async function cloneSingleRoutine({
     updateTasksAnalytics({
       userId,
       tasksToInsert: replacementTasks,
-      keyOne: "tasksStolen",
-      keyTwo: "manualTasksStolen",
+      keyOne: "tasksCloned",
+      keyTwo: "manualTasksCloned",
     });
 
     updateAnalytics({

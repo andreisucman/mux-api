@@ -130,16 +130,18 @@ export function combineSolutions(
 
 export default function selectItemsAtEqualDistances(
   arr: any[],
-  distance: number
+  numberOfImages: number
 ) {
-  if (arr.length < distance) {
+  if (arr.length <= numberOfImages) {
     return arr;
   }
 
   const selectedItems = [];
 
-  for (let i = 0; i < arr.length; i += distance) {
-    selectedItems.push(arr[i]);
+  const distance = (arr.length - 1) / (numberOfImages - 1);
+
+  for (let i = 0; i < numberOfImages; i++) {
+    selectedItems.push(arr[Math.round(i * distance)]);
   }
 
   return selectedItems;
