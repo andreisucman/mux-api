@@ -12,7 +12,7 @@ import setHeaders from "middleware/setHeaders.js";
 import checkAccess from "middleware/checkAccess.js";
 import getBeforeAfters from "routes/getBeforeAfters.js";
 import startTheFlow from "routes/startTheFlow.js";
-import copyTask from "@/routes/copyTask.js";
+import copyTask from "routes/copyTask.js";
 import analyzeFood from "routes/analyzeFood.js";
 import rootRoute from "routes/rootRoute.js";
 import getExistingFilters from "routes/getExistingFilters.js";
@@ -29,10 +29,10 @@ import getPurchases from "routes/getPurchases.js";
 import checkAnalysisCompletion from "routes/checkAnalysisCompletion.js";
 import getProofRecord from "routes/getProofRecord.js";
 import getTaskInfo from "routes/getTaskInfo.js";
-import editTask from "routes/editTask.js";
-import getInactiveTasks from "@/routes/getInactiveTasks.js";
+import editTaskInstance from "routes/editTaskInstance.js";
+import getInactiveTasks from "routes/getInactiveTasks.js";
 import getAutocomplete from "routes/getAutocomplete.js";
-import getProof from "@/routes/getProof.js";
+import getProof from "routes/getProof.js";
 import startProgressAnalysis from "routes/startProgressAnalysis.js";
 import startSubscriptionTrial from "routes/startSubscriptionTrial.js";
 import uploadProgress from "routes/uploadProgress.js";
@@ -43,15 +43,15 @@ import joinClub from "routes/joinClub.js";
 import updateConcernStatus from "routes/updateConcernStatus.js";
 import leaveClub from "routes/leaveClub.js";
 import redirectToWallet from "routes/redirectToWallet.js";
-import cloneRoutines from "@/routes/cloneRoutines.js";
+import copyRoutines from "routes/copyRoutines.js";
 import saveTaskFromDescription from "routes/saveTaskFromDescription.js";
 import updateAccountDeletion from "routes/updateAccountDeletion.js";
-import updateUserData from "@/routes/updateUserData.js";
+import updateUserData from "routes/updateUserData.js";
 import updateSex from "routes/updateSex.js";
 import updateContentBlurType from "routes/updateContentBlurType.js";
 import updateProofUpload from "routes/updateProofUpload.js";
 import updateSpecialConsiderations from "routes/updateSpecialConsiderations.js";
-import updateStatusOfTasks from "routes/updateStatusOfTasks.js";
+import updateStatusOfTaskInstances from "routes/updateStatusOfTaskInstances.js";
 import uploadProof from "routes/uploadProof.js";
 import metricCapturer from "middleware/metricCapturer.js";
 import metrics from "routes/metrics.js";
@@ -63,8 +63,8 @@ import changeEmailStepOne from "routes/changeEmailStepOne.js";
 import changeEmailStepTwo from "routes/changeEmailStepTwo.js";
 import verifyEmail from "routes/verifyEmail.js";
 import sendConfirmationCode from "routes/sendConfirmationCode.js";
-import getProgress from "@/routes/getProgress.js";
-import getFilters from "@/routes/getFilters.js";
+import getProgress from "routes/getProgress.js";
+import getFilters from "routes/getFilters.js";
 import createRoutine from "routes/createRoutine.js";
 import checkCountry from "routes/checkCountry.js";
 import getDiaryRecords from "routes/getDiaryRecords.js";
@@ -74,21 +74,24 @@ import saveDiaryRecord from "routes/saveDiaryRecord.js";
 import transcribe from "routes/transcribe.js";
 import deleteContent from "routes/deleteContent.js";
 import changeCountry from "routes/changeCountry.js";
-import addTaskInstance from "@/routes/addTaskInstance.js";
+import copyTaskInstance from "routes/copyTaskInstance.js";
 import signOut from "routes/signOut.js";
 import getScoresAndFeedback from "routes/getScoresAndFeedback.js";
-import getRoutineData from "./routes/getRoutineData.js";
-import saveRoutineData from "./routes/saveRoutineData.js";
-import getPublicUserData from "./routes/getPublicUserData.js";
-import subscribeToUpdates from "./routes/subscribeToUpdates.js";
-import getSubscriptionPrice from "./routes/getSubscriptionPrice.js";
-import createTaskFromDescription from "./routes/createTaskFromDescription.js";
-import updateTaskExamples from "./routes/updateTaskExamples.js";
-import updateRoutineStatuses from "./routes/updateRoutineStatuses.js";
-import rescheduleRoutines from "./routes/rescheduleRoutines.js";
-import createRoutineCheckoutSession from "./routes/createRoutineCheckoutSession.js";
-import deleteTasks from "./routes/deleteTasks.js";
-import deleteRoutines from "./routes/deleteRoutines.js";
+import getRoutineData from "routes/getRoutineData.js";
+import saveRoutineData from "routes/saveRoutineData.js";
+import getPublicUserData from "routes/getPublicUserData.js";
+import subscribeToUpdates from "routes/subscribeToUpdates.js";
+import getSubscriptionPrice from "routes/getSubscriptionPrice.js";
+import createTaskFromDescription from "routes/createTaskFromDescription.js";
+import updateTaskExamples from "routes/updateTaskExamples.js";
+import updateRoutineStatuses from "routes/updateRoutineStatuses.js";
+import rescheduleRoutines from "routes/rescheduleRoutines.js";
+import rescheduleTask from "routes/rescheduleTask.js";
+import createRoutineCheckoutSession from "routes/createRoutineCheckoutSession.js";
+import deleteTaskInstances from "routes/deleteTaskInstances.js";
+import deleteRoutines from "routes/deleteRoutines.js";
+import deleteTask from "routes/deleteTask.js";
+import updateStatusOfTask from "routes/updateStatusOfTask.js";
 
 import { client } from "init.js";
 
@@ -100,12 +103,7 @@ app.set("trust proxy", 1);
 const corsOptions = {
   origin: process.env.ALLOWED_ORIGINS?.split(","),
   methods: ["GET", "POST", "OPTIONS", "HEAD"],
-  allowedHeaders: [
-    "Content-Type",
-    "Authorization",
-    "X-CSRF-Token",
-    "Access-Control-Allow-Credentials",
-  ],
+  allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token", "Access-Control-Allow-Credentials"],
   credentials: true,
   optionsSuccessStatus: 200,
 };
@@ -175,7 +173,10 @@ app.use("/getFilters", getFilters);
 
 // protected routes
 app.use((req, res, next) => checkAccess(req, res, next, false));
-app.use("/deleteTasks", deleteTasks);
+app.use("/deleteTask", deleteTask);
+app.use("/updateStatusOfTask", updateStatusOfTask);
+app.use("/rescheduleTask", rescheduleTask);
+app.use("/deleteTaskInstances", deleteTaskInstances);
 app.use("/deleteRoutines", deleteRoutines);
 app.use("/startSubscriptionTrial", startSubscriptionTrial);
 app.use("/subscribeToUpdates", subscribeToUpdates);
@@ -184,7 +185,7 @@ app.use("/getRoutineData", getRoutineData);
 app.use("/saveRoutineData", saveRoutineData);
 app.use("/getScoresAndFeedback", getScoresAndFeedback);
 app.use("/deleteContent", deleteContent);
-app.use("/addTaskInstance", addTaskInstance);
+app.use("/copyTaskInstance", copyTaskInstance);
 app.use("/updateConcernStatus", updateConcernStatus);
 app.use("/changeCountry", changeCountry);
 app.use("/saveDiaryRecord", saveDiaryRecord);
@@ -204,12 +205,12 @@ app.use("/getPurchases", getPurchases);
 app.use("/getInactiveTasks", getInactiveTasks);
 app.use("/getProofRecord", getProofRecord);
 app.use("/getTaskInfo", getTaskInfo);
-app.use("/editTask", editTask);
+app.use("/editTaskInstance", editTaskInstance);
 app.use("/getCalendarTasks", getCalendarTasks);
 app.use("/joinClub", joinClub);
 app.use("/leaveClub", leaveClub);
 app.use("/redirectToWallet", redirectToWallet);
-app.use("/cloneRoutines", cloneRoutines);
+app.use("/copyRoutines", copyRoutines);
 app.use("/saveTaskFromDescription", saveTaskFromDescription);
 app.use("/createTaskFromDescription", createTaskFromDescription);
 app.use("/updateAccountDeletion", updateAccountDeletion);
@@ -217,7 +218,7 @@ app.use("/updateUserData", updateUserData);
 app.use("/updateContentBlurType", updateContentBlurType);
 app.use("/updateProofUpload", updateProofUpload);
 app.use("/updateSpecialConsiderations", updateSpecialConsiderations);
-app.use("/updateStatusOfTasks", updateStatusOfTasks);
+app.use("/updateStatusOfTaskInstances", updateStatusOfTaskInstances);
 app.use("/uploadProof", uploadProof);
 app.use("/signOut", signOut);
 app.use("/transcribe", transcribe);

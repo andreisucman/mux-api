@@ -25,6 +25,7 @@ export default async function getLatestTasks({ userId, timeZone }: Props) {
       db
         .collection("Task")
         .find({
+          userId: new ObjectId(userId),
           status: { $in: [TaskStatusEnum.ACTIVE, TaskStatusEnum.COMPLETED] },
           startsAt: { $gte: todayMidnight },
           deletedOn: { $exists: false },

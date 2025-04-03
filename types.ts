@@ -364,7 +364,6 @@ export type TaskType = {
   startsAt: Date | null;
   expiresAt: Date | null;
   completedAt: Date | null;
-  nextCanStartDate: Date | null;
   restDays: number;
   embedding: number[];
   copiedFrom?: string;

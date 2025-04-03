@@ -4,12 +4,7 @@ import httpError from "@/helpers/httpError.js";
 import sortTasksInScheduleByDate from "@/helpers/sortTasksInScheduleByDate.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import { daysFrom } from "@/helpers/utils.js";
-import {
-  RoutineStatusEnum,
-  RoutineType,
-  TaskStatusEnum,
-  TaskType,
-} from "@/types.js";
+import { RoutineStatusEnum, RoutineType, TaskStatusEnum, TaskType } from "@/types.js";
 import { ObjectId } from "mongodb";
 import { db } from "@/init.js";
 import updateAnalytics from "./updateAnalytics.js";
@@ -36,10 +31,7 @@ export default async function cloneSingleRoutine({
     };
 
     if (ignoreIncompleteTasks) {
-      filter.$or = [
-        { status: TaskStatusEnum.COMPLETED },
-        { status: TaskStatusEnum.ACTIVE },
-      ];
+      filter.$or = [{ status: TaskStatusEnum.COMPLETED }, { status: TaskStatusEnum.ACTIVE }];
     }
 
     let replacementTasks = (await doWithRetries(async () =>
@@ -109,11 +101,8 @@ export default async function cloneSingleRoutine({
           status: TaskStatusEnum.ACTIVE,
         }));
 
-      const relevantInfoTask = replacementTasks.find(
-        (task) => task.key === taskKey
-      );
-      const { name, key, icon, color, concern, description, instruction } =
-        relevantInfoTask;
+      const relevantInfoTask = replacementTasks.find((task) => task.key === taskKey);
+      const { name, key, icon, color, concern, description, instruction } = relevantInfoTask;
 
       const total = replacementTasks.filter((t) => t.key === key).length;
 
@@ -151,13 +140,9 @@ export default async function cloneSingleRoutine({
 
     if (userName) newRoutine.copiedFrom = hostRoutine.userName;
 
-    await doWithRetries(async () =>
-      db.collection("Routine").insertOne(newRoutine)
-    );
+    await doWithRetries(async () => db.collection("Routine").insertOne(newRoutine));
 
-    await doWithRetries(async () =>
-      db.collection("Task").insertMany(replacementTasks)
-    );
+    await doWithRetries(async () => db.collection("Task").insertMany(replacementTasks));
 
     updateTasksAnalytics({
       userId,
@@ -168,8 +153,8 @@ export default async function cloneSingleRoutine({
     updateTasksAnalytics({
       userId,
       tasksToInsert: replacementTasks,
-      keyOne: "tasksCloned",
-      keyTwo: "manualTasksCloned",
+      keyOne: "tasksCopied",
+      keyTwo: "manualtasksCopied",
     });
 
     updateAnalytics({
