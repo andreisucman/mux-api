@@ -19,8 +19,6 @@ async function checkAccess(req: CustomRequest, res: Response, next: NextFunction
   const timeZone = req.headers["timezone"];
   req.timeZone = timeZone as string;
 
-  console.log("timeZone", timeZone);
-
   if (allowUnauthorized && !accessToken) {
     next();
     return;

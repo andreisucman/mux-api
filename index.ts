@@ -92,6 +92,7 @@ import deleteTaskInstance from "@/routes/deleteTaskInstance.js";
 import deleteRoutines from "routes/deleteRoutines.js";
 import deleteTask from "routes/deleteTask.js";
 import updateStatusOfTask from "routes/updateStatusOfTask.js";
+import rescheduleTaskInstance from "routes/rescheduleTaskInstance.js";
 
 import { client } from "init.js";
 
@@ -103,7 +104,7 @@ app.set("trust proxy", 1);
 const corsOptions = {
   origin: process.env.ALLOWED_ORIGINS?.split(","),
   methods: ["GET", "POST", "OPTIONS", "HEAD"],
-  allowedHeaders: ["Content-Type","Timezone", "Authorization", "X-CSRF-Token", "Access-Control-Allow-Credentials"],
+  allowedHeaders: ["Content-Type", "Timezone", "Authorization", "X-CSRF-Token", "Access-Control-Allow-Credentials"],
   credentials: true,
   optionsSuccessStatus: 200,
 };
@@ -175,6 +176,7 @@ app.use("/getFilters", getFilters);
 app.use((req, res, next) => checkAccess(req, res, next, false));
 app.use("/deleteTask", deleteTask);
 app.use("/updateStatusOfTask", updateStatusOfTask);
+app.use("/rescheduleTaskInstance", rescheduleTaskInstance);
 app.use("/rescheduleTask", rescheduleTask);
 app.use("/deleteTaskInstance", deleteTaskInstance);
 app.use("/deleteRoutines", deleteRoutines);

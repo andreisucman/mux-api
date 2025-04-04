@@ -13,6 +13,7 @@ import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 import { db } from "init.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import httpError from "@/helpers/httpError.js";
+import { addTaskToSchedule } from "@/helpers/rescheduleTaskHelpers.js";
 
 const route = Router();
 
@@ -90,23 +91,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       };
     }
 
-    let updatedSchedule = { ...(finalSchedule || {}) };
-    const dateKey = newStartsAt.toDateString();
-
-    const newFinalScheduleRecord = {
-      key: resetTask.key,
-      _id: resetTask._id,
-      concern: resetTask.concern,
-    };
-
-    if (updatedSchedule[dateKey]) {
-      updatedSchedule[dateKey] = [...updatedSchedule[dateKey], newFinalScheduleRecord];
-    } else {
-      updatedSchedule[dateKey] = [newFinalScheduleRecord];
-    }
-
-    updatedSchedule = sortTasksInScheduleByDate(updatedSchedule);
-
     const newAllTaskRecord = {
       ids: [
         {
@@ -124,6 +108,9 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       instruction: resetTask.instruction,
       total: 1,
     };
+
+    let updatedSchedule = addTaskToSchedule(finalSchedule, resetTask.key, resetTask.concern, newAllTaskRecord.ids);
+    updatedSchedule = sortTasksInScheduleByDate(updatedSchedule);
 
     const finalRoutineAllTasks = combineAllTasks({
       oldAllTasks: allTasks,
@@ -143,7 +130,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
             $set: {
               finalSchedule: updatedSchedule,
               allTasks: finalRoutineAllTasks,
-              concerns: [...new Set([...concerns, resetTask.concern])],
+              concerns: [...new Set([...(concerns || []), resetTask.concern])],
               startsAt: new Date(minDate),
               lastDate: new Date(maxDate),
             },

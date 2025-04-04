@@ -6,15 +6,15 @@ import { Router, Response, NextFunction } from "express";
 import doWithRetries from "../helpers/doWithRetries.js";
 import { calculateDaysDifference, checkDateValidity, daysFrom } from "helpers/utils.js";
 import sortTasksInScheduleByDate from "helpers/sortTasksInScheduleByDate.js";
-import { AllTaskTypeWithIds, CustomRequest, RoutineStatusEnum, RoutineType, TaskStatusEnum, TaskType } from "types.js";
+import { CustomRequest, RoutineStatusEnum, RoutineType, TaskStatusEnum, TaskType } from "types.js";
 import { db } from "init.js";
 import httpError from "@/helpers/httpError.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
-import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 import checkPurchaseAccess from "@/functions/checkPurchaseAccess.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
+import { addTaskToAllTasks, addTaskToSchedule } from "@/helpers/rescheduleTaskHelpers.js";
 
 const route = Router();
 
@@ -81,21 +81,17 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       })),
     };
 
-    const part = taskInfo.part;
-    const targetUserId = taskInfo.userId;
-
     const hasAccessTo = await checkPurchaseAccess({
-      parts: [part],
-      targetUserId: String(targetUserId),
+      parts: [taskInfo.part],
+      targetUserId: String(taskInfo.userId),
       userId: req.userId,
     });
 
-    if (!hasAccessTo.includes(part)) {
+    if (!hasAccessTo.includes(taskInfo.part)) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
 
-    /* reset personalized fields */
     taskInfo = {
       ...taskInfo,
       proofEnabled: true,
@@ -104,6 +100,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       userName: userInfo.name,
       copiedFrom: userName,
       userId: new ObjectId(req.userId),
+      status: TaskStatusEnum.ACTIVE,
     };
 
     if (taskInfo.recipe) {
@@ -119,6 +116,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         ...taskInfo,
         _id: obj._id,
         startsAt: obj.startsAt,
+        expiresAt: daysFrom({ date: obj.startsAt, days: 1 }),
         status: obj.status,
       };
     });
@@ -128,9 +126,10 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         .collection("Routine")
         .find({
           userId: new ObjectId(req.userId),
-          part,
+          part: taskInfo.part,
           status: RoutineStatusEnum.ACTIVE,
-          $and: [{ startsAt: { $gte: new Date(startDate) } }, { lastDate: { $lt: new Date(startDate) } }],
+          startsAt: { $lte: new Date(startDate) },
+          lastDate: { $gte: new Date(startDate) },
         })
         .sort({ startsAt: 1 })
         .next()
@@ -138,30 +137,10 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     let { concerns, allTasks: currentAllTasks, finalSchedule: currentFinalSchedule } = currentRoutine || {};
 
-    let finalSchedule: { [key: string]: ScheduleTaskType[] } = currentFinalSchedule || {};
-    let allTasks: AllTaskTypeWithIds[] = currentAllTasks || [];
-
-    /* update final schedule */
-    for (let i = 0; i < draftTasks.length; i++) {
-      const task = draftTasks[i];
-      const dateString = new Date(task.startsAt).toDateString();
-
-      const simpleTaskContent = {
-        _id: task._id,
-        key: task.key,
-        concern: task.concern,
-      };
-
-      if (finalSchedule[dateString]) {
-        finalSchedule[dateString].push(simpleTaskContent);
-      } else {
-        finalSchedule[dateString] = [simpleTaskContent];
-      }
-    }
+    let finalSchedule = addTaskToSchedule(currentFinalSchedule, taskKey, taskInfo.concern, updatedAllTask.ids);
+    let allTasks = addTaskToAllTasks(updatedAllTask, currentAllTasks);
 
     finalSchedule = sortTasksInScheduleByDate(finalSchedule);
-
-    allTasks.push(updatedAllTask);
 
     const { minDate, maxDate } = getMinAndMaxRoutineDates(allTasks);
 
@@ -177,7 +156,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
             $set: {
               finalSchedule,
               allTasks,
-              concerns: [...new Set([...concerns, taskInfo.concern])],
+              concerns: [...new Set([...(concerns || []), taskInfo.concern])],
               startsAt: new Date(minDate),
               lastDate: new Date(maxDate),
             },

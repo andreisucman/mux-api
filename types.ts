@@ -405,13 +405,15 @@ export type AllTaskType = {
   instruction: string;
 };
 
+export type AllTaskIdType = {
+  _id: ObjectId;
+  startsAt: Date;
+  status: TaskStatusEnum;
+  deletedOn?: Date;
+};
+
 export interface AllTaskTypeWithIds extends AllTaskType {
-  ids: {
-    _id: ObjectId;
-    startsAt: Date;
-    status: TaskStatusEnum;
-    deletedOn?: Date;
-  }[];
+  ids: AllTaskIdType[];
 }
 
 export type BeforeAfterType = {
