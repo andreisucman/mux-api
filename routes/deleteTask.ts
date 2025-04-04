@@ -4,7 +4,7 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import { Router, Response, NextFunction } from "express";
-import { CustomRequest } from "types.js";
+import { CustomRequest, TaskStatusEnum } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 import recalculateAllTaskCountAndRoutineDates from "@/functions/recalculateAllTaskCountAndRoutineDates.js";
@@ -101,10 +101,19 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     await doWithRetries(async () => db.collection("Routine").bulkWrite(routineTasksUpdateOps));
 
-    await deactivateHangingBaAndRoutineData({
-      routineIds: [routineId],
-      userId: req.userId,
-    });
+    const numberOfActiveTasks = await doWithRetries(async () =>
+      db.collection("Task").countDocuments({
+        routineId: new ObjectId(routineId),
+        $or: [{ status: TaskStatusEnum.ACTIVE }, { status: TaskStatusEnum.COMPLETED }],
+        deletedOn: { $exists: false },
+      })
+    );
+
+    if (numberOfActiveTasks === 0)
+      await deactivateHangingBaAndRoutineData({
+        routineIds: [routineId],
+        userId: req.userId,
+      });
 
     await recalculateAllTaskCountAndRoutineDates([routineId]);
 
