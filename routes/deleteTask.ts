@@ -4,7 +4,7 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import { Router, Response, NextFunction } from "express";
-import { CustomRequest, TaskStatusEnum } from "types.js";
+import { CustomRequest } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 import recalculateAllTaskCountAndRoutineDates from "@/functions/recalculateAllTaskCountAndRoutineDates.js";
@@ -20,7 +20,7 @@ type Props = {
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
   const { taskKey, routineId }: Props = req.body;
 
-  if (!routineId || !taskKey) {
+  if (!ObjectId.isValid(routineId) || !taskKey) {
     res.status(400).json({ error: "Bad request" });
     return;
   }
@@ -28,6 +28,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
   try {
     const tasksToDeleteFilter: { [key: string]: any } = {
       routineId: new ObjectId(routineId),
+      userId: new ObjectId(req.userId),
       key: taskKey,
     };
 
@@ -71,71 +72,46 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       )
     );
 
-    const routineTasksUpdateOps: any[] = relevantTaskIds.map((taskId) => ({
-      updateOne: {
-        filter: {
-          "allTasks.ids._id": new ObjectId(taskId),
-        },
-        update: {
-          $set: {
-            "allTasks.$.ids.$[element].deletedOn": now,
-          },
-        },
-        arrayFilters: [{ "element._id": new ObjectId(taskId) }],
-      },
-    }));
-
-    const relevantRoutineIds = [...new Set(tasksToDelete.map((t) => t.routineId))];
-
-    const routinesWithActiveTasks = await doWithRetries(async () =>
-      db
-        .collection("Task")
-        .aggregate([
-          {
-            $match: {
-              routineId: { $in: relevantRoutineIds },
-              status: {
-                $in: [TaskStatusEnum.ACTIVE, TaskStatusEnum.COMPLETED, TaskStatusEnum.EXPIRED],
-              },
-            },
-          },
-          { $group: { _id: "$routineId" } },
-          { $project: { _id: 1 } },
-        ])
-        .toArray()
+    const numberOfNotDeletedTasks = await doWithRetries(async () =>
+      db.collection("Task").countDocuments({
+        routineId: new ObjectId(routineId),
+        deletedOn: { $exists: false },
+      })
     );
 
-    const activeRoutineIds = routinesWithActiveTasks.map((r) => String(r._id));
-
-    const routinesWithoutActiveTasks = relevantRoutineIds.filter((id) => !activeRoutineIds.includes(String(id)));
-
-    if (routinesWithoutActiveTasks.length > 0) {
-      routineTasksUpdateOps.push(
-        ...routinesWithoutActiveTasks.map((id) => ({
-          updateOne: {
-            filter: { _id: new ObjectId(id) },
-            update: { $set: { deletedOn: now } },
+    const routineTasksUpdateOps: any[] = relevantTaskIds.map((taskId) => {
+      const update: { [key: string]: any } = {
+        "allTasks.$.ids.$[element].deletedOn": now,
+      };
+      if (numberOfNotDeletedTasks === 0) {
+        update.deletedOn = now;
+      }
+      return {
+        updateOne: {
+          filter: {
+            "allTasks.ids._id": new ObjectId(taskId),
           },
-        }))
-      );
-
-      await deactivateHangingBaAndRoutineData({
-        routineIds: routinesWithoutActiveTasks,
-        userId: req.userId,
-      });
-    }
+          update: {
+            $set: update,
+          },
+          arrayFilters: [{ "element._id": new ObjectId(taskId) }],
+        },
+      };
+    });
 
     await doWithRetries(async () => db.collection("Routine").bulkWrite(routineTasksUpdateOps));
 
-    await recalculateAllTaskCountAndRoutineDates(relevantRoutineIds);
+    await deactivateHangingBaAndRoutineData({
+      routineIds: [routineId],
+      userId: req.userId,
+    });
+
+    await recalculateAllTaskCountAndRoutineDates([routineId]);
 
     const routine = await doWithRetries(() =>
-      db
-        .collection("Routine")
-        .find({
-          _id: new ObjectId(routineId),
-        })
-        .toArray()
+      db.collection("Routine").findOne({
+        _id: new ObjectId(routineId),
+      })
     );
 
     res.status(200).json({ message: routine });

@@ -18,9 +18,9 @@ import { db } from "init.js";
 const route = Router();
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { taskKey, routineId, startDate, timeZone } = req.body;
+  const { taskKey, routineId, startDate } = req.body;
 
-  const { isValidDate, isFutureDate } = checkDateValidity(startDate, timeZone);
+  const { isValidDate, isFutureDate } = checkDateValidity(startDate, req.timeZone);
 
   if (!taskKey || !routineId || !isValidDate || !isFutureDate) {
     res.status(400).json({ error: "Bad request" });
@@ -59,7 +59,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     const differenceInDays = calculateDaysDifference(
       earliestTask.startsAt,
-      setToMidnight({ date: startDate, timeZone })
+      setToMidnight({ date: startDate, timeZone: req.timeZone })
     );
 
     const updatedAllTask = {

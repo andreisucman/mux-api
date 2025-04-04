@@ -75,21 +75,35 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       )
     );
 
-    let routineTaskStatusUpdateOps: any[] = relevantTaskIds.map((taskId) => ({
-      updateOne: {
-        filter: {
-          "allTasks.ids._id": new ObjectId(taskId),
-        },
-        update: {
-          $set: {
-            "allTasks.$.ids.$[element].status": newStatus,
-          },
-        },
-        arrayFilters: [{ "element._id": new ObjectId(taskId) }],
-      },
-    }));
-
     const relevantRoutineIds = [...new Set(tasksToUpdate.map((t) => t.routineId))];
+
+    const numberOfTasksWithAnotherStatus = await doWithRetries(async () =>
+      db.collection("Task").countDocuments({
+        routineId: { $in: relevantRoutineIds },
+        status: { $ne: newStatus },
+        deletedOn: { $exists: false },
+      })
+    );
+
+    let routineTaskStatusUpdateOps: any[] = relevantTaskIds.map((taskId) => {
+      const update: { [key: string]: any } = {
+        "allTasks.$.ids.$[element].status": newStatus,
+      };
+      if (numberOfTasksWithAnotherStatus === 0) {
+        update.status = newStatus;
+      }
+      return {
+        updateOne: {
+          filter: {
+            "allTasks.ids._id": new ObjectId(taskId),
+          },
+          update: {
+            $set: update,
+          },
+          arrayFilters: [{ "element._id": new ObjectId(taskId) }],
+        },
+      };
+    });
 
     if (newStatus === TaskStatusEnum.CANCELED) {
       const routinesWithActiveTasks = await doWithRetries(async () =>
@@ -148,16 +162,13 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     await recalculateAllTaskCountAndRoutineDates(relevantRoutineIds);
 
-    const updatedRoutines = await doWithRetries(() =>
-      db
-        .collection("Routine")
-        .find({
-          _id: new ObjectId(routineId),
-        })
-        .toArray()
+    const updatedRoutine = await doWithRetries(() =>
+      db.collection("Routine").findOne({
+        _id: new ObjectId(routineId),
+      })
     );
 
-    res.status(200).json({ message: updatedRoutines });
+    res.status(200).json({ message: updatedRoutine });
   } catch (err) {
     next(err);
   }

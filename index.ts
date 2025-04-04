@@ -51,7 +51,7 @@ import updateSex from "routes/updateSex.js";
 import updateContentBlurType from "routes/updateContentBlurType.js";
 import updateProofUpload from "routes/updateProofUpload.js";
 import updateSpecialConsiderations from "routes/updateSpecialConsiderations.js";
-import updateStatusOfTaskInstances from "routes/updateStatusOfTaskInstances.js";
+import updateStatusOfTaskInstance from "@/routes/updateStatusOfTaskInstance.js";
 import uploadProof from "routes/uploadProof.js";
 import metricCapturer from "middleware/metricCapturer.js";
 import metrics from "routes/metrics.js";
@@ -88,7 +88,7 @@ import updateRoutineStatuses from "routes/updateRoutineStatuses.js";
 import rescheduleRoutines from "routes/rescheduleRoutines.js";
 import rescheduleTask from "routes/rescheduleTask.js";
 import createRoutineCheckoutSession from "routes/createRoutineCheckoutSession.js";
-import deleteTaskInstances from "routes/deleteTaskInstances.js";
+import deleteTaskInstance from "@/routes/deleteTaskInstance.js";
 import deleteRoutines from "routes/deleteRoutines.js";
 import deleteTask from "routes/deleteTask.js";
 import updateStatusOfTask from "routes/updateStatusOfTask.js";
@@ -103,7 +103,7 @@ app.set("trust proxy", 1);
 const corsOptions = {
   origin: process.env.ALLOWED_ORIGINS?.split(","),
   methods: ["GET", "POST", "OPTIONS", "HEAD"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token", "Access-Control-Allow-Credentials"],
+  allowedHeaders: ["Content-Type","Timezone", "Authorization", "X-CSRF-Token", "Access-Control-Allow-Credentials"],
   credentials: true,
   optionsSuccessStatus: 200,
 };
@@ -176,7 +176,7 @@ app.use((req, res, next) => checkAccess(req, res, next, false));
 app.use("/deleteTask", deleteTask);
 app.use("/updateStatusOfTask", updateStatusOfTask);
 app.use("/rescheduleTask", rescheduleTask);
-app.use("/deleteTaskInstances", deleteTaskInstances);
+app.use("/deleteTaskInstance", deleteTaskInstance);
 app.use("/deleteRoutines", deleteRoutines);
 app.use("/startSubscriptionTrial", startSubscriptionTrial);
 app.use("/subscribeToUpdates", subscribeToUpdates);
@@ -218,7 +218,7 @@ app.use("/updateUserData", updateUserData);
 app.use("/updateContentBlurType", updateContentBlurType);
 app.use("/updateProofUpload", updateProofUpload);
 app.use("/updateSpecialConsiderations", updateSpecialConsiderations);
-app.use("/updateStatusOfTaskInstances", updateStatusOfTaskInstances);
+app.use("/updateStatusOfTaskInstance", updateStatusOfTaskInstance);
 app.use("/uploadProof", uploadProof);
 app.use("/signOut", signOut);
 app.use("/transcribe", transcribe);

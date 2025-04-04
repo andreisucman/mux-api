@@ -21,6 +21,7 @@ export type SuggestionType = {
 
 export interface CustomRequest extends Request {
   userId?: string;
+  timeZone?: string;
 }
 
 export type UserInfoType = {

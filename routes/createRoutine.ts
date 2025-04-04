@@ -26,198 +26,171 @@ import incrementProgress from "@/helpers/incrementProgress.js";
 
 const route = Router();
 
-route.post(
-  "/",
-  async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const {
-      concerns,
-      part,
-      timeZone,
-      creationMode = "scratch",
-      routineStartDate,
-      specialConsiderations,
-    } = req.body;
+route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
+  const { concerns, part, creationMode = "scratch", routineStartDate, specialConsiderations } = req.body;
 
-    if (
-      !concerns ||
-      !concerns.length ||
-      !timeZone ||
-      (part && !validParts.includes(part))
-    ) {
+  if (!concerns || !concerns.length || (part && !validParts.includes(part))) {
+    res.status(400).json({ error: "Bad request" });
+    return;
+  }
+
+  const { isValidDate, isFutureDate } = checkDateValidity(routineStartDate, req.timeZone);
+
+  if (!isValidDate || !isFutureDate) {
+    res.status(400).json({ error: "Bad request" });
+    return;
+  }
+
+  try {
+    const activeConcerns = concerns.filter((c: UserConcernType) => !c.isDisabled);
+
+    const subscriptionIsValid: boolean = await checkSubscriptionStatus({
+      userId: req.userId,
+      subscriptionType: SubscriptionTypeNamesEnum.IMPROVEMENT,
+    });
+
+    if (!subscriptionIsValid) {
+      res.status(200).json({ error: "subscription expired" });
+      return;
+    }
+
+    const userInfo = await getUserInfo({
+      userId: req.userId,
+      projection: { nextRoutine: 1, concerns: 1 },
+    });
+
+    if (!userInfo) throw httpError("User not found");
+
+    const { nextRoutine, concerns: existingConcerns = [] } = userInfo;
+
+    if (concerns.length === 0) {
+      // if the user disables all concerns
       res.status(400).json({ error: "Bad request" });
       return;
     }
 
-    const { isValidDate, isFutureDate } = checkDateValidity(
-      routineStartDate,
-      timeZone
+    const selectedConcernKeys = activeConcerns.map((c: UserConcernType) => c.name);
+
+    const restOfConcerns = existingConcerns.filter(
+      (c: UserConcernType) => !selectedConcernKeys.includes(c.name) && !c.isDisabled
     );
 
-    if (!isValidDate || !isFutureDate) {
-      res.status(400).json({ error: "Bad request" });
+    const allUniqueConcerns = [...restOfConcerns, ...concerns].filter(
+      (obj, i, arr) => arr.findIndex((o) => o.name === obj.name) === i
+    );
+
+    await doWithRetries(async () =>
+      db
+        .collection("AnalysisStatus")
+        .updateOne(
+          { userId: new ObjectId(req.userId), operationKey: "routine" },
+          { $set: { isRunning: true, progress: 1, isError: false } },
+          { upsert: true }
+        )
+    );
+
+    global.startInterval(
+      () =>
+        incrementProgress({
+          operationKey: "routine",
+          userId: req.userId,
+          value: 1,
+        }),
+      12000
+    );
+
+    res.status(200).end();
+
+    let updatedNextRoutine;
+
+    let { canRoutineDate, availableRoutines } = await checkCanRoutine({
+      nextRoutine,
+      userId: req.userId,
+    });
+
+    if (part) {
+      availableRoutines = availableRoutines.filter((r) => r.part === part);
+    }
+
+    if (availableRoutines.length === 0) {
+      const formattedDate = formatDate({
+        date: new Date(canRoutineDate),
+        hideYear: true,
+      });
+
+      addAnalysisStatusError({
+        message: `You can create a routine once a week only. Try again after ${formattedDate}.`,
+        operationKey: "routine",
+        userId: req.userId,
+      });
       return;
     }
 
-    try {
-      const activeConcerns = concerns.filter(
-        (c: UserConcernType) => !c.isDisabled
-      );
-
-      const subscriptionIsValid: boolean = await checkSubscriptionStatus({
-        userId: req.userId,
-        subscriptionType: SubscriptionTypeNamesEnum.IMPROVEMENT,
-      });
-
-      if (!subscriptionIsValid) {
-        res.status(200).json({ error: "subscription expired" });
-        return;
-      }
-
-      const userInfo = await getUserInfo({
-        userId: req.userId,
-        projection: { nextRoutine: 1, concerns: 1 },
-      });
-
-      if (!userInfo) throw httpError("User not found");
-
-      const { nextRoutine, concerns: existingConcerns = [] } = userInfo;
-
-      if (concerns.length === 0) {
-        // if the user disables all concerns
-        res.status(400).json({ error: "Bad request" });
-        return;
-      }
-
-      const selectedConcernKeys = activeConcerns.map(
-        (c: UserConcernType) => c.name
-      );
-
-      const restOfConcerns = existingConcerns.filter(
-        (c: UserConcernType) =>
-          !selectedConcernKeys.includes(c.name) && !c.isDisabled
-      );
-
-      const allUniqueConcerns = [...restOfConcerns, ...concerns].filter(
-        (obj, i, arr) => arr.findIndex((o) => o.name === obj.name) === i
-      );
-
-      await doWithRetries(async () =>
-        db
-          .collection("AnalysisStatus")
-          .updateOne(
-            { userId: new ObjectId(req.userId), operationKey: "routine" },
-            { $set: { isRunning: true, progress: 1, isError: false } },
-            { upsert: true }
-          )
-      );
-
-      global.startInterval(
-        () =>
-          incrementProgress({
-            operationKey: "routine",
+    const promises = availableRoutines.map((r) =>
+      doWithRetries(
+        async () =>
+          await createRoutine({
             userId: req.userId,
-            value: 1,
-          }),
-        12000
-      );
+            part: r.part,
+            creationMode,
+            incrementMultiplier: 5 - availableRoutines.length,
+            concerns: activeConcerns,
+            specialConsiderations,
+            categoryName: CategoryNameEnum.TASKS,
+            routineStartDate,
+          })
+      )
+    );
 
-      res.status(200).end();
+    await Promise.all(promises);
 
-      let updatedNextRoutine;
+    updatedNextRoutine = updateNextRoutine({
+      nextRoutine,
+      parts: availableRoutines.map((r) => r.part),
+    });
 
-      let { canRoutineDate, availableRoutines } = await checkCanRoutine({
-        nextRoutine,
-        userId: req.userId,
-      });
-
-      if (part) {
-        availableRoutines = availableRoutines.filter((r) => r.part === part);
-      }
-
-      if (availableRoutines.length === 0) {
-        const formattedDate = formatDate({
-          date: new Date(canRoutineDate),
-          hideYear: true,
-        });
-
-        addAnalysisStatusError({
-          message: `You can create a routine once a week only. Try again after ${formattedDate}.`,
-          operationKey: "routine",
-          userId: req.userId,
-        });
-        return;
-      }
-
-      const promises = availableRoutines.map((r) =>
-        doWithRetries(
-          async () =>
-            await createRoutine({
-              userId: req.userId,
-              part: r.part,
-              creationMode,
-              incrementMultiplier: 5 - availableRoutines.length,
-              concerns: activeConcerns,
-              specialConsiderations,
-              categoryName: CategoryNameEnum.TASKS,
-              routineStartDate,
-            })
-        )
-      );
-
-      await Promise.all(promises);
-
-      updatedNextRoutine = updateNextRoutine({
-        nextRoutine,
-        parts: availableRoutines.map((r) => r.part),
-      });
-
-      await doWithRetries(async () =>
-        db.collection("User").updateOne(
-          {
-            _id: new ObjectId(req.userId),
-            moderationStatus: ModerationStatusEnum.ACTIVE,
+    await doWithRetries(async () =>
+      db.collection("User").updateOne(
+        {
+          _id: new ObjectId(req.userId),
+          moderationStatus: ModerationStatusEnum.ACTIVE,
+        },
+        {
+          $set: {
+            nextRoutine: updatedNextRoutine,
+            concerns: allUniqueConcerns,
           },
-          {
-            $set: {
-              nextRoutine: updatedNextRoutine,
-              concerns: allUniqueConcerns,
-            },
-          }
+        }
+      )
+    );
+
+    await doWithRetries(async () =>
+      db
+        .collection("AnalysisStatus")
+        .updateOne({ userId: new ObjectId(req.userId), operationKey: "routine" }, { $set: { progress: 99 } })
+    );
+
+    await delayExecution(5000);
+
+    await doWithRetries(async () =>
+      db
+        .collection("AnalysisStatus")
+        .updateOne(
+          { userId: new ObjectId(req.userId), operationKey: "routine" },
+          { $set: { isRunning: false, progress: 99 } }
         )
-      );
-
-      await doWithRetries(async () =>
-        db
-          .collection("AnalysisStatus")
-          .updateOne(
-            { userId: new ObjectId(req.userId), operationKey: "routine" },
-            { $set: { progress: 99 } }
-          )
-      );
-
-      await delayExecution(5000);
-
-      await doWithRetries(async () =>
-        db
-          .collection("AnalysisStatus")
-          .updateOne(
-            { userId: new ObjectId(req.userId), operationKey: "routine" },
-            { $set: { isRunning: false, progress: 99 } }
-          )
-      );
-      global.stopInterval();
-    } catch (err) {
-      await addAnalysisStatusError({
-        operationKey: "routine",
-        userId: String(req.userId),
-        message:
-          "An unexpected error occured. Please try again and inform us if the error persists.",
-        originalMessage: err.message,
-      });
-      global.stopInterval();
-      next(err);
-    }
+    );
+    global.stopInterval();
+  } catch (err) {
+    await addAnalysisStatusError({
+      operationKey: "routine",
+      userId: String(req.userId),
+      message: "An unexpected error occured. Please try again and inform us if the error persists.",
+      originalMessage: err.message,
+    });
+    global.stopInterval();
+    next(err);
   }
-);
+});
 
 export default route;

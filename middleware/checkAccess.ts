@@ -12,15 +12,14 @@ import { daysFrom } from "@/helpers/utils.js";
 
 const csrfProtection = new csrf();
 
-async function checkAccess(
-  req: CustomRequest,
-  res: Response,
-  next: NextFunction,
-  allowUnauthorized: boolean
-) {
+async function checkAccess(req: CustomRequest, res: Response, next: NextFunction, allowUnauthorized: boolean) {
   const accessToken = req.cookies["MUX_accessToken"];
   const csrfTokenFromClient = req.cookies["MUX_csrfToken"];
   const csrfSecret = req.cookies["MUX_csrfSecret"];
+  const timeZone = req.headers["timezone"];
+  req.timeZone = timeZone as string;
+
+  console.log("timeZone", timeZone);
 
   if (allowUnauthorized && !accessToken) {
     next();
@@ -33,10 +32,7 @@ async function checkAccess(
   }
 
   if (!allowUnauthorized) {
-    const csrfVerificationPassed = csrfProtection.verify(
-      csrfSecret,
-      csrfTokenFromClient as string
-    );
+    const csrfVerificationPassed = csrfProtection.verify(csrfSecret, csrfTokenFromClient as string);
 
     if (!csrfVerificationPassed) {
       signOut(res, 401, "Invalid csrf secret");
@@ -46,9 +42,7 @@ async function checkAccess(
 
   try {
     const session = await doWithRetries(async () =>
-      db
-        .collection("Session")
-        .findOne({ accessToken }, { projection: { userId: 1, expiresOn: 1 } })
+      db.collection("Session").findOne({ accessToken }, { projection: { userId: 1, expiresOn: 1 } })
     );
 
     if (!session) {
@@ -69,24 +63,13 @@ async function checkAccess(
       doWithRetries(async () =>
         db
           .collection("User")
-          .updateOne(
-            { _id: new ObjectId(req.userId) },
-            { $set: { lastActiveOn: new Date() } }
-          )
+          .updateOne({ _id: new ObjectId(req.userId) }, { $set: { lastActiveOn: new Date(), timeZone } })
       );
 
       const tomorrow = daysFrom({ days: 1 });
-      const newExpirationDate = Math.max(
-        tomorrow.getTime(),
-        session.expiresOn.getTime()
-      );
+      const newExpirationDate = Math.max(tomorrow.getTime(), session.expiresOn.getTime());
       doWithRetries(async () =>
-        db
-          .collection("Session")
-          .updateOne(
-            { accessToken },
-            { $set: { expiresOn: new Date(newExpirationDate) } }
-          )
+        db.collection("Session").updateOne({ accessToken }, { $set: { expiresOn: new Date(newExpirationDate) } })
       );
     }
 

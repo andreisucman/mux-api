@@ -16,13 +16,12 @@ const route = Router();
 type Props = {
   routineIds: string[];
   startDate: string;
-  timeZone: string;
 };
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { routineIds, startDate, timeZone }: Props = req.body;
+  const { routineIds, startDate }: Props = req.body;
 
-  const { isValidDate, isFutureDate } = checkDateValidity(startDate, timeZone);
+  const { isValidDate, isFutureDate } = checkDateValidity(startDate, req.timeZone);
 
   if (!routineIds || !isValidDate || !isFutureDate) {
     res.status(400).json({ error: "Bad request" });

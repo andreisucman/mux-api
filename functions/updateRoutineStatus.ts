@@ -9,12 +9,8 @@ type Props = {
   routineId: string;
 };
 
-export default async function updateRoutineStatus({
-  newStatus,
-  routineId,
-}: Props) {
-  const taskFilterStatus =
-    newStatus === "active" ? TaskStatusEnum.CANCELED : TaskStatusEnum.ACTIVE;
+export default async function updateRoutineStatus({ newStatus, routineId }: Props) {
+  const taskFilterStatus = newStatus === "active" ? TaskStatusEnum.CANCELED : TaskStatusEnum.ACTIVE;
 
   try {
     await doWithRetries(async () =>
@@ -27,10 +23,7 @@ export default async function updateRoutineStatus({
           },
         },
         {
-          arrayFilters: [
-            { "task.name": { $exists: true } },
-            { "id.status": taskFilterStatus },
-          ],
+          arrayFilters: [{ "task.name": { $exists: true } }, { "id.status": taskFilterStatus }],
         }
       )
     );

@@ -17,9 +17,9 @@ import httpError from "@/helpers/httpError.js";
 const route = Router();
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { taskId, startDate, userName, timeZone, returnTask } = req.body;
+  const { taskId, startDate, userName, returnTask } = req.body;
 
-  const { isValidDate, isFutureDate } = checkDateValidity(startDate, timeZone);
+  const { isValidDate, isFutureDate } = checkDateValidity(startDate, req.timeZone);
 
   if (!isValidDate || !isFutureDate || !ObjectId.isValid(taskId)) {
     res.status(400).json({ error: "Bad request" });
@@ -39,7 +39,10 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       allTasks: 1,
       finalSchedule: 1,
       lastDate: 1,
+      concerns: 1,
     };
+
+    const midnightStartDate = setToMidnight({ date: startDate, timeZone: req.timeZone });
 
     const currentRoutine = (await doWithRetries(async () =>
       db
@@ -48,7 +51,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
           userId: new ObjectId(req.userId),
           part: currentTask.part,
           status: RoutineStatusEnum.ACTIVE,
-          $and: [{ startsAt: { $gte: new Date(startDate) } }, { lastDate: { $lt: new Date(startDate) } }],
+          $and: [{ startsAt: { $lte: midnightStartDate } }, { lastDate: { $gte: new Date(midnightStartDate) } }],
         })
         .project(projection)
         .sort({ startsAt: 1 })
@@ -59,7 +62,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     const newStartsAt = setToMidnight({
       date: new Date(startDate),
-      timeZone,
+      timeZone: req.timeZone,
     });
 
     const newExpiresAt = daysFrom({
@@ -70,6 +73,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     const resetTask: TaskType = {
       ...currentTask,
       _id: new ObjectId(),
+      userId: new ObjectId(req.userId),
       startsAt: newStartsAt,
       expiresAt: newExpiresAt,
       proofId: null,

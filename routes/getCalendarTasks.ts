@@ -12,58 +12,51 @@ import { db } from "init.js";
 
 const route = Router();
 
-route.get(
-  "/",
-  async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { filter } = aqp(req.query as any) as AqpQuery;
-    const { status, timeZone, dateFrom, dateTo, key } = filter;
+route.get("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
+  const { filter } = aqp(req.query as any) as AqpQuery;
+  const { status, dateFrom, dateTo, key } = filter;
 
-    if (!timeZone) {
-      res.status(400).json({ error: "Bad request" });
-      return;
-    }
+  try {
+    const timeZone = req.timeZone;
+    let startsAtFrom = setToMidnight({ date: new Date(), timeZone });
+    let startsAtTo = setToMidnight({ date: daysFrom({ days: 7 }), timeZone });
 
-    try {
-      let startsAtFrom = setToMidnight({ date: new Date(), timeZone });
-      let startsAtTo = setToMidnight({ date: daysFrom({ days: 7 }), timeZone });
+    if (dateFrom) startsAtFrom = setToMidnight({ date: dateFrom, timeZone });
+    if (dateTo) startsAtTo = setToMidnight({ date: dateTo, timeZone });
 
-      if (dateFrom) startsAtFrom = setToMidnight({ date: dateFrom, timeZone });
-      if (dateTo) startsAtTo = setToMidnight({ date: dateTo, timeZone });
+    const filter: { [key: string]: any } = {
+      userId: new ObjectId(req.userId),
+      startsAt: {
+        $gte: startsAtFrom,
+        $lte: startsAtTo,
+      },
+    };
 
-      const filter: { [key: string]: any } = {
-        userId: new ObjectId(req.userId),
-        startsAt: {
-          $gte: startsAtFrom,
-          $lte: startsAtTo,
-        },
-      };
+    if (status) filter.status = status;
+    if (key) filter.key = key;
 
-      if (status) filter.status = status;
-      if (key) filter.key = key;
+    const tasks = await doWithRetries(async () =>
+      db
+        .collection("Task")
+        .find(filter)
+        .project({
+          _id: 1,
+          name: 1,
+          key: 1,
+          color: 1,
+          status: 1,
+          icon: 1,
+          expiresAt: 1,
+          startsAt: 1,
+        })
+        .sort({ startsAt: 1, part: -1, name: 1 })
+        .toArray()
+    );
 
-      const tasks = await doWithRetries(async () =>
-        db
-          .collection("Task")
-          .find(filter)
-          .project({
-            _id: 1,
-            name: 1,
-            key: 1,
-            color: 1,
-            status: 1,
-            icon: 1,
-            expiresAt: 1,
-            startsAt: 1,
-          })
-          .sort({ startsAt: 1, part: -1, name: 1 })
-          .toArray()
-      );
-
-      res.status(200).json({ message: tasks });
-    } catch (err) {
-      next(err);
-    }
+    res.status(200).json({ message: tasks });
+  } catch (err) {
+    next(err);
   }
-);
+});
 
 export default route;

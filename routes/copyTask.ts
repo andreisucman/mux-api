@@ -19,9 +19,9 @@ import setToMidnight from "@/helpers/setToMidnight.js";
 const route = Router();
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { taskKey, routineId, ignoreIncompleteTasks, startDate, timeZone, userName } = req.body;
+  const { taskKey, routineId, ignoreIncompleteTasks, startDate, userName } = req.body;
 
-  const { isValidDate, isFutureDate } = checkDateValidity(startDate, timeZone);
+  const { isValidDate, isFutureDate } = checkDateValidity(startDate, req.timeZone);
 
   if (!taskKey || !routineId || !userName || !isValidDate || !isFutureDate) {
     res.status(400).json({ error: "Bad request" });
@@ -60,7 +60,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     const differenceInDays = calculateDaysDifference(
       earliestTask.startsAt,
-      setToMidnight({ date: startDate, timeZone })
+      setToMidnight({ date: startDate, timeZone: req.timeZone })
     );
 
     const updatedIds = relevantAllTask.ids.filter((id) => {

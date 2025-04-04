@@ -31,7 +31,7 @@ const route = Router();
 const validExtensions = ["jpg", "webm", "mp4", "webp"];
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { taskId, url, timeZone } = req.body;
+  const { taskId, url } = req.body;
 
   const urlExtension = url.includes(".") ? url.split(".").pop() : "";
 
@@ -337,7 +337,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       (await getStreaksToIncrement({
         userId: req.userId,
         part,
-        timeZone,
+        timeZone: req.timeZone,
         streakDates,
       })) || {};
 

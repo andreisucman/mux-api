@@ -19,11 +19,11 @@ import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 const route = Router();
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { taskId, updatedDescription, updatedInstruction, startDate, timeZone, applyToAll, returnRoutine } = req.body;
+  const { taskId, updatedDescription, updatedInstruction, startDate, applyToAll, returnRoutine } = req.body;
 
-  const { isValidDate, isFutureDate } = checkDateValidity(startDate, timeZone);
+  const { isValidDate, isFutureDate } = checkDateValidity(startDate, req.timeZone);
 
-  if (!updatedDescription && !updatedInstruction && !startDate && !timeZone) {
+  if (!updatedDescription && !updatedInstruction && !startDate) {
     res.status(400).json({ error: "Bad request" });
     return;
   }
@@ -113,7 +113,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     const newStartsAt = setToMidnight({
       date: new Date(startDate),
-      timeZone,
+      timeZone: req.timeZone,
     });
 
     const latestDateOfWeeek = daysFrom({ days: 7 });
