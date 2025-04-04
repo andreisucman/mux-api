@@ -15,6 +15,7 @@ import setToMidnight from "@/helpers/setToMidnight.js";
 import { db } from "init.js";
 import { addTaskToSchedule, removeTaskFromAllTasks, removeTaskFromSchedule } from "@/helpers/rescheduleTaskHelpers.js";
 import combineAllTasks from "@/helpers/combineAllTasks.js";
+import getClosestRoutine from "@/functions/getClosestRoutine.js";
 
 const route = Router();
 
@@ -117,17 +118,14 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     )) as unknown as RoutineType;
 
     if (!targetRoutine) {
-      targetRoutine = (await doWithRetries(async () =>
-        db
-          .collection("Routine")
-          .find({
-            userId: new ObjectId(req.userId),
-            part: taskInfo.part,
-            status: RoutineStatusEnum.ACTIVE,
-          })
-          .sort({ startsAt: 1 })
-          .next()
-      )) as unknown as RoutineType;
+      targetRoutine = await getClosestRoutine(
+        {
+          userId: new ObjectId(req.userId),
+          part: taskInfo.part,
+          status: RoutineStatusEnum.ACTIVE,
+        },
+        startDate
+      );
     }
 
     let {
