@@ -104,11 +104,20 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       })
     );
 
-    if (newStatus === TaskStatusEnum.CANCELED) {
-      await deactivateHangingBaAndRoutineData({
-        routineIds: [taskToUpdate.routineId],
-        userId: req.userId,
-      });
+    if (newStatus === TaskStatusEnum.CANCELED && numberOfTasksWithAnotherStatus === 0) {
+      const numberOfActiveTasks = await doWithRetries(async () =>
+        db.collection("Task").countDocuments({
+          routineId: taskToUpdate.routineId,
+          $or: [{ status: TaskStatusEnum.ACTIVE }, { status: TaskStatusEnum.COMPLETED }],
+          deletedOn: { $exists: false },
+        })
+      );
+
+      if (numberOfActiveTasks === 0)
+        await deactivateHangingBaAndRoutineData({
+          routineIds: [taskToUpdate.routineId],
+          userId: req.userId,
+        });
     }
 
     await recalculateAllTaskCountAndRoutineDates([taskToUpdate.routineId]);
