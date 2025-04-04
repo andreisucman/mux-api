@@ -95,7 +95,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     const updateRoutineFilter = { "allTasks.ids._id": new ObjectId(taskId) };
     const updateRoutinePayload: { [key: string]: any } = { $set: { "allTasks.$.ids.$[element].status": newStatus } };
-    if (numberOfTasksWithAnotherStatus === 0) {
+    if (newStatus === TaskStatusEnum.ACTIVE || numberOfTasksWithAnotherStatus === 0) {
       updateRoutinePayload.$set.status = newStatus;
     }
     await doWithRetries(async () =>

@@ -13,12 +13,8 @@ import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
 import { db } from "init.js";
-import {
-  addTaskToAllTasks,
-  addTaskToSchedule,
-  removeTaskFromAllTasks,
-  removeTaskFromSchedule,
-} from "@/helpers/rescheduleTaskHelpers.js";
+import { addTaskToSchedule, removeTaskFromAllTasks, removeTaskFromSchedule } from "@/helpers/rescheduleTaskHelpers.js";
+import combineAllTasks from "@/helpers/combineAllTasks.js";
 
 const route = Router();
 
@@ -84,7 +80,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     const hostAllTasksWithoutTask = removeTaskFromAllTasks(taskKey, hostAllTasks);
     const hostScheduleWithoutTask = removeTaskFromSchedule(taskKey, hostFinalSchedule);
-    const { minDate: minHostDate, maxDate: maxHostDate } = getMinAndMaxRoutineDates(hostAllTasks);
+    const { minDate: minHostDate, maxDate: maxHostDate } = getMinAndMaxRoutineDates(hostAllTasksWithoutTask);
 
     if (hostAllTasksWithoutTask.length === 0) {
       await doWithRetries(async () =>
@@ -106,7 +102,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       );
     }
 
-    const targetRoutine = (await doWithRetries(async () =>
+    let targetRoutine = (await doWithRetries(async () =>
       db
         .collection("Routine")
         .find({
@@ -120,6 +116,20 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         .next()
     )) as unknown as RoutineType;
 
+    if (!targetRoutine) {
+      targetRoutine = (await doWithRetries(async () =>
+        db
+          .collection("Routine")
+          .find({
+            userId: new ObjectId(req.userId),
+            part: taskInfo.part,
+            status: RoutineStatusEnum.ACTIVE,
+          })
+          .sort({ startsAt: 1 })
+          .next()
+      )) as unknown as RoutineType;
+    }
+
     let {
       concerns: currentConcerns,
       allTasks: currentAllTasks,
@@ -127,12 +137,12 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     } = targetRoutine || {};
 
     let targetSchedule = addTaskToSchedule(currentFinalSchedule || {}, taskKey, taskInfo.concern, updatedAllTask.ids);
+    targetSchedule = sortTasksInScheduleByDate(targetSchedule);
 
     const targetConcerns = [...new Set([...(currentConcerns || []), taskInfo.concern])];
 
-    targetSchedule = sortTasksInScheduleByDate(targetSchedule);
-
-    const targetAllTasks = addTaskToAllTasks(updatedAllTask, currentAllTasks || []);
+    let targetAllTasks = combineAllTasks({ oldAllTasks: currentAllTasks, newAllTasks: [updatedAllTask] });
+    if (!targetAllTasks.length) targetAllTasks = [updatedAllTask];
 
     const { minDate, maxDate } = getMinAndMaxRoutineDates(targetAllTasks);
 
@@ -212,10 +222,15 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       keyTwo: "manualTasksRescheduled",
     });
 
-    const routine = await doWithRetries(() => db.collection("Routine").findOne({ _id: updateRoutineId }));
+    const routines = await doWithRetries(() =>
+      db
+        .collection("Routine")
+        .find({ _id: { $in: [updateRoutineId, hostRoutine._id] } })
+        .toArray()
+    );
 
     res.status(200).json({
-      message: routine,
+      message: routines,
     });
   } catch (err) {
     next(err);

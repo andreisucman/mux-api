@@ -45,21 +45,37 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     const midnightStartDate = setToMidnight({ date: startDate, timeZone: req.timeZone });
 
-    const currentRoutine = (await doWithRetries(async () =>
+    let targetRoutine = (await doWithRetries(async () =>
       db
         .collection("Routine")
         .find({
           userId: new ObjectId(req.userId),
           part: currentTask.part,
           status: RoutineStatusEnum.ACTIVE,
-          $and: [{ startsAt: { $lte: midnightStartDate } }, { lastDate: { $gte: new Date(midnightStartDate) } }],
+          startsAt: { $lte: new Date(midnightStartDate) },
+          lastDate: { $gte: new Date(midnightStartDate) },
         })
         .project(projection)
         .sort({ startsAt: 1 })
         .next()
     )) as unknown as RoutineType;
 
-    const { allTasks, concerns, finalSchedule } = currentRoutine || {};
+    if (!targetRoutine) {
+      targetRoutine = (await doWithRetries(async () =>
+        db
+          .collection("Routine")
+          .find({
+            userId: new ObjectId(req.userId),
+            part: currentTask.part,
+            status: RoutineStatusEnum.ACTIVE,
+          })
+          .project(projection)
+          .sort({ startsAt: 1 })
+          .next()
+      )) as unknown as RoutineType;
+    }
+
+    const { allTasks, concerns, finalSchedule } = targetRoutine || {};
 
     const newStartsAt = setToMidnight({
       date: new Date(startDate),
@@ -112,20 +128,21 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     let updatedSchedule = addTaskToSchedule(finalSchedule, resetTask.key, resetTask.concern, newAllTaskRecord.ids);
     updatedSchedule = sortTasksInScheduleByDate(updatedSchedule);
 
-    const finalRoutineAllTasks = combineAllTasks({
+    let finalRoutineAllTasks = combineAllTasks({
       oldAllTasks: allTasks,
       newAllTasks: [newAllTaskRecord],
     });
+    if (!finalRoutineAllTasks.length) finalRoutineAllTasks = [newAllTaskRecord];
 
     const { minDate, maxDate } = getMinAndMaxRoutineDates(finalRoutineAllTasks);
 
     let updateRoutineId;
-    if (currentRoutine) {
-      updateRoutineId = currentRoutine._id;
+    if (targetRoutine) {
+      updateRoutineId = targetRoutine._id;
 
       await doWithRetries(async () =>
         db.collection("Routine").updateOne(
-          { _id: new ObjectId(currentRoutine._id) },
+          { _id: new ObjectId(targetRoutine._id) },
           {
             $set: {
               finalSchedule: updatedSchedule,

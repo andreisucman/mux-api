@@ -125,7 +125,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     res.status(200).end();
 
-    const todayMidnight = setToMidnight({
+    const startDateMidnight = setToMidnight({
       date: new Date(startDate),
       timeZone: req.timeZone,
     });
@@ -135,7 +135,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         userId: new ObjectId(req.userId),
         status: RoutineStatusEnum.ACTIVE,
         part,
-        startsAt: { $lte: todayMidnight },
+        startsAt: { $lte: startDateMidnight },
       })
     );
 

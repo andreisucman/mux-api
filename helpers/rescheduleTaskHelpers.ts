@@ -9,15 +9,15 @@ export const removeTaskFromSchedule = (taskKey: string, schedule: { [key: string
   );
 };
 
-export const removeTaskFromAllTasks = (taskKey: string, allTasks: AllTaskTypeWithIds[]) => {
+export const removeTaskFromAllTasks = (taskKey: string, allTasks: AllTaskTypeWithIds[] = []) => {
   return allTasks.filter((at) => at.key !== taskKey);
 };
 
 export const addTaskToSchedule = (
-  currentSchedule: { [key: string]: ScheduleTaskType[] },
+  currentSchedule: { [key: string]: ScheduleTaskType[] } = {},
   taskKey: string,
   taskConcern: string,
-  updatedAllTaskIds: AllTaskIdType[]
+  updatedAllTaskIds: AllTaskIdType[] = []
 ) => {
   for (let i = 0; i < updatedAllTaskIds.length; i++) {
     const task = updatedAllTaskIds[i];
@@ -37,14 +37,4 @@ export const addTaskToSchedule = (
   }
 
   return { ...currentSchedule };
-};
-
-export const addTaskToAllTasks = (newAllTask: AllTaskTypeWithIds, currentAllTasks: AllTaskTypeWithIds[]) => {
-  const alreadyExists = currentAllTasks.some((t) => t.key === newAllTask.key);
-
-  if (alreadyExists) {
-    return currentAllTasks.map((at) => (at.key === newAllTask.key ? newAllTask : at));
-  } else {
-    return [...currentAllTasks, newAllTask];
-  }
 };

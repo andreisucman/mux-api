@@ -14,7 +14,8 @@ import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 import checkPurchaseAccess from "@/functions/checkPurchaseAccess.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
-import { addTaskToAllTasks, addTaskToSchedule } from "@/helpers/rescheduleTaskHelpers.js";
+import { addTaskToSchedule } from "@/helpers/rescheduleTaskHelpers.js";
+import combineAllTasks from "@/helpers/combineAllTasks.js";
 
 const route = Router();
 
@@ -23,7 +24,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
   const { isValidDate, isFutureDate } = checkDateValidity(startDate, req.timeZone);
 
-  if (!taskKey || !routineId || !userName || !isValidDate || !isFutureDate) {
+  if (!taskKey || !ObjectId.isValid(routineId) || !isValidDate || !isFutureDate) {
     res.status(400).json({ error: "Bad request" });
     return;
   }
@@ -121,7 +122,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       };
     });
 
-    const currentRoutine = (await doWithRetries(async () =>
+    let targetRoutine = (await doWithRetries(async () =>
       db
         .collection("Routine")
         .find({
@@ -135,23 +136,38 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         .next()
     )) as unknown as RoutineType;
 
-    let { concerns, allTasks: currentAllTasks, finalSchedule: currentFinalSchedule } = currentRoutine || {};
+    if (!targetRoutine) {
+      targetRoutine = (await doWithRetries(async () =>
+        db
+          .collection("Routine")
+          .find({
+            userId: new ObjectId(req.userId),
+            part: taskInfo.part,
+            status: RoutineStatusEnum.ACTIVE,
+          })
+          .sort({ startsAt: 1 })
+          .next()
+      )) as unknown as RoutineType;
+    }
+
+    let { concerns, allTasks: currentAllTasks, finalSchedule: currentFinalSchedule } = targetRoutine || {};
 
     let finalSchedule = addTaskToSchedule(currentFinalSchedule, taskKey, taskInfo.concern, updatedAllTask.ids);
-    let allTasks = addTaskToAllTasks(updatedAllTask, currentAllTasks);
-
     finalSchedule = sortTasksInScheduleByDate(finalSchedule);
+
+    let allTasks = combineAllTasks({ oldAllTasks: currentAllTasks, newAllTasks: [updatedAllTask] });
+    if (!allTasks) allTasks = [updatedAllTask];
 
     const { minDate, maxDate } = getMinAndMaxRoutineDates(allTasks);
 
     let updateRoutineId;
 
-    if (currentRoutine) {
-      updateRoutineId = currentRoutine._id;
+    if (targetRoutine) {
+      updateRoutineId = targetRoutine._id;
 
       await doWithRetries(async () =>
         db.collection("Routine").updateOne(
-          { _id: new ObjectId(currentRoutine._id) },
+          { _id: new ObjectId(targetRoutine._id) },
           {
             $set: {
               finalSchedule,
