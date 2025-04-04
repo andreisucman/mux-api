@@ -104,7 +104,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       })
     );
 
-    if (newStatus === TaskStatusEnum.CANCELED && numberOfTasksWithAnotherStatus === 0) {
+    if (newStatus === TaskStatusEnum.CANCELED) {
       const numberOfActiveTasks = await doWithRetries(async () =>
         db.collection("Task").countDocuments({
           routineId: taskToUpdate.routineId,

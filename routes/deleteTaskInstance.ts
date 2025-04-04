@@ -87,21 +87,19 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       })
     );
 
-    if (numberOfNotDeletedTasks === 0) {
-      const numberOfActiveTasks = await doWithRetries(async () =>
-        db.collection("Task").countDocuments({
-          routineId: taskToDelete.routineId,
-          $or: [{ status: TaskStatusEnum.ACTIVE }, { status: TaskStatusEnum.COMPLETED }],
-          deletedOn: { $exists: false },
-        })
-      );
+    const numberOfActiveTasks = await doWithRetries(async () =>
+      db.collection("Task").countDocuments({
+        routineId: taskToDelete.routineId,
+        $or: [{ status: TaskStatusEnum.ACTIVE }, { status: TaskStatusEnum.COMPLETED }],
+        deletedOn: { $exists: false },
+      })
+    );
 
-      if (numberOfActiveTasks === 0) {
-        await deactivateHangingBaAndRoutineData({
-          routineIds: [taskToDelete.routineId],
-          userId: req.userId,
-        });
-      }
+    if (numberOfActiveTasks === 0) {
+      await deactivateHangingBaAndRoutineData({
+        routineIds: [taskToDelete.routineId],
+        userId: req.userId,
+      });
     }
 
     await recalculateAllTaskCountAndRoutineDates([taskToDelete.routineId]);
