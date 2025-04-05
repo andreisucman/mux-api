@@ -20,13 +20,13 @@ export default async function checkProofImage({
   categoryName,
 }: Props) {
   try {
-    const systemContent = `You are given the scenes of an activity from a video. Are they relevant to the following requisite: ${requisite}? Respond with true if the scenes are relevant to the requisite and false if the scenes are completely irrelevant.`;
+    const systemContent = `You are given the scenes of an activity from a video. Are they relevant to the following requisite: ${requisite}? Respond with true if the scenes are at least somewhat relevant to the requisite and false if the scenes are completely irrelevant.`;
 
     const CheckProofImageResponseType = z.object({
       verdict: z
         .boolean()
         .describe(
-          "true if the scenes are relevant to the requisite, false if not"
+          "true if the scenes are at least somewhat relevant to the requisite, false if not"
         ),
       explanation: z
         .string()

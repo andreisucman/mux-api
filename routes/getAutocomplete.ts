@@ -7,7 +7,6 @@ import doWithRetries from "helpers/doWithRetries.js";
 import { CustomRequest } from "types.js";
 import { ModerationStatusEnum } from "types.js";
 import { db } from "init.js";
-import { filterData } from "@/functions/filterData.js";
 
 const route = Router();
 
@@ -35,74 +34,64 @@ const indexMap: { [key: string]: string } = {
   user: "user_search_autocomplete",
 };
 
-route.get(
-  "/:userName?",
-  async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { userName } = req.params;
-    const { filter } = aqp(req.query as any) as AqpQuery;
-    const { query, collection } = filter || {};
+route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFunction) => {
+  const { userName } = req.params;
+  const { filter } = aqp(req.query as any) as AqpQuery;
+  const { query, collection } = filter || {};
 
-    try {
-      const pipeline: any = [];
+  try {
+    const pipeline: any = [];
 
-      if (query) {
-        pipeline.push({
-          $search: {
-            index: indexMap[collection],
-            compound: {
-              should: fieldsMap[collection].map((field) => ({
-                autocomplete: {
-                  query,
-                  path: field,
-                  tokenOrder: "sequential",
-                  fuzzy: {
-                    maxEdits: 2,
-                  },
+    if (query) {
+      pipeline.push({
+        $search: {
+          index: indexMap[collection],
+          compound: {
+            should: fieldsMap[collection].map((field) => ({
+              autocomplete: {
+                query,
+                path: field,
+                tokenOrder: "sequential",
+                fuzzy: {
+                  maxEdits: 2,
                 },
-              })),
-              minimumShouldMatch: 1,
-            },
+              },
+            })),
+            minimumShouldMatch: 1,
           },
-        });
-      }
-
-      let match: { [key: string]: any } = {};
-
-      if (collection !== "solution") {
-        match.moderationStatus = ModerationStatusEnum.ACTIVE;
-      }
-
-      if (userName) {
-        match.userName = userName;
-      }
-
-      const projection = projectionMap[collection].reduce(
-        (a: { [key: string]: number }, c) => {
-          a[c] = 1;
-          return a;
         },
-        {}
-      );
-
-      pipeline.push(
-        {
-          $match: match,
-        },
-        {
-          $project: { ...projection, _id: 0 },
-        },
-        { $limit: 10 }
-      );
-
-      const autocompleteData = await doWithRetries(async () =>
-        db.collection(collectionsMap[collection]).aggregate(pipeline).toArray()
-      );
-
-      res.status(200).json({ message: autocompleteData });
-    } catch (err) {
-      next(err);
+      });
     }
+
+    let match: { [key: string]: any } = { moderationStatus: ModerationStatusEnum.ACTIVE };
+
+    if (userName) {
+      match.userName = userName;
+    }
+
+    const projection = projectionMap[collection].reduce((a: { [key: string]: number }, c) => {
+      a[c] = 1;
+      return a;
+    }, {});
+
+    pipeline.push(
+      {
+        $match: match,
+      },
+      {
+        $project: { ...projection, _id: 0 },
+      },
+      { $limit: 10 }
+    );
+
+    const autocompleteData = await doWithRetries(async () =>
+      db.collection(collectionsMap[collection]).aggregate(pipeline).toArray()
+    );
+
+    res.status(200).json({ message: autocompleteData });
+  } catch (err) {
+    next(err);
   }
-);
+});
 
 export default route;

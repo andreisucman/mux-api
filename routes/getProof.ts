@@ -92,7 +92,7 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
 
     proof = await doWithRetries(async () => db.collection("Proof").aggregate(pipeline).toArray());
 
-    if (!purchases.length) proof = proof.map((r) => maskProof(r as ProofType));
+    if (!purchases.length && userName) proof = proof.map((r) => maskProof(r as ProofType));
 
     res.status(200).json({
       message: { data: proof, purchases, notPurchased, priceData },

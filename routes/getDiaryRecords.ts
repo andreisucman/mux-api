@@ -73,7 +73,7 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
         .toArray()
     )) as unknown as DiaryRecordType[];
 
-    if (!purchases.length) diary = diary.map((r) => maskDiaryRow(r as DiaryRecordType));
+    if (!purchases.length && userName) diary = diary.map((r) => maskDiaryRow(r as DiaryRecordType));
 
     res.status(200).json({
       message: { data: diary, purchases, notPurchased, priceData },

@@ -27,6 +27,7 @@ export function maskDiaryRow(diaryRecord: DiaryRecordType) {
     userId: null,
     audio: "/",
     embedding: [],
+    transcription: Array(diaryRecord.transcription.length).fill("*").join(""),
     activity: diaryRecord.activity.map((a) => {
       const thumbnail = `https://placehold.co/480x720/3b3b3b/3b3b3b/webp?text=%27&font=poppins`;
       const placeholder =
