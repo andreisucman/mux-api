@@ -29,8 +29,6 @@ export default async function checkAndRecordTwin({
   try {
     const embedding = await createImageEmbedding(image);
 
-    console.log("embedding length", embedding.length);
-
     response.isSuspended = await checkIfSuspended({
       embedding,
       image,
@@ -46,8 +44,6 @@ export default async function checkAndRecordTwin({
       registryFilter,
       categoryName,
     });
-
-    console.log("twinIds", twinIds);
 
     if (twinIds.length > 0) {
       // dont change the requestUserId to finalUserId here
@@ -74,7 +70,6 @@ export default async function checkAndRecordTwin({
       }
     }
 
-    console.log("response", response);
     return response;
   } catch (err) {
     throw httpError(err);

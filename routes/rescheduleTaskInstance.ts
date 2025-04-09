@@ -17,7 +17,7 @@ import getClosestRoutine from "@/functions/getClosestRoutine.js";
 const route = Router();
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { taskId, startDate } = req.body;
+  const { taskId, startDate, isVoid } = req.body;
 
   const { isValidDate, isFutureDate } = checkDateValidity(startDate, req.timeZone);
 
@@ -220,6 +220,11 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       keyOne: "tasksRescheduled",
       keyTwo: "manualTasksRescheduled",
     });
+
+    if (isVoid) {
+      res.status(200).end();
+      return;
+    }
 
     const routines = await doWithRetries(() =>
       db

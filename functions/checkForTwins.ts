@@ -76,20 +76,22 @@ export default async function checkForTwins({
 
         const uniqueOriginalImages = [...new Set(originalImages)];
 
-        const collageImage = await createImageCollage({
-          images: uniqueOriginalImages,
-          isGrid: true,
-        });
+        if (originalImages.length) {
+          const collageImage = await createImageCollage({
+            images: uniqueOriginalImages,
+            isGrid: true,
+          });
 
-        const twinIndexes = await checkPeopleSimilarity({
-          categoryName,
-          image: collageImage,
-          userId: finalUserId,
-        });
+          const twinIndexes = await checkPeopleSimilarity({
+            categoryName,
+            image: collageImage,
+            userId: finalUserId,
+          });
 
-        const filteredTwinIndexes = twinIndexes.filter((index) => index !== "0");
+          const filteredTwinIndexes = twinIndexes.filter((index) => index !== "0");
 
-        twinDocuments = closestDocuments.filter((doc, index) => filteredTwinIndexes.includes(String(index + 1)));
+          twinDocuments = closestDocuments.filter((doc, index) => filteredTwinIndexes.includes(String(index + 1)));
+        }
       }
     }
 
