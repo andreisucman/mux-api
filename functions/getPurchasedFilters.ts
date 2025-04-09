@@ -28,7 +28,7 @@ export default async function getPurchasedFilters({ userName, userId, part }: Pr
       db
         .collection("RoutineData")
         .find(
-          { userId: new ObjectId(sellerIdObj._id), status: "public" },
+          { userId: new ObjectId(sellerIdObj?._id), status: "public" },
           {
             projection: { name: 1, description: 1, price: 1, part: 1 },
           }

@@ -1,218 +1,123 @@
 const criteria = {
-  female: {
-    mouth: `
-                0-20: Severe Oral Health Issues. Critical oral health problems, such as advanced periodontal disease with deep gum pockets (≥6mm), multiple missing or broken teeth, extensive tooth decay affecting most teeth, visible swelling, abscesses, or pus.
-                ##
-                20-40: Poor oral health. Noticeable dental problems, such as moderate periodontal disease with gum recession (4-5mm pockets), several untreated cavities, or heavy plaque and tartar buildup leading to visible yellowing or staining.
-                ##
-                40-60: Fair oral health. Occasional or mild dental issues, such as early-stage gum disease (gingivitis) with slight redness and swelling, a few small cavities that may not be immediately noticeable, or minor gum irritation. Plaque buildup is present but not excessive, and teeth may show slight discoloration or minor cosmetic flaws.
-                ##
-                60-80: Good oral health. Generally healthy with minimal dental issues. Gums are pink and firm with no signs of inflammation or bleeding, and teeth are mostly free of decay or discoloration. Minor plaque buildup or slight cosmetic imperfections (e.g., small chips or mild staining) may be present but do not affect overall oral health.
-                ##
-                80-100: Excellent oral health. Optimal dental health, characterized by strong, well-aligned teeth with no visible decay, cracks, or staining. Gums are healthy, pink, and firm with no signs of recession, inflammation, or bleeding. Oral hygiene is impeccable, with no plaque or tartar buildup, and there are no functional or aesthetic concerns.
-                `,
-    skin: `
-                0-20: Severe skin issues. Critical skin conditions that significantly compromise skin integrity and appearance. Examples include widespread acne (e.g., cystic or nodular acne), deep or infected wounds, severe burns, chronic eczema or psoriasis covering large areas. Skin may appear highly irritated, discolored, or scarred.
-                ##
-                20-40: Significant skin problems. Noticeable skin concerns that impact overall quality and appearance. These may include persistent acne (e.g., papules and pustules), deep acne scars, hyperpigmentation or hypopigmentation, rough or uneven texture, or chronic dryness or oiliness. Visible redness, irritation, or early signs of skin laxity may also be present.
-                ##
-                40-60: Moderate skin concerns. Occasional or mild skin issues, such as sporadic breakouts, mild acne scars, uneven skin tone (e.g., sunspots or mild melasma), rough patches, or early signs of aging (e.g., fine lines, faint wrinkles, or slight loss of elasticity). Skin may appear generally healthy but with some visible imperfections.
-                ##
-                60-80: Generally Healthy Skin. Mostly clear and healthy skin with minor imperfections. Occasional pimples, slight dryness or oiliness, and minimal signs of aging (e.g., faint lines or mild dullness) may be present. Skin texture is smooth, and tone is relatively even, with no major discoloration or irritation.
-                ##
-                80-100: Excellent skin health. Optimal skin condition, characterized by a smooth, even texture, balanced hydration, and a radiant, glowing appearance. Pores are barely visible, and there is no acne, discoloration, or irritation. Signs of aging are minimal or absent, and the skin appears firm, elastic, and well-maintained.
-                `,
-    lips: `
-                0-20: Severe Lip Issues. Characterized by severe dryness, deep cracking, bleeding, or visible flaking. Lips may appear inflamed, chapped, or scaly. Cold sores, open wounds, or infections may also be present.
-                ##
-                20-40: Significant Lip Problems. Noticeable lip concerns, such as persistent dryness, moderate cracking, and rough or uneven texture. Lips may feel tight or uncomfortable, with visible peeling or flakiness.
-                ##
-                40-60: Moderate Lip Concerns. Occasional or mild lip issues, such as moderate dryness, slight cracking, or a faintly rough texture. Lips may feel dry but are not severely uncomfortable. Minor flakiness or unevenness may be visible.
-                ##
-                60-80: Generally Healthy Lips. Mostly smooth and hydrated lips with minimal issues. Slight dryness or occasional tightness may occur, but there is no significant cracking or flaking. Lips appear soft and well-maintained, with a natural texture and color.
-                ##
-                80-100: Excellent Lip Health. Optimal lip condition, characterized by perfectly smooth, moisturized, and supple lips. There is no dryness, cracking, or flaking, and lips feel soft and comfortable. The natural color is even, and the texture is smooth, with no signs of irritation or damage.
-                `,
-    eyes: `
-                0-20: Severe Wrinkles and Skin Aging. Advanced signs of aging, including deep wrinkles, pronounced crow's feet, severe under-eye bags or puffiness, prominent dark circles, and significant skin laxity. Skin texture is uneven, sagging, or crepe-like, with a loss of elasticity and firmness. These signs are highly visible and may extend beyond the eye area to the forehead, cheeks, and mouth.
-                ##
-                20-40: Moderate Wrinkles and Skin Aging. Noticeable signs of aging, such as moderate wrinkles around the eyes, visible crow's feet, and moderate under-eye bags or puffiness. Dark circles are present but not severe, and there are early signs of skin laxity and uneven texture. Fine lines may also appear on the forehead or mouth area.
-                ##
-                40-60: Mild Wrinkles and Skin Aging. Early signs of aging, such as fine lines around the eyes, mild crow's feet, and slight under-eye bags or puffiness. Dark circles are mild and can be improved with treatment. Skin texture shows moderate unevenness, but overall firmness and elasticity are still relatively intact.
-                ##
-                60-80: Minimal Wrinkles and Skin Aging. Few or no visible wrinkles around the eyes, minimal crow's feet, and occasional under-eye bags or puffiness that are easily managed. Dark circles are faint or absent, and skin texture is generally smooth, firm, and even. Signs of aging are subtle and not immediately noticeable.
-                ##
-                80-100: No Visible Wrinkles or Skin Aging. Optimal skin condition with no visible wrinkles, lines, or crow's feet. Under-eye areas are smooth, with no bags, puffiness, or dark circles. Skin texture is very smooth, firm, and youthful, with excellent elasticity and a radiant appearance. There are no signs of aging or skin laxity.
-                `,
-    grooming: `
-                0-20: Poor Grooming. Eyebrows are sparse, uneven, and poorly shaped, with prominent stray hairs. Visible nose or ear hair is present. If makeup is worn, it is smudged, uneven, or poorly applied, with visible residue or clumping. The overall appearance is unkempt, with no attention to detail or refinement.
-                ##
-                20-40: Below-Average Grooming. Eyebrows lack definition and symmetry, with inconsistent shaping and some stray hairs. If makeup is worn, it is unevenly applied, with visible smudging or residue. Facial hair (e.g., upper lip or chin) may be noticeable.
-                ##
-                40-60: Average Grooming. Eyebrows are reasonably shaped but could benefit from more definition and symmetry. Stray facial hairs are minimal and not overly distracting. If makeup is worn, it is adequately applied but lacks precision or finesse. The overall appearance is presentable but not particularly refined or polished.
-                ##
-                60-80: Good Grooming. Eyebrows are well-shaped, symmetrical, and defined, with minimal stray hairs. If makeup is worn, it is neatly applied, with minimal smudging or residue, and enhances facial features. Facial hair is well-managed, and the overall appearance is refined and well-maintained.
-                ##
-                80-100: Excellent Grooming. Eyebrows are perfectly shaped, balanced, and symmetrical, with no stray hairs. If makeup is worn, it is flawlessly applied, with no smudging or residue, and enhances facial symmetry and natural beauty. Facial hair is completely managed, and the overall appearance is polished.`,
-    scalp: `
-                0-20: Severe Scalp Issues. Critical scalp conditions that significantly compromise scalp health and appearance. Examples include extensive dandruff, psoriasis, eczema, open sores, severe inflammation, or infections (e.g., folliculitis). The scalp may appear red, swollen, or scaly, with visible flaking, crusting, or bleeding.
-                ##
-                20-40: Significant Scalp Problems. Noticeable scalp concerns, such as persistent dandruff, deep or large flakes, noticeable dryness or oiliness, and moderate inflammation. The scalp may appear uneven, with visible redness or irritation.
-                ##
-                40-60: Moderate Scalp Concerns. Occasional or mild scalp issues, such as small flakes, dry patches, slight redness, or minor texture irregularities. These concerns are not severe but may mildly affect the visual quality of the scalp.
-                ##
-                60-80: Generally Healthy Scalp. Mostly clear and smooth scalp with minor imperfections. Occasional small flakes, slight unevenness, or minimal redness may be present, but these do not significantly detract from the overall appearance. The scalp appears clean, balanced, and well-maintained.
-                ##
-                80-100: Excellent Scalp Health. Optimal scalp condition, characterized by a smooth, even tone with no visible flakes, redness, or other imperfections. The scalp appears clean, healthy, and well-hydrated, with no signs of dryness, oiliness, or irritation. It is free from any visible issues and contributes to an overall polished appearance.`,
-    belly: `0-20 points: Poor Muscle Definition. The belly region, including the rectus abdominis and obliques, appears smooth and underdeveloped. There is minimal muscle tone, with no noticeable shape or separation. The overall appearance is soft and undefined.
-          ##
-          20-40 points: Minimal Muscle Definition. The belly shows slight muscle development but remains below average in definition. The rectus abdominis may have a slight increase in tone, but there is minimal separation between the upper and lower sections. The obliques show minimal shape, but the overall appearance remains smooth and lacks distinct definition.
-          ##
-          40-60 points: Moderate Muscle Definition. The belly displays moderate muscle development and tone. The rectus abdominis is more defined, with visible but not pronounced separation. The obliques exhibit moderate definition, contributing to a more sculpted appearance. The overall look is well-toned and balanced, with a leaner, more refined silhouette.
-          ##
-          60-80 points: Good Muscle Definition. The belly demonstrates above-average tone and definition. The rectus abdominis is well-defined, with clear separation between the upper and lower sections. The obliques are prominently defined, adding to a refined, athletic look. The belly region is smooth, firm, and aesthetically pleasing.
-          ##
-          80-100 points: Excellent Muscle Definition. The belly exhibits exceptional tone and beauty. The rectus abdominis is highly sculpted, with prominent separation and a well-defined appearance. The obliques are highly refined, contributing to a balanced and streamlined silhouette. The overall look is strikingly toned, showcasing outstanding fitness and a polished, feminine shape.`,
-    back: `0-20: Poor Muscle Definition. The back lacks any visible muscle tone and appears completely undefined. There is no noticeable shape or structure, and the overall appearance is soft and flat, with no signs of muscular development or sculpting.
-          ##20-40: Minimal Muscle Definition. The back lacks noticeable muscle definition and appears predominantly flat. There may be slight hints of underlying structure, but the overall appearance lacks shape, tone, or any visible muscular development.
-          ##40-60: Moderate Muscle Definition. The back shows some muscle definition, particularly in areas like the shoulders or lower back, but lacks overall sculpting and balance. The appearance is neither flat nor highly toned, with moderate but incomplete muscular development.
-          ##60-80: Good Muscle Definition. The back shows noticeable muscle definition, with visible contours and shape. Key muscle groups, such as the latissimus dorsi and trapezius, are evident, but the overall appearance lacks the refined sculpting and leanness of an elite level..
-          ##80-100: Excellent Muscle Definition. The back displays exceptional muscle definition, with a lean, sculpted, and balanced appearance. All major muscle groups, including the latissimus dorsi, trapezius, and erector spinae, are well-defined and symmetrical. The back appears strong, toned, and aesthetically pleasing.`,
-    arms: `0-20: Poor Muscle Definition. Arms lack visible muscle tone and definition. They appear soft, undefined, and shapeless, with no noticeable structure or firmness.
-          ##
-          20-40: Minimal Muscle Definition. Some muscle tone is visible but not well-defined. Arms show noticeable softness or laxity, with limited overall definition. The appearance is smooth and lacks pronounced shape.
-          ##
-          40-60: Moderate Muscle Definition. Muscle definition is visible but not sculpted. Development is uneven, with some areas appearing less toned. Biceps and triceps show early signs of shape but lack refinement. 
-          60-80: Good Muscle Definition. Arms have moderate muscle tone and definition, with noticeable shape in the biceps and triceps. They appear lean, proportional, and slightly sculpted, contributing to a balanced and athletic look.
-          ##
-          80-100 Points: Excellent Muscle Definition. Arms exhibit well-defined muscle tone and shape, typical of a fit and athletic appearance. Biceps and triceps are visibly toned, firm, and sculpted, creating an aesthetically pleasing and proportional look. The arms display a high level of muscular definition and refinement.`,
-    thighs: `0-20: Poor Muscle Definition. The thighs appear soft and underdeveloped, with minimal muscle tone and definition. The quadriceps, hamstrings, and inner thighs lack visible shape, resulting in a smooth, uniform, and undefined appearance.
-          ##
-          20-40: Minimal Muscle Definition. The thighs show slight muscle development but remain below average in definition. The quadriceps and hamstrings may have a slight increase in tone, but there is minimal visible separation. The inner thighs show some shape, but the overall appearance remains smooth and lacks prominent muscularity.
-          ##
-          40-60: Moderate Muscle Definition. The thighs display moderate muscle development and tone. The quadriceps and hamstrings are more defined, with visible but not pronounced shape. The inner thighs appear more toned, contributing to a solid, well-structured silhouette. The overall look reflects regular physical activity and improved muscle tone.
-          ##.
-          60-80: Good Muscle Definition. The thighs demonstrate above-average tone and definition. The quadriceps and hamstrings are well-defined, creating a curvaceous and athletic appearance. The inner thighs exhibit refined shape and noticeable definition. The overall look is aesthetically pleasing, reflecting consistent physical activity and a balanced, feminine silhouette.
-          ##
-          80-100: Excellent Muscle Definition. The thighs exhibit exceptional tone and definition. The quadriceps, hamstrings, and inner thighs are highly sculpted, with a firm, well-defined appearance. The thighs showcase elegant curvature and prominent muscle definition, reflecting outstanding fitness and a beautifully feminine, refined shape.`,
-    calves: `0-20: Poor Muscle Definition. The calves appear soft and underdeveloped, with minimal muscle tone and definition. The gastrocnemius and soleus muscles are smooth and lack noticeable shape, resulting in a uniform and undefined appearance.
-          ##20-40: Minimal Muscle Definition. The calves show slight muscle development but remain below average in definition. The gastrocnemius and soleus muscles may appear slightly firmer, but visible definition is still lacking. The calves show a bit more shape but remain relatively smooth and lack distinct muscularity.
-          ##40-60: Moderate Muscle Definition. The calves display moderate muscle development. The gastrocnemius and soleus muscles are more defined, with visible but not pronounced shape. The calves have a toned appearance, with noticeable improvement in muscle structure and overall shape. The look reflects regular physical activity.
-          ##60-80: Good Muscle Definition. The calves demonstrate above-average tone and definition. The gastrocnemius and soleus muscles are well-defined and firm, contributing to a sculpted appearance. The calves exhibit a lean, athletic look with noticeable shape and improved muscle tone. The overall appearance is refined, reflecting consistent physical activity.
-          ##80-100: Excellent Muscle Definition. The calves exhibit exceptional tone and definition. The gastrocnemius and soleus muscles are highly sculpted, with a lean and elegant appearance. The calves are exceptionally firm and well-defined, showcasing a sleek and aesthetically pleasing shape. The overall look is strikingly toned and refined, highlighting outstanding fitness.`,
-    hips: `0-20: Poor Muscle Definition. Hips and glutes appear flat with no noticeable muscle definition. There is little to no curvature or separation, blending into the thighs with a straight or minimally contoured appearance.
-        ##20-40: Minimal Muscle Definition. A subtle curve begins to develop in the hips, and minor definition is evident in the glutes, but they remain underdefined. The transition from the hips to the thighs is not well-pronounced, and the overall shape lacks prominence.
-        ##40-60: Moderate Muscle Definition. Noticeable curvature and definition are present in the hips, with moderate development and increased roundness in the glutes. The hips show a clear, rounded transition from the waist to the thighs, contributing to a more shapely and balanced contour.
-        ##60-80: Good Muscle Definition. Hips are highly defined with a pronounced curve. Well-developed glutes complement the hips, creating a balanced and aesthetically pleasing silhouette. The shape is prominent and stands out, reflecting good muscular strength and tone.
-        ##80-100: Excellent Muscle Definition. Hips are extremely well-developed with an exceptional curve. They are highly prominent, enhancing overall aesthetics and working harmoniously with the glutes for a striking appearance. The shape is highly pronounced and considered a standout feature, showcasing outstanding fitness and refinement.`,
+  face: {
+    elasticity: `0-20 points: Poor Elasticity
+The skin lacks firmness and resilience, appearing loose or sagging with minimal rebound when stretched. Fine lines, wrinkles, or creases are prominent, and the skin may appear thin or fragile. There is little to no natural snap-back effect, indicating significant loss of elasticity.
+
+20-40 points: Minimal Elasticity
+The skin shows slight resilience but remains below average in firmness. Some mild sagging or laxity is present, particularly in areas prone to stretching (e.g., abdomen, arms, or thighs). The rebound effect is slow, and fine lines or early wrinkling may be noticeable upon manipulation.
+
+40-60 points: Moderate Elasticity
+The skin has a balanced level of firmness with moderate resilience. It rebounds reasonably well when lightly stretched but may show slight laxity in high-mobility areas. Minor creasing may occur, but the overall texture appears smooth and supported. Hydration and collagen levels contribute to a healthier bounce-back response.
+
+60-80 points: Good Elasticity
+The skin is firm, supple, and highly resilient, with a quick rebound when stretched. Minimal laxity is present, and the surface appears smooth with only subtle fine lines under tension. The skin maintains a youthful tautness, reflecting strong collagen and elastin support.
+
+80-100 points: Excellent Elasticity
+The skin exhibits exceptional firmness and snap-back recovery, resembling youthful elasticity. It remains taut, smooth, and resistant to sagging or creasing even when stretched. The texture is plump and hydrated, with no visible laxity or wrinkles. This tier reflects optimal collagen/elastin integrity and outstanding skin health.`,
+    texture: `0-20 points: Poor Skin Texture
+The skin appears rough, uneven, or heavily textured. Visible blemishes, large pores, acne, or hyperpigmentation are prominent. The surface lacks smoothness and may show signs of dehydration or irritation. Overall, the skin looks dull and unhealthy.
+
+20-40 points: Minimal Skin Refinement
+The skin has slight improvements in texture but remains uneven. Some areas may appear smoother, but blemishes, minor acne, or discoloration are still noticeable. Pores are visible, and the skin lacks a consistent glow. Hydration levels are suboptimal.
+
+40-60 points: Moderate Skin Texture
+The skin is fairly smooth with minor imperfections. Pores are refined but still somewhat visible in certain lighting. Some areas may have slight discoloration or occasional breakouts, but the overall texture is balanced. A healthy glow is beginning to emerge, and hydration is improved.
+
+60-80 points: Good Skin Texture
+The skin appears smooth and well-maintained, with minimal imperfections. Pores are small and barely noticeable. Minor discoloration or rare blemishes may exist but do not detract from the overall clarity. The skin has a natural radiance, good elasticity, and even tone.
+
+80-100 points: Excellent Skin Texture
+The skin is exceptionally smooth, clear, and refined. Pores are nearly invisible, and there are no visible blemishes or discoloration. The complexion is even, luminous, and deeply hydrated, with a plump, youthful appearance. The skin looks healthy, radiant, and well-cared-for, reflecting an outstanding skincare routine and overall wellness.`,
+    tone: `0-20 points: Poor Skin Tone
+The complexion is highly uneven, with prominent discoloration, hyperpigmentation, or redness. Dark spots, melasma, or post-inflammatory marks are widespread. The skin appears patchy, dull, or sallow, with no uniformity in color.
+
+20-40 points: Minimal Tone Evenness
+Some improvement in tone, but discoloration (dark spots, redness, or uneven patches) remains obvious. The skin lacks vibrancy, and areas of hyperpigmentation or dullness detract from a balanced appearance.
+
+40-60 points: Moderate Skin Tone
+The complexion is moderately even, with minor discoloration or slight redness in certain areas. Hyperpigmentation may be faint but not distracting. The skin has a more uniform base, with a subtle healthy glow starting to emerge.
+
+60-80 points: Good Skin Tone
+Skin tone is mostly even and radiant, with minimal discoloration. Any remaining hyperpigmentation or redness is faint and only visible under close inspection. The complexion appears balanced, bright, and naturally healthy.
+
+80-100 points: Excellent Skin Tone
+Flawless, even-toned complexion with no visible discoloration, redness, or dark spots. The skin has a luminous, uniform hue—whether fair, medium, or deep—and appears naturally radiant. Melanin distribution is perfectly balanced, reflecting optimal skin health and care.`,
+    pores: `0-20 points: Very Enlarged, Prominent Pores
+Pores are extremely visible, dilated, and may appear "open" or clogged. They are widespread across the T-zone, cheeks, or nose, often with blackheads or excess sebum. Skin texture appears rough and uneven due to pore prominence.
+
+20-40 points: Enlarged, Noticeable Pores
+Pores are clearly visible, especially in oily or combination skin areas. Some may appear stretched or slightly clogged, with minor blackheads. Texture is improved but still uneven under certain lighting.
+
+40-60 points: Moderate Pore Visibility
+Pores are visible upon close inspection but not overly distracting. They may appear refined in some areas (e.g., cheeks) but slightly larger in the T-zone. Minimal blackheads or congestion. Skin looks smoother overall.
+
+60-80 points: Refined, Minimal Pores
+Pores are small and barely noticeable except under magnification. No visible clogging or blackheads. Skin appears smooth, with pores blending naturally into the complexion.
+
+80-100 points: Nearly Poreless, Flawless Texture
+Pores are virtually invisible to the naked eye, even under close inspection. Skin looks airbrushed, with a seamless, smooth surface. No congestion or texture irregularities.`,
+    wrinkles: `0-20 points: Poor Skin Smoothness
+The skin shows significant wrinkling, with deep folds and pronounced texture. Wrinkles are highly visible even at rest, particularly around high-movement areas (e.g., forehead, eyes, mouth). The skin appears loose, creased, and lacks elasticity, with minimal natural firmness or hydration.
+
+20-40 points: Minimal Skin Smoothness
+Wrinkles are noticeable but not severe. Fine lines are present, especially with facial expressions, but deeper wrinkles are less prominent at rest. Skin retains some elasticity but shows early signs of aging or dehydration, with slight sagging in key areas.
+
+40-60 points: Moderate Skin Smoothness
+The skin exhibits moderate wrinkles, primarily dynamic (appearing with movement) rather than static. Fine lines are visible up close, but deeper wrinkles are minimal. Skin maintains reasonable firmness and hydration, with minor texture irregularities. Overall appearance is age-appropriate but not overly aged.
+
+60-80 points: Good Skin Smoothness
+Wrinkles are subtle and limited to fine lines, mostly visible only with exaggerated expressions. Skin appears smooth at rest, with good elasticity and hydration. Minor texture may exist but is not distracting. The overall look is youthful, with well-maintained collagen and minimal sagging.
+
+80-100 points: Excellent Skin Smoothness
+The skin is nearly flawless, with minimal to no visible wrinkles even during expressions. Surface texture is smooth, firm, and evenly toned. Hydration and elasticity are optimal, contributing to a plump, youthful appearance. Any fine lines are barely perceptible, and the skin radiates health and vitality.`,
   },
-  male: {
-    mouth: `
-            0-20: Severe Oral Health Issues. Critical oral health problems, such as advanced periodontal disease with deep gum pockets (≥6mm), multiple missing or broken teeth, extensive tooth decay affecting most teeth, visible swelling, abscesses, or pus.
-            ##
-            20-40: Poor oral health. Noticeable dental problems, such as moderate periodontal disease with gum recession (4-5mm pockets), several untreated cavities, or heavy plaque and tartar buildup leading to visible yellowing or staining.
-            ##
-            40-60: Fair oral health. Occasional or mild dental issues, such as early-stage gum disease (gingivitis) with slight redness and swelling, a few small cavities that may not be immediately noticeable, or minor gum irritation. Plaque buildup is present but not excessive, and teeth may show slight discoloration or minor cosmetic flaws.
-            ##
-            60-80: Good oral health. Generally healthy with minimal dental issues. Gums are pink and firm with no signs of inflammation or bleeding, and teeth are mostly free of decay or discoloration. Minor plaque buildup or slight cosmetic imperfections (e.g., small chips or mild staining) may be present but do not affect overall oral health.
-            ##
-            80-100: Excellent oral health. Optimal dental health, characterized by strong, well-aligned teeth with no visible decay, cracks, or staining. Gums are healthy, pink, and firm with no signs of recession, inflammation, or bleeding. Oral hygiene is impeccable, with no plaque or tartar buildup, and there are no functional or aesthetic concerns.
-          `,
-    skin: `0-20: Severe skin issues. Critical skin conditions that significantly compromise skin integrity and appearance. Examples include widespread acne (e.g., cystic or nodular acne), deep or infected wounds, severe burns, chronic eczema or psoriasis covering large areas. Skin may appear highly irritated, discolored, or scarred.
-                ##
-                20-40: Significant skin problems. Noticeable skin concerns that impact overall quality and appearance. These may include persistent acne (e.g., papules and pustules), deep acne scars, hyperpigmentation or hypopigmentation, rough or uneven texture, or chronic dryness or oiliness. Visible redness, irritation, or early signs of skin laxity may also be present.
-                ##
-                40-60: Moderate skin concerns. Occasional or mild skin issues, such as sporadic breakouts, mild acne scars, uneven skin tone (e.g., sunspots or mild melasma), rough patches, or early signs of aging (e.g., fine lines, faint wrinkles, or slight loss of elasticity). Skin may appear generally healthy but with some visible imperfections.
-                ##
-                60-80: Generally Healthy Skin. Mostly clear and healthy skin with minor imperfections. Occasional pimples, slight dryness or oiliness, and minimal signs of aging (e.g., faint lines or mild dullness) may be present. Skin texture is smooth, and tone is relatively even, with no major discoloration or irritation.
-                ##
-                80-100: Excellent skin health. Optimal skin condition, characterized by a smooth, even texture, balanced hydration, and a radiant, glowing appearance. Pores are barely visible, and there is no acne, discoloration, or irritation. Signs of aging are minimal or absent, and the skin appears firm, elastic, and well-maintained.`,
-    lips: `0-20: Severe Lip Issues. Characterized by severe dryness, deep cracking, bleeding, or visible flaking. Lips may appear inflamed, chapped, or scaly. Cold sores, open wounds, or infections may also be present.
-                ##
-                20-40: Significant Lip Problems. Noticeable lip concerns, such as persistent dryness, moderate cracking, and rough or uneven texture. Lips may feel tight or uncomfortable, with visible peeling or flakiness.
-                ##
-                40-60: Moderate Lip Concerns. Occasional or mild lip issues, such as moderate dryness, slight cracking, or a faintly rough texture. Lips may feel dry but are not severely uncomfortable. Minor flakiness or unevenness may be visible.
-                ##
-                60-80: Generally Healthy Lips. Mostly smooth and hydrated lips with minimal issues. Slight dryness or occasional tightness may occur, but there is no significant cracking or flaking. Lips appear soft and well-maintained, with a natural texture and color.
-                ##
-                80-100: Excellent Lip Health. Optimal lip condition, characterized by perfectly smooth, moisturized, and supple lips. There is no dryness, cracking, or flaking, and lips feel soft and comfortable. The natural color is even, and the texture is smooth, with no signs of irritation or damage.
-                `,
-    eyes: `0-20: Severe Wrinkles and Skin Aging. Advanced signs of aging, including deep wrinkles, pronounced crow's feet, severe under-eye bags or puffiness, prominent dark circles, and significant skin laxity. Skin texture is uneven, sagging, or crepe-like, with a loss of elasticity and firmness. These signs are highly visible and may extend beyond the eye area to the forehead, cheeks, and mouth.
-                ##
-                20-40: Moderate Wrinkles and Skin Aging. Noticeable signs of aging, such as moderate wrinkles around the eyes, visible crow's feet, and moderate under-eye bags or puffiness. Dark circles are present but not severe, and there are early signs of skin laxity and uneven texture. Fine lines may also appear on the forehead or mouth area.
-                ##
-                40-60: Mild Wrinkles and Skin Aging. Early signs of aging, such as fine lines around the eyes, mild crow's feet, and slight under-eye bags or puffiness. Dark circles are mild and can be improved with treatment. Skin texture shows moderate unevenness, but overall firmness and elasticity are still relatively intact.
-                ##
-                60-80: Minimal Wrinkles and Skin Aging. Few or no visible wrinkles around the eyes, minimal crow's feet, and occasional under-eye bags or puffiness that are easily managed. Dark circles are faint or absent, and skin texture is generally smooth, firm, and even. Signs of aging are subtle and not immediately noticeable.
-                ##
-                80-100: No Visible Wrinkles or Skin Aging. Optimal skin condition with no visible wrinkles, lines, or crow's feet. Under-eye areas are smooth, with no bags, puffiness, or dark circles. Skin texture is very smooth, firm, and youthful, with excellent elasticity and a radiant appearance. There are no signs of aging or skin laxity.`,
-    grooming: `
-          0-20: Poor Grooming. 
-          If the person has a beard: The beard is completely unkempt, messy, and uneven, with a wild and neglected appearance. Stray hairs are prominent, and there is no shaping or trimming. If the person doesn't have a beard: The shaven area is uneven, poorly shaved, or patchy, with visible stubble and missed spots. The overall appearance is unkempt and lacks attention to detail.
-          ##
-          20-40: Below-Average Grooming. If the person has a beard: The beard is somewhat uneven or patchy, with inconsistent length and minimal shaping. Stray hairs are noticeable, and the beard lacks definition. If the person doesn’t have a beard: The shaven area has rough patches, missed spots, or uneven stubble. The shave is incomplete or inconsistent, detracting from the overall appearance.
-          ##
-          40-60: Average Grooming. If the person has a beard: The beard is generally trimmed but may have uneven edges or stray hairs. The shape is present but lacks precision or refinement. If the person doesn't have a beard: The shaven area is generally smooth but not perfectly clean, with minimal stubble or slight unevenness. The overall appearance is acceptable but not polished.
-          ##
-          60-80: Good Grooming. If the person has a beard: The beard is neatly trimmed with well-defined edges and even growth. Stray hairs are minimal, and the beard complements facial features. If the person doesn't have a beard: The shaven area is clean and smooth, with minimal stubble visible only upon close inspection. The overall appearance is well-maintained and refined.
-          ##
-          80-100: If the person has a beard: The beard is perfectly shaped, with clean lines, even growth, and no stray hairs. It is meticulously maintained and enhances facial symmetry. If the person doesn't have a beard: The shaven area is perfectly smooth and clean-shaven, with no visible stubble or missed spots. The overall appearance is immaculate and polished.`,
-    scalp: `
-          0-20: Severe Scalp Issues. Critical scalp conditions that significantly compromise scalp health and appearance. Examples include extensive dandruff, psoriasis, eczema, open sores, severe inflammation, or infections (e.g., folliculitis). The scalp may appear red, swollen, or scaly, with visible flaking, crusting, or bleeding.
-                ##
-                20-40: Significant Scalp Problems. Noticeable scalp concerns, such as persistent dandruff, deep or large flakes, noticeable dryness or oiliness, and moderate inflammation. The scalp may appear uneven, with visible redness or irritation.
-                ##
-                40-60: Moderate Scalp Concerns. Occasional or mild scalp issues, such as small flakes, dry patches, slight redness, or minor texture irregularities. These concerns are not severe but may mildly affect the visual quality of the scalp.
-                ##
-                60-80: Generally Healthy Scalp. Mostly clear and smooth scalp with minor imperfections. Occasional small flakes, slight unevenness, or minimal redness may be present, but these do not significantly detract from the overall appearance. The scalp appears clean, balanced, and well-maintained.
-                ##
-                80-100: Excellent Scalp Health. Optimal scalp condition, characterized by a smooth, even tone with no visible flakes, redness, or other imperfections. The scalp appears clean, healthy, and well-hydrated, with no signs of dryness, oiliness, or irritation. It is free from any visible issues and contributes to an overall polished appearance.`,
-    chest: `0-20: Poor Muscle Definition. The chest region, including the pectoralis major, pectoralis minor, and surrounding muscles, shows minimal development. The chest appears flat and smooth, with no visible muscle tone or definition. The pectoralis major lacks any noticeable separation or contour, and the pectoralis minor is not discernible. Overall, the chest has a soft, underdeveloped appearance with no distinct muscular features.
-          ##
-          20-40: Minimal Muscle Definition. The chest begins to show early signs of muscle development, though it remains below average in terms of definition and size. The pectoralis major may exhibit a slight shape, particularly near the sternum, but lacks clear separation or fullness. The pectoralis minor remains mostly hidden, contributing little to the overall appearance. The chest has a slightly improved contour but still appears soft and lacks pronounced muscularity.
-          ##
-          40-60: Moderate Muscle Definition. The chest displays moderate muscle development, with a more noticeable shape and structure. The pectoralis major shows improved definition, with some visible separation, particularly near the center and lower regions. The pectoralis minor begins to contribute to the overall appearance, adding subtle depth and structure. The chest appears firmer and more toned, with a solid foundation of muscle development, though it still lacks the fullness and sharpness of a highly trained physique.
-          ##
-          60-80: Good Muscle Definition. The chest demonstrates above-average muscle tone and definition, with a well-developed and athletic appearance. The pectoralis major is clearly defined, with noticeable separation and a fuller, more robust shape. The pectoralis minor is visibly contributing to the chest's structure, adding depth and dimension. The overall chest area appears sculpted and muscular, with a balanced and proportionate look that suggests consistent training and development.
-          ##
-          80-100: Excellent Muscle Definition. The chest exhibits exceptional muscle development, with a highly sculpted and powerful appearance. The pectoralis major is prominently defined, with deep separation, sharp contours, and a full, rounded shape that commands attention. The pectoralis minor is highly visible, adding to the chest’s impressive depth and detail. The overall chest is extraordinarily firm, muscular, and aesthetically striking, showcasing a level of development that reflects advanced training, discipline, and genetic potential.`,
-    belly: `0-20 points: Poor Muscle Definition. The belly region, including the rectus abdominis, obliques, and lower back, shows minimal muscle development. The abdominal area appears smooth and soft, with no visible muscle definition or separation. The rectus abdominis lacks any noticeable segmentation, the obliques are not discernible, and the lower back is smooth without distinct muscle definition. Overall, the belly region has a soft, undefined appearance with no visible muscularity.
-          ##
-          20-40 points: Minimal Muscle Definition. The belly region exhibits some muscle development but remains below average in definition. The rectus abdominis lacks significant separation into individual six-pack sections. The obliques may start to show minimal shape but remain somewhat undefined. The lower back shows slight improvement in definition but lacks prominent muscle separation. Overall, the belly region has a somewhat better shape but still lacks clear definition.
-          ##
-          40-60 points: Moderate Muscle Definition. The belly region displays moderate muscle development. The rectus abdominis is more defined, with visible separation between the upper and lower sections, though the six-pack is not yet highly pronounced. The obliques exhibit moderate definition, contributing to a more sculpted appearance. The lower back is firmer and shows some definition, contributing to an overall toned and structured look. The belly region appears solid and well-toned.
-          ##
-          60-80 points: Good Muscle Definition. The belly region demonstrates above-average muscle tone and definition. The rectus abdominis is well-defined, with clear separation into distinct six-pack sections and noticeable muscle definition. The obliques are prominently defined, showing significant separation and a V-shape along the sides of the torso. The lower back is highly defined, with visible muscle groups and a robust appearance. The overall look is athletic and impressive, indicative of consistent strength training and low body fat.
-          ##
-          80-100 points: Excellent Muscle Definition. The belly region exhibits exceptional muscle development and definition. The rectus abdominis is highly sculpted, with prominent, deep separation between the six-pack sections and a highly defined appearance. The obliques are extraordinarily well-defined, with intricate muscle detail and a striking V-shape. The lower back is exceptionally defined, contributing to a muscular and aesthetically impressive appearance. The entire belly region conveys outstanding strength and conditioning, with a highly impressive and aesthetically striking look.`,
-    arms: `0-20: Poor Muscle Definition. The arms, including the biceps, triceps, and forearms, show minimal muscle development. The biceps appear smooth and underdeveloped with little to no definition, lacking noticeable shape. The triceps are not discernible, and the overall arm appears soft and lacking in muscle tone. The forearms also lack definition, contributing to a uniform and undefined appearance.
-          ##
-          20-40: Minimal Muscle Definition. The arms exhibit some signs of muscle development but remain below average in definition. The biceps may have a slight increase in definition but lack significant separation. The triceps begin to show minimal shape but remain somewhat smooth and undefined. Overall, the arms have a somewhat better shape yet still lack pronounced muscularity.
-          ##
-          40-60: Moderate Muscle Definition. Arms in this category display moderate muscle development. The biceps are more defined, showing visible but not pronounced separation. The triceps exhibit moderate definition, with noticeable separation along the back of the upper arm. The forearms are firmer and show some definition, contributing to a more toned and structured appearance. Overall, the arms appear solid and well-toned, reflecting regular physical activity.
-          ##
-          60-80: Good Muscle Definition. The arms demonstrate above-average muscle tone and definition. The biceps are well-defined, with clear separation and noticeable peaks when flexed. The triceps are prominently defined, with significant separation and a robust appearance along the back of the upper arm. The forearms exhibit high definition, with visible muscle groups and prominent vascularity. The overall appearance of the arms is athletic and impressive, indicative of consistent strength training or physical activity. 
-          ##
-          80-100: Excellent Muscle Definition. Arms exhibit exceptional muscle development and definition. The biceps are highly sculpted, with prominent peaks, deep separation, and exceptional definition. The triceps are extraordinarily well-defined, showing intricate muscle detail and substantial separation. The forearms are highly defined, with prominent muscularity and visible vascularity. The entire arm region conveys outstanding strength and conditioning, with a strikingly muscular and aesthetically impressive appearance.`,
-    legs: `0-20: Poor Muscle Definition. Legs exhibit minimal muscle development, lacking noticeable definition. There is a general absence of muscles and shape, resulting in a smooth and underdeveloped appearance. Both thighs and calves blend seamlessly without distinct separation.
-          ##
-          20-40: Minimal Muscle Definition. Legs show some muscle development but remain below average in definition. They may appear slightly more muscular than in the lower range but still lack significant muscularity. The separation between muscle groups is minimal, and the overall shape remains somewhat undefined.
-          ##
-          40-60: Moderate Muscle Definition. Legs display moderate muscle development with visible, though not pronounced, definition. Thighs and calves have some separation between muscle groups indicating a foundation of strength. The overall look is solid and well-toned.
-          ##
-          60-80: Good Muscle Definition. Legs exhibit above-average muscle definition. There is clear separation between the thighs, calves, and other muscle groups, with noticeable athletic appearance. This level indicates significant muscle development.
-          ##
-          80-100: Excellent Muscle Definition. Legs in this range demonstrate exceptional muscle development. They are highly sculpted, with prominent, well-defined muscles throughout. Thighs and calves show outstanding separation, reflecting a high level of fitness and muscularity. The overall appearance is strikingly muscular and aesthetically impressive, conveying exceptional strength and conditioning.`,
-    back: `0-20: Poor Muscle Definition. The back muscles, including the latissimus dorsi, rhomboids, trapezius, and erector spinae, exhibit minimal development. The back appears smooth and underdeveloped with little to no visible muscle tone or definition. The latissimus dorsi lack noticeable width and definition, the rhomboids are not discernible, and the trapezius appears smooth without distinct separation. The erector spinae are not visibly defined, contributing to a undefined overall appearance.
-          ##20-40: Minimal Muscle Definition. The back muscles show some development but remain below average in definition. The latissimus dorsi may exhibit a slight increase in width but lack significant separation. The rhomboids and trapezius start to show minimal shape, though they remain somewhat undefined. The erector spinae lacks prominent definition. The overall back shape improves slightly in comparison to the lowest condition but lacks clear muscle separation and definition.
-          ##40-60: Moderate Muscle Definition. The back displays moderate muscle development. The latissimus dorsi are more defined, with visible but not pronounced width and separation, contributing to a more solid appearance. The rhomboids and trapezius show moderate definition, with noticeable separation between muscle groups and a more structured look. The erector spinae shows some definition along the lower back. Overall, the back appears well-toned with moderate muscle definition and shape.
-          ##60-80: Good Muscle Definition. The back demonstrates above-average muscle tone and definition. The latissimus dorsi are well-defined, with clear separation from the lower back and a noticeable V-shape. The rhomboids and trapezius exhibit significant definition, with detailed separation and a pronounced upper back structure. The erector spinae are highly visible, contributing to a strong and well-defined lower back. The overall appearance is robust and athletic, reflecting consistent strength training and physical conditioning.
-          ##80-100: Excellent Muscle Definition. Back muscles exhibit exceptional development and definition. The latissimus dorsi are highly sculpted, with prominent width and clear separation from the lower back, creating an impressive V-taper. The rhomboids and trapezius are extraordinarily well-defined, with intricate muscle detail and exceptional separation, extending from the neck to the upper back. The erector spinae are highly visible and well-defined, adding to the overall muscular and aesthetic appeal of the back. The entire back region conveys outstanding strength and conditioning, with an exceptionally impressive and aesthetically striking appearance.`,
-    shoulders: `0-20: Poor Muscle Definition. The shoulder muscles, including the deltoids, trapezius, and rotator cuff muscles, exhibit minimal development. The deltoids lack definition, appearing smooth and underdeveloped. The trapezius muscles show little to no noticeable structure or separation, and the rotator cuff muscles are not visibly defined. Overall, the shoulders are lacking in shape, and the muscle groups blend seamlessly without distinct borders.
-          ##20-40: Minimal Muscle Definition. The shoulder muscles show some signs of development but remain below average in definition. The deltoids may have a slight increase in definition but lack significant separation. The trapezius muscles might begin to show a hint of shape, but the overall appearance remains somewhat undefined. The rotator cuff muscles are still not prominently visible, and the overall shoulder area has a somewhat improved shape but lacks pronounced muscularity.
-          ##40-60: Moderate Muscle Definition. Shoulders display moderate muscle development. The deltoids are more toned, with visible but not pronounced definition, showing some separation between the anterior, lateral, and posterior heads. The trapezius muscles exhibit a more defined appearance, with noticeable muscle separation along the upper back. The rotator cuff muscles may show mild definition, contributing to a more solid and athletic shoulder shape. The overall appearance is well-toned, reflecting regular physical activity.
-          ##60-80: Good Muscle Definition. Shoulders demonstrate above-average muscle tone and definition. The deltoids are well-defined, with clear separation between the anterior, lateral, and posterior heads, resulting in a robust and athletic appearance. The trapezius muscles are prominent, showing significant definition and separation along the upper and middle back. The rotator cuff muscles are visibly defined, contributing to the overall shape of the shoulders. The shoulders have a strikingly athletic look, indicative of consistent strength training or physical activity.
-          ##80-100: Excellent Muscle Definition. Shoulders exhibit exceptional muscle development and definition. The deltoids are highly sculpted, with prominent and well-defined separation between the anterior, lateral, and posterior heads. The trapezius muscles are extraordinarily well-developed, with detailed definition and exceptional separation extending from the neck to the upper back. The rotator cuff muscles are highly visible and well-defined, adding to the overall muscular and aesthetic appeal of the shoulders. The entire shoulder region conveys outstanding strength and conditioning, with a highly impressive and aesthetically striking appearance.`,
+  hair: {
+    density: `0-20 points: Very Thin/Sparse Hair
+The scalp is highly visible with significant gaps between hair strands. Hair appears wispy, fragile, and lacks volume. Coverage is minimal, with noticeable bald spots or extreme thinning. The overall appearance is weak and uneven.
+
+20-40 points: Below-Average Density
+Hair is thin but slightly more distributed, with moderate scalp visibility. Strands are finer and sparser than average, lacking fullness. Some areas may appear patchy, especially under bright light. Volume is minimal, and styling options are limited.
+
+40-60 points: Moderate Density
+Hair has a balanced but unremarkable thickness. The scalp may peek through in certain lighting but isn't overly obvious. Strands have decent coverage, though volume is still average or slightly below. Styling holds better, but hair lacks natural body.
+
+60-80 points: Good/Thick Density
+Hair appears full and healthy, with minimal scalp visibility. Strands are densely packed, providing ample volume and texture. Styling is versatile, and hair holds shape well. Minor thinning may occur at the crown or part line but isn't distracting.
+
+80-100 points: Excellent/Luxurious Density
+Hair is exceptionally thick, with no visible scalp even under direct light. Strands are densely packed, creating a lush, voluminous appearance. Hair feels heavy, resilient, and effortlessly holds styles. The overall look is vibrant, healthy, and enviably full.`,
+    texture: `0-20 points: Poor Texture
+The hair appears severely damaged and uneven. Split ends are widespread and highly visible, with frequent white dots and fraying. The surface looks chaotic, with extreme frizz or puffiness disrupting the hair's alignment. Breakage is obvious, with short, uneven pieces sticking out randomly. Some sections may appear wiry while others look limp, creating a patchy overall effect.
+
+20-40 points: Minimal Texture Refinement
+The hair shows slight improvement but remains below average in smoothness. Split ends are present but not dominant on every strand. Frizz is noticeable, particularly at the crown and ends, disrupting the hair's flow. Strands lack uniformity, with some areas appearing slightly smoother than others. Minor breakage is detectable upon close inspection.
+
+40-60 points: Moderate Texture
+The hair displays a balanced but unremarkable texture. Split ends are minimal and confined mostly to the tips. Frizz is subdued, with only minor flyaways under humidity. Strands align decently but may show slight variations in smoothness. No major breakage is apparent, though finer hairs may lack uniformity.
+
+60-80 points: Good Texture
+The hair appears smooth and well-maintained. Split ends are rare and barely noticeable. Frizz is minimal, limited to a few flyaways in harsh conditions. The cuticle layer looks intact, contributing to a sleek appearance. Strands align neatly, with no visible patches of roughness or breakage.
+
+80-100 points: Excellent Texture
+The hair exhibits flawless, salon-quality refinement. No split ends or breakage are detectable, even upon close inspection. The surface is perfectly smooth, with zero frizz or flyaways. Strands fall in uniform alignment, creating a seamless, polished look from roots to ends.`,
+    shine: `0-20 points: Poor Hair Shine. Hair appears dull, dry, and lifeless with no reflective quality. It lacks luster and may look rough, frizzy, or damaged. Overall appearance is matte and unhealthy.
+
+20-40 points: Minimal Hair Shine. Hair shows slight luster in certain lighting but remains mostly flat and lackluster. Shine is uneven and limited to small areas. Texture may still appear coarse or dry.
+
+40-60 points: Moderate Hair Shine. Hair has a consistent, soft sheen under light. It looks healthier and smoother, with improved texture and light reflection, but shine is not intense or high-gloss.
+
+60-80 points: Good Hair Shine. Hair reflects light clearly and evenly. It appears healthy, smooth, and vibrant with a noticeable gloss. Texture is silky, and shine enhances the overall aesthetic.
+
+80-100 points: Excellent Hair Shine. Hair displays an intense, mirror-like shine with brilliant light reflection. It looks luxuriously healthy, sleek, and polished. Shine is uniform from root to tip, enhancing overall beauty.`,
+    scalp: `0-20 points: Poor Scalp Health. Scalp is visibly dry, flaky, or excessively oily. Redness, irritation, or sores may be present. Overall appearance is unhealthy and neglected.
+
+20-40 points: Minimal Scalp Health. Some signs of dryness, oiliness, or buildup are present. Mild flaking or irritation may occur. Scalp lacks balance and vitality.
+
+40-60 points: Moderate Scalp Health. Scalp is mostly clear with occasional dryness or oiliness. Minimal flaking or buildup. Scalp appears relatively healthy with minor issues.
+
+60-80 points: Good Scalp Health. Scalp is clean, balanced, and free from visible irritation or buildup. No signs of flaking or excess oil. Overall appearance is healthy and well-maintained.
+
+80-100 points: Excellent Scalp Health. Scalp is perfectly balanced, smooth, and free from any irritation, buildup, or flaking. Overall appearance is pristine, vibrant, and optimally nourished.`,
   },
 };
 

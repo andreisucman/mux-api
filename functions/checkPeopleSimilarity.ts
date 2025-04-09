@@ -12,11 +12,7 @@ type Props = {
   categoryName: CategoryNameEnum;
 };
 
-export default async function checkPeopleSimilarity({
-  userId,
-  image,
-  categoryName,
-}: Props) {
+export default async function checkPeopleSimilarity({ userId, image, categoryName }: Props) {
   try {
     const messages = [
       {

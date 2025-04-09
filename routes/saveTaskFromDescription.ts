@@ -7,15 +7,7 @@ import { generateRandomPastelColor } from "make-random-color";
 import { Router, Response, NextFunction } from "express";
 import { zodResponseFormat } from "openai/helpers/zod";
 import { RunType } from "@/types/askOpenaiTypes.js";
-import {
-  CategoryNameEnum,
-  CustomRequest,
-  ModerationStatusEnum,
-  RoutineStatusEnum,
-  RoutineType,
-  TaskStatusEnum,
-  TaskType,
-} from "types.js";
+import { CategoryNameEnum, CustomRequest, RoutineStatusEnum, RoutineType, TaskStatusEnum, TaskType } from "types.js";
 import { adminDb, db } from "init.js";
 import askRepeatedly from "functions/askRepeatedly.js";
 import isActivityHarmful from "@/functions/isActivityHarmful.js";

@@ -1,12 +1,5 @@
 import * as dotenv from "dotenv";
-import {
-  PositionEnum,
-  UserType,
-  PartEnum,
-  DemographicsType,
-  NextActionType,
-  ModerationStatusEnum,
-} from "types.js";
+import { UserType, PartEnum, DemographicsType, NextActionType, ModerationStatusEnum } from "types.js";
 
 dotenv.config();
 
@@ -36,63 +29,6 @@ export const defaultTriedSubscriptions = {
   },
 };
 
-export const defaultRequiredProgress = [
-  {
-    position: PositionEnum.FRONT,
-    part: PartEnum.FACE,
-    title: "Progress: Head - front",
-    instruction: "Take a photo of your head from the front.",
-  },
-  {
-    position: PositionEnum.RIGHT,
-    part: PartEnum.FACE,
-    title: "Progress: Head - right",
-    instruction: "Take a photo of your head from the right.",
-  },
-  {
-    position: PositionEnum.LEFT,
-    part: PartEnum.FACE,
-    title: "Progress: Head - left",
-    instruction: "Take a photo of your head from the left.",
-  },
-  {
-    position: PositionEnum.FRONT,
-    part: PartEnum.MOUTH,
-    title: "Progress: Head - mouth",
-    instruction: "Take a photo of your open mouth.",
-  },
-  {
-    position: PositionEnum.FRONT,
-    part: PartEnum.SCALP,
-    title: "Progress: Head - scalp & hair",
-    instruction: "Take a photo of your head from the top.",
-  },
-  {
-    position: PositionEnum.FRONT,
-    part: PartEnum.BODY,
-    title: "Progress: Body - front",
-    instruction: "Take a full-height photo of your body from the front.",
-  },
-  {
-    position: PositionEnum.RIGHT,
-    part: PartEnum.BODY,
-    title: "Progress: Body - right",
-    instruction: "Take a full-height photo of your body from the right.",
-  },
-  {
-    position: PositionEnum.LEFT,
-    part: PartEnum.BODY,
-    title: "Progress: Body - left",
-    instruction: "Take a full-height photo of your body from the left.",
-  },
-  {
-    position: PositionEnum.BACK,
-    part: PartEnum.BODY,
-    title: "Progress: Body - back",
-    instruction: "Take a full-height photo of your body from the back.",
-  },
-];
-
 export const defaultDemographics: DemographicsType = {
   sex: null,
   ageInterval: null,
@@ -104,14 +40,14 @@ export const defaultDemographics: DemographicsType = {
 const defaultNextAction: NextActionType[] = [
   { part: PartEnum.FACE, date: null },
   { part: PartEnum.MOUTH, date: null },
-  { part: PartEnum.SCALP, date: null },
+  { part: PartEnum.HAIR, date: null },
   { part: PartEnum.BODY, date: null },
 ];
 
 const defaultStreaks = {
   faceStreak: 0,
   mouthStreak: 0,
-  scalpStreak: 0,
+  hairStreak: 0,
   bodyStreak: 0,
 };
 
@@ -119,7 +55,7 @@ export const defaultLatestScores = {
   overall: 0,
   face: null,
   mouth: null,
-  scalp: null,
+  hair: null,
   body: null,
 };
 
@@ -140,12 +76,11 @@ export const defaultUser: UserType = {
   latestScores: defaultLatestScores,
   latestScoresDifference: defaultLatestScores,
   club: null,
-  scanAnalysisQuota: 1,
   latestProgress: {
     overall: 0,
     face: null,
     mouth: null,
-    scalp: null,
+    hair: null,
     body: null,
   },
   createdAt: new Date(),
@@ -153,18 +88,13 @@ export const defaultUser: UserType = {
   specialConsiderations: "",
   tosAccepted: false,
   nextRoutine: defaultNextAction,
+  nextScan: defaultNextAction,
   streakDates: {},
   password: null,
   emailVerified: false,
   concerns: null,
-  requiredProgress: defaultRequiredProgress,
   subscriptions: defaultSubscriptions,
   toAnalyze: [],
-  coachEnergy: Number(process.env.COACH_ENERGY),
-  nutrition: {
-    dailyCalorieGoal: 2000,
-    remainingDailyCalories: 2000,
-  },
   canRejoinClubAfter: null,
   lastActiveOn: null,
   isPublic: false,

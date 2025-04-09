@@ -5,7 +5,7 @@ import httpError from "@/helpers/httpError.js";
 import findEmbeddings from "./findEmbeddings.js";
 import doWithRetries from "@/helpers/doWithRetries.js";
 import checkPeopleSimilarity from "./checkPeopleSimilarity.js";
-import { CategoryNameEnum } from "@/types.js";
+import { CategoryNameEnum, ProgressType } from "@/types.js";
 import createImageCollage from "./createImageCollage.js";
 import { db } from "@/init.js";
 
@@ -48,12 +48,9 @@ export default async function checkForTwins({
       });
 
       if (closestDocuments.length > 0) {
-        const inIds = [
-          new ObjectId(finalUserId),
-          ...closestDocuments.map((doc) => new ObjectId(doc.userId)),
-        ];
+        const inIds = [new ObjectId(finalUserId), ...closestDocuments.map((doc) => new ObjectId(doc.userId))];
 
-        const progressOfTwins = await doWithRetries(async () =>
+        const progressOfTwins = (await doWithRetries(async () =>
           db
             .collection("Progress")
             .find({
@@ -62,74 +59,26 @@ export default async function checkForTwins({
               },
             })
             .sort({ createdAt: -1 })
-            .project({ "images.position": 1, "images.urls": 1, userId: 1 })
+            .project({ "images.urls": 1, userId: 1 })
             .toArray()
-        );
+        )) as unknown as ProgressType[];
 
-        const frontalImageObjects = progressOfTwins
+        const originalImages = progressOfTwins
           .map((rec) => {
-            const frontalImage = rec.images.find(
-              (io: { position: string; urls: any[] }) => io.position === "front"
-            );
-            if (!frontalImage) return null;
-
-            const originalUrlObj = frontalImage.urls.find(
-              (io: { name: string; url: string }) => io.name === "original"
-            );
+            const originalUrlObj = rec.images
+              .flatMap((imo) => imo.urls)
+              .find((io: { name: string; url: string }) => io.name === "original");
             if (!originalUrlObj) return null;
 
-            return {
-              userId: rec.userId,
-              frontalImage: originalUrlObj.url,
-            };
+            return originalUrlObj.url;
           })
           .filter(Boolean);
 
-        const sideImageObjects = progressOfTwins
-          .map((rec) => {
-            const sideImage = rec.images.find(
-              (io: { position: string; urls: any[] }) => io.position === "right"
-            );
-            if (!sideImage) return null;
-
-            const originalUrlObj = sideImage.urls.find(
-              (io: { name: string; url: string }) => io.name === "original"
-            );
-            if (!originalUrlObj) return null;
-
-            return {
-              userId: rec.userId,
-              sideImage: originalUrlObj.url,
-            };
-          })
-          .filter(Boolean);
-
-        const closestDocumentsWithUser = [
-          { userId: new ObjectId(finalUserId), image },
-          ...closestDocuments,
-        ];
-
-        const collageImageGroups: string[][] = closestDocumentsWithUser.map(
-          (doc) => {
-            const images: string[] = [doc.image];
-            const relatedFrontalImageObject = frontalImageObjects.find(
-              (rec) => String(rec.userId) === String(doc.userId)
-            );
-            if (relatedFrontalImageObject)
-              images.push(relatedFrontalImageObject.frontalImage);
-
-            const relatedSideImageObject = sideImageObjects.find(
-              (rec) => String(rec.userId) === String(doc.userId)
-            );
-            if (relatedSideImageObject)
-              images.push(relatedSideImageObject.sideImage);
-            return [...new Set(images)];
-          }
-        );
+        const uniqueOriginalImages = [...new Set(originalImages)];
 
         const collageImage = await createImageCollage({
-          images: collageImageGroups,
-          isGrid: false,
+          images: uniqueOriginalImages,
+          isGrid: true,
         });
 
         const twinIndexes = await checkPeopleSimilarity({
@@ -138,13 +87,9 @@ export default async function checkForTwins({
           userId: finalUserId,
         });
 
-        const filteredTwinIndexes = twinIndexes.filter(
-          (index) => index !== "0"
-        );
+        const filteredTwinIndexes = twinIndexes.filter((index) => index !== "0");
 
-        twinDocuments = closestDocuments.filter((doc, index) =>
-          filteredTwinIndexes.includes(String(index + 1))
-        );
+        twinDocuments = closestDocuments.filter((doc, index) => filteredTwinIndexes.includes(String(index + 1)));
       }
     }
 

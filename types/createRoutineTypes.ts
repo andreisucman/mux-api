@@ -1,11 +1,5 @@
 import { ObjectId } from "mongodb";
-import {
-  UserConcernType,
-  RecipeType,
-  DemographicsType,
-  NextActionType,
-  SuggestionType,
-} from "@/types.js";
+import { UserConcernType, RecipeType, DemographicsType, NextActionType, SuggestionType } from "@/types.js";
 
 export type CreateRoutineUserInfoType = {
   _id: ObjectId;
@@ -37,7 +31,7 @@ export type CreateRoutineAllSolutionsType = {
 };
 
 export type CreateRoutineProgressRecordType = {
-  images: { position: string; image: string }[];
+  images: { image: string }[];
 };
 
 export type PersonalizedInfoType = {

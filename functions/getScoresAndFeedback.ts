@@ -1,5 +1,4 @@
 import doWithRetries from "@/helpers/doWithRetries.js";
-import getFeaturesToAnalyze from "@/helpers/getFeaturesToAnalyze.js";
 import { db } from "@/init.js";
 import {
   CategoryNameEnum,
@@ -17,12 +16,11 @@ import compareFeatureProgress from "./compareFeatureProgress.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import analyzeConcerns from "./analyzeConcerns.js";
 import formatRatings from "@/helpers/formatRatings.js";
-import filterImagesByFeature from "@/helpers/filterImagesByFeature.js";
 import { maintenanceConcerns } from "@/data/maintenanceConcerns.js";
 import { daysFrom } from "@/helpers/utils.js";
+import criteria from "@/data/featureCriteria.js";
 
 export type ImageObject = {
-  position: string;
   part: string;
   url: string;
 };
@@ -52,10 +50,7 @@ export default async function getScoresAndFeedback({
   let scoresDifference: FormattedRatingType = { overall: 0 };
   let concerns: UserConcernType[] = [];
 
-  const featuresToAnalyze = getFeaturesToAnalyze({
-    sex,
-    part,
-  });
+  const featuresToAnalyze = Object.keys(criteria[part]);
 
   let appearanceAnalysisResults: FeatureAnalysisResultType[] = [];
 
@@ -68,8 +63,7 @@ export default async function getScoresAndFeedback({
     createdAt: { $lte: minimumDistance },
   };
 
-  if (progressIdToExclude)
-    previousScanFilter._id = { $ne: progressIdToExclude };
+  if (progressIdToExclude) previousScanFilter._id = { $ne: progressIdToExclude };
 
   const previousScan = await doWithRetries(
     async () =>
@@ -91,22 +85,15 @@ export default async function getScoresAndFeedback({
     appearanceAnalysisResults = await doWithRetries(async () =>
       Promise.all(
         featuresToAnalyze.map(async (feature: string) => {
-          const relevantPreviousExplanation = allPreviousExplanations.find(
-            (obj) => obj.feature === feature
-          );
+          const relevantPreviousExplanation = allPreviousExplanations.find((obj) => obj.feature === feature);
 
           return doWithRetries(() => {
-            const filteredToAnalyze = filterImagesByFeature(
-              imageObjects,
-              feature
-            );
             return compareFeatureProgress({
               part,
               userId,
               feature,
               categoryName,
-              sex,
-              currentImages: filteredToAnalyze.map((obj) => obj.url),
+              currentImages: imageObjects.map((obj) => obj.url),
               previousImages,
               previousExplanation: relevantPreviousExplanation.explanation,
             });
@@ -119,18 +106,13 @@ export default async function getScoresAndFeedback({
     appearanceAnalysisResults = await doWithRetries(async () =>
       Promise.all(
         featuresToAnalyze.map(async (feature: string) => {
-          const filteredToAnalyze = filterImagesByFeature(
-            imageObjects,
-            feature
-          );
           return doWithRetries(() =>
             analyzeFeature({
               part,
               userId,
               feature,
               categoryName,
-              sex,
-              relevantImages: filteredToAnalyze.map((obj) => obj.url),
+              relevantImages: imageObjects.map((obj) => obj.url),
             })
           );
         })
@@ -161,23 +143,18 @@ export default async function getScoresAndFeedback({
   /* add the record of progress to the Progress collection*/
   scores = formatRatings(appearanceAnalysisResults);
 
-  scores.explanations = appearanceAnalysisResults.map(
-    ({ feature, explanation }: FeatureAnalysisType) => ({
-      feature,
-      explanation,
-    })
-  );
+  scores.explanations = appearanceAnalysisResults.map(({ feature, explanation }: FeatureAnalysisType) => ({
+    feature,
+    explanation,
+  }));
   const safeInitialScores = initialScores || scores;
 
-  scoresDifference = Object.keys(safeInitialScores).reduce(
-    (a: { [key: string]: number }, key) => {
-      if (typeof scores[key] === "number") {
-        a[key] = scores[key] - safeInitialScores[key];
-      }
-      return a;
-    },
-    {}
-  );
+  scoresDifference = Object.keys(safeInitialScores).reduce((a: { [key: string]: number }, key) => {
+    if (typeof scores[key] === "number") {
+      a[key] = scores[key] - safeInitialScores[key];
+    }
+    return a;
+  }, {});
 
   return { scores, scoresDifference, concerns };
 }

@@ -2,7 +2,6 @@ import { ObjectId } from "mongodb";
 import { Request } from "express";
 import { ModerationResultType } from "./functions/moderateContent.js";
 import { TaskExampleType } from "./types/createRoutineTypes.js";
-import { BlurDotType } from "./routes/uploadProgress.js";
 
 export type SuggestionType = {
   _id: string;
@@ -34,7 +33,7 @@ export type UserInfoType = {
 };
 
 export type HigherThanType = {
-  head: { overall: number; face: number; mouth: number; scalp: number };
+  head: { overall: number; face: number; mouth: number; hair: number };
   body: { overall: number; body: number };
 };
 
@@ -44,7 +43,6 @@ export type RequirementType = {
   title: string;
   instruction: string;
   part: PartEnum;
-  position: PositionEnum;
 };
 
 export type FormattedRatingType = {
@@ -57,7 +55,7 @@ export type LatestScoresType = {
   overall: number;
   face: FormattedRatingType;
   mouth: FormattedRatingType;
-  scalp: FormattedRatingType;
+  hair: FormattedRatingType;
   body: FormattedRatingType;
 };
 
@@ -94,23 +92,21 @@ export type UserType = {
   latestScanImages?: string[];
   specialConsiderations: string;
   streaks: StreaksType;
+  nextScan: NextActionType[];
   nextRoutine: NextActionType[];
   streakDates: {};
   concerns: UserConcernType[] | null;
   tosAccepted: boolean;
-  requiredProgress: RequirementType[];
   latestScores: LatestScoresType;
   latestScoresDifference: LatestScoresType;
   latestProgress: LatestProgressType;
   club: ClubDataType;
-  scanAnalysisQuota: number;
   deleteOn: Date;
   subscriptions: {
     improvement: SubscriptionType;
     advisor: SubscriptionType;
   };
   toAnalyze: ToAnalyzeType[];
-  coachEnergy: number;
   stripeUserId: string;
   emailVerified: boolean;
   canRejoinClubAfter: Date | null;
@@ -118,10 +114,6 @@ export type UserType = {
   nextDiaryRecordAfter: { [key: string]: Date | null } | null;
   nextNameUpdateAt: Date | null;
   moderationStatus: ModerationStatusEnum;
-  nutrition: {
-    dailyCalorieGoal: number;
-    remainingDailyCalories: number;
-  };
   lastActiveOn: Date | null;
 };
 
@@ -129,7 +121,6 @@ export type ToAnalyzeType = {
   createdAt: Date;
   mainUrl: BlurredUrlType;
   contentUrlTypes: BlurredUrlType[];
-  position: string;
   part: PartEnum | null;
   blurType?: BlurTypeEnum;
   suspiciousAnalysisResults?: ModerationResultType[];
@@ -183,7 +174,7 @@ export enum PartEnum {
   FACE = "face",
   BODY = "body",
   MOUTH = "mouth",
-  SCALP = "scalp",
+  HAIR = "hair",
 }
 
 export enum PositionEnum {
@@ -257,7 +248,7 @@ export enum RoutineStatusEnum {
 export type StreaksType = {
   faceStreak: number;
   mouthStreak: number;
-  scalpStreak: number;
+  hairStreak: number;
   bodyStreak: number;
 };
 
@@ -276,7 +267,6 @@ export type BlurredUrlType = {
 };
 
 export type ProgressImageType = {
-  position: string;
   mainUrl: BlurredUrlType;
   urls: BlurredUrlType[];
 };
@@ -326,7 +316,7 @@ export type LatestProgressType = {
   overall: number;
   face: ProgressType;
   mouth: ProgressType;
-  scalp: ProgressType;
+  hair: ProgressType;
   body: ProgressType;
 };
 

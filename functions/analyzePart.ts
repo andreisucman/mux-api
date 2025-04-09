@@ -7,25 +7,20 @@ import {
   ProgressType,
   ClubDataType,
   PartEnum,
-  BlurTypeEnum,
   ProgressImageType,
   BeforeAfterType,
   CategoryNameEnum,
   FormattedRatingType,
 } from "types.js";
 import addModerationAnalyticsData from "./addModerationAnalyticsData.js";
-import addSuspiciousRecord, {
-  SuspiciousRecordCollectionEnum,
-} from "./addSuspiciousRecord.js";
+import addSuspiciousRecord, { SuspiciousRecordCollectionEnum } from "./addSuspiciousRecord.js";
 import { ModerationStatusEnum } from "types.js";
 import moderateContent, { ModerationResultType } from "./moderateContent.js";
-import updateProgressImages from "functions/updateProgressImages.js";
 import { PartResultType } from "@/types/analyzePartTypes.js";
 import { db } from "init.js";
 import checkIfSelf from "./checkIfSelf.js";
 import httpError from "@/helpers/httpError.js";
 import { urlToBase64 } from "@/helpers/utils.js";
-import { CookieOptions } from "express";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import getScoresAndFeedback from "./getScoresAndFeedback.js";
 import { checkIfPublic } from "@/routes/checkIfPublic.js";
@@ -33,9 +28,7 @@ import { checkIfPublic } from "@/routes/checkIfPublic.js";
 type Props = {
   userId: string;
   name: string;
-  cookies: CookieOptions;
   avatar: { [key: string]: any } | null;
-  blurType: BlurTypeEnum;
   part: PartEnum;
   enableScanAnalysis: boolean;
   club: ClubDataType;
@@ -58,8 +51,6 @@ export default async function analyzePart({
   name,
   avatar,
   part,
-  cookies,
-  blurType,
   concerns = [],
   categoryName,
   demographics,
@@ -87,9 +78,7 @@ export default async function analyzePart({
       });
 
       isSafe = moderationResponse.isSafe;
-      isSuspicious = isSuspicious
-        ? isSuspicious
-        : moderationResponse.isSuspicious;
+      isSuspicious = isSuspicious ? isSuspicious : moderationResponse.isSuspicious;
       moderationResults.push(...moderationResponse.moderationResults);
 
       if (!isSafe) {
@@ -100,9 +89,7 @@ export default async function analyzePart({
           isSuspicious,
           userId,
         });
-        throw httpError(
-          `It looks like your image contains inappropriate content. Try a different one.`
-        );
+        throw httpError(`It looks like your image contains inappropriate content. Try a different one.`);
       }
 
       const isSelf = await checkIfSelf({
@@ -140,7 +127,6 @@ export default async function analyzePart({
     if (enableScanAnalysis) {
       const imageObjects = toAnalyze.map((tAo) => ({
         part: tAo.part,
-        position: tAo.position,
         url: tAo.mainUrl.url,
       }));
 
@@ -161,16 +147,9 @@ export default async function analyzePart({
     }
 
     const images = partToAnalyze.map((record: ToAnalyzeType) => ({
-      position: record.position,
       mainUrl: record.mainUrl,
       urls: record.contentUrlTypes,
     }));
-
-    const updatedImages = await updateProgressImages({
-      currentImages: images,
-      blurType,
-      cookies,
-    });
 
     const isPublic = await checkIfPublic({ userId, part });
 
@@ -180,8 +159,8 @@ export default async function analyzePart({
       part,
       scores,
       demographics,
-      images: updatedImages,
-      initialImages: initialProgress?.images || updatedImages,
+      images,
+      initialImages: initialProgress?.images || images,
       initialDate: initialProgress?.createdAt || createdAt,
       createdAt,
       userName: name,
@@ -193,7 +172,7 @@ export default async function analyzePart({
     };
 
     const beforeAfterUpdate: BeforeAfterType = {
-      images: updatedImages,
+      images,
       part,
       scores,
       demographics,
@@ -203,7 +182,7 @@ export default async function analyzePart({
       avatar,
       userName: name,
       initialDate: initialProgress?.createdAt || createdAt,
-      initialImages: initialProgress?.images || updatedImages,
+      initialImages: initialProgress?.images || images,
       scoresDifference,
     };
 
@@ -211,16 +190,12 @@ export default async function analyzePart({
       $set: beforeAfterUpdate,
     };
 
-    await doWithRetries(async () =>
-      db.collection("Progress").insertOne(recordOfProgress)
-    );
+    await doWithRetries(async () => db.collection("Progress").insertOne(recordOfProgress));
 
     await doWithRetries(async () =>
-      db
-        .collection("BeforeAfter")
-        .updateOne({ userId: new ObjectId(userId), part }, updateOperation, {
-          upsert: true,
-        })
+      db.collection("BeforeAfter").updateOne({ userId: new ObjectId(userId), part }, updateOperation, {
+        upsert: true,
+      })
     );
 
     partResult.latestScores = scores;

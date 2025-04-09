@@ -13,7 +13,6 @@ import { ChatCompletionContentPart } from "openai/src/resources/index.js";
 type Props = {
   userId: string;
   feature: string;
-  sex: SexEnum;
   part: PartEnum;
   categoryName: CategoryNameEnum;
   currentImages: string[];
@@ -29,19 +28,14 @@ export default async function compareFeatureProgress({
   previousImages,
   previousExplanation,
   part,
-  sex,
 }: Props) {
   try {
-    const systemContent = `You are an anthropologist, dermatologist and anathomist. You are given 2 sets of images of ${feature}: the current and previous. Your goal is to compare the condition of the ${feature} now with its previous condition Use this criteria when deciding on the current score: ### Criteria: ${
-      criteria[sex as "male"][feature as "mouth"]
-    }###. Make no assumptions, base your opinion on the available information only. Think step-by-step.`;
+    const systemContent = `You are an anthropologist, dermatologist and anathomist. You are given 2 sets of images of ${feature}: the current and previous. Your goal is to compare the condition of the ${feature} now with its previous condition Use this criteria when deciding on the current score: ### Criteria: ${criteria[part][feature]}###. Make no assumptions, base your opinion on the available information only. Think step-by-step.`;
 
     const FeatureProgressResponseFormatType = z.object({
       score: z
         .number()
-        .describe(
-          `A score from 0 to 100 representing the current condition of the ${feature} based on the criteria.`
-        ),
+        .describe(`A score from 0 to 100 representing the current condition of the ${feature} based on the criteria.`),
       explanation: z
         .string()
         .describe(
@@ -49,9 +43,7 @@ export default async function compareFeatureProgress({
         ),
     });
 
-    const content: ChatCompletionContentPart[] = [
-      { type: "text", text: "The previous images:" },
-    ];
+    const content: ChatCompletionContentPart[] = [{ type: "text", text: "The previous images:" }];
 
     for (const previousImage of previousImages) {
       content.push({
@@ -88,10 +80,7 @@ export default async function compareFeatureProgress({
       {
         model: "gpt-4o",
         content,
-        responseFormat: zodResponseFormat(
-          FeatureProgressResponseFormatType,
-          "analysis"
-        ),
+        responseFormat: zodResponseFormat(FeatureProgressResponseFormatType, "analysis"),
       },
     ];
 

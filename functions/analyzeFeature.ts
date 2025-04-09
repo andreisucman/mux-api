@@ -3,7 +3,7 @@ import * as dotenv from "dotenv";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import criteria from "data/featureCriteria.js";
 import askRepeatedly from "./askRepeatedly.js";
-import { SexEnum, PartEnum, CategoryNameEnum } from "types.js";
+import { PartEnum, CategoryNameEnum } from "types.js";
 import { FeatureAnalysisResultType } from "@/types/analyzeFeatureType.js";
 import httpError from "@/helpers/httpError.js";
 import { urlToBase64 } from "@/helpers/utils.js";
@@ -14,35 +14,21 @@ dotenv.config();
 
 type Props = {
   userId: string;
-  sex: SexEnum;
   feature: string;
   part: PartEnum;
   categoryName: CategoryNameEnum;
   relevantImages: string[];
 };
 
-export default async function analyzeFeature({
-  sex,
-  feature,
-  relevantImages,
-  part,
-  categoryName,
-  userId,
-}: Props) {
+export default async function analyzeFeature({ feature, relevantImages, part, categoryName, userId }: Props) {
   try {
-    const systemContent = `You are an anthropologist, dermatologist and anathomist. Rate the ${feature} of the person on the provided images from 0 to 100 according to the following criteria: ### Criteria: ${
-      criteria[sex as "male"][feature as "mouth"]
-    }###. Explain your reasoning with the references to the images. DO YOUR BEST AT PRODUCING A SCORE EVEN IF THE IMAGES ARE NOT CLEAR. Think step-by-step. Don't suggest any specific solutions. Don't mention the criteria in your response.`;
+    const systemContent = `You are an anthropologist, dermatologist and anathomist. Rate the ${feature} of the person on the provided images from 0 to 100 according to the following criteria: ### Criteria: ${criteria[part][feature]}###. Explain your reasoning with the references to the images. DO YOUR BEST AT PRODUCING A SCORE EVEN IF THE IMAGES ARE NOT CLEAR. Think step-by-step. Don't suggest any specific solutions. Don't mention the criteria in your response.`;
 
     const FeatureResponseFormatType = z.object({
       score: z
         .number()
-        .describe(
-          `score from 0 to 100 representing the condition of the ${feature} based on the criteria`
-        ),
-      explanation: z
-        .string()
-        .describe(`3-5 sentences of your reasoning for the score.`),
+        .describe(`score from 0 to 100 representing the condition of the ${feature} based on the criteria`),
+      explanation: z.string().describe(`3-5 sentences of your reasoning for the score.`),
     });
 
     const imageContent = [];
@@ -84,10 +70,7 @@ export default async function analyzeFeature({
             text: firstResponse,
           },
         ],
-        responseFormat: zodResponseFormat(
-          FeatureResponseFormatType,
-          "analysis"
-        ),
+        responseFormat: zodResponseFormat(FeatureResponseFormatType, "analysis"),
       },
     ];
 

@@ -4,20 +4,8 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import setToMidnight from "@/helpers/setToMidnight.js";
 import { daysFrom } from "helpers/utils.js";
-import personalizeInstruction from "functions/personalizeInstruction.js";
-import { tasksRequirePersonalizedInstruction } from "data/tasksRequirePersonalizedInstructions.js";
-import {
-  UserInfoType,
-  TaskType,
-  PartEnum,
-  TaskStatusEnum,
-  CategoryNameEnum,
-  ModerationStatusEnum,
-} from "types.js";
-import {
-  CreateRoutineAllSolutionsType,
-  PersonalizedInfoType,
-} from "types/createRoutineTypes.js";
+import { UserInfoType, TaskType, PartEnum, TaskStatusEnum, CategoryNameEnum } from "types.js";
+import { CreateRoutineAllSolutionsType, PersonalizedInfoType } from "types/createRoutineTypes.js";
 import httpError from "helpers/httpError.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
@@ -52,17 +40,13 @@ export default async function createTasks({
     let uniqueSolutions = [...new Set(rawTasks.map((entry) => entry.key))];
 
     if (createOnlyTheseKeys) {
-      uniqueSolutions = uniqueSolutions.filter((solutionKey) =>
-        createOnlyTheseKeys.includes(solutionKey)
-      );
+      uniqueSolutions = uniqueSolutions.filter((solutionKey) => createOnlyTheseKeys.includes(solutionKey));
     }
 
     const draftTasks: DraftTaskType[] = uniqueSolutions
       .map((key) => {
         const rawTaskObject = rawTasks.find((pair) => pair.key === key);
-        const informationObject = allSolutions.find(
-          (object) => object.key === key
-        );
+        const informationObject = allSolutions.find((object) => object.key === key);
 
         if (!rawTaskObject || !informationObject) return null;
 
@@ -83,33 +67,6 @@ export default async function createTasks({
       userId: String(userId),
     });
 
-    for (const draftTask of draftTasks) {
-      if (tasksRequirePersonalizedInstruction.includes(draftTask.key)) {
-        const { instruction: personalInstruction, productTypes } =
-          await personalizeInstruction({
-            userInfo,
-            categoryName,
-            name: draftTask.name,
-            instruction: draftTask.instruction,
-            description: draftTask.description,
-            concern: draftTask.concern,
-          });
-
-        await incrementProgress({
-          value: 2,
-          operationKey: "routine",
-          userId: String(userId),
-        });
-
-        personalizedInfo.push({
-          instruction: personalInstruction,
-          name: draftTask.name,
-          key: draftTask.key,
-          productTypes,
-        });
-      }
-    }
-
     const tasksToInsert = [];
     const dates = Object.keys(finalSchedule);
     const groupsOfTasks = Object.values(finalSchedule);
@@ -118,15 +75,11 @@ export default async function createTasks({
       for (let i = 0; i < groupsOfTasks[j].length; i++) {
         const scheduleTask = groupsOfTasks[j][i];
 
-        const matchingDraft = draftTasks.find(
-          (task) => task.key === scheduleTask.key
-        );
+        const matchingDraft = draftTasks.find((task) => task.key === scheduleTask.key);
 
         if (!matchingDraft) continue;
 
-        const relevantInfo = personalizedInfo.find(
-          (record) => record.key === scheduleTask.key
-        );
+        const relevantInfo = personalizedInfo.find((record) => record.key === scheduleTask.key);
 
         const startsAt = setToMidnight({
           date: new Date(dates[j]),

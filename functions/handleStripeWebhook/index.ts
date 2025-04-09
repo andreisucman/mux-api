@@ -21,10 +21,7 @@ let lastPlanFetch = 0;
 const sanitizePlanName = (name: string) => name.replace(/\./g, "_");
 
 //#region Helper Functions
-async function handleSubscriptionCreated(
-  subscription: Stripe.Subscription,
-  plans: any[]
-) {
+async function handleSubscriptionCreated(subscription: Stripe.Subscription, plans: any[]) {
   try {
     const { routineDataId } = subscription.metadata || {};
     if (routineDataId) return;
@@ -41,25 +38,13 @@ async function handleSubscriptionCreated(
   }
 }
 
-async function createRoutinePurchase(
-  routineDataId: string,
-  buyerId: string,
-  paymentIntentId: string
-) {
+async function createRoutinePurchase(routineDataId: string, buyerId: string, paymentIntentId: string) {
   try {
-    const relatedRoutineData: { [key: string]: any } = await fetchRoutineData(
-      routineDataId
-    );
+    const relatedRoutineData: { [key: string]: any } = await fetchRoutineData(routineDataId);
 
     if (!relatedRoutineData) return;
 
-    const {
-      name,
-      part,
-      userId: sellerId,
-      contentStartDate,
-      contentEndDate,
-    } = relatedRoutineData;
+    const { name, part, userId: sellerId, contentStartDate, contentEndDate } = relatedRoutineData;
 
     const [sellerInfo, buyerInfo] = await Promise.all([
       getUserInfo({
@@ -177,11 +162,7 @@ async function fetchRoutineData(routineDataId: string) {
   }
 }
 
-async function updateUserSubscriptionPlan(
-  customerId: string,
-  subscription: Stripe.Subscription,
-  plan: any
-) {
+async function updateUserSubscriptionPlan(customerId: string, subscription: Stripe.Subscription, plan: any) {
   try {
     const validUntil = new Date(subscription.current_period_end * 1000);
     const sanitizedPlanName = sanitizePlanName(plan.name);
@@ -205,10 +186,7 @@ async function updateUserSubscriptionPlan(
   }
 }
 
-async function handleSubscriptionPayment(
-  session: Stripe.Checkout.Session,
-  plans: any[]
-) {
+async function handleSubscriptionPayment(session: Stripe.Checkout.Session, plans: any[]) {
   try {
     const subscriptionId = session.subscription as string;
     if (!subscriptionId) return;
@@ -218,41 +196,27 @@ async function handleSubscriptionPayment(
 
     if (routineDataId) return;
 
-    const buyerInfo = await fetchUserInfo(
-      { stripeUserId: session.customer },
-      { _id: 1 }
-    );
+    const buyerInfo = await fetchUserInfo({ stripeUserId: session.customer }, { _id: 1 });
 
-    const expandedSession = await stripe.checkout.sessions.retrieve(
-      session.id,
-      {
-        expand: ["line_items.data"],
+    const expandedSession = await stripe.checkout.sessions.retrieve(session.id, {
+      expand: ["line_items.data"],
+    });
+
+    const planQuantities = expandedSession.line_items.data.reduce((acc, line) => {
+      const plan = plans.find((p) => p.priceId === line.price?.id);
+      if (plan) acc[plan.name] = (acc[plan.name] || 0) + (line.quantity ?? 1);
+      return acc;
+    }, {} as Record<string, number>);
+
+    const analyticsUpdate = Object.entries(planQuantities).reduce((a, [planName, quantity]) => {
+      const key = `overview.subscription.purchased.${sanitizePlanName(planName)}`;
+      if (key) {
+        a[key] += quantity;
+      } else {
+        a[key] = quantity;
       }
-    );
-
-    const planQuantities = expandedSession.line_items.data.reduce(
-      (acc, line) => {
-        const plan = plans.find((p) => p.priceId === line.price?.id);
-        if (plan) acc[plan.name] = (acc[plan.name] || 0) + (line.quantity ?? 1);
-        return acc;
-      },
-      {} as Record<string, number>
-    );
-
-    const analyticsUpdate = Object.entries(planQuantities).reduce(
-      (a, [planName, quantity]) => {
-        const key = `overview.subscription.purchased.${sanitizePlanName(
-          planName
-        )}`;
-        if (key) {
-          a[key] += quantity;
-        } else {
-          a[key] = quantity;
-        }
-        return a;
-      },
-      {}
-    );
+      return a;
+    }, {});
 
     updateAnalytics({
       userId: String(buyerInfo._id),
@@ -275,10 +239,7 @@ async function handleInvoicePayment(invoice: Stripe.Invoice) {
 
     const newSubscribedUntil = new Date(subscription.current_period_end * 1000);
 
-    const sellerInfo = await fetchUserInfo(
-      { _id: new ObjectId(sellerId) },
-      { "club.payouts.connectId": 1 }
-    );
+    const sellerInfo = await fetchUserInfo({ _id: new ObjectId(sellerId) }, { "club.payouts.connectId": 1 });
 
     await updatePurchaseSubscriptionData(
       newSubscribedUntil,
@@ -297,12 +258,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     const buyerInfo = await fetchUserInfo({ stripeUserId }, { _id: 1 });
 
     await doWithRetries(() =>
-      db
-        .collection("Purchase")
-        .updateOne(
-          { buyerId: buyerInfo._id },
-          { $unset: { subscriptionId: null } }
-        )
+      db.collection("Purchase").updateOne({ buyerId: buyerInfo._id }, { $unset: { subscriptionId: null } })
     );
   } catch (err) {
     throw httpError(err);
@@ -321,11 +277,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
       updatePayload = { $unset: { isDeactivated: null } };
     }
 
-    await doWithRetries(() =>
-      db
-        .collection("Purchase")
-        .updateOne({ buyerId: buyerInfo._id }, updatePayload)
-    );
+    await doWithRetries(() => db.collection("Purchase").updateOne({ buyerId: buyerInfo._id }, updatePayload));
   } catch (err) {
     throw httpError(err);
   }
@@ -348,10 +300,7 @@ async function updatePurchaseSubscriptionData(
     await doWithRetries(() =>
       db
         .collection("Purchase")
-        .updateOne(
-          { routineDataId: new ObjectId(routineDataId) },
-          { $set: updatePurchasePayload }
-        )
+        .updateOne({ routineDataId: new ObjectId(routineDataId) }, { $set: updatePurchasePayload })
     );
 
     const stripeBalance = await doWithRetries(async () =>
@@ -378,10 +327,7 @@ async function updatePurchaseSubscriptionData(
   }
 }
 
-export async function fetchUserInfo(
-  filter: { [key: string]: any },
-  projection = {}
-) {
+export async function fetchUserInfo(filter: { [key: string]: any }, projection = {}) {
   try {
     const userInfo = await doWithRetries(() =>
       db.collection("User").findOne(
@@ -402,53 +348,7 @@ export async function fetchUserInfo(
   }
 }
 
-async function handleOneTimePayment(
-  session: Stripe.Checkout.Session,
-  plans: any[]
-) {
-  try {
-    const { routineDataId, buyerId } = session.metadata || {};
-
-    if (routineDataId) {
-      await createRoutinePurchase(
-        routineDataId,
-        buyerId,
-        session.payment_intent as string
-      );
-    } else {
-      const expandedSession = await stripe.checkout.sessions.retrieve(
-        session.id,
-        {
-          expand: ["line_items.data.price.product"],
-        }
-      );
-
-      const relatedPlan = plans.find((p) => p.name === "scan");
-      if (!relatedPlan) return;
-
-      const lineItems = expandedSession.line_items?.data || [];
-      const totalQuantity = calculateTotalScanQuantity(lineItems, relatedPlan);
-
-      const customerId = session.customer as string;
-
-      await doWithRetries(() =>
-        db
-          .collection("User")
-          .updateOne(
-            { stripeUserId: customerId },
-            { $inc: { scanAnalysisQuota: totalQuantity } }
-          )
-      );
-    }
-  } catch (err) {
-    throw httpError(err);
-  }
-}
-
-function calculateTotalScanQuantity(
-  lineItems: Stripe.LineItem[],
-  scanPlan: any
-) {
+function calculateTotalScanQuantity(lineItems: Stripe.LineItem[], scanPlan: any) {
   return lineItems.reduce((total, item) => {
     if (item.price?.id === scanPlan.priceId) {
       return total + (item.quantity || 0);
@@ -458,9 +358,7 @@ function calculateTotalScanQuantity(
 }
 
 export async function markEventAsProcessed(eventId: string) {
-  await adminDb
-    .collection("ProcessedEvent")
-    .insertOne({ eventId, createdAt: new Date() });
+  await adminDb.collection("ProcessedEvent").insertOne({ eventId, createdAt: new Date() });
 }
 
 //#endregion
@@ -492,10 +390,7 @@ async function handleStripeWebhook(event: Stripe.Event) {
 
     switch (type) {
       case "customer.subscription.created":
-        await handleSubscriptionCreated(
-          data.object as Stripe.Subscription,
-          plans
-        );
+        await handleSubscriptionCreated(data.object as Stripe.Subscription, plans);
         break;
 
       case "invoice.payment_succeeded":
@@ -511,17 +406,8 @@ async function handleStripeWebhook(event: Stripe.Event) {
         break;
 
       case "checkout.session.completed":
-        if (data.object.mode === "payment") {
-          await handleOneTimePayment(
-            data.object as Stripe.Checkout.Session,
-            plans
-          );
-        }
         if (data.object.mode === "subscription") {
-          await handleSubscriptionPayment(
-            data.object as Stripe.Checkout.Session,
-            plans
-          );
+          await handleSubscriptionPayment(data.object as Stripe.Checkout.Session, plans);
         }
         break;
     }

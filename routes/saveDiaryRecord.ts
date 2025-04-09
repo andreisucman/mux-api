@@ -18,7 +18,7 @@ import { checkIfPublic } from "./checkIfPublic.js";
 
 const route = Router();
 
-const validParts = [PartEnum.BODY, PartEnum.FACE, PartEnum.MOUTH, PartEnum.SCALP];
+const validParts = [PartEnum.BODY, PartEnum.FACE, PartEnum.MOUTH, PartEnum.HAIR];
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
   const { audio, activity, part } = req.body;

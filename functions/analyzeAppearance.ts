@@ -7,28 +7,26 @@ import {
   DemographicsType,
   ToAnalyzeType,
   UserConcernType,
-  BlurTypeEnum,
   CategoryNameEnum,
   PartEnum,
   LatestScoresType,
   LatestProgressType,
+  NextActionType,
 } from "types.js";
 import analyzePart from "functions/analyzePart.js";
-import { defaultRequiredProgress } from "data/defaultUser.js";
 import { db } from "init.js";
 import { ModerationStatusEnum } from "types.js";
 import httpError from "@/helpers/httpError.js";
-import { CookieOptions } from "express";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import updateAnalytics from "./updateAnalytics.js";
+import updateNextScan from "@/helpers/updateNextScan.js";
 
 type Props = {
   userId: string;
   name: string;
-  cookies: CookieOptions;
+  nextScan: NextActionType[];
   avatar: { [key: string]: any } | null;
   categoryName: CategoryNameEnum;
-  blurType: BlurTypeEnum;
   defaultToUpdateUser?: { $set: { [key: string]: unknown } };
   club: ClubDataType;
   enableScanAnalysis: boolean;
@@ -46,8 +44,7 @@ export default async function analyzeAppearance({
   name,
   avatar,
   club,
-  cookies,
-  blurType,
+  nextScan,
   concerns = [],
   categoryName,
   latestProgress,
@@ -64,20 +61,6 @@ export default async function analyzeAppearance({
 
     const toUpdateUser: { [key: string]: any } = { $set: {}, $inc: {} };
 
-    if (enableScanAnalysis) {
-      toUpdateUser.$inc.scanAnalysisQuota = -1;
-    } else {
-      const relevantImages = toAnalyze.map((obj) => {
-        const relevantImage = obj.contentUrlTypes.find(
-          (o) => o.name === blurType
-        );
-        return relevantImage.url;
-      });
-
-      // needed for displaying on analysis page when feedback is not requested
-      toUpdateUser.$set.latestScanImages = relevantImages;
-    }
-
     if (defaultToUpdateUser) {
       toUpdateUser.$set = { ...(defaultToUpdateUser.$set || {}) };
     }
@@ -88,7 +71,6 @@ export default async function analyzeAppearance({
       latestScores,
       demographics,
       latestScoresDifference,
-      requiredProgress: defaultRequiredProgress,
     };
 
     let rephrasedSpecialConsiderations: string;
@@ -100,9 +82,7 @@ export default async function analyzeAppearance({
         categoryName,
       });
 
-    const nullValueGroups = Object.entries(demographics).filter(
-      (g) => g[1] === null
-    );
+    const nullValueGroups = Object.entries(demographics).filter((g) => g[1] === null);
 
     if (nullValueGroups.length > 0) {
       const newDemographics = await getDemographics({
@@ -115,25 +95,18 @@ export default async function analyzeAppearance({
       demographics = { ...(demographics || {}), ...newDemographics };
     }
 
-    await incrementProgress({
-      value: 5,
-      operationKey: "progress",
-      userId: String(userId),
-    });
-
     toUpdateUser.$set.demographics = demographics;
+    toUpdateUser.$set.nextScan = updateNextScan({ nextScan, toAnalyze });
 
     const analyzePartPromises = parts.map((part) => {
       return doWithRetries(async () =>
         analyzePart({
           name,
           avatar,
-          cookies,
           club,
           part: part as PartEnum,
           userId,
           concerns,
-          blurType,
           categoryName,
           demographics,
           toAnalyze,
@@ -148,9 +121,7 @@ export default async function analyzeAppearance({
 
     const newConcerns = analysesResults.flatMap((rec) => rec.concerns);
 
-    const restOfConcerns = concerns.filter(
-      (rec) => !partsAnalyzed.includes(rec.part)
-    );
+    const restOfConcerns = concerns.filter((rec) => !partsAnalyzed.includes(rec.part));
 
     const allUniqueConcerns = [...restOfConcerns, ...newConcerns].filter(
       (obj, i, arr) => arr.findIndex((o) => o.name === obj.name) === i
@@ -167,9 +138,7 @@ export default async function analyzeAppearance({
       { overall: 0 }
     );
 
-    newLatestScores.overall = Math.round(
-      newLatestScores.overall / analysesResults.length
-    );
+    newLatestScores.overall = Math.round(newLatestScores.overall / analysesResults.length);
 
     const newLatestScoresDifference = analysesResults.reduce(
       (a: { [key: string]: any }, c) => {
@@ -180,9 +149,7 @@ export default async function analyzeAppearance({
       { overall: 0 }
     );
 
-    newLatestScoresDifference.overall = Math.round(
-      newLatestScoresDifference.overall / analysesResults.length
-    );
+    newLatestScoresDifference.overall = Math.round(newLatestScoresDifference.overall / analysesResults.length);
 
     await incrementProgress({
       value: 99,
@@ -200,9 +167,7 @@ export default async function analyzeAppearance({
       { overall: 0 }
     );
 
-    newLatestProgress.overall = Math.round(
-      newLatestProgress.overall / analysesResults.length
-    );
+    newLatestProgress.overall = Math.round(newLatestProgress.overall / analysesResults.length);
 
     toUpdateUser.$set.latestScores = {
       ...latestScores,
@@ -240,9 +205,7 @@ export default async function analyzeAppearance({
         )
     );
 
-    const partScansIncrementPayload = partsAnalyzed.map(
-      (p) => `overview.usage.scans.progressScanParts.${p}`
-    );
+    const partScansIncrementPayload = partsAnalyzed.map((p) => `overview.usage.scans.progressScanParts.${p}`);
 
     const partScansIncrementMap = partScansIncrementPayload.reduce((a, c) => {
       a[c] = 1;

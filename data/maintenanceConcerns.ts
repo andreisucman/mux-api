@@ -18,11 +18,11 @@ export const maintenanceConcerns = [
     imported: false,
   },
   {
-    name: "scalp_improvement",
+    name: "hair_improvement",
     explanation: "",
     importance: 1,
     isDisabled: false,
-    part: "scalp" as PartEnum,
+    part: "hair" as PartEnum,
     imported: false,
   },
   {

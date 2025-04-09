@@ -75,8 +75,8 @@ export default async function getStreaksToIncrement({
         streaksToIncrement["streaks.mouthStreak"] = 1;
       }
 
-      if (part === "scalp") {
-        streaksToIncrement["streaks.scalpStreak"] = 1;
+      if (part === "hair") {
+        streaksToIncrement["streaks.hairStreak"] = 1;
       }
 
       if (part === "body") {

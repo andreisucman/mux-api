@@ -6,6 +6,7 @@ import askRepeatedly from "./askRepeatedly.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import { z } from "zod";
+import createImageCollage from "./createImageCollage.js";
 
 type Props = {
   userId: string;
@@ -14,14 +15,12 @@ type Props = {
   categoryName: CategoryNameEnum;
 };
 
-export default async function checkFacialHair({
-  userId,
-  categoryName,
-  partImages,
-  incrementMultiplier = 1,
-}: Props) {
+export default async function checkFacialHair({ userId, categoryName, partImages, incrementMultiplier = 1 }: Props) {
   try {
-    const relevantImage = partImages?.find((imo) => imo.position === "front");
+    const imageCollage = await createImageCollage({
+      images: partImages.map((imo) => imo.mainUrl.url),
+      isGrid: true,
+    });
 
     const FacialHairCheckResponseType = z.object({
       isGrowingBeard: z.boolean().describe("true if yes, false if not"),
@@ -34,7 +33,7 @@ export default async function checkFacialHair({
           {
             type: "image_url",
             image_url: {
-              url: await urlToBase64(relevantImage.mainUrl.url),
+              url: await urlToBase64(imageCollage),
               detail: "low",
             },
           },
@@ -45,10 +44,7 @@ export default async function checkFacialHair({
             value: 1 * incrementMultiplier,
             userId: String(userId),
           }),
-        responseFormat: zodResponseFormat(
-          FacialHairCheckResponseType,
-          "FacialHairCheckResponseType"
-        ),
+        responseFormat: zodResponseFormat(FacialHairCheckResponseType, "FacialHairCheckResponseType"),
       },
     ];
 
@@ -56,8 +52,7 @@ export default async function checkFacialHair({
       runs: facialHairCheck,
       userId,
       functionName: "checkFacialHair",
-      systemContent:
-        "Does it appear like the user is growing beard or moustache?",
+      systemContent: "Does it appear like the user is growing beard or moustache?",
       categoryName,
     });
 

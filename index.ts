@@ -13,7 +13,6 @@ import checkAccess from "middleware/checkAccess.js";
 import getBeforeAfters from "routes/getBeforeAfters.js";
 import startTheFlow from "routes/startTheFlow.js";
 import copyTask from "routes/copyTask.js";
-import analyzeFood from "routes/analyzeFood.js";
 import rootRoute from "routes/rootRoute.js";
 import getExistingFilters from "routes/getExistingFilters.js";
 import getReviews from "routes/getReviews.js";
@@ -69,7 +68,6 @@ import createRoutine from "routes/createRoutine.js";
 import checkCountry from "routes/checkCountry.js";
 import getDiaryRecords from "routes/getDiaryRecords.js";
 import createDiaryRecord from "routes/createDiaryRecord.js";
-import getLatestFoodAnalysis from "routes/getLatestFoodAnalysis.js";
 import saveDiaryRecord from "routes/saveDiaryRecord.js";
 import transcribe from "routes/transcribe.js";
 import deleteContent from "routes/deleteContent.js";
@@ -93,6 +91,7 @@ import deleteRoutines from "routes/deleteRoutines.js";
 import deleteTask from "routes/deleteTask.js";
 import updateStatusOfTask from "routes/updateStatusOfTask.js";
 import rescheduleTaskInstance from "routes/rescheduleTaskInstance.js";
+import deleteToAnalyze from "routes/deleteToAnalyze.js";
 
 import { client } from "init.js";
 
@@ -141,7 +140,6 @@ app.use("/sendPasswordResetEmail", sendPasswordResetEmail);
 app.use("/setPassword", setPassword);
 app.use("/authorize", authorize);
 app.use("/authenticate", authenticate);
-app.use("/getLatestFoodAnalysis", getLatestFoodAnalysis);
 
 app.use((req, res, next) => checkAccess(req, res, next, true));
 app.use("/createRoutineCheckoutSession", createRoutineCheckoutSession);
@@ -157,7 +155,6 @@ app.use("/verifyEmail", verifyEmail);
 app.use("/changeEmailStepOne", changeEmailStepOne);
 app.use("/changeEmailStepTwo", changeEmailStepTwo);
 app.use("/startTheFlow", startTheFlow);
-app.use("/analyzeFood", analyzeFood);
 app.use("/checkAnalysisCompletion", checkAnalysisCompletion);
 app.use("/getBeforeAfters", getBeforeAfters);
 app.use("/getExistingFilters", getExistingFilters);
@@ -171,6 +168,7 @@ app.use("/uploadProgress", uploadProgress);
 app.use("/uploadToSpaces", uploadToSpaces);
 app.use("/updateSex", updateSex);
 app.use("/getFilters", getFilters);
+app.use("/deleteToAnalyze", deleteToAnalyze);
 
 // protected routes
 app.use((req, res, next) => checkAccess(req, res, next, false));

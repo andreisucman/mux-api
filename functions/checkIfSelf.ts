@@ -9,6 +9,7 @@ import { ModerationStatusEnum } from "types.js";
 import { RunType } from "types/askOpenaiTypes.js";
 import httpError from "@/helpers/httpError.js";
 import { urlToBase64 } from "@/helpers/utils.js";
+import createImageCollage from "./createImageCollage.js";
 
 type Props = {
   userImage?: string;
@@ -17,12 +18,7 @@ type Props = {
   categoryName: CategoryNameEnum;
 };
 
-export default async function checkIfSelf({
-  userImage,
-  categoryName,
-  image,
-  userId,
-}: Props) {
+export default async function checkIfSelf({ userImage, categoryName, image, userId }: Props) {
   let isSelf = true;
 
   try {
@@ -44,21 +40,19 @@ export default async function checkIfSelf({
         const { images } = face;
 
         if (images) {
-          const imageObject = images.find(
-            (imageObj) => imageObj.position === "front"
-          );
-
-          if (imageObject) userImage = imageObject.mainUrl.url;
+          userImage = await createImageCollage({
+            images: images.map((isObj) => isObj.mainUrl.url),
+            isGrid: true,
+            collageSize: 1024,
+          });
         }
       }
     }
 
     if (userImage) {
-      const samePersonContent = `You are given two images. Your goal is to check if the person on each image is the same.`;
+      const samePersonContent = `You are given two images. One is a collage, the other is single image. Your goal is to check if the person on the single image and the person on the collage are same people.`;
 
-      const ModerateImagesResponseType = z
-        .boolean()
-        .describe("true if same, false if not");
+      const ModerateImagesResponseType = z.boolean().describe("true if same, false if not");
 
       const runs = [
         {
@@ -79,10 +73,7 @@ export default async function checkIfSelf({
               },
             },
           ],
-          responseFormat: zodResponseFormat(
-            ModerateImagesResponseType,
-            "ModerateImagesResponseType"
-          ),
+          responseFormat: zodResponseFormat(ModerateImagesResponseType, "ModerateImagesResponseType"),
         },
       ];
 

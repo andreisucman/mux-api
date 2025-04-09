@@ -31,7 +31,7 @@ export default async function getReadyBlurredUrls({
     }
 
     if (blurType !== "original") {
-      const endpoint = urlExtension === "jpg" ? "blurImage" : "blurVideo";
+      const endpoint = urlExtension === "jpg" ? "blurImageManually" : "blurVideo";
 
       const blurredUrlResponse = await blurContent({
         blurType,

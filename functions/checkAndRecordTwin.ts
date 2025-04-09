@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb";
 import checkForTwins from "./checkForTwins.js";
-import createHumanEmbedding from "./createHumanEmbedding.js";
+import createImageEmbedding from "./createImageEmbedding.js";
 import doWithRetries from "@/helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 import checkIfSuspended from "./checkIfSuspended.js";
@@ -16,10 +16,6 @@ type Props = {
   categoryName: CategoryNameEnum;
 };
 
-const skipCheckingTheseParts = ["mouth", "scalp"];
-const skipCheckingThesePositions = ["back"];
-const skipCheckingTheseCombinations = ["body=right", "body=left"];
-
 export default async function checkAndRecordTwin({
   requestUserId,
   payloadUserId,
@@ -30,33 +26,10 @@ export default async function checkAndRecordTwin({
   let response = { mustLogin: false, isSuspended: false, errorMessage: "" };
   const finalUserId = requestUserId || payloadUserId;
 
-  const { part, position } = registryFilter;
-
   try {
-    let skip = false;
+    const embedding = await createImageEmbedding(image);
 
-    for (const combination of skipCheckingTheseCombinations) {
-      const [skipPart, skipPosition] = combination.split("=");
-      if (part === skipPart && position === skipPosition) skip = true;
-    }
-
-    if (
-      skipCheckingTheseParts.includes(part) ||
-      skipCheckingThesePositions.includes(position)
-    ) {
-      skip = true;
-    }
-
-    if (skip) return response;
-
-    const { errorMessage, message: embedding } = await createHumanEmbedding(
-      image
-    );
-
-    if (errorMessage) {
-      response.errorMessage = errorMessage as string;
-      return response;
-    }
+    console.log("embedding length", embedding.length);
 
     response.isSuspended = await checkIfSuspended({
       embedding,
@@ -73,6 +46,8 @@ export default async function checkAndRecordTwin({
       registryFilter,
       categoryName,
     });
+
+    console.log("twinIds", twinIds);
 
     if (twinIds.length > 0) {
       // dont change the requestUserId to finalUserId here
@@ -99,6 +74,7 @@ export default async function checkAndRecordTwin({
       }
     }
 
+    console.log("response", response);
     return response;
   } catch (err) {
     throw httpError(err);

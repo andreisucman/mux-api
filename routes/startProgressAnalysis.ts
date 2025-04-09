@@ -4,19 +4,12 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
-import {
-  BlurTypeEnum,
-  CategoryNameEnum,
-  CustomRequest,
-  ModerationStatusEnum,
-} from "types.js";
+import { BlurTypeEnum, CategoryNameEnum, CustomRequest, ModerationStatusEnum } from "types.js";
 import { UploadProgressUserInfo } from "types/uploadProgressTypes.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import analyzeAppearance from "functions/analyzeAppearance.js";
-import formatDate from "@/helpers/formatDate.js";
 import httpError from "@/helpers/httpError.js";
 import { db } from "init.js";
-import incrementProgress from "@/helpers/incrementProgress.js";
 
 const route = Router();
 
@@ -26,128 +19,101 @@ type Props = {
   enableScanAnalysis: boolean;
 };
 
-route.post(
-  "/",
-  async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { userId, blurType, enableScanAnalysis }: Props = req.body;
+route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
+  const { userId, enableScanAnalysis }: Props = req.body;
 
-    const finalUserId = req.userId || userId;
+  const finalUserId = req.userId || userId;
 
-    if (!ObjectId.isValid(finalUserId)) {
-      res.status(400).json({
-        message: `userId: ${finalUserId} is missing.`,
-      });
-      return;
-    }
-
-    try {
-      const userInfo = (await doWithRetries(async () =>
-        db.collection("User").findOne(
-          {
-            _id: new ObjectId(finalUserId),
-            moderationStatus: ModerationStatusEnum.ACTIVE,
-          },
-          {
-            projection: {
-              name: 1,
-              avatar: 1,
-              scanAnalysisQuota: 1,
-              requiredProgress: 1,
-              toAnalyze: 1,
-              demographics: 1,
-              concerns: 1,
-              nutrition: 1,
-              country: 1,
-              timeZone: 1,
-              latestProgress: 1,
-              specialConsiderations: 1,
-              latestScoresDifference: 1,
-              latestScores: 1,
-              club: 1,
-            },
-          }
-        )
-      )) as unknown as UploadProgressUserInfo;
-
-      if (!userInfo) throw httpError(`No userInfo for ${finalUserId}`);
-
-      let {
-        name,
-        avatar,
-        toAnalyze,
-        club,
-        concerns,
-        demographics,
-        latestProgress,
-        latestScores,
-        requiredProgress,
-        scanAnalysisQuota,
-        latestScoresDifference,
-        specialConsiderations,
-      } = userInfo;
-
-      if (enableScanAnalysis) {
-        if (scanAnalysisQuota < 1) {
-          res.status(200).json({
-            error: "buy scan analysis",
-          });
-          return;
-        }
-      }
-
-      await doWithRetries(async () =>
-        db
-          .collection("AnalysisStatus")
-          .updateOne(
-            { userId: new ObjectId(finalUserId), operationKey: "progress" },
-            { $set: { isRunning: true, progress: 1, isError: null } },
-            { upsert: true }
-          )
-      );
-
-      global.startInterval(() =>
-        incrementProgress({
-          operationKey: "progress",
-          userId: req.userId,
-          value: 1,
-        })
-      );
-
-      res.status(200).json({
-        requiredProgress,
-        toAnalyze,
-      });
-
-      await analyzeAppearance({
-        club,
-        userId,
-        name,
-        avatar,
-        cookies: req.cookies,
-        concerns: concerns || [],
-        blurType,
-        enableScanAnalysis,
-        categoryName: CategoryNameEnum.PROGRESSSCAN,
-        demographics,
-        toAnalyze,
-        latestScores,
-        latestProgress,
-        latestScoresDifference,
-        newSpecialConsiderations: specialConsiderations,
-      });
-      global.stopInterval();
-    } catch (err) {
-      await addAnalysisStatusError({
-        operationKey: "progress",
-        userId: String(finalUserId),
-        message:
-          "An unexpected error occured. Please try again and inform us if the error persists.",
-        originalMessage: err.message,
-      });
-      global.stopInterval();
-      next(err);
-    }
+  if (!ObjectId.isValid(finalUserId)) {
+    res.status(400).json({
+      message: `userId: ${finalUserId} is missing.`,
+    });
+    return;
   }
-);
+
+  try {
+    const userInfo = (await doWithRetries(async () =>
+      db.collection("User").findOne(
+        {
+          _id: new ObjectId(finalUserId),
+          moderationStatus: ModerationStatusEnum.ACTIVE,
+        },
+        {
+          projection: {
+            nextScan: 1,
+            name: 1,
+            avatar: 1,
+            toAnalyze: 1,
+            demographics: 1,
+            concerns: 1,
+            nutrition: 1,
+            country: 1,
+            timeZone: 1,
+            latestProgress: 1,
+            specialConsiderations: 1,
+            latestScoresDifference: 1,
+            latestScores: 1,
+            club: 1,
+          },
+        }
+      )
+    )) as unknown as UploadProgressUserInfo;
+
+    if (!userInfo) throw httpError(`No userInfo for ${finalUserId}`);
+
+    let {
+      name,
+      avatar,
+      toAnalyze,
+      nextScan,
+      club,
+      concerns,
+      demographics,
+      latestProgress,
+      latestScores,
+      latestScoresDifference,
+      specialConsiderations,
+    } = userInfo;
+
+    await doWithRetries(async () =>
+      db
+        .collection("AnalysisStatus")
+        .updateOne(
+          { userId: new ObjectId(finalUserId), operationKey: "progress" },
+          { $set: { isRunning: true, progress: 1, isError: null } },
+          { upsert: true }
+        )
+    );
+
+    res.status(200).json({
+      toAnalyze,
+    });
+
+    await analyzeAppearance({
+      club,
+      userId,
+      name,
+      avatar,
+      nextScan,
+      concerns: concerns || [],
+      enableScanAnalysis,
+      categoryName: CategoryNameEnum.PROGRESSSCAN,
+      demographics,
+      toAnalyze,
+      latestScores,
+      latestProgress,
+      latestScoresDifference,
+      newSpecialConsiderations: specialConsiderations,
+    });
+  } catch (err) {
+    await addAnalysisStatusError({
+      operationKey: "progress",
+      userId: String(finalUserId),
+      message: "An unexpected error occured. Please try again and inform us if the error persists.",
+      originalMessage: err.message,
+    });
+    next(err);
+  }
+});
 
 export default route;

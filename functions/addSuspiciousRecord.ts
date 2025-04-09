@@ -15,7 +15,6 @@ export enum SuspiciousRecordCollectionEnum {
   DIARY = "Diary",
   USER = "User",
   ROUTINE_DATA = "RoutineData",
-  FOOD = "FoodAnalysis",
 }
 
 type Props = {
@@ -26,16 +25,9 @@ type Props = {
   moderationResults: ModerationResultType[];
 };
 
-export default async function addSuspiciousRecord({
-  collection,
-  contentId,
-  userId,
-  key,
-  moderationResults,
-}: Props) {
+export default async function addSuspiciousRecord({ collection, contentId, userId, key, moderationResults }: Props) {
   try {
-    const theMostSuspiciousResult =
-      getTheMostSuspiciousResult(moderationResults);
+    const theMostSuspiciousResult = getTheMostSuspiciousResult(moderationResults);
 
     await doWithRetries(async () =>
       adminDb.collection("SuspiciousRecord").insertOne({

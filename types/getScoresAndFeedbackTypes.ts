@@ -8,7 +8,6 @@ import { ObjectId } from "mongodb";
 
 export type GetScoresAndFeedbackUserType = {
   _id: ObjectId;
-  scanAnalysisQuota: number;
   demographics: DemographicsType;
   concerns: UserConcernType[];
   latestScores: LatestScoresType;
