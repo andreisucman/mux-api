@@ -101,13 +101,13 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       categoryName: CategoryNameEnum.PROGRESSSCAN,
     });
 
-    // if (!isClearlyVisible) {
-    //   res.status(200).json({
-    //     error:
-    //       "The image is not clear. Try taking photos in daylight with no shadows or glitter obscuring your features.",
-    //   });
-    //   return;
-    // }
+    if (!isClearlyVisible) {
+      res.status(200).json({
+        error:
+          "The image is not clear. Try taking photos in daylight with no shadows or glitter obscuring your features.",
+      });
+      return;
+    }
 
     if (numberOfPeople === 0) {
       res.status(200).json({
@@ -123,19 +123,24 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       return;
     }
 
-    const { isValidForComparison, explanation } = await checkAngleAndPartBetweenImages({
-      beforeImage,
-      afterImage: image,
-      part,
-      userId: finalUserId,
-      categoryName: CategoryNameEnum.PROGRESSSCAN,
-    });
-
-    if (!isValidForComparison) {
-      res.status(200).json({
-        error: "Your current photo is too different from the previous. " + explanation,
+    if (beforeImage && image) {
+      const { isValidForComparison, explanation } = await checkAngleAndPartBetweenImages({
+        beforeImage,
+        afterImage: image,
+        part,
+        userId: finalUserId,
+        categoryName: CategoryNameEnum.PROGRESSSCAN,
       });
-      return;
+
+      if (!isValidForComparison) {
+        res.status(200).json({
+          error:
+            "Your current photo is too different from the previous. " +
+            explanation +
+            " Click on the 'Overlay previous' checkbox in the top left to see the previous image.",
+        });
+        return;
+      }
     }
 
     const userInfo = (await doWithRetries(async () =>

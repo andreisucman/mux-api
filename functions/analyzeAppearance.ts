@@ -29,7 +29,6 @@ type Props = {
   categoryName: CategoryNameEnum;
   defaultToUpdateUser?: { $set: { [key: string]: unknown } };
   club: ClubDataType;
-  enableScanAnalysis: boolean;
   concerns: UserConcernType[] | null;
   toAnalyze: ToAnalyzeType[];
   newSpecialConsiderations: string;
@@ -51,7 +50,6 @@ export default async function analyzeAppearance({
   defaultToUpdateUser,
   latestScores,
   latestScoresDifference,
-  enableScanAnalysis,
   toAnalyze,
   demographics,
   newSpecialConsiderations,
@@ -110,7 +108,6 @@ export default async function analyzeAppearance({
           categoryName,
           demographics,
           toAnalyze,
-          enableScanAnalysis,
           specialConsiderations: rephrasedSpecialConsiderations,
         })
       );

@@ -16,11 +16,10 @@ const route = Router();
 type Props = {
   userId: string;
   blurType: BlurTypeEnum;
-  enableScanAnalysis: boolean;
 };
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { userId, enableScanAnalysis }: Props = req.body;
+  const { userId }: Props = req.body;
 
   const finalUserId = req.userId || userId;
 
@@ -96,7 +95,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       avatar,
       nextScan,
       concerns: concerns || [],
-      enableScanAnalysis,
       categoryName: CategoryNameEnum.PROGRESSSCAN,
       demographics,
       toAnalyze,

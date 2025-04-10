@@ -30,7 +30,6 @@ type Props = {
   name: string;
   avatar: { [key: string]: any } | null;
   part: PartEnum;
-  enableScanAnalysis: boolean;
   club: ClubDataType;
   specialConsiderations: string;
   concerns: UserConcernType[] | null;
@@ -54,7 +53,6 @@ export default async function analyzePart({
   concerns = [],
   categoryName,
   demographics,
-  enableScanAnalysis,
   specialConsiderations,
   toAnalyze,
 }: Props): Promise<PartResultType> {
@@ -124,27 +122,25 @@ export default async function analyzePart({
         .next()
     )) as unknown as LocalProgressType;
 
-    if (enableScanAnalysis) {
-      const imageObjects = toAnalyze.map((tAo) => ({
-        part: tAo.part,
-        url: tAo.mainUrl.url,
-      }));
+    const imageObjects = toAnalyze.map((tAo) => ({
+      part: tAo.part,
+      url: tAo.mainUrl.url,
+    }));
 
-      const response = await getScoresAndFeedback({
-        categoryName,
-        currentPartConcerns: partConcerns,
-        part,
-        sex: demographics.sex,
-        imageObjects,
-        userId,
-        initialScores: initialProgress?.scores,
-      });
+    const response = await getScoresAndFeedback({
+      categoryName,
+      currentPartConcerns: partConcerns,
+      part,
+      sex: demographics.sex,
+      imageObjects,
+      userId,
+      initialScores: initialProgress?.scores,
+    });
 
-      scores = response.scores;
-      scoresDifference = response.scoresDifference;
-      newConcerns = response.concerns;
-      partResult.concerns = newConcerns;
-    }
+    scores = response.scores;
+    scoresDifference = response.scoresDifference;
+    newConcerns = response.concerns;
+    partResult.concerns = newConcerns;
 
     const images = partToAnalyze.map((record: ToAnalyzeType) => ({
       mainUrl: record.mainUrl,
