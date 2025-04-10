@@ -19,7 +19,6 @@ export default async function checkFacialHair({ userId, categoryName, partImages
   try {
     const imageCollage = await createImageCollage({
       images: partImages.map((imo) => imo.mainUrl.url),
-      isGrid: true,
     });
 
     const FacialHairCheckResponseType = z.object({

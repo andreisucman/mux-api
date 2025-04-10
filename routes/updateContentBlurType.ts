@@ -78,7 +78,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       if (!response.ok) throw httpError("Network error during blur");
 
       const json = await response.json();
-      newMainUrl = { name: "blurred", url: json.url };
+      newMainUrl = { name: "blurred", url: json.message };
 
       const newUrls = [{ name: "original", url }, newMainUrl];
 

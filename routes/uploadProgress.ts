@@ -10,6 +10,7 @@ import {
   ModerationStatusEnum,
   CategoryNameEnum,
   BlurredUrlType,
+  BlurTypeEnum,
 } from "types.js";
 import { db } from "init.js";
 import { UploadProgressUserInfo } from "@/types/uploadProgressTypes.js";
@@ -18,6 +19,7 @@ import httpError from "@/helpers/httpError.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
 import checkImageRequirements from "@/functions/checkImageRequirements.js";
 import { validParts } from "@/data/other.js";
+import checkAngleAndPartBetweenImages from "@/functions/checkAngleAndPartBetweenImages.js";
 import checkAndRecordTwin from "@/functions/checkAndRecordTwin.js";
 
 const route = Router();
@@ -34,6 +36,7 @@ export type BlurDotType = {
 
 type Props = {
   image: string;
+  beforeImage: string;
   part: PartEnum;
   userId: string;
   specialConsiderations: string;
@@ -41,7 +44,14 @@ type Props = {
 };
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { image, part, userId, blurDots, specialConsiderations: newSpecialConsiderations }: Props = req.body;
+  const {
+    image,
+    beforeImage,
+    part,
+    userId,
+    blurDots,
+    specialConsiderations: newSpecialConsiderations,
+  }: Props = req.body;
 
   const finalUserId = req.userId || userId;
 
@@ -113,6 +123,21 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       return;
     }
 
+    const { isValidForComparison, explanation } = await checkAngleAndPartBetweenImages({
+      beforeImage,
+      afterImage: image,
+      part,
+      userId: finalUserId,
+      categoryName: CategoryNameEnum.PROGRESSSCAN,
+    });
+
+    if (!isValidForComparison) {
+      res.status(200).json({
+        error: "Your current photo is too different from the previous. " + explanation,
+      });
+      return;
+    }
+
     const userInfo = (await doWithRetries(async () =>
       db.collection("User").findOne(
         {
@@ -154,16 +179,19 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
       mainUrl = {
         name: "blurred" as "blurred",
-        url: json.url,
+        url: json.message,
       };
       contentUrlTypes.push(mainUrl as BlurredUrlType);
     }
+
+    const updateUrl = { url: beforeImage, name: BlurTypeEnum.ORIGINAL };
 
     /* add the current uploaded info to the info to analyze */
     const newToAnalyzeObject: ToAnalyzeType = {
       part,
       createdAt: new Date(),
       mainUrl: mainUrl as BlurredUrlType,
+      updateUrl,
       contentUrlTypes,
     };
 

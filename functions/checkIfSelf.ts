@@ -42,7 +42,6 @@ export default async function checkIfSelf({ userImage, categoryName, image, user
         if (images) {
           userImage = await createImageCollage({
             images: images.map((isObj) => isObj.mainUrl.url),
-            isGrid: true,
             collageSize: 1024,
           });
         }

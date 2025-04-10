@@ -41,7 +41,7 @@ export default async function getReadyBlurredUrls({
       });
 
       // at this point the blur should already exist, therefore the response will contain a url
-      mainUrl = { name: blurType as "original", url: blurredUrlResponse.url };
+      mainUrl = { name: blurType as "original", url: blurredUrlResponse.message };
       mainThumbnail = {
         name: blurType as "original",
         url: blurredUrlResponse.thumbnail,

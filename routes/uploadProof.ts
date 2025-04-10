@@ -279,7 +279,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       proofImage = await createImageCollage({
         images: selectedProofImages,
         collageSize: 1024,
-        isGrid: true,
       });
     }
 

@@ -5,17 +5,11 @@ import httpError from "@/helpers/httpError.js";
 type Props = {
   images: string[][] | string[];
   collageSize?: number;
-  isGrid: boolean;
 };
 
-export default async function createImageCollage({
-  images,
-  collageSize,
-  isGrid,
-}: Props) {
+export default async function createImageCollage({ images, collageSize }: Props) {
   try {
-    const endpoint = isGrid ? "createGridCollage" : "createGroupCollage";
-    const url = `${process.env.PROCESSING_SERVER_URL}/${endpoint}`;
+    const url = `${process.env.PROCESSING_SERVER_URL}/createGridCollage`;
 
     const payload = JSON.stringify({
       images,

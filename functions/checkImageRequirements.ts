@@ -17,9 +17,14 @@ type Props = {
 
 export default async function checkImageRequirements({ userId, image, categoryName }: Props) {
   try {
-    const systemContent = `1. Is the human on the image clearly visible with no shadows or glitter obscuring their features? 2. How many people are on the image?`;
+    const systemContent = `1. Is the angle and captured part on both images similar? 2. Is the human on the image clearly visible with no shadows or glitter obscuring their features? 3. How many people are on the image?`;
 
     const CheckImagePositionResponseType = z.object({
+      isAngleAndPartSimilar: z
+        .boolean()
+        .describe(
+          "true if the angle and part is similar on both images, false if the angle or part between the images is entirely irrelevant"
+        ),
       isClearlyVisible: z.boolean().describe("true if clearly visible, false if not"),
       numberOfPeople: z.number().describe("the number of people on the image"),
     });

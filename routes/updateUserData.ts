@@ -148,16 +148,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       updatePayload["club.socials"] = socials;
     }
 
-    if (dailyCalorieGoal) {
-      const { nutrition } = userInfo;
-
-      const additionalCalories = dailyCalorieGoal - nutrition.dailyCalorieGoal;
-      const newRemainingCalories = nutrition.remainingDailyCalories + additionalCalories;
-
-      updatePayload["nutrition.dailyCalorieGoal"] = dailyCalorieGoal;
-      updatePayload["nutrition.remainingDailyCalories"] = Math.max(newRemainingCalories, 0);
-    }
-
     await doWithRetries(async () =>
       db.collection("User").updateOne(
         {

@@ -120,6 +120,7 @@ export type UserType = {
 export type ToAnalyzeType = {
   createdAt: Date;
   mainUrl: BlurredUrlType;
+  updateUrl: BlurredUrlType;
   contentUrlTypes: BlurredUrlType[];
   part: PartEnum | null;
   blurType?: BlurTypeEnum;
