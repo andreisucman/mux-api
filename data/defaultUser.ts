@@ -22,7 +22,6 @@ export const defaultTriedSubscriptions = {
 export const defaultDemographics: DemographicsType = {
   sex: null,
   ageInterval: null,
-  bodyType: null,
   ethnicity: null,
   skinType: null,
 };

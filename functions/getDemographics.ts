@@ -19,7 +19,6 @@ const demographicsMap = {
   ageInterval: z.enum(["18-24", "24-30", "30-36", "36-42", "42-48", "48-56", "56-64", "64+"]),
   ethnicity: z.enum(["white", "asian", "black", "hispanic", "arab", "south_asian", "native_american"]),
   skinType: z.enum(["dry", "oily", "normal"]),
-  bodyType: z.enum(["ectomorph", "mesomorph", "endomorph"]),
 };
 
 export default async function getDemographics({ toAnalyze, userId, categoryName, demographicsKeys }: Props) {
@@ -67,7 +66,7 @@ export default async function getDemographics({ toAnalyze, userId, categoryName,
 
     const analyticsPayload: { [key: string]: number } = {};
 
-    const { sex, ethnicity, skinType, ageInterval, bodyType } = response;
+    const { sex, ethnicity, skinType, ageInterval } = response;
 
     if (sex) {
       analyticsPayload[`overview.demographics.sex.${sex}`] = 1;
@@ -83,10 +82,6 @@ export default async function getDemographics({ toAnalyze, userId, categoryName,
 
     if (ageInterval) {
       analyticsPayload[`overview.demographics.ageInterval.${ageInterval}`] = 1;
-    }
-
-    if (bodyType) {
-      analyticsPayload[`overview.demographics.bodyType.${bodyType}`] = 1;
     }
 
     updateAnalytics({

@@ -6,7 +6,6 @@ import { CustomRequest } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 
 type ExistingFiltersType = {
-  bodyType: string[];
   ethnicity: string[];
   concern: string[];
   nearestConcerns: string[];
@@ -17,7 +16,6 @@ type ExistingFiltersType = {
 };
 
 const emptyFilters: ExistingFiltersType = {
-  bodyType: [],
   ethnicity: [],
   concern: [],
   nearestConcerns: [],
@@ -34,27 +32,22 @@ const collectionMap: { [key: string]: string } = {
   proof: "Proof",
 };
 
-route.get(
-  "/:collection",
-  async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { collection } = req.params;
+route.get("/:collection", async (req: CustomRequest, res: Response, next: NextFunction) => {
+  const { collection } = req.params;
 
-    try {
-      const object = await doWithRetries(async () =>
-        db
-          .collection("ExistingFilters")
-          .findOne({ collection: collectionMap[collection] })
-      );
+  try {
+    const object = await doWithRetries(async () =>
+      db.collection("ExistingFilters").findOne({ collection: collectionMap[collection] })
+    );
 
-      let result = emptyFilters;
+    let result = emptyFilters;
 
-      if (object) result = object.filters;
+    if (object) result = object.filters;
 
-      res.status(200).json({ message: result });
-    } catch (err) {
-      next(err);
-    }
+    res.status(200).json({ message: result });
+  } catch (err) {
+    next(err);
   }
-);
+});
 
 export default route;

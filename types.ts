@@ -138,7 +138,6 @@ export type DemographicsType = {
   ethnicity: EthnicityEnum | null;
   skinType: SkinTypeEnum | null;
   ageInterval: AgeIntervalEnum | null;
-  bodyType: BodyTypeEnum | null;
 };
 
 export enum BlurTypeEnum {
@@ -191,12 +190,6 @@ export enum AgeIntervalEnum {
   "48-56" = "48-56",
   "56-64" = "56-64",
   "64+" = "64+",
-}
-
-export enum BodyTypeEnum {
-  ECTOMORPH = "ectomorph",
-  MESOMORPH = "mesomorph",
-  ENDOMORPH = "endomorph",
 }
 
 export enum TaskStatusEnum {
