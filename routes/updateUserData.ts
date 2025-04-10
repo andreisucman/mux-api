@@ -18,7 +18,7 @@ import { SuspiciousRecordCollectionEnum } from "@/functions/addSuspiciousRecord.
 const route = Router();
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { name, avatar, intro, socials, dailyCalorieGoal } = req.body;
+  const { name, avatar, intro, socials } = req.body;
 
   if (Object.keys(req.body).length === 0) {
     res.status(400).json({ error: "Bad request" });

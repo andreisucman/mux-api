@@ -18,7 +18,7 @@ type Props = {
   ignoreIncompleteTasks?: boolean;
 };
 
-export default async function cloneSingleRoutine({
+export default async function copySingleRoutine({
   userId,
   userName,
   daysDifference,

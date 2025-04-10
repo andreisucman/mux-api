@@ -3,21 +3,6 @@ import { Request } from "express";
 import { ModerationResultType } from "./functions/moderateContent.js";
 import { TaskExampleType } from "./types/createRoutineTypes.js";
 
-export type SuggestionType = {
-  _id: string;
-  type: "product" | "place";
-  suggestion: string;
-  asin: string;
-  name: string;
-  image: string;
-  url: string;
-  rating: number;
-  description: string;
-  priceAndUnit: string;
-  vectorizedOn: Date;
-  productFeatures?: string[];
-};
-
 export interface CustomRequest extends Request {
   userId?: string;
   timeZone?: string;
@@ -30,11 +15,6 @@ export type UserInfoType = {
   concerns: UserConcernType[];
   specialConsiderations: string;
   demographics: DemographicsType;
-};
-
-export type HigherThanType = {
-  head: { overall: number; face: number; mouth: number; hair: number };
-  body: { overall: number; body: number };
 };
 
 export type NextActionType = { part: PartEnum; date: Date | null };
@@ -54,9 +34,7 @@ export type FormattedRatingType = {
 export type LatestScoresType = {
   overall: number;
   face: FormattedRatingType;
-  mouth: FormattedRatingType;
   hair: FormattedRatingType;
-  body: FormattedRatingType;
 };
 
 export type PurchaseType = {
@@ -89,7 +67,6 @@ export type UserType = {
   auth: string;
   isPublic: boolean;
   createdAt: Date;
-  latestScanImages?: string[];
   specialConsiderations: string;
   streaks: StreaksType;
   nextScan: NextActionType[];
@@ -104,7 +81,6 @@ export type UserType = {
   deleteOn: Date;
   subscriptions: {
     improvement: SubscriptionType;
-    advisor: SubscriptionType;
   };
   toAnalyze: ToAnalyzeType[];
   stripeUserId: string;
@@ -129,7 +105,6 @@ export type ToAnalyzeType = {
 
 export enum SubscriptionTypeNamesEnum {
   IMPROVEMENT = "improvement",
-  ADVISOR = "advisor",
 }
 
 export type SubscriptionType = {
@@ -173,16 +148,7 @@ export enum BlurTypeEnum {
 
 export enum PartEnum {
   FACE = "face",
-  BODY = "body",
-  MOUTH = "mouth",
   HAIR = "hair",
-}
-
-export enum PositionEnum {
-  FRONT = "front",
-  BACK = "back",
-  RIGHT = "right",
-  LEFT = "left",
 }
 
 export enum SexEnum {
@@ -248,9 +214,7 @@ export enum RoutineStatusEnum {
 
 export type StreaksType = {
   faceStreak: number;
-  mouthStreak: number;
   hairStreak: number;
-  bodyStreak: number;
 };
 
 export type UserConcernType = {
@@ -316,9 +280,7 @@ export type FeatureAnalysisType = {
 export type LatestProgressType = {
   overall: number;
   face: ProgressType;
-  mouth: ProgressType;
   hair: ProgressType;
-  body: ProgressType;
 };
 
 export type RecipeType = {
@@ -351,7 +313,6 @@ export type TaskType = {
   isDish: boolean;
   recipe: RecipeType | null;
   examples: TaskExampleType[];
-  suggestions: SuggestionType[] | null;
   productTypes: string[] | null;
   startsAt: Date | null;
   expiresAt: Date | null;

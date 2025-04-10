@@ -12,7 +12,7 @@ type ExistingFiltersType = {
   nearestConcerns: string[];
   ageInterval: string[];
   sex: string[];
-  type: string[];
+  part: string[];
   taskName: string[];
 };
 
@@ -23,7 +23,7 @@ const emptyFilters: ExistingFiltersType = {
   nearestConcerns: [],
   ageInterval: [],
   sex: [],
-  type: [],
+  part: [],
   taskName: [],
 };
 

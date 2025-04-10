@@ -9,7 +9,7 @@ import { CustomRequest, RoutineType } from "types.js";
 import { calculateDaysDifference, checkDateValidity } from "helpers/utils.js";
 import httpError from "@/helpers/httpError.js";
 import getUserInfo from "@/functions/getUserInfo.js";
-import cloneSingleRoutine from "@/functions/cloneSingleRoutine.js";
+import copySingleRoutine from "@/functions/copySingleRoutine.js";
 import checkPurchaseAccess from "@/functions/checkPurchaseAccess.js";
 
 const route = Router();
@@ -77,7 +77,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     for (let i = 0; i < accessibleRoutines.length; i++) {
       promises.push(
         doWithRetries(() =>
-          cloneSingleRoutine({
+          copySingleRoutine({
             hostRoutine: accessibleRoutines[i],
             userId: req.userId,
             userName: userInfo.name,

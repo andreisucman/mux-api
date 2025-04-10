@@ -16,44 +16,16 @@ type Props = {
 
 const demographicsMap = {
   sex: z.enum(["male", "female"]),
-  ageInterval: z.enum([
-    "18-24",
-    "24-30",
-    "30-36",
-    "36-42",
-    "42-48",
-    "48-56",
-    "56-64",
-    "64+",
-  ]),
-  ethnicity: z.enum([
-    "white",
-    "asian",
-    "black",
-    "hispanic",
-    "arab",
-    "south_asian",
-    "native_american",
-  ]),
+  ageInterval: z.enum(["18-24", "24-30", "30-36", "36-42", "42-48", "48-56", "56-64", "64+"]),
+  ethnicity: z.enum(["white", "asian", "black", "hispanic", "arab", "south_asian", "native_american"]),
   skinType: z.enum(["dry", "oily", "normal"]),
   bodyType: z.enum(["ectomorph", "mesomorph", "endomorph"]),
 };
 
-export default async function getDemographics({
-  toAnalyze,
-  userId,
-  categoryName,
-  demographicsKeys,
-}: Props) {
-  const hasBody = toAnalyze.some((obj) => obj.part === "body");
-
+export default async function getDemographics({ toAnalyze, userId, categoryName, demographicsKeys }: Props) {
   try {
     let systemContent =
       "You are an anthropologist. You are given images of a human. Your goal is to determine its demographic data such as sex, age interval, ethnicity, skin type";
-
-    if (hasBody) {
-      systemContent += ` and body type.`;
-    }
 
     systemContent += ` Think step-by-step. Follow the instruction strictly. Use only the information that exists.`;
 
@@ -81,10 +53,7 @@ export default async function getDemographics({
       {
         model: "gpt-4o",
         content: images,
-        responseFormat: zodResponseFormat(
-          DemographicsResponseType,
-          "demographics"
-        ),
+        responseFormat: zodResponseFormat(DemographicsResponseType, "demographics"),
       },
     ];
 

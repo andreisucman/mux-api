@@ -19,11 +19,7 @@ type GetCanIncrementProps = {
   streakDates: { [key: string]: Date };
 };
 
-function getCanIncrement({
-  part,
-  timeZone,
-  streakDates,
-}: GetCanIncrementProps) {
+function getCanIncrement({ part, timeZone, streakDates }: GetCanIncrementProps) {
   if (!streakDates) return true;
 
   const todayMidnight = setToMidnight({ date: new Date(), timeZone });
@@ -35,12 +31,7 @@ function getCanIncrement({
   return todayMidnight > streakDate;
 }
 
-export default async function getStreaksToIncrement({
-  userId,
-  part,
-  timeZone,
-  streakDates,
-}: Props) {
+export default async function getStreaksToIncrement({ userId, part, timeZone, streakDates }: Props) {
   try {
     const streaksToIncrement: { [key: string]: number } = {};
     let newStreakDates = { ...streakDates };
@@ -71,16 +62,8 @@ export default async function getStreaksToIncrement({
         streaksToIncrement["streaks.faceStreak"] = 1;
       }
 
-      if (part === "mouth") {
-        streaksToIncrement["streaks.mouthStreak"] = 1;
-      }
-
       if (part === "hair") {
         streaksToIncrement["streaks.hairStreak"] = 1;
-      }
-
-      if (part === "body") {
-        streaksToIncrement["streaks.bodyStreak"] = 1;
       }
 
       newStreakDates = {

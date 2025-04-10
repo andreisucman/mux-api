@@ -4,7 +4,7 @@ import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import checkProofImage from "functions/checkProofImage.js";
-import { daysFrom, urlToBase64 } from "helpers/utils.js";
+import { urlToBase64 } from "helpers/utils.js";
 import isMajorityOfImagesIdentical from "functions/isMajorityOfImagesIdentical.js";
 import { extensionTypeMap } from "data/extensionTypeMap.js";
 import addSuspiciousRecord, { SuspiciousRecordCollectionEnum } from "@/functions/addSuspiciousRecord.js";
@@ -15,14 +15,12 @@ import { UploadProofUserType, UploadProofTaskType } from "types/uploadProofTypes
 import moderateContent from "@/functions/moderateContent.js";
 import { ModerationStatusEnum } from "types.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
-import analyzeCalories from "functions/analyzeCalories.js";
 import getStreaksToIncrement from "helpers/getStreaksToIncrement.js";
 import selectItemsAtEqualDistances from "helpers/utils.js";
 import httpError from "@/helpers/httpError.js";
 import extractImagesAndTextFromVideo from "@/functions/extractImagesAndTextFromVideo.js";
 import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.js";
 import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
-import checkIfTaskIsAboutFood from "@/functions/checkIfTaskIsRelated.js";
 import { checkIfPublic } from "./checkIfPublic.js";
 import createImageCollage from "@/functions/createImageCollage.js";
 
@@ -357,39 +355,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       keyOne: "tasksCompleted",
       keyTwo: "manualTasksCompleted",
     });
-
-    const isTaskAboutFood = await checkIfTaskIsAboutFood({
-      categoryName: CategoryNameEnum.PROOF,
-      instruction: taskInfo.instruction,
-      userId: req.userId,
-    });
-
-    /* decrement the daily calories for food submissions */
-    if (isTaskAboutFood) {
-      const { nutrition } = userInfo;
-
-      const { remainingDailyCalories } = nutrition;
-
-      const foodAnalysis = await analyzeCalories({
-        userId: req.userId,
-        url: proofImage,
-        categoryName: CategoryNameEnum.PROOF,
-        onlyCalories: true,
-        taskDescription: taskInfo.description,
-      });
-
-      const { energy } = foodAnalysis;
-
-      const newRemainingCalories = Math.max(0, remainingDailyCalories - energy);
-
-      userUpdatePayload.$set = {
-        ...userUpdatePayload.$set,
-        nutrition: {
-          ...nutrition,
-          remainingDailyCalories: newRemainingCalories,
-        },
-      };
-    }
 
     if (Object.keys(userUpdatePayload).length > 0)
       await doWithRetries(async () =>

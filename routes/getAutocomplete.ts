@@ -12,25 +12,21 @@ const route = Router();
 
 const collectionsMap: { [key: string]: string } = {
   proof: "Proof",
-  solution: "Solution",
   user: "User",
 };
 
 const fieldsMap: { [key: string]: string[] } = {
   proof: ["taskName", "concern"],
-  solution: ["name", "nearestConcerns", "description"],
   user: ["name"],
 };
 
 const projectionMap: { [key: string]: string[] } = {
   proof: ["taskName", "concern"],
-  solution: ["name", "nearestConcerns"],
   user: ["name", "avatar"],
 };
 
 const indexMap: { [key: string]: string } = {
   proof: "proof_search_autocomplete",
-  solution: "solution_search_autocomplete",
   user: "user_search_autocomplete",
 };
 

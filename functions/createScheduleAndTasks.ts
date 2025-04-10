@@ -4,14 +4,7 @@ import incrementProgress from "@/helpers/incrementProgress.js";
 import polishRawSchedule from "./polishRawSchedule.js";
 import createTasks from "./createTasks.js";
 import addDateAndIdsToAllTasks from "@/helpers/addDateAndIdsToAllTasks.js";
-import {
-  AllTaskType,
-  CategoryNameEnum,
-  PartEnum,
-  TaskType,
-  UserConcernType,
-  UserInfoType,
-} from "@/types.js";
+import { AllTaskType, CategoryNameEnum, PartEnum, UserConcernType, UserInfoType } from "@/types.js";
 import { CreateRoutineAllSolutionsType } from "@/types/createRoutineTypes.js";
 import httpError from "@/helpers/httpError.js";
 
@@ -44,7 +37,7 @@ export default async function createScheduleAndTasks({
         allTasks,
         routineStartDate,
         days: 7,
-        timeZone: userInfo.timeZone
+        timeZone: userInfo.timeZone,
       })
     );
 

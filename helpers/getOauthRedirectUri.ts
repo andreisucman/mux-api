@@ -8,9 +8,6 @@ export default function getOauthRedirectUri(redirectPath: string) {
     case "/scan/progress":
       redirectUrl = process.env.SCAN_PROGRESS_REDIRECT_URI;
       break;
-    case "/scan/food":
-      redirectUrl = process.env.SCAN_FOOD_REDIRECT_URI;
-      break;
     case "/tasks":
       redirectUrl = process.env.TASKS_REDIRECT_URI;
       break;
@@ -28,12 +25,6 @@ export default function getOauthRedirectUri(redirectPath: string) {
       break;
     case "/club/about":
       redirectUrl = process.env.CLUB_ABOUT_REDIRECT_URI;
-      break;
-    case "/club/answers":
-      redirectUrl = process.env.CLUB_ANSWERS_REDIRECT_URI;
-      break;
-    case "/plans":
-      redirectUrl = process.env.PLANS_REDIRECT_URI;
       break;
     case "/rewards":
       redirectUrl = process.env.REWARDS_REDIRECT_URI;

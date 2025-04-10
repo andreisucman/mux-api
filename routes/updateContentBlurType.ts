@@ -10,26 +10,6 @@ import httpError from "@/helpers/httpError.js";
 
 const route = Router();
 
-type UpdateDiaryRecordProps = {
-  contentId: string;
-  url: string;
-};
-
-async function updateDiaryRecord({ contentId, url }: UpdateDiaryRecordProps) {
-  /* update diary activities */
-  const relevantDiaryRecord = await doWithRetries(async () =>
-    db.collection("Diary").findOne({ "activity.contentId": contentId }, { projection: { activity: 1 } })
-  );
-
-  if (relevantDiaryRecord) {
-    const activity = relevantDiaryRecord.activity.map((a) => (a.contentId === contentId ? { ...a, url: url } : a));
-
-    await doWithRetries(async () =>
-      db.collection("Diary").updateOne({ _id: new ObjectId(relevantDiaryRecord._id) }, { $set: { activity } })
-    );
-  }
-}
-
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
   const { url, contentId, blurDots } = req.body;
 
@@ -107,8 +87,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     }
 
     updatePayload.$set = { images: updatedImages };
-
-    await updateDiaryRecord({ contentId, url: newMainUrl.url });
 
     await doWithRetries(async () =>
       db

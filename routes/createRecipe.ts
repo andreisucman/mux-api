@@ -21,7 +21,6 @@ import checkSubscriptionStatus from "functions/checkSubscription.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import { adminDb, db } from "init.js";
 import httpError from "@/helpers/httpError.js";
-import findRelevantSuggestions from "@/functions/findRelevantSuggestions.js";
 import extractProductsFromImage from "@/functions/extractProductsFromImage.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 
@@ -261,8 +260,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       userId: req.userId,
     });
 
-    const suggestions = await findRelevantSuggestions(response.productTypes);
-
     await doWithRetries(async () =>
       db.collection("AnalysisStatus").updateOne(
         { userId: new ObjectId(req.userId), operationKey: analysisType },
@@ -286,7 +283,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
               description: response.description,
               instruction: response.instruction,
             },
-            suggestions,
           },
         }
       )

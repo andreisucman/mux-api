@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { UserConcernType, RecipeType, DemographicsType, NextActionType, SuggestionType } from "@/types.js";
+import { UserConcernType, RecipeType, DemographicsType, NextActionType } from "@/types.js";
 
 export type CreateRoutineUserInfoType = {
   _id: ObjectId;
@@ -19,7 +19,6 @@ export type CreateRoutineAllSolutionsType = {
   description: string;
   requisite: string;
   icon: string;
-  suggestions: SuggestionType[];
   examples: TaskExampleType[];
   color: string;
   name: string;

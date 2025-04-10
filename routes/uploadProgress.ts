@@ -95,7 +95,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       return;
     }
 
-    const { isClearlyVisible, numberOfPeople } = await checkImageRequirements({
+    const { isClearlyVisible, numberOfPeople, isMinor } = await checkImageRequirements({
       image,
       userId: finalUserId,
       categoryName: CategoryNameEnum.PROGRESSSCAN,
@@ -119,6 +119,13 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     if (numberOfPeople > 1) {
       res.status(200).json({
         error: "There can only be one person on the photo.",
+      });
+      return;
+    }
+
+    if (isMinor) {
+      res.status(200).json({
+        error: "The person on the image appears to be a minor.",
       });
       return;
     }

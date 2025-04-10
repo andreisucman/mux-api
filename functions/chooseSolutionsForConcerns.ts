@@ -5,13 +5,7 @@ import { z } from "zod";
 import askRepeatedly from "functions/askRepeatedly.js";
 import { convertKeysAndValuesTotoSnakeCase } from "helpers/utils.js";
 import incrementProgress from "helpers/incrementProgress.js";
-import {
-  UserConcernType,
-  PartEnum,
-  CategoryNameEnum,
-  DemographicsType,
-  ProgressImageType,
-} from "types.js";
+import { UserConcernType, PartEnum, CategoryNameEnum, DemographicsType, ProgressImageType } from "types.js";
 import { RunType } from "types/askOpenaiTypes.js";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import checkFacialHair from "./checkFacialHair.js";
@@ -57,10 +51,9 @@ export default async function chooseSolutionsForConcerns({
   part,
 }: Props) {
   const callback = () => {
-    const value = part === "body" ? 2 : 4;
     incrementProgress({
       operationKey: "routine",
-      value: value * incrementMultiplier,
+      value: 2 * incrementMultiplier,
       userId: String(userId),
     });
   };
@@ -70,10 +63,7 @@ export default async function chooseSolutionsForConcerns({
   const concernsNames = partConcerns.map((c) => c.name);
 
   try {
-    const shouldCheckFacialHar =
-      sex === "male" &&
-      part === "face" &&
-      concernsNames.includes("ungroomed_facial_hair");
+    const shouldCheckFacialHar = sex === "male" && part === "face" && concernsNames.includes("ungroomed_facial_hair");
 
     let findSolutionsInstruction = `You are a dermatologist, dentist and fitness coach. You are given the information about a user and a list of their ${part} concerns. Your goal is to come up with a combination of the most effective solutions that you know of that the user can do themselves to improve each of their concerns. These could include nutrition, skincare or fitness tasks. Each solution must represent a standalone individual task with a monthly frequency of use. The solutions must be compatible with each other. Don't suggest apps, or passive tasks such as sleeping. 
     <--->Your response is an object where keys are the concerns and values are an array of objects each havng a solution name and frequency. <--->Example of your response format: {chapped_lips: [{solution: lip healing balm, monthlyFrequency: 60}], thinning_hair: [{solution: minoxidil, monthlyFrequency: 60},{solution: scalp massage, monthlyFrequency: 30}, {solution: gentle shampoo, monthlyFrequency: 8}, ...], ...}`;
@@ -91,8 +81,7 @@ export default async function chooseSolutionsForConcerns({
         incrementMultiplier,
       });
 
-      if (growsFacialHair)
-        findSolutionsInstruction += ` Don't suggest clean shave.`;
+      if (growsFacialHair) findSolutionsInstruction += ` Don't suggest clean shave.`;
     }
 
     const allConcerns = partConcerns.map((co) => ({
@@ -115,9 +104,7 @@ export default async function chooseSolutionsForConcerns({
       {
         type: "text",
         text: `User info: ${userAboutString}.${
-          specialConsiderations
-            ? ` User's special considerations: ${specialConsiderations}`
-            : ""
+          specialConsiderations ? ` User's special considerations: ${specialConsiderations}` : ""
         }`,
       },
       {
@@ -155,9 +142,7 @@ export default async function chooseSolutionsForConcerns({
     let ChooseSolutonForConcernsResponseType = z.object(
       allConcerns.reduce((a, c) => {
         a[c.name] = z
-          .array(
-            z.object({ solution: z.string(), monthlyFrequency: z.number() })
-          )
+          .array(z.object({ solution: z.string(), monthlyFrequency: z.number() }))
           .describe(`The array of solutions for the ${c.name} concern`);
 
         return a;
@@ -168,15 +153,11 @@ export default async function chooseSolutionsForConcerns({
       ChooseSolutonForConcernsResponseType = z.object({
         areCurrentSolutionsOkay: z
           .boolean()
-          .describe(
-            "true if the current solutions are effective and no more solutions are needed, false otherwise"
-          ),
+          .describe("true if the current solutions are effective and no more solutions are needed, false otherwise"),
         updatedListOfSolutions: z.object(
           allConcerns.reduce((a, c) => {
             a[c.name] = z
-              .array(
-                z.object({ solution: z.string(), monthlyFrequency: z.number() })
-              )
+              .array(z.object({ solution: z.string(), monthlyFrequency: z.number() }))
               .describe(`The array of solutions for the ${c.name} concern`);
 
             return a;
@@ -193,27 +174,22 @@ export default async function chooseSolutionsForConcerns({
           text: `Format your final list of solutions as JSON object.`,
         },
       ],
-      responseFormat: zodResponseFormat(
-        ChooseSolutonForConcernsResponseType,
-        "ChooseSolutonForConcernsResponseType"
-      ),
+      responseFormat: zodResponseFormat(ChooseSolutonForConcernsResponseType, "ChooseSolutonForConcernsResponseType"),
       callback,
     });
 
-    let findFrequencyResponse: ConcernsSolutionsAndFrequenciesType =
-      await askRepeatedly({
-        userId: String(userId),
-        categoryName,
-        systemContent: findSolutionsInstruction,
-        runs: findSolutionsContentArray as RunType[],
-        functionName: "chooseSolutionsForConcerns",
-      });
+    let findFrequencyResponse: ConcernsSolutionsAndFrequenciesType = await askRepeatedly({
+      userId: String(userId),
+      categoryName,
+      systemContent: findSolutionsInstruction,
+      runs: findSolutionsContentArray as RunType[],
+      functionName: "chooseSolutionsForConcerns",
+    });
 
     let data = findFrequencyResponse;
 
     if (latestSolutions) {
-      data =
-        findFrequencyResponse.updatedListOfSolutions as unknown as ConcernsSolutionsAndFrequenciesType;
+      data = findFrequencyResponse.updatedListOfSolutions as unknown as ConcernsSolutionsAndFrequenciesType;
     }
 
     data = Object.fromEntries(

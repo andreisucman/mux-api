@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import { Router, NextFunction } from "express";
 import { db } from "init.js";
-import { CustomRequest, TaskStatusEnum } from "types.js";
+import { CustomRequest } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 
 const route = Router();

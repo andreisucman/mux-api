@@ -29,7 +29,6 @@ export default async function polishRawSchedule({
 }: Props) {
   try {
     const callback = (value: number) => {
-      if (part === "body") value = value / 2;
       incrementProgress({
         operationKey: "routine",
         value: value * incrementMultiplier,
@@ -61,19 +60,6 @@ export default async function polishRawSchedule({
         callback: () => callback(2),
       },
     ];
-
-    if (part === "body") {
-      userContent.push({
-        model: "o3-mini",
-        content: [
-          {
-            type: "text",
-            text: "Reschedule the exercises into a push-pull-legs split, ensuring pushing exercises are on one day, pulling exercises on another, and leg exercises on a separate day.",
-          },
-        ],
-        callback: () => callback(2),
-      });
-    }
 
     userContent.push({
       model: "gpt-4o-mini",

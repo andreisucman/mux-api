@@ -9,20 +9,10 @@ export const defaultSubscriptions = {
     subscriptionId: null as string | null,
     validUntil: null as Date | null,
   },
-  advisor: {
-    isTrialUsed: false,
-    subscriptionId: null as string | null,
-    validUntil: null as Date | null,
-  },
 };
 
 export const defaultTriedSubscriptions = {
   improvement: {
-    isTrialUsed: true,
-    subscriptionId: null as string | null,
-    validUntil: null as Date | null,
-  },
-  advisor: {
     isTrialUsed: true,
     subscriptionId: null as string | null,
     validUntil: null as Date | null,
@@ -39,24 +29,18 @@ export const defaultDemographics: DemographicsType = {
 
 const defaultNextAction: NextActionType[] = [
   { part: PartEnum.FACE, date: null },
-  { part: PartEnum.MOUTH, date: null },
   { part: PartEnum.HAIR, date: null },
-  { part: PartEnum.BODY, date: null },
 ];
 
 const defaultStreaks = {
   faceStreak: 0,
-  mouthStreak: 0,
   hairStreak: 0,
-  bodyStreak: 0,
 };
 
 export const defaultLatestScores = {
   overall: 0,
   face: null,
-  mouth: null,
   hair: null,
-  body: null,
 };
 
 export const defaultUser: UserType = {
@@ -79,9 +63,7 @@ export const defaultUser: UserType = {
   latestProgress: {
     overall: 0,
     face: null,
-    mouth: null,
     hair: null,
-    body: null,
   },
   createdAt: new Date(),
   streaks: defaultStreaks,

@@ -1,7 +1,7 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import { CategoryNameEnum, PartEnum } from "@/types.js";
+import { CategoryNameEnum } from "@/types.js";
 import httpError from "@/helpers/httpError.js";
 import { urlToBase64 } from "@/helpers/utils.js";
 import askRepeatedly from "./askRepeatedly.js";
@@ -17,14 +17,10 @@ type Props = {
 
 export default async function checkImageRequirements({ userId, image, categoryName }: Props) {
   try {
-    const systemContent = `1. Is the angle and captured part on both images similar? 2. Is the human on the image clearly visible with no shadows or glitter obscuring their features? 3. How many people are on the image?`;
+    const systemContent = `1. Does the person on the image appear to be a minor (younger than 18 years)? 2. Is the human on the image clearly visible with no shadows or glitter obscuring their features? 3. How many people are on the image?`;
 
     const CheckImagePositionResponseType = z.object({
-      isAngleAndPartSimilar: z
-        .boolean()
-        .describe(
-          "true if the angle and part is similar on both images, false if the angle or part between the images is entirely irrelevant"
-        ),
+      isMinor: z.boolean().describe("true if appears to be a minor, false if not"),
       isClearlyVisible: z.boolean().describe("true if clearly visible, false if not"),
       numberOfPeople: z.number().describe("the number of people on the image"),
     });
@@ -42,7 +38,7 @@ export default async function checkImageRequirements({ userId, image, categoryNa
       },
     ];
 
-    const { isClearlyVisible, numberOfPeople } = await askRepeatedly({
+    const response = await askRepeatedly({
       runs,
       userId,
       systemContent,
@@ -50,10 +46,7 @@ export default async function checkImageRequirements({ userId, image, categoryNa
       functionName: "checkImageRequirements",
     });
 
-    return {
-      isClearlyVisible,
-      numberOfPeople,
-    };
+    return response;
   } catch (err) {
     throw httpError(err);
   }

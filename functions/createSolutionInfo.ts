@@ -7,7 +7,6 @@ import httpError from "@/helpers/httpError.js";
 import { generateRandomPastelColor } from "make-random-color";
 import searchYoutubeVideos from "./searchYoutubeVideos.js";
 import generateImage from "./generateImage.js";
-import findRelevantSuggestions from "./findRelevantSuggestions.js";
 
 type Props = {
   solution: string;
@@ -40,21 +39,9 @@ export default async function createSolutionInfo({
 
     const TaskResponseType = z.object({
       name: z.string().describe("The name of the task in imperative form"),
-      requisite: z
-        .string()
-        .describe(
-          "The requisite that the user has to provide to prove the completion of the task"
-        ),
-      restDays: z
-        .number()
-        .describe(
-          "Number of days the user should rest before repeating this activity"
-        ),
-      isDish: z
-        .boolean()
-        .describe(
-          "true if this activity is a dish that has to be prepared before eating"
-        ),
+      requisite: z.string().describe("The requisite that the user has to provide to prove the completion of the task"),
+      restDays: z.number().describe("Number of days the user should rest before repeating this activity"),
+      isDish: z.boolean().describe("true if this activity is a dish that has to be prepared before eating"),
       isFood: z.boolean().describe("true if this activity is a food"),
       productTypes: productTypesSchema,
     });
@@ -67,8 +54,7 @@ export default async function createSolutionInfo({
             text: `Activity description: ${description}.<-->Activity instruction: ${instruction}.`,
           },
         ],
-        model:
-          "ft:gpt-4o-mini-2024-07-18:personal:save-task-from-description:AIx7makF",
+        model: "ft:gpt-4o-mini-2024-07-18:personal:save-task-from-description:AIx7makF",
         responseFormat: zodResponseFormat(TaskResponseType, "TaskResponseType"),
       },
     ];
@@ -113,10 +99,6 @@ export default async function createSolutionInfo({
         }));
       }
     }
-
-    const suggestions = await findRelevantSuggestions(data.productTypes);
-
-    response.suggestions = suggestions;
 
     return response;
   } catch (err) {

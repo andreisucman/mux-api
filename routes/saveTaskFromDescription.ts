@@ -25,7 +25,6 @@ import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 import { validParts } from "@/data/other.js";
-import findRelevantSuggestions from "@/functions/findRelevantSuggestions.js";
 import getUsersImages from "@/functions/getUserImages.js";
 import generateImage from "@/functions/generateImage.js";
 import searchYoutubeVideos from "@/functions/searchYoutubeVideos.js";
@@ -232,10 +231,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     });
 
     generalTaskInfo.icon = iconsMap[generalTaskInfo.name];
-
-    const suggestions = await findRelevantSuggestions(generalTaskInfo.productTypes || []);
-
-    generalTaskInfo.suggestions = suggestions;
 
     const info = `${description}.${instruction}`;
     const embedding = await createTextEmbedding({
