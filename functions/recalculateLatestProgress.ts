@@ -1,12 +1,10 @@
-import { FormattedRatingType, LatestScoresType, ProgressType } from "types.js";
+import { LatestScoresDifferenceType, LatestScoresType, ProgressType } from "types.js";
 import httpError from "@/helpers/httpError.js";
 
 function updateObject(overallObject: { [key: string]: any }) {
   const { overall, explanations, ...rest } = overallObject;
 
-  const restScoresValues = Object.values(rest).filter(
-    (v) => typeof v === "number"
-  );
+  const restScoresValues = Object.values(rest).filter((v) => typeof v === "number");
 
   const newOverall = restScoresValues.reduce((a, c) => a + c, 0);
 
@@ -16,25 +14,25 @@ function updateObject(overallObject: { [key: string]: any }) {
 }
 
 type Props = {
-  latestScores: LatestScoresType;
-  latestScoresDifference: LatestScoresType;
+  latestConcernScores: LatestScoresType;
+  latestConcernScoresDifference: LatestScoresDifferenceType;
   substituteProgressRecord: ProgressType;
 };
 
 export default async function recalculateLatestProgress({
-  latestScores,
-  latestScoresDifference,
+  latestConcernScores,
+  latestConcernScoresDifference,
   substituteProgressRecord,
 }: Props) {
   try {
-    const finalLatestScores = updateObject(latestScores);
+    const finalLatestScores = updateObject(latestConcernScores);
 
-    const finalLatestScoresDifference = updateObject(latestScoresDifference);
+    const finalLatestScoresDifference = updateObject(latestConcernScoresDifference);
 
     return {
       latestProgress: substituteProgressRecord,
-      latestScores: finalLatestScores,
-      latestScoresDifference: finalLatestScoresDifference,
+      latestConcernScores: finalLatestScores,
+      latestConcernScoresDifference: finalLatestScoresDifference,
     };
   } catch (err) {
     throw httpError(err);

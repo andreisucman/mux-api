@@ -46,12 +46,12 @@ export default async function removeFromClub(userId: string) {
     });
 
     updateContent({
-      userId,
+      filter: { userId: new ObjectId(userId) },
       collections: ["BeforeAfter", "Progress", "Proof", "Diary", "Routine"],
       updatePayload: { isPublic: false, userName: null, avatar: null },
     });
 
-    cancelRoutineSubscribers(userId);
+    cancelRoutineSubscribers({ sellerId: new ObjectId(userId) });
   } catch (err) {
     throw httpError(err);
   }

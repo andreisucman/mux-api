@@ -19,7 +19,9 @@ export type UploadProgressUserInfo = {
   nextScan: NextActionType[];
   specialConsiderations?: string;
   latestProgress: LatestProgressType;
-  latestScores: LatestScoresType;
-  latestScoresDifference: LatestScoresType;
+  latestConcernScores: LatestScoresType;
+  latestConcernScoresDifference: LatestScoresType;
+  latestFeatureScores: LatestScoresType;
+  latestFeatureScoresDifference: LatestScoresType;
   club: ClubDataType;
 };

@@ -72,7 +72,6 @@ import deleteContent from "routes/deleteContent.js";
 import changeCountry from "routes/changeCountry.js";
 import copyTaskInstance from "routes/copyTaskInstance.js";
 import signOut from "routes/signOut.js";
-import getScoresAndFeedback from "routes/getScoresAndFeedback.js";
 import getRoutineData from "routes/getRoutineData.js";
 import saveRoutineData from "routes/saveRoutineData.js";
 import getPublicUserData from "routes/getPublicUserData.js";
@@ -90,6 +89,7 @@ import deleteTask from "routes/deleteTask.js";
 import updateStatusOfTask from "routes/updateStatusOfTask.js";
 import rescheduleTaskInstance from "routes/rescheduleTaskInstance.js";
 import deleteToAnalyze from "routes/deleteToAnalyze.js";
+import getConcerns from "routes/getConcerns.js";
 
 import { client } from "init.js";
 
@@ -138,6 +138,7 @@ app.use("/sendPasswordResetEmail", sendPasswordResetEmail);
 app.use("/setPassword", setPassword);
 app.use("/authorize", authorize);
 app.use("/authenticate", authenticate);
+app.use("/getConcerns", getConcerns);
 
 app.use((req, res, next) => checkAccess(req, res, next, true));
 app.use("/createRoutineCheckoutSession", createRoutineCheckoutSession);
@@ -180,7 +181,6 @@ app.use("/subscribeToUpdates", subscribeToUpdates);
 app.use("/getSubscriptionPrice", getSubscriptionPrice);
 app.use("/getRoutineData", getRoutineData);
 app.use("/saveRoutineData", saveRoutineData);
-app.use("/getScoresAndFeedback", getScoresAndFeedback);
 app.use("/deleteContent", deleteContent);
 app.use("/copyTaskInstance", copyTaskInstance);
 app.use("/updateConcernStatus", updateConcernStatus);

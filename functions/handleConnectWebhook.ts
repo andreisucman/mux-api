@@ -10,10 +10,7 @@ import updateAnalytics from "./updateAnalytics.js";
 import getEmailContent from "@/helpers/getEmailContent.js";
 import sendEmail from "./sendEmail.js";
 import updateContent from "./updateContent.js";
-import {
-  markEventAsProcessed,
-  fetchUserInfo,
-} from "./handleStripeWebhook/index.js";
+import { markEventAsProcessed, fetchUserInfo } from "./handleStripeWebhook/index.js";
 import cancelRoutineSubscribers from "./cancelRoutineSubscribers.js";
 
 async function handleBalanceAvailable(connectId: string | undefined) {
@@ -84,14 +81,11 @@ async function handleAccountUpdated(event: Stripe.AccountUpdatedEvent) {
     if (currentPayoutsEnabled && !account.payouts_enabled) {
       emailType = "payoutsDisabled";
 
-      const isRejected = [
-        "rejected.other",
-        "rejected.fraud",
-        "rejected.tos",
-      ].includes(account.requirements?.disabled_reason);
+      const isRejected = ["rejected.other", "rejected.fraud", "rejected.tos"].includes(
+        account.requirements?.disabled_reason
+      );
 
-      const isPaused =
-        account.requirements?.disabled_reason === "platform_paused";
+      const isPaused = account.requirements?.disabled_reason === "platform_paused";
 
       if (isRejected) {
         emailType = "payoutsRejected";
@@ -115,21 +109,18 @@ async function handleAccountUpdated(event: Stripe.AccountUpdatedEvent) {
 
       if (isRejected) {
         await updateContent({
-          userId: String(userInfo._id),
           collections: ["BeforeAfter", "Progress", "Proof", "Diary", "Routine"],
           updatePayload: { isPublic: false },
+          filter: { userId: new ObjectId(userInfo._id) },
         });
 
         await doWithRetries(() =>
           db
             .collection("RoutineData")
-            .updateMany(
-              { userId: new ObjectId(userInfo._id) },
-              { $set: { status: "hidden" } }
-            )
+            .updateMany({ userId: new ObjectId(userInfo._id) }, { $set: { status: "hidden" } })
         );
 
-        await cancelRoutineSubscribers(String(userInfo._id));
+        await cancelRoutineSubscribers({ sellerId: new ObjectId(userInfo._id) });
       }
     }
 
@@ -153,12 +144,7 @@ async function handleAccountUpdated(event: Stripe.AccountUpdatedEvent) {
     }
 
     await doWithRetries(() =>
-      db
-        .collection("User")
-        .updateOne(
-          { "club.payouts.connectId": connectId },
-          { $set: updatePayload }
-        )
+      db.collection("User").updateOne({ "club.payouts.connectId": connectId }, { $set: updatePayload })
     );
 
     if (!currentDetailsSubmitted && account.details_submitted) {
@@ -176,10 +162,7 @@ async function handleAccountUpdated(event: Stripe.AccountUpdatedEvent) {
 
 async function handleConnectWebhook(event: Stripe.Event) {
   try {
-    if (
-      event.type !== "balance.available" &&
-      event.type !== "account.updated"
-    ) {
+    if (event.type !== "balance.available" && event.type !== "account.updated") {
       return;
     }
 

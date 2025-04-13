@@ -37,7 +37,6 @@ const defaultStreaks = {
 };
 
 export const defaultLatestScores = {
-  overall: 0,
   face: null,
   hair: null,
 };
@@ -56,11 +55,10 @@ export const defaultUser: UserType = {
   deleteOn: null,
   stripeUserId: "",
   demographics: defaultDemographics,
-  latestScores: defaultLatestScores,
-  latestScoresDifference: defaultLatestScores,
+  latestConcernScores: defaultLatestScores,
+  latestConcernScoresDifference: defaultLatestScores,
   club: null,
   latestProgress: {
-    overall: 0,
     face: null,
     hair: null,
   },

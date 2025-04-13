@@ -86,7 +86,7 @@ route.post(
       );
 
       updateContent({
-        userId: req.userId,
+        filter: { userId: new ObjectId(req.userId) },
         collections: [
           "BeforeAfter",
           "Progress",

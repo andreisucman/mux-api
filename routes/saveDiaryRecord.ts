@@ -12,18 +12,18 @@ import addSuspiciousRecord, { SuspiciousRecordCollectionEnum } from "@/functions
 import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.js";
 import { DiaryRecordType } from "@/types/saveDiaryRecordTypes.js";
 import getUserInfo from "@/functions/getUserInfo.js";
-import { db } from "init.js";
 import createTextEmbedding from "@/functions/createTextEmbedding.js";
 import { checkIfPublic } from "./checkIfPublic.js";
+import { db } from "init.js";
 
 const route = Router();
 
 const validParts = [PartEnum.FACE, PartEnum.HAIR];
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { audio, activity, part } = req.body;
+  const { audio, activity, part, routineId } = req.body;
 
-  if (!audio || !activity || !validParts.includes(part)) {
+  if (!audio || !activity || !validParts.includes(part) || !routineId) {
     res.status(400).json({ error: "Bad request" });
     return;
   }
@@ -109,6 +109,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       transcription: body.message,
       createdAt: new Date(),
       moderationStatus: ModerationStatusEnum.ACTIVE,
+      concerns: [],
     };
 
     newDiaryRecord.isPublic = await checkIfPublic({
@@ -118,6 +119,18 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     const { name } = userInfo;
     if (name) newDiaryRecord.userName = name;
+
+    const routine = await doWithRetries(async () =>
+      db.collection("Routine").findOne(
+        {
+          _id: new ObjectId(routineId),
+          userId: new ObjectId(req.userId),
+        },
+        { projection: { concerns: 1 } }
+      )
+    );
+
+    newDiaryRecord.concerns = routine.concerns;
 
     await doWithRetries(async () => db.collection("Diary").insertOne(newDiaryRecord));
 

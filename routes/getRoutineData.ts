@@ -9,51 +9,50 @@ import doWithRetries from "helpers/doWithRetries.js";
 
 const route = Router();
 
-route.get(
-  "/",
-  async (req: CustomRequest, res: Response, next: NextFunction) => {
-    try {
-      const routinePartObjects = await doWithRetries(
-        async () =>
-          await db
-            .collection("Routine")
-            .aggregate([
-              {
-                $match: {
-                  userId: new ObjectId(req.userId),
-                  status: {
-                    $ne: RoutineStatusEnum.CANCELED,
-                  },
-                  deletedOn: { $exists: false },
+route.get("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
+  try {
+    const routineConcernNameObjects = await doWithRetries(
+      async () =>
+        await db
+          .collection("Routine")
+          .aggregate([
+            {
+              $match: {
+                userId: new ObjectId(req.userId),
+                status: {
+                  $ne: RoutineStatusEnum.CANCELED,
                 },
+                deletedOn: { $exists: false },
               },
-              {
-                $group: {
-                  _id: "$part",
-                },
+            },
+            { $unwind: "$concerns" },
+            {
+              $group: {
+                _id: null,
+                concerns: { $addToSet: "$concerns.name" },
               },
-              { $project: { _id: 1 } },
-            ])
-            .toArray()
-      );
+            },
+            { $project: { _id: 0, concerns: 1 } },
+          ])
+          .next()
+    );
 
-      const routineData = await doWithRetries(async () =>
-        db
-          .collection("RoutineData")
-          .find({ userId: new ObjectId(req.userId) })
-          .toArray()
-      );
+    const routineData = await doWithRetries(async () =>
+      db
+        .collection("RoutineData")
+        .find({ userId: new ObjectId(req.userId) })
+        .toArray()
+    );
 
-      res.status(200).json({
-        message: {
-          parts: routinePartObjects.map((o) => o._id),
-          routineData,
-        },
-      });
-    } catch (err) {
-      next(err);
-    }
+    res.status(200).json({
+      message: {
+        concerns: routineConcernNameObjects.concerns,
+        routineData,
+      },
+    });
+  } catch (err) {
+    next(err);
   }
-);
+});
 
 export default route;

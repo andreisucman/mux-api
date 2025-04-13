@@ -1,9 +1,11 @@
-import { UserConcernType, FormattedRatingType, ProgressType } from "types.js";
+import { UserConcernType, ScoreType, ScoreDifferenceType, ProgressType } from "types.js";
 
 export type PartResultType = {
   part: string;
   concerns: UserConcernType[];
-  latestScores: FormattedRatingType;
-  scoresDifference: { [key: string]: number };
+  latestConcernScores: ScoreType[];
+  concernScoresDifference: ScoreDifferenceType[];
+  latestFeatureScores: ScoreType[];
+  featureScoresDifference: ScoreDifferenceType[];
   latestProgress: ProgressType;
 };

@@ -2,16 +2,13 @@ import mime from "mime-types";
 import { DateTime } from "luxon";
 import bcrypt from "bcrypt";
 import setToMidnight from "./setToMidnight.js";
+import { ScoreType } from "@/types.js";
 
 export function delayExecution(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export function getExponentialBackoffDelay(
-  attempt: number,
-  baseDelay = 3000,
-  maxDelay = 15000
-) {
+export function getExponentialBackoffDelay(attempt: number, baseDelay = 3000, maxDelay = 15000) {
   const rawDelay = baseDelay * Math.pow(2, attempt);
   const jitter = Math.random() * baseDelay - baseDelay / 2;
   return Math.min(rawDelay + jitter, maxDelay);
@@ -45,20 +42,13 @@ export function toSentenceCase(value: any): string {
   return value.trim().replace(/^\w/, (char) => char.toUpperCase());
 }
 
-export function sortObjectByNumberValue(
-  obj: { [key: string]: number },
-  isAscending: boolean
-) {
+export function sortObjectByNumberValue(obj: { [key: string]: number }, isAscending: boolean) {
   return Object.fromEntries(
-    isAscending
-      ? Object.entries(obj).sort(([, a], [, b]) => a - b)
-      : Object.entries(obj).sort(([, a], [, b]) => b - a)
+    isAscending ? Object.entries(obj).sort(([, a], [, b]) => a - b) : Object.entries(obj).sort(([, a], [, b]) => b - a)
   );
 }
 
-export const getHashedPassword = async (
-  password?: string
-): Promise<string | null> => {
+export const getHashedPassword = async (password?: string): Promise<string | null> => {
   return password ? await bcrypt.hash(password, 10) : null;
 };
 
@@ -89,13 +79,7 @@ export function convertKeysAndValuesTotoSnakeCase(obj: { [key: string]: any }) {
 
       if (Array.isArray(obj[key])) {
         toSnakeCaseValues = obj[key].map(
-          ({
-            solution,
-            monthlyFrequency,
-          }: {
-            solution: string;
-            monthlyFrequency: number;
-          }) => ({
+          ({ solution, monthlyFrequency }: { solution: string; monthlyFrequency: number }) => ({
             solution: toSnakeCase(solution),
             monthlyFrequency,
             concern: key,
@@ -119,19 +103,13 @@ export function combineSolutions(
   const combinedSolutions: { [key: string]: string[] } = {};
 
   for (const [concern, solution] of Object.entries(findSolutionsResponse)) {
-    combinedSolutions[concern] = [
-      solution,
-      ...(findAdditionalSolutionsResponse[solution] || []),
-    ];
+    combinedSolutions[concern] = [solution, ...(findAdditionalSolutionsResponse[solution] || [])];
   }
 
   return combinedSolutions;
 }
 
-export default function selectItemsAtEqualDistances(
-  arr: any[],
-  numberOfImages: number
-) {
+export default function selectItemsAtEqualDistances(arr: any[], numberOfImages: number) {
   if (arr.length <= numberOfImages) {
     return arr;
   }
@@ -171,9 +149,7 @@ export async function urlToBase64(url: string): Promise<string> {
 }
 
 export function setToUtcMidnight(date: Date) {
-  return new Date(
-    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
-  );
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 }
 
 export function checkDateValidity(
@@ -192,4 +168,17 @@ export function checkDateValidity(
   const isFutureDate = isValidDate && dateUtcMidnight >= nowUtcMidnight;
 
   return { isValidDate, isFutureDate };
+}
+
+export function calculateScoreDifferences(initialScores: ScoreType[], currentScores: ScoreType[]) {
+  return initialScores
+    .map((obj) => {
+      const relevantNewScoreObject = currentScores.find((newObj) => newObj.name === obj.name);
+
+      if (relevantNewScoreObject) {
+        return { name: obj.name, value: relevantNewScoreObject.value - obj.value, part: obj.part };
+      }
+      return null;
+    })
+    .filter(Boolean);
 }

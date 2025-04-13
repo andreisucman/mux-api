@@ -1,19 +1,5 @@
 const criteria = {
   face: {
-    elasticity: `0-20 points: Poor Elasticity
-The skin lacks firmness and resilience, appearing loose or sagging with minimal rebound when stretched. Fine lines, wrinkles, or creases are prominent, and the skin may appear thin or fragile. There is little to no natural snap-back effect, indicating significant loss of elasticity.
-
-20-40 points: Minimal Elasticity
-The skin shows slight resilience but remains below average in firmness. Some mild sagging or laxity is present, particularly in areas prone to stretching (e.g., abdomen, arms, or thighs). The rebound effect is slow, and fine lines or early wrinkling may be noticeable upon manipulation.
-
-40-60 points: Moderate Elasticity
-The skin has a balanced level of firmness with moderate resilience. It rebounds reasonably well when lightly stretched but may show slight laxity in high-mobility areas. Minor creasing may occur, but the overall texture appears smooth and supported. Hydration and collagen levels contribute to a healthier bounce-back response.
-
-60-80 points: Good Elasticity
-The skin is firm, supple, and highly resilient, with a quick rebound when stretched. Minimal laxity is present, and the surface appears smooth with only subtle fine lines under tension. The skin maintains a youthful tautness, reflecting strong collagen and elastin support.
-
-80-100 points: Excellent Elasticity
-The skin exhibits exceptional firmness and snap-back recovery, resembling youthful elasticity. It remains taut, smooth, and resistant to sagging or creasing even when stretched. The texture is plump and hydrated, with no visible laxity or wrinkles. This tier reflects optimal collagen/elastin integrity and outstanding skin health.`,
     texture: `0-20 points: Poor Skin Texture
 The skin appears rough, uneven, or heavily textured. Visible blemishes, large pores, acne, or hyperpigmentation are prominent. The surface lacks smoothness and may show signs of dehydration or irritation. Overall, the skin looks dull and unhealthy.
 

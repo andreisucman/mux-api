@@ -69,10 +69,9 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         payloadUserId: userId,
         requestUserId: req.userId,
         registryFilter: {
-          category: "progress",
           part,
         },
-        categoryName: CategoryNameEnum.PROGRESSSCAN,
+        categoryName: CategoryNameEnum.SCAN,
       })) || {};
 
     if (errorMessage) {
@@ -98,16 +97,16 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     const { isClearlyVisible, numberOfPeople, isMinor } = await checkImageRequirements({
       image,
       userId: finalUserId,
-      categoryName: CategoryNameEnum.PROGRESSSCAN,
+      categoryName: CategoryNameEnum.SCAN,
     });
 
-    if (!isClearlyVisible) {
-      res.status(200).json({
-        error:
-          "The image is not clear. Try taking photos in daylight with no shadows or glitter obscuring your features.",
-      });
-      return;
-    }
+    // if (!isClearlyVisible) {
+    //   res.status(200).json({
+    //     error:
+    //       "The image is not clear. Try taking photos in daylight with no shadows or glitter obscuring your features.",
+    //   });
+    //   return;
+    // }
 
     if (numberOfPeople === 0) {
       res.status(200).json({
@@ -136,7 +135,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         afterImage: image,
         part,
         userId: finalUserId,
-        categoryName: CategoryNameEnum.PROGRESSSCAN,
+        categoryName: CategoryNameEnum.SCAN,
       });
 
       if (!isValidForComparison) {
@@ -168,7 +167,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     let { toAnalyze = [] } = userInfo;
 
-    if (toAnalyze.length >= 4) {
+    if (toAnalyze.length >= 3) {
       res.status(400).json({ error: "Bad request" });
       return;
     }

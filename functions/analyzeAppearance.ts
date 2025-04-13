@@ -30,12 +30,15 @@ type Props = {
   defaultToUpdateUser?: { $set: { [key: string]: unknown } };
   club: ClubDataType;
   concerns: UserConcernType[] | null;
+  userUploadedConcerns: Partial<UserConcernType>[];
   toAnalyze: ToAnalyzeType[];
   newSpecialConsiderations: string;
   latestProgress: LatestProgressType;
   demographics: DemographicsType;
-  latestScores: LatestScoresType;
-  latestScoresDifference: LatestScoresType;
+  latestConcernScores: LatestScoresType;
+  latestConcernScoresDifference: LatestScoresType;
+  latestFeatureScores: LatestScoresType;
+  latestFeatureScoresDifference: LatestScoresType;
 };
 
 export default async function analyzeAppearance({
@@ -48,8 +51,11 @@ export default async function analyzeAppearance({
   categoryName,
   latestProgress,
   defaultToUpdateUser,
-  latestScores,
-  latestScoresDifference,
+  latestConcernScores,
+  latestFeatureScores,
+  userUploadedConcerns,
+  latestConcernScoresDifference,
+  latestFeatureScoresDifference,
   toAnalyze,
   demographics,
   newSpecialConsiderations,
@@ -66,9 +72,9 @@ export default async function analyzeAppearance({
     toUpdateUser.$set = {
       ...toUpdateUser.$set,
       toAnalyze,
-      latestScores,
+      latestConcernScores,
       demographics,
-      latestScoresDifference,
+      latestConcernScoresDifference,
     };
 
     let rephrasedSpecialConsiderations: string;
@@ -105,6 +111,7 @@ export default async function analyzeAppearance({
           part: part as PartEnum,
           userId,
           concerns,
+          userUploadedConcerns,
           categoryName,
           demographics,
           toAnalyze,
@@ -121,32 +128,32 @@ export default async function analyzeAppearance({
     const restOfConcerns = concerns.filter((rec) => !partsAnalyzed.includes(rec.part));
 
     const allUniqueConcerns = [...restOfConcerns, ...newConcerns].filter(
-      (obj, i, arr) => arr.findIndex((o) => o.name === obj.name) === i
+      (obj, i, arr) => arr.findIndex((o) => o.name === obj.name && o.part === obj.part) === i
     );
+
+    allUniqueConcerns.sort((a, b) => a.importance - b.importance).map((co, i) => ({ ...co, importance: i + 1 }));
 
     toUpdateUser.$set.concerns = allUniqueConcerns;
 
-    const newLatestScores = analysesResults.reduce(
-      (a: { [key: string]: any }, c) => {
-        a[c.part] = c.latestScores;
-        a.overall += c.latestScores.overall;
-        return a;
-      },
-      { overall: 0 }
-    );
+    const newLatestConcernScores = analysesResults.reduce((a: { [key: string]: any }, c) => {
+      a[c.part] = c.latestConcernScores;
+      return a;
+    }, {});
 
-    newLatestScores.overall = Math.round(newLatestScores.overall / analysesResults.length);
+    const newLatestConcernScoresDifference = analysesResults.reduce((a: { [key: string]: any }, c) => {
+      a[c.part] = c.concernScoresDifference;
+      return a;
+    }, {});
 
-    const newLatestScoresDifference = analysesResults.reduce(
-      (a: { [key: string]: any }, c) => {
-        a[c.part] = c.scoresDifference;
-        a.overall += c.scoresDifference.overall;
-        return a;
-      },
-      { overall: 0 }
-    );
+    const newLatestFeaturesScores = analysesResults.reduce((a: { [key: string]: any }, c) => {
+      a[c.part] = c.latestFeatureScores;
+      return a;
+    }, {});
 
-    newLatestScoresDifference.overall = Math.round(newLatestScoresDifference.overall / analysesResults.length);
+    const newLatestFeatureScoresDifference = analysesResults.reduce((a: { [key: string]: any }, c) => {
+      a[c.part] = c.featureScoresDifference;
+      return a;
+    }, {});
 
     await incrementProgress({
       value: 99,
@@ -155,25 +162,29 @@ export default async function analyzeAppearance({
       userId,
     });
 
-    const newLatestProgress = analysesResults.reduce(
-      (a: { [key: string]: any }, c) => {
-        a[c.part] = c.latestProgress;
-        a.overall += c.latestProgress.scores.overall;
-        return a;
-      },
-      { overall: 0 }
-    );
+    const newLatestProgress = analysesResults.reduce((a: { [key: string]: any }, c) => {
+      a[c.part] = c.latestProgress;
+      return a;
+    }, {});
 
-    newLatestProgress.overall = Math.round(newLatestProgress.overall / analysesResults.length);
-
-    toUpdateUser.$set.latestScores = {
-      ...latestScores,
-      ...newLatestScores,
+    toUpdateUser.$set.latestConcernScores = {
+      ...latestConcernScores,
+      ...newLatestConcernScores,
     };
 
-    toUpdateUser.$set.latestScoresDifference = {
-      ...latestScoresDifference,
-      ...newLatestScoresDifference,
+    toUpdateUser.$set.latestFeatureScores = {
+      ...latestFeatureScores,
+      ...newLatestFeaturesScores,
+    };
+
+    toUpdateUser.$set.latestConcernScoresDifference = {
+      ...latestConcernScoresDifference,
+      ...newLatestConcernScoresDifference,
+    };
+
+    toUpdateUser.$set.latestFeatureScoresDifference = {
+      ...latestFeatureScoresDifference,
+      ...newLatestFeatureScoresDifference,
     };
 
     toUpdateUser.$set.latestProgress = {
@@ -202,7 +213,7 @@ export default async function analyzeAppearance({
         )
     );
 
-    const partScansIncrementPayload = partsAnalyzed.map((p) => `overview.usage.scans.progressScanParts.${p}`);
+    const partScansIncrementPayload = partsAnalyzed.map((p) => `overview.usage.scans.scanParts.${p}`);
 
     const partScansIncrementMap = partScansIncrementPayload.reduce((a, c) => {
       a[c] = 1;
@@ -213,7 +224,7 @@ export default async function analyzeAppearance({
       userId,
       incrementPayload: {
         ...partScansIncrementMap,
-        "overview.usage.scans.totalProgressScans": 1,
+        "overview.usage.scans.totalScans": 1,
       },
     });
 

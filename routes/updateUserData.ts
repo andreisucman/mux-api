@@ -164,7 +164,9 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       if (avatar) updatePublicityPayload.avatar = avatar;
 
       updateContent({
-        userId: req.userId,
+        filter: {
+          userId: new ObjectId(req.userId),
+        },
         collections: ["Proof", "Progres", "Diary", "Task", "Routine", "BeforeAfter"],
         updatePayload: updatePublicityPayload,
       });

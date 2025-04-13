@@ -25,16 +25,25 @@ export type RequirementType = {
   part: PartEnum;
 };
 
-export type FormattedRatingType = {
-  explanations?: { feature: string; explanation: string }[];
-} & {
-  [key: string]: number;
+export type ScoreType = {
+  value: number;
+  explanation: string;
+  name: string;
+  part: PartEnum;
 };
 
 export type LatestScoresType = {
-  overall: number;
-  face: FormattedRatingType;
-  hair: FormattedRatingType;
+  [key: string]: ScoreType[];
+};
+
+export type ScoreDifferenceType = {
+  value: number;
+  name: string;
+  part: PartEnum;
+};
+
+export type LatestScoresDifferenceType = {
+  [key: string]: ScoreDifferenceType[];
 };
 
 export type PurchaseType = {
@@ -74,8 +83,8 @@ export type UserType = {
   streakDates: {};
   concerns: UserConcernType[] | null;
   tosAccepted: boolean;
-  latestScores: LatestScoresType;
-  latestScoresDifference: LatestScoresType;
+  latestConcernScores: LatestScoresType;
+  latestConcernScoresDifference: LatestScoresDifferenceType;
   latestProgress: LatestProgressType;
   club: ClubDataType;
   deleteOn: Date;
@@ -213,10 +222,8 @@ export type StreaksType = {
 export type UserConcernType = {
   name: string;
   part: PartEnum;
-  explanation: string;
   importance: number;
   isDisabled: boolean;
-  imported?: boolean;
 };
 
 export type BlurredUrlType = {
@@ -237,8 +244,7 @@ export enum ModerationStatusEnum {
 
 export enum CategoryNameEnum {
   TASKS = "tasks",
-  PROGRESSSCAN = "progressScan",
-  FOODSCAN = "foodScan",
+  SCAN = "scan",
   PRODUCTS = "products",
   PROOF = "proof",
   DIARY = "diary",
@@ -255,8 +261,10 @@ export type ProgressType = {
   concerns?: UserConcernType[];
   images: ProgressImageType[];
   initialImages: ProgressImageType[];
-  scores?: FormattedRatingType;
-  scoresDifference?: { [key: string]: any };
+  concernScores?: ScoreType[];
+  concernScoresDifference?: ScoreDifferenceType[];
+  featureScores?: ScoreType[];
+  featureScoresDifference?: ScoreDifferenceType[];
   specialConsiderations: string;
   isPublic: boolean;
   userName?: string;
@@ -264,14 +272,7 @@ export type ProgressType = {
   moderationStatus: ModerationStatusEnum;
 };
 
-export type FeatureAnalysisType = {
-  feature: string;
-  score: number;
-  explanation: string;
-};
-
 export type LatestProgressType = {
-  overall: number;
   face: ProgressType;
   hair: ProgressType;
 };
@@ -368,10 +369,10 @@ export type BeforeAfterType = {
   concerns?: UserConcernType[];
   images: ProgressImageType[];
   initialImages: ProgressImageType[];
-  scores?: { [key: string]: any };
-  scoresDifference?: { [key: string]: any };
-  latestBodyScoreDifference?: number;
-  latestHeadScoreDifference?: number;
+  concernScores?: ScoreType[];
+  concernScoresDifference?: ScoreDifferenceType[];
+  featureScores?: ScoreType[];
+  featureScoresDifference?: ScoreDifferenceType[];
   isPublic: boolean;
   avatar?: { [key: string]: any };
   userName?: string;
@@ -400,4 +401,5 @@ export type ProofType = {
   moderationStatus: ModerationStatusEnum;
   isPublic: boolean;
   deletedOn?: Date;
+  concerns: UserConcernType[];
 };

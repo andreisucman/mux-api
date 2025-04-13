@@ -19,17 +19,9 @@ type Props = {
   systemContent: string;
 };
 
-async function askRepeatedly({
-  runs,
-  seed,
-  userId,
-  functionName,
-  categoryName,
-  systemContent,
-}: Props) {
+async function askRepeatedly({ runs, seed, userId, functionName, categoryName, systemContent }: Props) {
   try {
-    if (!ObjectId.isValid(userId))
-      throw httpError("Invalid userId format and no meta");
+    if (!ObjectId.isValid(userId)) throw httpError("Invalid userId format and no meta");
 
     let finalSeed = seed;
     let result;
@@ -38,9 +30,7 @@ async function askRepeatedly({
       finalSeed = generateSeed(userId);
     }
 
-    let conversation: ChatCompletionMessageParam[] = [
-      { role: "system", content: systemContent },
-    ];
+    let conversation: ChatCompletionMessageParam[] = [{ role: "system", content: systemContent }];
 
     for (let i = 0; i < runs.length; i++) {
       conversation.push({
@@ -58,8 +48,7 @@ async function askRepeatedly({
       };
 
       if (runs[i].model) payload.model = runs[i].model;
-      if (runs[i].responseFormat)
-        payload.responseFormat = runs[i].responseFormat;
+      if (runs[i].responseFormat) payload.responseFormat = runs[i].responseFormat;
 
       result = await doWithRetries(async () => askAi(payload));
 

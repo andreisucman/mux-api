@@ -1,10 +1,9 @@
 import z from "zod";
 import * as dotenv from "dotenv";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
-import criteria from "data/featureCriteria.js";
 import askRepeatedly from "./askRepeatedly.js";
 import { PartEnum, CategoryNameEnum } from "types.js";
-import { FeatureAnalysisResultType } from "@/types/analyzeFeatureType.js";
+import { ScoreType } from "types.js";
 import httpError from "@/helpers/httpError.js";
 import { urlToBase64 } from "@/helpers/utils.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
@@ -14,21 +13,35 @@ dotenv.config();
 
 type Props = {
   userId: string;
-  feature: string;
+  name: string;
   part: PartEnum;
   categoryName: CategoryNameEnum;
+  assessmentCriteria?: string;
   relevantImages: string[];
 };
 
-export default async function analyzeFeature({ feature, relevantImages, part, categoryName, userId }: Props) {
+export default async function analyzeFeature({
+  name,
+  assessmentCriteria,
+  relevantImages,
+  part,
+  categoryName,
+  userId,
+}: Props) {
   try {
-    const systemContent = `You are an anthropologist, dermatologist and anathomist. Rate the ${feature} of the person on the provided images from 0 to 100 according to the following criteria: ### Criteria: ${criteria[part][feature]}###. Explain your reasoning with the references to the images. DO YOUR BEST AT PRODUCING A SCORE EVEN IF THE IMAGES ARE NOT CLEAR. Think step-by-step. Don't suggest any specific solutions. Don't mention the criteria in your response.`;
+    let systemContent = `You are a dermatologist. Rate the severity of the ${name} concern on the provided images from 0 to 100, where 0 represents non-existed and 100 represents the most severe condition. Don't assume, base your opinion on the available information only. Don't suggest anything. Think step-by-step.`;
+
+    if (assessmentCriteria) {
+      systemContent = `You are a dermatologist. Rate the ${name} of the person's ${part} on the provided images from 0 to 100 according to the following criteria: ### Criteria: ${assessmentCriteria}###. Don't mention the criteria in your response. Don't suggest anything. Think step-by-step.`;
+    }
+
+    const scoreDecription = assessmentCriteria
+      ? `Score of ${name} from 0 to 100.`
+      : `Severity score of ${name} from 0 to 100.`;
 
     const FeatureResponseFormatType = z.object({
-      score: z
-        .number()
-        .describe(`score from 0 to 100 representing the condition of the ${feature} based on the criteria`),
-      explanation: z.string().describe(`3-5 sentences of your reasoning for the score.`),
+      score: z.number().describe(scoreDecription),
+      explanation: z.string().describe(`3-5 sentences of explanation for the user in 2nd tense (you/your).`),
     });
 
     const imageContent = [];
@@ -43,14 +56,47 @@ export default async function analyzeFeature({ feature, relevantImages, part, ca
       });
     }
 
+    const content = [...imageContent];
+
+    if (!assessmentCriteria) {
+      content.push({
+        type: "text",
+        text: "The concern might not be present on the images at all. If so, return severity as 0.",
+      });
+    }
     const runs: RunType[] = [
       {
         model: "gpt-4o",
-        content: imageContent,
+        content,
+        responseFormat: zodResponseFormat(FeatureResponseFormatType, "FeatureResponseFormatType"),
       },
     ];
 
-    const firstResponse = await askRepeatedly({
+    // const firstResponse = await askRepeatedly({
+    //   runs,
+    //   userId,
+    //   systemContent,
+    //   categoryName,
+    //   functionName: "analyzeFeature",
+    // });
+
+    // const formatSystemContent =
+    //   "Paraphrase this text in the 2nd tense (you/your) and casual language. Don't add any new information, only paraphrase the existing.";
+
+    // const formatRuns = [
+    //   {
+    //     model: "gpt-4o-mini",
+    //     content: [
+    //       {
+    //         type: "text" as "text",
+    //         text: firstResponse,
+    //       },
+    //     ],
+    //     responseFormat: zodResponseFormat(FeatureResponseFormatType, "analysis"),
+    //   },
+    // ];
+
+    const { score, explanation } = await askRepeatedly({
       runs,
       userId,
       systemContent,
@@ -58,36 +104,12 @@ export default async function analyzeFeature({ feature, relevantImages, part, ca
       functionName: "analyzeFeature",
     });
 
-    const formatSystemContent =
-      "You are given a description of the user's body part. Your goal is to paraphrase it in the 2nd tense (you/your) in a casual language, better flow an readability. Your response must be entirely based on the information you are given. Don't make things up. Only say what is present in the description. Think step-by-step.";
-
-    const formatRuns = [
-      {
-        model: "ft:gpt-4o-mini-2024-07-18:personal:analyzefeature:B0pQR81v",
-        content: [
-          {
-            type: "text" as "text",
-            text: firstResponse,
-          },
-        ],
-        responseFormat: zodResponseFormat(FeatureResponseFormatType, "analysis"),
-      },
-    ];
-
-    const { score, explanation } = await askRepeatedly({
-      runs: formatRuns,
-      userId,
-      systemContent: formatSystemContent,
-      categoryName,
-      functionName: "analyzeFeature",
-    });
-
     await incrementProgress({ value: 1, operationKey: "progress", userId });
 
-    const response: FeatureAnalysisResultType = {
-      score: Math.round(score),
+    const response: ScoreType = {
+      value: Math.round(score),
       explanation,
-      feature,
+      name,
       part,
     };
 

@@ -4,22 +4,23 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
-import { BlurTypeEnum, CategoryNameEnum, CustomRequest, ModerationStatusEnum } from "types.js";
+import { CategoryNameEnum, CustomRequest, ModerationStatusEnum, UserConcernType } from "types.js";
 import { UploadProgressUserInfo } from "types/uploadProgressTypes.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import analyzeAppearance from "functions/analyzeAppearance.js";
 import httpError from "@/helpers/httpError.js";
 import { db } from "init.js";
+import incrementProgress from "@/helpers/incrementProgress.js";
 
 const route = Router();
 
 type Props = {
   userId: string;
-  blurType: BlurTypeEnum;
+  userUploadedConcerns: Partial<UserConcernType>[];
 };
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { userId }: Props = req.body;
+  const { userId, userUploadedConcerns = [] }: Props = req.body;
 
   const finalUserId = req.userId || userId;
 
@@ -50,8 +51,10 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
             timeZone: 1,
             latestProgress: 1,
             specialConsiderations: 1,
-            latestScoresDifference: 1,
-            latestScores: 1,
+            latestConcernScores: 1,
+            latestConcernScoresDifference: 1,
+            latestFeatureScores: 1,
+            latestFeatureScoresDifference: 1,
             club: 1,
           },
         }
@@ -69,8 +72,10 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       concerns,
       demographics,
       latestProgress,
-      latestScores,
-      latestScoresDifference,
+      latestConcernScores,
+      latestConcernScoresDifference,
+      latestFeatureScores,
+      latestFeatureScoresDifference,
       specialConsiderations,
     } = userInfo;
 
@@ -88,6 +93,16 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       toAnalyze,
     });
 
+    global.startInterval(
+      () =>
+        incrementProgress({
+          operationKey: "progress",
+          userId: req.userId,
+          value: Math.min(Math.round(Math.random() * 5), 1),
+        }),
+      2000
+    );
+
     await analyzeAppearance({
       club,
       userId,
@@ -95,14 +110,19 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       avatar,
       nextScan,
       concerns: concerns || [],
-      categoryName: CategoryNameEnum.PROGRESSSCAN,
+      userUploadedConcerns,
+      categoryName: CategoryNameEnum.SCAN,
       demographics,
       toAnalyze,
-      latestScores,
+      latestConcernScores,
+      latestConcernScoresDifference,
+      latestFeatureScores,
+      latestFeatureScoresDifference,
       latestProgress,
-      latestScoresDifference,
       newSpecialConsiderations: specialConsiderations,
     });
+
+    global.stopInterval();
   } catch (err) {
     await addAnalysisStatusError({
       operationKey: "progress",
@@ -110,6 +130,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       message: "An unexpected error occured. Please try again and inform us if the error persists.",
       originalMessage: err.message,
     });
+    global.stopInterval();
     next(err);
   }
 });

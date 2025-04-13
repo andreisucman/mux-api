@@ -1,24 +1,14 @@
 import doWithRetries from "@/helpers/doWithRetries.js";
 import { db } from "@/init.js";
-import {
-  CategoryNameEnum,
-  FeatureAnalysisType,
-  FormattedRatingType,
-  ProgressImageType,
-  UserConcernType,
-  PartEnum,
-  SexEnum,
-} from "@/types.js";
-import { FeatureAnalysisResultType } from "@/types/analyzeFeatureType.js";
+import { CategoryNameEnum, UserConcernType, PartEnum, ProgressType } from "@/types.js";
 import { ObjectId } from "mongodb";
-import analyzeFeature from "./analyzeFeature.js";
-import compareFeatureProgress from "./compareFeatureProgress.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import analyzeConcerns from "./analyzeConcerns.js";
-import formatRatings from "@/helpers/formatRatings.js";
 import { maintenanceConcerns } from "@/data/maintenanceConcerns.js";
-import { daysFrom } from "@/helpers/utils.js";
-import criteria from "@/data/featureCriteria.js";
+import { calculateScoreDifferences, daysFrom } from "@/helpers/utils.js";
+import { ScoreType } from "@/types.js";
+import calculateConcernScores from "./calculateConcernScores.js";
+import calculateFeatureScores from "./calculateFeatureScores.js";
 
 export type ImageObject = {
   part: string;
@@ -28,39 +18,45 @@ export type ImageObject = {
 type Props = {
   part: PartEnum;
   userId: string;
-  sex: SexEnum;
   progressIdToExclude?: ObjectId;
-  initialScores?: FormattedRatingType;
+  initialConcernScores?: ScoreType[];
+  initialFeatureScores?: ScoreType[];
   categoryName: CategoryNameEnum;
   imageObjects: ImageObject[];
   currentPartConcerns: UserConcernType[];
+  partUserUploadedConcerns: Partial<UserConcernType>[];
 };
 
 export default async function getScoresAndFeedback({
   part,
-  sex,
   userId,
-  initialScores,
+  initialConcernScores,
+  initialFeatureScores,
   categoryName,
   imageObjects,
   progressIdToExclude,
   currentPartConcerns,
+  partUserUploadedConcerns,
 }: Props) {
-  let scores: FormattedRatingType = { overall: 0 };
-  let scoresDifference: FormattedRatingType = { overall: 0 };
-  let concerns: UserConcernType[] = [];
+  const updatedPartUserUploadedConcerns: UserConcernType[] = partUserUploadedConcerns.map((obj, i) => ({
+    name: obj.name,
+    part: obj.part,
+    isDisabled: false,
+    importance: i + 1,
+  }));
 
-  const featuresToAnalyze = Object.keys(criteria[part]);
-
-  let appearanceAnalysisResults: FeatureAnalysisResultType[] = [];
+  let concerns: UserConcernType[] = [...updatedPartUserUploadedConcerns, ...currentPartConcerns].map((obj, i) => ({
+    ...obj,
+    importance: i + 1,
+  }));
 
   const minimumDistance = daysFrom({ days: -7 });
 
   const previousScanFilter: { [key: string]: any } = {
     userId: new ObjectId(userId),
-    scores: { $exists: true },
-    part,
+    $or: [{ concernScores: { $exists: true }, featureScores: { $exists: true } }],
     createdAt: { $lte: minimumDistance },
+    part,
   };
 
   if (progressIdToExclude) previousScanFilter._id = { $ne: progressIdToExclude };
@@ -69,92 +65,67 @@ export default async function getScoresAndFeedback({
     async () =>
       db
         .collection("Progress")
-        .find(previousScanFilter, { projection: { images: 1, scores: 1 } })
+        .find(previousScanFilter, { projection: { images: 1, concernScores: 1, featureScores: 1 } })
         .sort({ createdAt: -1 })
-        .next() as unknown as {
-        images: ProgressImageType[];
-        scores: FormattedRatingType;
-      }
+        .next() as unknown as ProgressType
   );
-
-  if (previousScan) {
-    const previousImages = previousScan.images.map((obj) => obj.mainUrl.url);
-
-    const allPreviousExplanations = previousScan.scores.explanations;
-
-    appearanceAnalysisResults = await doWithRetries(async () =>
-      Promise.all(
-        featuresToAnalyze.map(async (feature: string) => {
-          const relevantPreviousExplanation = allPreviousExplanations.find((obj) => obj.feature === feature);
-
-          return doWithRetries(() => {
-            return compareFeatureProgress({
-              part,
-              userId,
-              feature,
-              categoryName,
-              currentImages: imageObjects.map((obj) => obj.url),
-              previousImages,
-              previousExplanation: relevantPreviousExplanation.explanation,
-            });
-          });
-        })
-      )
-    );
-  } else {
-    // first scan case
-    appearanceAnalysisResults = await doWithRetries(async () =>
-      Promise.all(
-        featuresToAnalyze.map(async (feature: string) => {
-          return doWithRetries(() =>
-            analyzeFeature({
-              part,
-              userId,
-              feature,
-              categoryName,
-              relevantImages: imageObjects.map((obj) => obj.url),
-            })
-          );
-        })
-      )
-    );
-  }
-
-  await incrementProgress({ value: 4, operationKey: "progress", userId });
 
   const newConcerns = await analyzeConcerns({
     part,
     userId,
     categoryName,
-    sex,
-    appearanceAnalysisResults,
     currentImages: imageObjects.map((obj) => obj.url),
   });
 
-  if (newConcerns && newConcerns.length > 0) {
-    const uniqueConcerns = [...currentPartConcerns, ...newConcerns].filter(
-      (obj, i, arr) => arr.findIndex((o) => o.name === obj.name) === i
-    );
+  const updatedConcerns = [...concerns, ...newConcerns];
+
+  if (updatedConcerns.length > 0) {
+    const uniqueConcerns = updatedConcerns.filter((obj, i, arr) => arr.findIndex((o) => o.name === obj.name) === i);
     concerns = uniqueConcerns;
   } else {
     concerns = maintenanceConcerns.filter((c) => c.part === part);
   }
 
-  /* add the record of progress to the Progress collection*/
-  scores = formatRatings(appearanceAnalysisResults);
+  const concernScores = await calculateConcernScores({
+    categoryName,
+    concerns,
+    currentImages: imageObjects.map((imo) => imo.url),
+    part,
+    previousScan,
+    userId,
+  });
 
-  scores.explanations = appearanceAnalysisResults.map(({ feature, explanation }: FeatureAnalysisType) => ({
-    feature,
-    explanation,
-  }));
-  const safeInitialScores = initialScores || scores;
+  await incrementProgress({ value: 4, operationKey: "progress", userId });
 
-  scoresDifference = Object.keys(safeInitialScores).reduce((a: { [key: string]: number }, key) => {
-    if (typeof scores[key] === "number") {
-      a[key] = scores[key] - safeInitialScores[key];
-    }
-    return a;
-  }, {});
+  const safeInitialConcernScores = initialConcernScores || concernScores;
 
-  return { scores, scoresDifference, concerns };
+  const concernScoresDifference = calculateScoreDifferences(safeInitialConcernScores, concernScores);
+
+  const featureScores = await calculateFeatureScores({
+    categoryName,
+    currentImages: imageObjects.map((imo) => imo.url),
+    part,
+    previousScan,
+    userId,
+  });
+
+  const safeInitialFeatureScores = initialFeatureScores || featureScores;
+
+  const featureScoresDifference = calculateScoreDifferences(safeInitialFeatureScores, featureScores);
+
+  const concernsThatAreTrulyPresent = concerns.filter((co) =>
+    concernScores.find((so) => so.part === co.part && so.value >= 10)
+  );
+
+  if (concernsThatAreTrulyPresent.length === 0) {
+    concernsThatAreTrulyPresent.push(...maintenanceConcerns.filter((c) => c.part === part));
+  }
+
+  return {
+    concernScores,
+    concernScoresDifference,
+    featureScores,
+    featureScoresDifference,
+    concerns: concernsThatAreTrulyPresent,
+  };
 }

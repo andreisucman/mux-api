@@ -33,9 +33,8 @@ export default async function checkForTwins({
       const embeddingFilter: { [key: string]: any } = {
         ...registryFilter,
       };
-      if (requestUserId)
-        // this is done to avoid matching with the current user if the user is logged in
-        embeddingFilter.userId = { $ne: new ObjectId(requestUserId) };
+
+      if (finalUserId) embeddingFilter.userId = { $ne: new ObjectId(finalUserId) };
 
       const closestDocuments = await findEmbeddings({
         collection: "TwinRegistry",

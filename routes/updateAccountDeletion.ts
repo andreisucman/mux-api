@@ -11,81 +11,73 @@ import updateContent from "@/functions/updateContent.js";
 
 const route = Router();
 
-route.post(
-  "/",
-  async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { isActivate } = req.body;
+route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
+  const { isActivate } = req.body;
 
-    try {
-      const payload: { [key: string]: any } = {};
+  try {
+    const payload: { [key: string]: any } = {};
 
-      if (isActivate) {
-        payload.deleteOn = null;
-        payload.isPublic = true;
-      } else {
-        const partsAvailable = await doWithRetries(async () =>
-          db
-            .collection("Routine")
-            .aggregate([
-              {
-                $match: {
-                  _id: new ObjectId(req.userId),
-                },
+    if (isActivate) {
+      payload.deleteOn = null;
+      payload.isPublic = true;
+    } else {
+      const partsAvailable = await doWithRetries(async () =>
+        db
+          .collection("Routine")
+          .aggregate([
+            {
+              $match: {
+                _id: new ObjectId(req.userId),
               },
-              {
-                $group: {
-                  _id: "$part",
-                },
+            },
+            {
+              $group: {
+                _id: "$part",
               },
-              {
-                $project: {
-                  _id: 0,
-                  part: "$_id",
-                },
+            },
+            {
+              $project: {
+                _id: 0,
+                part: "$_id",
               },
-            ])
-            .toArray()
-        );
-        const isAnythingSold = await doWithRetries(() =>
-          db.collection("Purchase").countDocuments({
-            part: { $in: partsAvailable.map((p) => p.part) },
-            sellerId: new ObjectId(req.userId),
-          })
-        );
-        const days = isAnythingSold ? 365 : 7;
-        const deleteOn = daysFrom({ days });
-        payload.deleteOn = deleteOn;
-        payload.isPublic = false;
-      }
-
-      await updateContent({
-        userId: req.userId,
-        updatePayload: { isPublic: isActivate },
-        collections: [
-          "User",
-          "Routine",
-          "Progress",
-          "Proof",
-          "BeforeAfter",
-          "Diary",
-        ],
-      });
-
-      await doWithRetries(async () =>
-        db.collection("User").updateOne(
-          {
-            _id: new ObjectId(req.userId),
-            moderationStatus: ModerationStatusEnum.ACTIVE,
-          },
-          { $set: payload }
-        )
+            },
+          ])
+          .toArray()
       );
-
-      res.status(200).json({ message: payload.deleteOn });
-    } catch (err) {
-      next(err);
+      const isAnythingSold = await doWithRetries(() =>
+        db.collection("Purchase").countDocuments({
+          part: { $in: partsAvailable.map((p) => p.part) },
+          sellerId: new ObjectId(req.userId),
+        })
+      );
+      const days = isAnythingSold ? 365 : 7;
+      const deleteOn = daysFrom({ days });
+      payload.deleteOn = deleteOn;
+      payload.isPublic = false;
     }
+
+    await updateContent({
+      filter: {
+        userId: new ObjectId(req.userId),
+      },
+      updatePayload: { isPublic: isActivate },
+      collections: ["User", "Routine", "Progress", "Proof", "BeforeAfter", "Diary"],
+    });
+
+    await doWithRetries(async () =>
+      db.collection("User").updateOne(
+        {
+          _id: new ObjectId(req.userId),
+          moderationStatus: ModerationStatusEnum.ACTIVE,
+        },
+        { $set: payload }
+      )
+    );
+
+    res.status(200).json({ message: payload.deleteOn });
+  } catch (err) {
+    next(err);
   }
-);
+});
 
 export default route;

@@ -15,15 +15,16 @@ import cancelRoutineSubscribers from "@/functions/cancelRoutineSubscribers.js";
 const route = Router();
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { status, part, name, description, price, updatePrice } = req.body;
+  const { status, concern, name, description, price, updatePrice } = req.body;
 
   if (
     Number(price) < 5 ||
     Number(updatePrice) < 2 ||
     isNaN(Number(price)) ||
     isNaN(Number(updatePrice)) ||
+    !concern ||
     name.length > 50 ||
-    description.length > 150
+    description.length > 2000
   ) {
     res.status(400).json({ error: "Bad request" });
     return;
@@ -56,12 +57,12 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       }
 
       const numberOfProgresses = await doWithRetries(() =>
-        db.collection("Progress").countDocuments({ userId: new ObjectId(req.userId), part })
+        db.collection("Progress").countDocuments({ userId: new ObjectId(req.userId), "concerns.name": concern })
       );
 
       if (numberOfProgresses < 2) {
         res.status(200).json({
-          error: `You have to have at least one ${part} before-after image to publish your routine.`,
+          error: `You have to have at least one pair of before-after images for ${concern} to publish your routine.`,
         });
         return;
       }
@@ -83,28 +84,32 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     }
 
     const existingRecord = await doWithRetries(async () =>
-      db.collection("RoutineData").findOne({ userId: new ObjectId(req.userId), part })
+      db.collection("RoutineData").findOne({ userId: new ObjectId(req.userId), concern })
     );
 
     if (existingRecord) {
       await doWithRetries(async () =>
         db.collection("RoutineData").updateOne(
-          { userId: new ObjectId(req.userId), part },
+          { _id: existingRecord._id },
           {
             $set: updatePayload,
           }
         )
       );
     } else {
-      const firstRoutineOfPart = await doWithRetries(async () =>
-        db.collection("Routine").findOne({ userId: new ObjectId(req.userId), part }, { sort: { createdAt: 1 } })
+      const firstRoutineOfConcern = await doWithRetries(async () =>
+        db
+          .collection("Routine")
+          .find({ userId: new ObjectId(req.userId), "concerns.name": concern })
+          .sort({ createdAt: 1 })
+          .next()
       );
 
-      updatePayload.contentStartDate = firstRoutineOfPart.createdAt;
+      updatePayload.contentStartDate = firstRoutineOfConcern.createdAt;
 
       await doWithRetries(async () =>
         db.collection("RoutineData").updateOne(
-          { userId: new ObjectId(req.userId), part },
+          { userId: new ObjectId(req.userId), concern },
           {
             $set: updatePayload,
           },
@@ -123,7 +128,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     await doWithRetries(async () =>
       db.collection("BeforeAfter").updateOne(
-        { userId: new ObjectId(req.userId), part },
+        { userId: new ObjectId(req.userId), "concerns.name": concern },
         {
           $set: { routineName: name },
         }
@@ -131,14 +136,16 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     );
 
     await updateContent({
-      userId: req.userId,
-      collections: ["BeforeAfter", "Progress", "Proof", "Diary", "Routine"],
+      collections: ["BeforeAfter", "Progress", "Routine", "Proof", "Diary"],
       updatePayload: {
         isPublic: status === "public",
         avatar,
         userName,
       },
-      part,
+      filter: {
+        userId: new ObjectId(req.userId),
+        "concerns.name": concern,
+      },
     });
 
     await doWithRetries(() =>
@@ -146,7 +153,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     );
 
     if (status !== "public") {
-      await cancelRoutineSubscribers(req.userId);
+      await cancelRoutineSubscribers({ sellerId: new ObjectId(req.userId) });
     }
   } catch (err) {
     next(err);

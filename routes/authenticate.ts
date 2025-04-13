@@ -23,15 +23,14 @@ import updateAnalytics from "@/functions/updateAnalytics.js";
 const route = Router();
 
 const allowedReferrers = [
-  "scanFood",
-  "scanProgress",
-  "analysisProgress",
+  "scan",
+  "analysis",
   "clubRoutines",
   "clubProgress",
   "clubProof",
   "clubDiary",
   "authPage",
-  "scanIndex",
+  "choosePart",
   "rewards",
 ];
 

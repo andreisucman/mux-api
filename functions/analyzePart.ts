@@ -10,7 +10,8 @@ import {
   ProgressImageType,
   BeforeAfterType,
   CategoryNameEnum,
-  FormattedRatingType,
+  ScoreType,
+  ScoreDifferenceType,
 } from "types.js";
 import addModerationAnalyticsData from "./addModerationAnalyticsData.js";
 import addSuspiciousRecord, { SuspiciousRecordCollectionEnum } from "./addSuspiciousRecord.js";
@@ -36,11 +37,12 @@ type Props = {
   demographics: DemographicsType;
   toAnalyze: ToAnalyzeType[];
   categoryName: CategoryNameEnum;
+  userUploadedConcerns: Partial<UserConcernType>[];
 };
 
 type LocalProgressType = {
   _id: ObjectId;
-  scores: FormattedRatingType;
+  concernScores: ScoreType[];
   images: ProgressImageType[];
   createdAt: Date;
 };
@@ -53,12 +55,14 @@ export default async function analyzePart({
   concerns = [],
   categoryName,
   demographics,
+  userUploadedConcerns,
   specialConsiderations,
   toAnalyze,
 }: Props): Promise<PartResultType> {
   try {
-    const partConcerns = concerns.filter((obj) => obj.part === part);
+    const partConcerns = concerns.filter((obj) => obj.part === part && !obj.isDisabled);
     const partToAnalyze = toAnalyze.filter((obj) => obj.part === part);
+    const partUserUploadedConcerns = userUploadedConcerns.filter((obj) => obj.part === part);
 
     let isSuspicious = false;
     let isSafe = false;
@@ -105,8 +109,10 @@ export default async function analyzePart({
 
     const partResult = { part, concerns: [] } as PartResultType;
 
-    let scores: FormattedRatingType = { overall: 0 };
-    let scoresDifference: FormattedRatingType = { overall: 0 };
+    let concernScores: ScoreType[] = [];
+    let concernScoresDifference: ScoreDifferenceType[] = [];
+    let featureScores: ScoreType[] = [];
+    let featureScoresDifference: ScoreDifferenceType[] = [];
     let newConcerns: UserConcernType[] = [];
 
     let initialProgress = (await doWithRetries(async () =>
@@ -117,7 +123,7 @@ export default async function analyzePart({
           userId: new ObjectId(userId),
           moderationStatus: ModerationStatusEnum.ACTIVE,
         })
-        .project({ scores: 1, images: 1, createdAt: 1 })
+        .project({ concernScores: 1, images: 1, createdAt: 1 })
         .sort({ createdAt: 1 })
         .next()
     )) as unknown as LocalProgressType;
@@ -128,17 +134,20 @@ export default async function analyzePart({
     }));
 
     const response = await getScoresAndFeedback({
-      categoryName,
       currentPartConcerns: partConcerns,
-      part,
-      sex: demographics.sex,
+      initialConcernScores: initialProgress?.concernScores,
+      partUserUploadedConcerns,
+      categoryName,
       imageObjects,
       userId,
-      initialScores: initialProgress?.scores,
+      part,
     });
 
-    scores = response.scores;
-    scoresDifference = response.scoresDifference;
+    concernScores = response.concernScores;
+    concernScoresDifference = response.concernScoresDifference;
+    featureScores = response.featureScores;
+    featureScoresDifference = response.featureScoresDifference;
+
     newConcerns = response.concerns;
     partResult.concerns = newConcerns;
 
@@ -153,7 +162,6 @@ export default async function analyzePart({
       _id: new ObjectId(),
       userId: new ObjectId(userId),
       part,
-      scores,
       demographics,
       images,
       initialImages: initialProgress?.images || images,
@@ -161,7 +169,10 @@ export default async function analyzePart({
       createdAt,
       userName: name,
       concerns: newConcerns,
-      scoresDifference,
+      concernScores,
+      concernScoresDifference,
+      featureScores,
+      featureScoresDifference,
       specialConsiderations,
       isPublic,
       moderationStatus: ModerationStatusEnum.ACTIVE,
@@ -170,16 +181,18 @@ export default async function analyzePart({
     const beforeAfterUpdate: BeforeAfterType = {
       images,
       part,
-      scores,
       demographics,
       isPublic,
-      concerns: newConcerns,
-      updatedAt: new Date(),
       avatar,
       userName: name,
+      concerns: newConcerns,
+      concernScores,
+      concernScoresDifference,
+      featureScores,
+      featureScoresDifference,
+      updatedAt: new Date(),
       initialDate: initialProgress?.createdAt || createdAt,
       initialImages: initialProgress?.images || images,
-      scoresDifference,
     };
 
     const updateOperation: any = {
@@ -194,8 +207,11 @@ export default async function analyzePart({
       })
     );
 
-    partResult.latestScores = scores;
-    partResult.scoresDifference = scoresDifference;
+    partResult.latestConcernScores = concernScores;
+    partResult.concernScoresDifference = concernScoresDifference;
+    partResult.latestFeatureScores = featureScores;
+    partResult.featureScoresDifference = featureScoresDifference;
+
     partResult.latestProgress = recordOfProgress;
 
     if (moderationResults.length > 0) {

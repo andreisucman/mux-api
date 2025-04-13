@@ -1,9 +1,7 @@
 import z from "zod";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import askRepeatedly from "./askRepeatedly.js";
-import criteria from "data/featureCriteria.js";
-import { PartEnum, CategoryNameEnum, SexEnum } from "types.js";
-import { FeatureAnalysisResultType } from "@/types/analyzeFeatureType.js";
+import { PartEnum, CategoryNameEnum, ScoreType } from "types.js";
 import httpError from "@/helpers/httpError.js";
 import { urlToBase64 } from "@/helpers/utils.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
@@ -12,35 +10,41 @@ import { ChatCompletionContentPart } from "openai/src/resources/index.js";
 
 type Props = {
   userId: string;
-  feature: string;
+  name: string;
   part: PartEnum;
+  previousScore: number;
   categoryName: CategoryNameEnum;
   currentImages: string[];
   previousImages: string[];
   previousExplanation: string;
+  assessmentCriteria?: string;
 };
 
 export default async function compareFeatureProgress({
   userId,
-  feature,
+  name,
+  part,
   categoryName,
   currentImages,
   previousImages,
   previousExplanation,
-  part,
+  previousScore,
+  assessmentCriteria,
 }: Props) {
   try {
-    const systemContent = `You are an anthropologist, dermatologist and anathomist. You are given 2 sets of images of ${feature}: the current and previous. Your goal is to compare the condition of the ${feature} now with its previous condition Use this criteria when deciding on the current score: ### Criteria: ${criteria[part][feature]}###. Make no assumptions, base your opinion on the available information only. Think step-by-step.`;
+    let systemContent = `You are a dermatologist. Compare the severity of the ${name} on the current images with its state on the previous images and come up with a new severity score from 0 to 100, where 0 stands for non-existend, and 100 for the highest severty. Don't assume, base your opinion on the available information only. Don't suggest anything. Think step-by-step.`;
+
+    if (assessmentCriteria) {
+      systemContent = `You are a dermatologist. Compare the condition of the ${name} on the current and previous images according to this criteria: ${assessmentCriteria}###. Make no assumptions, base your opinion on the available information only. Don't suggest anything. Think step-by-step.`;
+    }
+
+    const scoreDecription = assessmentCriteria
+      ? `Score of ${name} from 0 to 100.`
+      : `Severity score of ${name} from 0 to 100.`;
 
     const FeatureProgressResponseFormatType = z.object({
-      score: z
-        .number()
-        .describe(`A score from 0 to 100 representing the current condition of the ${feature} based on the criteria.`),
-      explanation: z
-        .string()
-        .describe(
-          `3-5 sentences explanation in the 2nd tense (you/your) describing the difference between the current and previous conditions of the ${feature}.`
-        ),
+      score: z.number().describe(scoreDecription),
+      explanation: z.string().describe(`3-5 sentences of explanation for the user in 2nd tense (you/your).`),
     });
 
     const content: ChatCompletionContentPart[] = [{ type: "text", text: "The previous images:" }];
@@ -56,6 +60,10 @@ export default async function compareFeatureProgress({
     }
 
     content.push(
+      {
+        type: "text",
+        text: `The previous ${assessmentCriteria ? "score" : "severity score"}: ${previousScore}.`,
+      },
       {
         type: "text",
         text: `The previous explanation: ${previousExplanation}.`,
@@ -80,7 +88,7 @@ export default async function compareFeatureProgress({
       {
         model: "gpt-4o",
         content,
-        responseFormat: zodResponseFormat(FeatureProgressResponseFormatType, "analysis"),
+        responseFormat: zodResponseFormat(FeatureProgressResponseFormatType, "FeatureProgressResponseFormatType"),
       },
     ];
 
@@ -94,10 +102,10 @@ export default async function compareFeatureProgress({
 
     await incrementProgress({ value: 3, operationKey: "progress", userId });
 
-    const response: FeatureAnalysisResultType = {
-      score: Math.round(score),
+    const response: ScoreType = {
+      value: Math.round(score),
       explanation,
-      feature,
+      name,
       part,
     };
 
