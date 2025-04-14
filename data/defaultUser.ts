@@ -58,7 +58,7 @@ export const defaultUser: UserType = {
   latestConcernScores: defaultLatestScores,
   latestConcernScoresDifference: defaultLatestScores,
   club: null,
-  latestProgress: {
+  latestProgressImages: {
     face: null,
     hair: null,
   },

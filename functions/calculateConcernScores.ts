@@ -20,6 +20,7 @@ export default async function calculateConcernScores({
   currentImages,
   concerns,
 }: Props) {
+
   if (previousScan) {
     const previousImages = previousScan.images.map((obj) => obj.mainUrl.url);
 

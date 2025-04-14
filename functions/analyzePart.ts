@@ -153,7 +153,7 @@ export default async function analyzePart({
     const isPublicPromises = concernScores.map((so) => checkIfPublic({ userId, concern: so.name }));
     const isPublicResults = await Promise.all(isPublicPromises);
 
-    const promises = newConcerns.map((co, i) => {
+    const promises = newConcerns.map((co) => {
       const relevantConcernScore = concernScores.find((c) => c.name === co.name);
       const relevantConcernScoreDifference = concernScoresDifference.find((c) => c.name === co.name);
       const relevantInitialProgress = initialProgresses?.find((ip) => ip.concernScore.name === co.name);

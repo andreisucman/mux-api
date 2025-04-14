@@ -81,11 +81,11 @@ export type UserType = {
   nextScan: NextActionType[];
   nextRoutine: NextActionType[];
   streakDates: {};
+  latestProgressImages: LatestProgressImagesType;
   concerns: UserConcernType[] | null;
   tosAccepted: boolean;
   latestConcernScores: LatestScoresType;
   latestConcernScoresDifference: LatestScoresDifferenceType;
-  latestProgress: LatestProgressType;
   club: ClubDataType;
   deleteOn: Date;
   subscriptions: {

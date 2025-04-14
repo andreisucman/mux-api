@@ -155,7 +155,7 @@ export default async function analyzeAppearance({
       ...newLatestConcernScoresDifference,
     };
 
-    toUpdateUser.$set.newLatestProgressImages = {
+    toUpdateUser.$set.latestProgressImages = {
       ...latestProgressImages,
       ...newLatestProgressImages,
     };

@@ -70,17 +70,17 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
           recalculatedData = await recalculateLatestProgress({
             latestConcernScores,
             latestConcernScoresDifference,
-            substituteProgressRecord,
+            substituteProgressImagesRecord: substituteProgressRecord.images,
           });
 
-          const { images, concerns, createdAt, concernScores, concernScoresDifference } = substituteProgressRecord;
+          const { images, concern, createdAt, concernScore, concernScoreDifference } = substituteProgressRecord;
 
           const toUpdatePayload = {
-            concernScores,
+            concernScore,
             images,
-            concerns,
+            concern,
             updatedAt: createdAt,
-            concernScoresDifference,
+            concernScoreDifference,
           };
 
           await doWithRetries(() =>
@@ -94,7 +94,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
           );
         } else {
           recalculatedData = {
-            latestProgress: defaultUser.latestProgress,
+            latestProgressImages: defaultUser.latestProgressImages,
             latestConcernScores: defaultUser.latestConcernScores,
             latestConcernScoresDifference: defaultUser.latestConcernScoresDifference,
           };

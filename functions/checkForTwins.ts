@@ -10,7 +10,6 @@ import createImageCollage from "./createImageCollage.js";
 import { db } from "@/init.js";
 
 type Props = {
-  requestUserId?: string;
   finalUserId: string;
   image?: string;
   embedding?: number[];
@@ -19,7 +18,6 @@ type Props = {
 };
 
 export default async function checkForTwins({
-  requestUserId,
   finalUserId,
   image,
   registryFilter = {},

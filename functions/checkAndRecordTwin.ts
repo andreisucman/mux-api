@@ -37,7 +37,6 @@ export default async function checkAndRecordTwin({
     });
 
     const twinIds = await checkForTwins({
-      requestUserId,
       finalUserId,
       image,
       embedding,

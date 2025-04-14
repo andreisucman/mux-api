@@ -32,8 +32,6 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
   try {
     const fields = Object.keys(projection);
 
-    console.log("fields", fields);
-
     const groupParams = fields.reduce((a: { [key: string]: any }, c) => {
       a[c] = { $addToSet: `$${c}` };
       return a;

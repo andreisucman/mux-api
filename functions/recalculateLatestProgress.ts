@@ -1,4 +1,4 @@
-import { LatestScoresDifferenceType, LatestScoresType, ProgressType } from "types.js";
+import { LatestScoresDifferenceType, LatestScoresType, ProgressImageType, ProgressType } from "types.js";
 import httpError from "@/helpers/httpError.js";
 
 function updateObject(overallObject: { [key: string]: any }) {
@@ -16,13 +16,13 @@ function updateObject(overallObject: { [key: string]: any }) {
 type Props = {
   latestConcernScores: LatestScoresType;
   latestConcernScoresDifference: LatestScoresDifferenceType;
-  substituteProgressRecord: ProgressType;
+  substituteProgressImagesRecord: ProgressImageType[];
 };
 
 export default async function recalculateLatestProgress({
   latestConcernScores,
   latestConcernScoresDifference,
-  substituteProgressRecord,
+  substituteProgressImagesRecord,
 }: Props) {
   try {
     const finalLatestScores = updateObject(latestConcernScores);
@@ -30,7 +30,7 @@ export default async function recalculateLatestProgress({
     const finalLatestScoresDifference = updateObject(latestConcernScoresDifference);
 
     return {
-      latestProgress: substituteProgressRecord,
+      latestProgressImages: substituteProgressImagesRecord,
       latestConcernScores: finalLatestScores,
       latestConcernScoresDifference: finalLatestScoresDifference,
     };

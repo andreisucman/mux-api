@@ -85,7 +85,7 @@ export default async function getScoresAndFeedback({
   const concernScoresDifference = calculateScoreDifferences(safeInitialConcernScores, concernScores);
 
   const concernsThatAreTrulyPresent = concerns.filter((co) =>
-    concernScores.find((so) => so.part === co.part && so.value >= 10)
+    concernScores.find((so) => so.part === co.part && so.name === co.name && so.value >= 10)
   );
 
   return {

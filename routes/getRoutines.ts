@@ -32,7 +32,7 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
       const response = await getPurchasedFilters({
         userId: req.userId,
         userName,
-        part: filter.part,
+        concern: filter.concern,
       });
       purchases = response.purchases;
       priceData = response.priceData;

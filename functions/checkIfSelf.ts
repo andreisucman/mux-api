@@ -29,12 +29,12 @@ export default async function checkIfSelf({ userImage, categoryName, image, user
             _id: new ObjectId(userId),
             moderationStatus: ModerationStatusEnum.ACTIVE,
           },
-          { projection: { latestProgress: 1 } }
+          { projection: { latestProgressImages: 1 } }
         )
-      )) as unknown as { latestProgress: LatestProgressType };
+      )) as unknown as { latestProgressImages: LatestProgressType };
 
-      const { latestProgress } = userInfo || {};
-      const { face } = latestProgress || {};
+      const { latestProgressImages } = userInfo || {};
+      const { face } = latestProgressImages || {};
 
       if (face) {
         const { images } = face;

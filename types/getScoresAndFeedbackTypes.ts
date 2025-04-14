@@ -1,4 +1,4 @@
-import { DemographicsType, LatestProgressType, LatestScoresType, UserConcernType } from "@/types.js";
+import { DemographicsType, LatestProgressImagesType, LatestScoresType, UserConcernType } from "@/types.js";
 import { ObjectId } from "mongodb";
 
 export type GetScoresAndFeedbackUserType = {
@@ -7,5 +7,5 @@ export type GetScoresAndFeedbackUserType = {
   concerns: UserConcernType[];
   latestConcernScores: LatestScoresType;
   latestConcernScoresDifference: LatestScoresType;
-  latestProgress: LatestProgressType;
+  latestProgressImages: LatestProgressImagesType;
 };
