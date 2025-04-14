@@ -7,7 +7,5 @@ export type GetScoresAndFeedbackUserType = {
   concerns: UserConcernType[];
   latestConcernScores: LatestScoresType;
   latestConcernScoresDifference: LatestScoresType;
-  latestFeatureScores: LatestScoresType;
-  latestFeatureScoresDifference: LatestScoresType;
   latestProgress: LatestProgressType;
 };

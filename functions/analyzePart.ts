@@ -108,8 +108,6 @@ export default async function analyzePart({
 
     let concernScores: ScoreType[] = [];
     let concernScoresDifference: ScoreDifferenceType[] = [];
-    let featureScores: ScoreType[] = [];
-    let featureScoresDifference: ScoreDifferenceType[] = [];
     let newConcerns: UserConcernType[] = [];
 
     let initialProgresses = (await doWithRetries(async () =>
@@ -171,8 +169,6 @@ export default async function analyzePart({
         concernScoreDifference: relevantConcernScoreDifference,
         createdAt,
         demographics,
-        featureScores,
-        featureScoresDifference,
         initialDate,
         initialImages,
         isPublic: relevantIsPublic.isPublic,
@@ -187,8 +183,6 @@ export default async function analyzePart({
 
     partResult.latestConcernScores = concernScores;
     partResult.concernScoresDifference = concernScoresDifference;
-    partResult.latestFeatureScores = featureScores;
-    partResult.featureScoresDifference = featureScoresDifference;
     partResult.latestProgressImages = images;
 
     if (moderationResults.length > 0) {

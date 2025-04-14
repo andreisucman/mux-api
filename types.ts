@@ -264,8 +264,6 @@ export type ProgressType = {
   initialImages: ProgressImageType[];
   concernScore?: ScoreType;
   concernScoreDifference?: ScoreDifferenceType;
-  featureScores?: ScoreType[];
-  featureScoresDifference?: ScoreDifferenceType[];
   specialConsiderations: string;
   isPublic: boolean;
   concern: string;
@@ -372,8 +370,6 @@ export type BeforeAfterType = {
   initialImages: ProgressImageType[];
   concernScore?: ScoreType;
   concernScoreDifference?: ScoreDifferenceType;
-  featureScores?: ScoreType[];
-  featureScoresDifference?: ScoreDifferenceType[];
   isPublic: boolean;
   concern: string;
   avatar?: { [key: string]: any };

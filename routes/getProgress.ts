@@ -36,7 +36,6 @@ route.get("/:userName?", async (req: CustomRequest, res, next: NextFunction) => 
       isPublic: 1,
       createdAt: 1,
       concernScoreDifference: 1,
-      featureScoresDifference: 1,
       initialDate: 1,
       userId: 1,
       deletedOn: 1,

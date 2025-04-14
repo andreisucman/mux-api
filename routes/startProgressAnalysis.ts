@@ -53,8 +53,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
             specialConsiderations: 1,
             latestConcernScores: 1,
             latestConcernScoresDifference: 1,
-            latestFeatureScores: 1,
-            latestFeatureScoresDifference: 1,
             club: 1,
           },
         }
@@ -74,8 +72,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       latestProgressImages,
       latestConcernScores,
       latestConcernScoresDifference,
-      latestFeatureScores,
-      latestFeatureScoresDifference,
       specialConsiderations,
     } = userInfo;
 
@@ -116,8 +112,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       toAnalyze,
       latestConcernScores,
       latestConcernScoresDifference,
-      latestFeatureScores,
-      latestFeatureScoresDifference,
       latestProgressImages,
       newSpecialConsiderations: specialConsiderations,
     });

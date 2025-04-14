@@ -37,8 +37,6 @@ type Props = {
   demographics: DemographicsType;
   latestConcernScores: LatestScoresType;
   latestConcernScoresDifference: LatestScoresType;
-  latestFeatureScores: LatestScoresType;
-  latestFeatureScoresDifference: LatestScoresType;
 };
 
 export default async function analyzeAppearance({
@@ -52,10 +50,8 @@ export default async function analyzeAppearance({
   latestProgressImages,
   defaultToUpdateUser,
   latestConcernScores,
-  latestFeatureScores,
   userUploadedConcerns,
   latestConcernScoresDifference,
-  latestFeatureScoresDifference,
   toAnalyze,
   demographics,
   newSpecialConsiderations,
@@ -137,11 +133,6 @@ export default async function analyzeAppearance({
       return a;
     }, {});
 
-    const newLatestFeatureScoresDifference = analysesResults.reduce((a: { [key: string]: any }, c) => {
-      a[c.part] = c.featureScoresDifference;
-      return a;
-    }, {});
-
     await incrementProgress({
       value: 99,
       operation: "set",
@@ -162,11 +153,6 @@ export default async function analyzeAppearance({
     toUpdateUser.$set.latestConcernScoresDifference = {
       ...latestConcernScoresDifference,
       ...newLatestConcernScoresDifference,
-    };
-
-    toUpdateUser.$set.latestFeatureScoresDifference = {
-      ...latestFeatureScoresDifference,
-      ...newLatestFeatureScoresDifference,
     };
 
     toUpdateUser.$set.newLatestProgressImages = {

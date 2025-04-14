@@ -38,7 +38,7 @@ export default async function getScoresAndFeedback({
 
   const previousScanFilter: { [key: string]: any } = {
     userId: new ObjectId(userId),
-    $or: [{ concernScores: { $exists: true }, featureScores: { $exists: true } }],
+    concernScores: { $exists: true },
     createdAt: { $lte: minimumDistance },
     part,
   };
@@ -49,7 +49,7 @@ export default async function getScoresAndFeedback({
     async () =>
       db
         .collection("Progress")
-        .find(previousScanFilter, { projection: { images: 1, concernScores: 1, featureScores: 1 } })
+        .find(previousScanFilter, { projection: { images: 1, concernScores: 1 } })
         .sort({ createdAt: -1 })
         .next() as unknown as ProgressType
   );

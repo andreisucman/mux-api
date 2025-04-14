@@ -20,8 +20,6 @@ type Props = {
   demographics: DemographicsType;
   concernScore: ScoreType;
   concernScoreDifference: ScoreDifferenceType;
-  featureScores: ScoreType[];
-  featureScoresDifference: ScoreDifferenceType[];
   initialDate: Date;
   createdAt: Date;
   images: ProgressImageType[];
@@ -40,8 +38,6 @@ export default async function createProgressRecords({
   demographics,
   concernScore,
   concernScoreDifference,
-  featureScores,
-  featureScoresDifference,
   initialDate,
   createdAt,
   images,
@@ -64,8 +60,6 @@ export default async function createProgressRecords({
     concern,
     concernScore,
     concernScoreDifference,
-    featureScores,
-    featureScoresDifference,
     specialConsiderations,
     isPublic,
     moderationStatus: ModerationStatusEnum.ACTIVE,
@@ -81,8 +75,6 @@ export default async function createProgressRecords({
     concern,
     concernScore,
     concernScoreDifference,
-    featureScores,
-    featureScoresDifference,
     updatedAt: new Date(),
     initialDate,
     initialImages,

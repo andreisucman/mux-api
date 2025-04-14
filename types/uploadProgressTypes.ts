@@ -21,7 +21,5 @@ export type UploadProgressUserInfo = {
   latestProgressImages: LatestProgressImagesType;
   latestConcernScores: LatestScoresType;
   latestConcernScoresDifference: LatestScoresType;
-  latestFeatureScores: LatestScoresType;
-  latestFeatureScoresDifference: LatestScoresType;
   club: ClubDataType;
 };
