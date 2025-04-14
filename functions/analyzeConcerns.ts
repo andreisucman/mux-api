@@ -4,11 +4,11 @@ import doWithRetries from "helpers/doWithRetries.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import askRepeatedly from "functions/askRepeatedly.js";
 import { PartEnum, ConcernType, CategoryNameEnum } from "types.js";
-import { db } from "init.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import httpError from "@/helpers/httpError.js";
 import updateConcernsAnalytics from "./updateConcernsAnalytics.js";
 import { urlToBase64 } from "@/helpers/utils.js";
+import { db } from "init.js";
 
 type Props = {
   userId: string;
@@ -70,11 +70,9 @@ export default async function analyzeConcerns({ userId, part, currentImages, cat
       categoryName,
     });
 
-    const userConcerns = response.concerns.map((string, index) => ({
+    const userConcerns = response.concerns.map((string) => ({
       name: string,
       part,
-      isDisabled: false,
-      importance: index + 1,
     }));
 
     updateConcernsAnalytics({ userId, concerns: userConcerns });

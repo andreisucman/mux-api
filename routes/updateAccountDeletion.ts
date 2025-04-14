@@ -7,7 +7,6 @@ import doWithRetries from "helpers/doWithRetries.js";
 import { CustomRequest, ModerationStatusEnum } from "types.js";
 import { daysFrom } from "helpers/utils.js";
 import { db } from "init.js";
-import updateContent from "@/functions/updateContent.js";
 
 const route = Router();
 
@@ -55,14 +54,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       payload.deleteOn = deleteOn;
       payload.isPublic = false;
     }
-
-    await updateContent({
-      filter: {
-        userId: new ObjectId(req.userId),
-      },
-      updatePayload: { isPublic: isActivate },
-      collections: ["User", "Routine", "Progress", "Proof", "BeforeAfter", "Diary"],
-    });
 
     await doWithRetries(async () =>
       db.collection("User").updateOne(

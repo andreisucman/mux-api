@@ -96,6 +96,15 @@ export function convertKeysAndValuesTotoSnakeCase(obj: { [key: string]: any }) {
   return newObj;
 }
 
+export function normalizeString(string: string) {
+  if (!string) return "";
+  const normalized = string
+    .split(/[\s_]+/)
+    .join(" ")
+    .toLowerCase();
+  return normalized[0].toUpperCase() + normalized.slice(1);
+}
+
 export function combineSolutions(
   findSolutionsResponse: { [key: string]: string },
   findAdditionalSolutionsResponse: { [key: string]: string[] }

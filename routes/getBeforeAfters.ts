@@ -10,14 +10,19 @@ route.get("/", async (req: CustomRequest, res, next: NextFunction) => {
   const { filter, skip } = aqp(req.query as any) as AqpQuery;
   const { ageInterval, part, sex, ethnicity, concern } = filter || {};
 
+  if (!concern) {
+    res.status(400).json({ error: "Bad request" });
+    return;
+  }
+
   try {
     const pipeline: any = [];
 
     const filter: { [key: string]: any } = {
       isPublic: true,
+      concern,
     };
 
-    if (concern) filter["concerns.name"] = concern;
     if (part) filter.part = part;
     if (sex) filter["demographics.sex"] = sex;
     if (ageInterval) filter["demographics.ageInterval"] = ageInterval;

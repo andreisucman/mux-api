@@ -326,7 +326,9 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       concerns: [],
     };
 
-    newProof.isPublic = await checkIfPublic({ userId: req.userId, part });
+    const isPublicResponse = await checkIfPublic({ userId: req.userId, concern });
+
+    newProof.isPublic = isPublicResponse.isPublic;
 
     const userUpdatePayload: { [key: string]: any } = {};
 

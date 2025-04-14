@@ -4,11 +4,9 @@ import {
   DemographicsType,
   ToAnalyzeType,
   UserConcernType,
-  ProgressType,
   ClubDataType,
   PartEnum,
   ProgressImageType,
-  BeforeAfterType,
   CategoryNameEnum,
   ScoreType,
   ScoreDifferenceType,
@@ -25,6 +23,7 @@ import { urlToBase64 } from "@/helpers/utils.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import getScoresAndFeedback from "./getScoresAndFeedback.js";
 import { checkIfPublic } from "@/routes/checkIfPublic.js";
+import createProgressRecords from "./createProgressRecords.js";
 
 type Props = {
   userId: string;
@@ -33,16 +32,16 @@ type Props = {
   part: PartEnum;
   club: ClubDataType;
   specialConsiderations: string;
-  concerns: UserConcernType[] | null;
   demographics: DemographicsType;
   toAnalyze: ToAnalyzeType[];
   categoryName: CategoryNameEnum;
-  userUploadedConcerns: Partial<UserConcernType>[];
+  userUploadedConcerns: UserConcernType[];
 };
 
 type LocalProgressType = {
   _id: ObjectId;
-  concernScores: ScoreType[];
+  concernScore: ScoreType;
+  featuresScores: ScoreType[];
   images: ProgressImageType[];
   createdAt: Date;
 };
@@ -52,7 +51,6 @@ export default async function analyzePart({
   name,
   avatar,
   part,
-  concerns = [],
   categoryName,
   demographics,
   userUploadedConcerns,
@@ -60,9 +58,9 @@ export default async function analyzePart({
   toAnalyze,
 }: Props): Promise<PartResultType> {
   try {
-    const partConcerns = concerns.filter((obj) => obj.part === part && !obj.isDisabled);
     const partToAnalyze = toAnalyze.filter((obj) => obj.part === part);
     const partUserUploadedConcerns = userUploadedConcerns.filter((obj) => obj.part === part);
+    const concernNames = partUserUploadedConcerns.map((obj) => obj.name);
 
     let isSuspicious = false;
     let isSafe = false;
@@ -115,27 +113,30 @@ export default async function analyzePart({
     let featureScoresDifference: ScoreDifferenceType[] = [];
     let newConcerns: UserConcernType[] = [];
 
-    let initialProgress = (await doWithRetries(async () =>
+    let initialProgresses = (await doWithRetries(async () =>
       db
         .collection("Progress")
         .find({
-          part,
           userId: new ObjectId(userId),
+          "concernScore.name": { $in: concernNames },
           moderationStatus: ModerationStatusEnum.ACTIVE,
         })
-        .project({ concernScores: 1, images: 1, createdAt: 1 })
-        .sort({ createdAt: 1 })
-        .next()
-    )) as unknown as LocalProgressType;
+        .project({ concernScore: 1, images: 1, createdAt: 1 })
+        .sort({ _id: 1 })
+        .toArray()
+    )) as unknown as LocalProgressType[];
 
     const imageObjects = toAnalyze.map((tAo) => ({
       part: tAo.part,
       url: tAo.mainUrl.url,
     }));
 
+    const initialConcernScores = initialProgresses.map((obj) => obj.concernScore);
+    const initialFeatureScores = initialProgresses[0]?.featuresScores || [];
+
     const response = await getScoresAndFeedback({
-      currentPartConcerns: partConcerns,
-      initialConcernScores: initialProgress?.concernScores,
+      initialConcernScores,
+      initialFeatureScores,
       partUserUploadedConcerns,
       categoryName,
       imageObjects,
@@ -156,63 +157,44 @@ export default async function analyzePart({
       urls: record.contentUrlTypes,
     }));
 
-    const isPublic = await checkIfPublic({ userId, part });
+    const isPublicPromises = concernScores.map((so) => checkIfPublic({ userId, concern: so.name }));
+    const isPublicResults = await Promise.all(isPublicPromises);
 
-    const recordOfProgress: ProgressType = {
-      _id: new ObjectId(),
-      userId: new ObjectId(userId),
-      part,
-      demographics,
-      images,
-      initialImages: initialProgress?.images || images,
-      initialDate: initialProgress?.createdAt || createdAt,
-      createdAt,
-      userName: name,
-      concerns: newConcerns,
-      concernScores,
-      concernScoresDifference,
-      featureScores,
-      featureScoresDifference,
-      specialConsiderations,
-      isPublic,
-      moderationStatus: ModerationStatusEnum.ACTIVE,
-    };
+    const promises = newConcerns.map((co, i) => {
+      const relevantConcernScore = concernScores.find((c) => c.name === co.name);
+      const relevantConcernScoreDifference = concernScoresDifference.find((c) => c.name === co.name);
+      const relevantInitialProgress = initialProgresses?.find((ip) => ip.concernScore.name === co.name);
+      const initialDate = relevantInitialProgress?.createdAt || createdAt;
+      const initialImages = relevantInitialProgress?.images || images;
+      const relevantIsPublic = isPublicResults.find((io) => io.concern === co.name);
 
-    const beforeAfterUpdate: BeforeAfterType = {
-      images,
-      part,
-      demographics,
-      isPublic,
-      avatar,
-      userName: name,
-      concerns: newConcerns,
-      concernScores,
-      concernScoresDifference,
-      featureScores,
-      featureScoresDifference,
-      updatedAt: new Date(),
-      initialDate: initialProgress?.createdAt || createdAt,
-      initialImages: initialProgress?.images || images,
-    };
+      return createProgressRecords({
+        userId: new ObjectId(userId),
+        avatar,
+        concern: co.name,
+        concernScore: relevantConcernScore,
+        concernScoreDifference: relevantConcernScoreDifference,
+        createdAt,
+        demographics,
+        featureScores,
+        featureScoresDifference,
+        initialDate,
+        initialImages,
+        isPublic: relevantIsPublic.isPublic,
+        part,
+        images,
+        specialConsiderations,
+        userName: name,
+      });
+    });
 
-    const updateOperation: any = {
-      $set: beforeAfterUpdate,
-    };
-
-    await doWithRetries(async () => db.collection("Progress").insertOne(recordOfProgress));
-
-    await doWithRetries(async () =>
-      db.collection("BeforeAfter").updateOne({ userId: new ObjectId(userId), part }, updateOperation, {
-        upsert: true,
-      })
-    );
+    const updatedIds = await Promise.all(promises);
 
     partResult.latestConcernScores = concernScores;
     partResult.concernScoresDifference = concernScoresDifference;
     partResult.latestFeatureScores = featureScores;
     partResult.featureScoresDifference = featureScoresDifference;
-
-    partResult.latestProgress = recordOfProgress;
+    partResult.latestProgressImages = images;
 
     if (moderationResults.length > 0) {
       addModerationAnalyticsData({
@@ -224,12 +206,14 @@ export default async function analyzePart({
       });
 
       if (isSuspicious) {
-        addSuspiciousRecord({
-          collection: SuspiciousRecordCollectionEnum.PROGRESS,
-          moderationResults,
-          contentId: String(recordOfProgress._id),
-          userId,
-        });
+        for (const item of updatedIds) {
+          addSuspiciousRecord({
+            collection: SuspiciousRecordCollectionEnum.PROGRESS,
+            moderationResults,
+            contentId: String(item.progressId),
+            userId,
+          });
+        }
       }
     }
 

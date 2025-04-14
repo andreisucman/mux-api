@@ -22,7 +22,7 @@ type Props = {
   creationMode: "scratch" | "continue";
   incrementMultiplier?: number;
   categoryName: CategoryNameEnum;
-  concerns: UserConcernType[];
+  partConcerns: UserConcernType[];
   specialConsiderations: string;
   routineStartDate: string;
 };
@@ -33,12 +33,12 @@ export default async function createRoutine({
   incrementMultiplier = 1,
   categoryName,
   creationMode,
-  concerns,
+  partConcerns,
   routineStartDate,
   specialConsiderations,
 }: Props) {
   try {
-    if (concerns.length === 0) throw new Error("No concerns");
+    if (partConcerns.length === 0) throw new Error("No concerns");
 
     const userInfo = (await doWithRetries(async () =>
       db.collection("User").findOne(
@@ -63,8 +63,6 @@ export default async function createRoutine({
 
     if (!userInfo) throw new Error("This user doesn't exist");
 
-    const partConcerns = concerns.filter((c) => c.part === part);
-
     const partImages = await getUsersImages({ userId, part });
 
     const latestPartRoutine = await doWithRetries(async () =>
@@ -84,17 +82,14 @@ export default async function createRoutine({
     if (creationMode === "continue" && latestPartRoutine) {
       const latestTasks = latestPartRoutine ? latestPartRoutine.allTasks : [];
 
-      const latestSolutions = latestTasks.reduce(
-        (a: { [key: string]: number }, c: TaskType) => {
-          if (a[c.key]) {
-            a[c.key] += 1;
-          } else {
-            a[c.key] = 1;
-          }
-          return a;
-        },
-        {}
-      );
+      const latestSolutions = latestTasks.reduce((a: { [key: string]: number }, c: TaskType) => {
+        if (a[c.key]) {
+          a[c.key] += 1;
+        } else {
+          a[c.key] = 1;
+        }
+        return a;
+      }, {});
 
       await reviewLatestRoutine({
         part,

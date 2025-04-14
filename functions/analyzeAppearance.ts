@@ -10,8 +10,8 @@ import {
   CategoryNameEnum,
   PartEnum,
   LatestScoresType,
-  LatestProgressType,
   NextActionType,
+  LatestProgressImagesType,
 } from "types.js";
 import analyzePart from "functions/analyzePart.js";
 import { db } from "init.js";
@@ -29,11 +29,11 @@ type Props = {
   categoryName: CategoryNameEnum;
   defaultToUpdateUser?: { $set: { [key: string]: unknown } };
   club: ClubDataType;
-  concerns: UserConcernType[] | null;
-  userUploadedConcerns: Partial<UserConcernType>[];
+  userUploadedConcerns: UserConcernType[];
   toAnalyze: ToAnalyzeType[];
   newSpecialConsiderations: string;
-  latestProgress: LatestProgressType;
+  latestProgressImages: LatestProgressImagesType;
+  allConcerns: UserConcernType[];
   demographics: DemographicsType;
   latestConcernScores: LatestScoresType;
   latestConcernScoresDifference: LatestScoresType;
@@ -47,9 +47,9 @@ export default async function analyzeAppearance({
   avatar,
   club,
   nextScan,
-  concerns = [],
+  allConcerns,
   categoryName,
-  latestProgress,
+  latestProgressImages,
   defaultToUpdateUser,
   latestConcernScores,
   latestFeatureScores,
@@ -110,7 +110,6 @@ export default async function analyzeAppearance({
           club,
           part: part as PartEnum,
           userId,
-          concerns,
           userUploadedConcerns,
           categoryName,
           demographics,
@@ -125,15 +124,8 @@ export default async function analyzeAppearance({
 
     const newConcerns = analysesResults.flatMap((rec) => rec.concerns);
 
-    const restOfConcerns = concerns.filter((rec) => !partsAnalyzed.includes(rec.part));
-
-    const allUniqueConcerns = [...restOfConcerns, ...newConcerns].filter(
-      (obj, i, arr) => arr.findIndex((o) => o.name === obj.name && o.part === obj.part) === i
-    );
-
-    allUniqueConcerns.sort((a, b) => a.importance - b.importance).map((co, i) => ({ ...co, importance: i + 1 }));
-
-    toUpdateUser.$set.concerns = allUniqueConcerns;
+    const restConcerns = allConcerns.filter((co) => !partsAnalyzed.includes(co.part));
+    toUpdateUser.$set.concerns = [...restConcerns, ...newConcerns];
 
     const newLatestConcernScores = analysesResults.reduce((a: { [key: string]: any }, c) => {
       a[c.part] = c.latestConcernScores;
@@ -162,8 +154,8 @@ export default async function analyzeAppearance({
       userId,
     });
 
-    const newLatestProgress = analysesResults.reduce((a: { [key: string]: any }, c) => {
-      a[c.part] = c.latestProgress;
+    const newLatestProgressImages = analysesResults.reduce((a: { [key: string]: any }, c) => {
+      a[c.part] = c.latestProgressImages;
       return a;
     }, {});
 
@@ -187,9 +179,9 @@ export default async function analyzeAppearance({
       ...newLatestFeatureScoresDifference,
     };
 
-    toUpdateUser.$set.latestProgress = {
-      ...latestProgress,
-      ...newLatestProgress,
+    toUpdateUser.$set.newLatestProgressImages = {
+      ...latestProgressImages,
+      ...newLatestProgressImages,
     };
 
     toUpdateUser.$set.toAnalyze = [];

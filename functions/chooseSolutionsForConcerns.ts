@@ -84,11 +84,6 @@ export default async function chooseSolutionsForConcerns({
       if (growsFacialHair) findSolutionsInstruction += ` Don't suggest clean shave.`;
     }
 
-    const allConcerns = partConcerns.map((co) => ({
-      name: co.name,
-      importance: co.importance,
-    }));
-
     const findSolutionsContentArray: RunType[] = [];
 
     const userAboutString = Object.entries({
@@ -109,7 +104,7 @@ export default async function chooseSolutionsForConcerns({
       },
       {
         type: "text",
-        text: `User's concerns are: ${JSON.stringify(allConcerns)}`,
+        text: `User's concerns are: ${JSON.stringify(partConcerns)}`,
       },
     ];
 
@@ -140,7 +135,7 @@ export default async function chooseSolutionsForConcerns({
     findSolutionsContentArray.push(checkMessage);
 
     let ChooseSolutonForConcernsResponseType = z.object(
-      allConcerns.reduce((a, c) => {
+      partConcerns.reduce((a, c) => {
         a[c.name] = z
           .array(z.object({ solution: z.string(), monthlyFrequency: z.number() }))
           .describe(`The array of solutions for the ${c.name} concern`);
@@ -155,7 +150,7 @@ export default async function chooseSolutionsForConcerns({
           .boolean()
           .describe("true if the current solutions are effective and no more solutions are needed, false otherwise"),
         updatedListOfSolutions: z.object(
-          allConcerns.reduce((a, c) => {
+          partConcerns.reduce((a, c) => {
             a[c.name] = z
               .array(z.object({ solution: z.string(), monthlyFrequency: z.number() }))
               .describe(`The array of solutions for the ${c.name} concern`);

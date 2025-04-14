@@ -11,9 +11,9 @@ const route = Router();
 route.get("/:userName?", async (req: CustomRequest, res, next: NextFunction) => {
   const { userName } = req.params;
   const { filter, skip, sort } = aqp(req.query as any) as AqpQuery;
-  const { part } = filter;
+  const { part, concern } = filter;
 
-  if (!userName && !req.userId) {
+  if ((!userName && !req.userId) || !concern) {
     res.status(400).json({ error: "Bad request" });
     return;
   }
@@ -25,6 +25,7 @@ route.get("/:userName?", async (req: CustomRequest, res, next: NextFunction) => 
     let priceData = [];
 
     let finalFilters: { [key: string]: any } = {
+      concern,
       moderationStatus: ModerationStatusEnum.ACTIVE,
     };
 
@@ -32,10 +33,10 @@ route.get("/:userName?", async (req: CustomRequest, res, next: NextFunction) => 
 
     const projection: { [key: string]: any } = {
       _id: 1,
-      part: 1,
       isPublic: 1,
       createdAt: 1,
-      concernScoresDifference: 1,
+      concernScoreDifference: 1,
+      featureScoresDifference: 1,
       initialDate: 1,
       userId: 1,
       deletedOn: 1,
@@ -50,7 +51,7 @@ route.get("/:userName?", async (req: CustomRequest, res, next: NextFunction) => 
       const response = await getPurchasedFilters({
         userId: req.userId,
         userName,
-        part,
+        concern,
       });
       purchases = response.purchases;
       priceData = response.priceData;

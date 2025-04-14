@@ -6,13 +6,7 @@ import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import createRoutine from "@/functions/createRoutine.js";
 import checkSubscriptionStatus from "functions/checkSubscription.js";
-import {
-  UserConcernType,
-  CustomRequest,
-  SubscriptionTypeNamesEnum,
-  ModerationStatusEnum,
-  CategoryNameEnum,
-} from "types.js";
+import { CustomRequest, SubscriptionTypeNamesEnum, ModerationStatusEnum, CategoryNameEnum } from "types.js";
 import updateNextRoutine from "helpers/updateNextRoutine.js";
 import formatDate from "helpers/formatDate.js";
 import httpError from "@/helpers/httpError.js";
@@ -27,9 +21,9 @@ import incrementProgress from "@/helpers/incrementProgress.js";
 const route = Router();
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { concerns, part, creationMode = "scratch", routineStartDate, specialConsiderations } = req.body;
+  const { part, creationMode = "scratch", routineStartDate, specialConsiderations } = req.body;
 
-  if (!concerns || !concerns.length || (part && !validParts.includes(part))) {
+  if (!part || (part && !validParts.includes(part))) {
     res.status(400).json({ error: "Bad request" });
     return;
   }
@@ -42,8 +36,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
   }
 
   try {
-    const activeConcerns = concerns.filter((c: UserConcernType) => !c.isDisabled);
-
     const subscriptionIsValid: boolean = await checkSubscriptionStatus({
       userId: req.userId,
       subscriptionType: SubscriptionTypeNamesEnum.IMPROVEMENT,
@@ -63,21 +55,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     const { nextRoutine, concerns: existingConcerns = [] } = userInfo;
 
-    if (concerns.length === 0) {
-      // if the user disables all concerns
-      res.status(400).json({ error: "Bad request" });
-      return;
-    }
-
-    const selectedConcernKeys = activeConcerns.map((c: UserConcernType) => c.name);
-
-    const restOfConcerns = existingConcerns.filter(
-      (c: UserConcernType) => !selectedConcernKeys.includes(c.name) && !c.isDisabled
-    );
-
-    const allUniqueConcerns = [...restOfConcerns, ...concerns].filter(
-      (obj, i, arr) => arr.findIndex((o) => o.name === obj.name) === i
-    );
+    const partConcerns = existingConcerns.filter((co) => co.part === part);
 
     await doWithRetries(async () =>
       db
@@ -101,16 +79,12 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     res.status(200).end();
 
-    let updatedNextRoutine;
-
     let { canRoutineDate, availableRoutines } = await checkCanRoutine({
       nextRoutine,
       userId: req.userId,
     });
 
-    if (part) {
-      availableRoutines = availableRoutines.filter((r) => r.part === part);
-    }
+    availableRoutines = availableRoutines.filter((r) => r.part === part);
 
     if (availableRoutines.length === 0) {
       const formattedDate = formatDate({
@@ -134,7 +108,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
             part: r.part,
             creationMode,
             incrementMultiplier: 5 - availableRoutines.length,
-            concerns: activeConcerns,
+            partConcerns,
             specialConsiderations,
             categoryName: CategoryNameEnum.TASKS,
             routineStartDate,
@@ -144,7 +118,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     await Promise.all(promises);
 
-    updatedNextRoutine = updateNextRoutine({
+    const updatedNextRoutine = updateNextRoutine({
       nextRoutine,
       parts: availableRoutines.map((r) => r.part),
     });
@@ -158,7 +132,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         {
           $set: {
             nextRoutine: updatedNextRoutine,
-            concerns: allUniqueConcerns,
           },
         }
       )

@@ -23,8 +23,7 @@ type Props = {
   initialFeatureScores?: ScoreType[];
   categoryName: CategoryNameEnum;
   imageObjects: ImageObject[];
-  currentPartConcerns: UserConcernType[];
-  partUserUploadedConcerns: Partial<UserConcernType>[];
+  partUserUploadedConcerns: UserConcernType[];
 };
 
 export default async function getScoresAndFeedback({
@@ -35,20 +34,9 @@ export default async function getScoresAndFeedback({
   categoryName,
   imageObjects,
   progressIdToExclude,
-  currentPartConcerns,
   partUserUploadedConcerns,
 }: Props) {
-  const updatedPartUserUploadedConcerns: UserConcernType[] = partUserUploadedConcerns.map((obj, i) => ({
-    name: obj.name,
-    part: obj.part,
-    isDisabled: false,
-    importance: i + 1,
-  }));
-
-  let concerns: UserConcernType[] = [...updatedPartUserUploadedConcerns, ...currentPartConcerns].map((obj, i) => ({
-    ...obj,
-    importance: i + 1,
-  }));
+  let concerns: UserConcernType[] = [...partUserUploadedConcerns];
 
   const minimumDistance = daysFrom({ days: -7 });
 
@@ -77,13 +65,13 @@ export default async function getScoresAndFeedback({
     currentImages: imageObjects.map((obj) => obj.url),
   });
 
-  const updatedConcerns = [...concerns, ...newConcerns];
+  const newConcernNames = newConcerns.map((o) => o.name);
+  const uploadedConcernsExist = concerns.some((obj) => newConcernNames.includes(obj.name));
 
-  if (updatedConcerns.length > 0) {
-    const uniqueConcerns = updatedConcerns.filter((obj, i, arr) => arr.findIndex((o) => o.name === obj.name) === i);
-    concerns = uniqueConcerns;
-  } else {
-    concerns = maintenanceConcerns.filter((c) => c.part === part);
+  if (!uploadedConcernsExist) {
+    if (newConcerns.length > 0) {
+      concerns = [...concerns, ...newConcerns];
+    }
   }
 
   const concernScores = await calculateConcernScores({
@@ -97,29 +85,23 @@ export default async function getScoresAndFeedback({
 
   await incrementProgress({ value: 4, operationKey: "progress", userId });
 
-  const safeInitialConcernScores = initialConcernScores || concernScores;
-
+  const safeInitialConcernScores = initialConcernScores.length > 0 ? initialConcernScores : concernScores;
   const concernScoresDifference = calculateScoreDifferences(safeInitialConcernScores, concernScores);
 
   const featureScores = await calculateFeatureScores({
     categoryName,
     currentImages: imageObjects.map((imo) => imo.url),
-    part,
     previousScan,
     userId,
+    part,
   });
 
-  const safeInitialFeatureScores = initialFeatureScores || featureScores;
-
+  const safeInitialFeatureScores = initialFeatureScores.length > 0 ? initialFeatureScores : featureScores;
   const featureScoresDifference = calculateScoreDifferences(safeInitialFeatureScores, featureScores);
 
   const concernsThatAreTrulyPresent = concerns.filter((co) =>
     concernScores.find((so) => so.part === co.part && so.value >= 10)
   );
-
-  if (concernsThatAreTrulyPresent.length === 0) {
-    concernsThatAreTrulyPresent.push(...maintenanceConcerns.filter((c) => c.part === part));
-  }
 
   return {
     concernScores,

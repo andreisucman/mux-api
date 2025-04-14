@@ -26,7 +26,7 @@ export default async function calculateConcernScores({
     return await doWithRetries(async () =>
       Promise.all(
         concerns.map(async (concernObject: UserConcernType) => {
-          const relevantPreviousRecord = previousScan.concernScores.find((obj) => obj.name === concernObject.name);
+          const relevantPreviousRecord = previousScan.concernScore;
 
           return doWithRetries(() => {
             return compareFeatureProgress({

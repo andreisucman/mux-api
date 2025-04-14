@@ -16,7 +16,7 @@ const route = Router();
 
 type Props = {
   userId: string;
-  userUploadedConcerns: Partial<UserConcernType>[];
+  userUploadedConcerns: UserConcernType[];
 };
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
@@ -49,7 +49,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
             nutrition: 1,
             country: 1,
             timeZone: 1,
-            latestProgress: 1,
+            latestProgressImages: 1,
             specialConsiderations: 1,
             latestConcernScores: 1,
             latestConcernScoresDifference: 1,
@@ -71,7 +71,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       club,
       concerns,
       demographics,
-      latestProgress,
+      latestProgressImages,
       latestConcernScores,
       latestConcernScoresDifference,
       latestFeatureScores,
@@ -109,7 +109,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       name,
       avatar,
       nextScan,
-      concerns: concerns || [],
+      allConcerns: concerns || [],
       userUploadedConcerns,
       categoryName: CategoryNameEnum.SCAN,
       demographics,
@@ -118,7 +118,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       latestConcernScoresDifference,
       latestFeatureScores,
       latestFeatureScoresDifference,
-      latestProgress,
+      latestProgressImages,
       newSpecialConsiderations: specialConsiderations,
     });
 

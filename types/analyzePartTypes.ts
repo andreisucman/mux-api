@@ -1,4 +1,4 @@
-import { UserConcernType, ScoreType, ScoreDifferenceType, ProgressType } from "types.js";
+import { UserConcernType, ScoreType, ScoreDifferenceType, ProgressImageType } from "types.js";
 
 export type PartResultType = {
   part: string;
@@ -7,5 +7,5 @@ export type PartResultType = {
   concernScoresDifference: ScoreDifferenceType[];
   latestFeatureScores: ScoreType[];
   featureScoresDifference: ScoreDifferenceType[];
-  latestProgress: ProgressType;
+  latestProgressImages: ProgressImageType[];
 };

@@ -18,7 +18,12 @@ const route = Router();
 route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFunction) => {
   const { userName } = req.params;
   const { filter, sort, skip } = aqp(req.query as any) as AqpQuery;
-  const { dateFrom, dateTo, part } = filter;
+  const { dateFrom, dateTo, part, concern } = filter;
+
+  if (!concern) {
+    res.status(400).json({ error: "Bad request" });
+    return;
+  }
 
   try {
     let purchases = [];
@@ -27,6 +32,7 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
     let priceData = [];
 
     let finalFilters: { [key: string]: any } = {
+      "concerns.name": concern,
       moderationStatus: ModerationStatusEnum.ACTIVE,
     };
 
@@ -36,7 +42,7 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
       const response = await getPurchasedFilters({
         userId: req.userId,
         userName,
-        part: filter.part,
+        concern,
       });
       purchases = response.purchases;
       priceData = response.priceData;

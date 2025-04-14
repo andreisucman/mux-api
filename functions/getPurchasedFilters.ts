@@ -7,10 +7,10 @@ import { db } from "@/init.js";
 type Props = {
   userName: string;
   userId: string;
-  part?: string;
+  concern?: string;
 };
 
-export default async function getPurchasedFilters({ userName, userId, part }: Props) {
+export default async function getPurchasedFilters({ userName, userId, concern }: Props) {
   const additionalFilters: { [key: string]: any } = {};
   let purchases = [];
   let priceData = [];
@@ -30,14 +30,14 @@ export default async function getPurchasedFilters({ userName, userId, part }: Pr
         .find(
           { userId: new ObjectId(sellerIdObj?._id), status: "public" },
           {
-            projection: { name: 1, description: 1, price: 1, part: 1 },
+            projection: { name: 1, description: 1, price: 1, concern: 1 },
           }
         )
         .toArray()
     );
 
     if (!userId) {
-      notPurchased = priceData.map((obj) => obj.part);
+      notPurchased = priceData.map((obj) => obj.concern);
       return { purchases, priceData, notPurchased, additionalFilters };
     }
 
@@ -46,7 +46,7 @@ export default async function getPurchasedFilters({ userName, userId, part }: Pr
       sellerId: new ObjectId(sellerIdObj._id),
     };
 
-    if (part) filter.part = part;
+    if (concern) filter.concern = concern;
 
     purchases = await doWithRetries(async () =>
       db
@@ -54,7 +54,7 @@ export default async function getPurchasedFilters({ userName, userId, part }: Pr
         .find(filter, {
           projection: {
             contentEndDate: 1,
-            part: 1,
+            concern: 1,
           },
         })
         .toArray()
@@ -62,19 +62,19 @@ export default async function getPurchasedFilters({ userName, userId, part }: Pr
 
     const purchasedParts = purchases.map((obj) => obj.part);
 
-    notPurchased = priceData.filter((pd) => !purchasedParts.includes(pd.part)).map((obj) => obj.part);
+    notPurchased = priceData.filter((pd) => !purchasedParts.includes(pd.concern)).map((obj) => obj.concern);
 
     if (purchases.length) {
-      const purchasedParts = [];
+      const purchasedConcerns = [];
       const withinPurchasedPeriod: { [key: string]: any } = {};
 
       for (const obj of purchases) {
-        const { contentEndDate, part: purchasedPart } = obj;
-        purchasedParts.push(purchasedPart);
+        const { contentEndDate, concern: purchassedConcern } = obj;
+        purchasedConcerns.push(purchassedConcern);
         withinPurchasedPeriod.$lte = new Date(contentEndDate);
       }
 
-      additionalFilters.part = { $in: purchasedParts };
+      additionalFilters.concern = { $in: purchasedConcerns };
       additionalFilters.createdAt = withinPurchasedPeriod;
     }
 

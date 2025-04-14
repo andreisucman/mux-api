@@ -1,4 +1,4 @@
-import { PartEnum, LatestProgressType, NextActionType } from "@/types.js";
+import { PartEnum, LatestProgressType, NextActionType, ProgressImageType, LatestProgressImagesType } from "@/types.js";
 
 import { ToAnalyzeType, UserConcernType, ClubDataType, DemographicsType, LatestScoresType } from "types.js";
 
@@ -18,7 +18,7 @@ export type UploadProgressUserInfo = {
   timeZone: string;
   nextScan: NextActionType[];
   specialConsiderations?: string;
-  latestProgress: LatestProgressType;
+  latestProgressImages: LatestProgressImagesType;
   latestConcernScores: LatestScoresType;
   latestConcernScoresDifference: LatestScoresType;
   latestFeatureScores: LatestScoresType;

@@ -15,15 +15,16 @@ import getUserInfo from "@/functions/getUserInfo.js";
 import createTextEmbedding from "@/functions/createTextEmbedding.js";
 import { checkIfPublic } from "./checkIfPublic.js";
 import { db } from "init.js";
+import { normalizeString } from "@/helpers/utils.js";
 
 const route = Router();
 
 const validParts = [PartEnum.FACE, PartEnum.HAIR];
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { audio, activity, part, routineId } = req.body;
+  const { audio, activity, part, concern, routineId } = req.body;
 
-  if (!audio || !activity || !validParts.includes(part) || !routineId) {
+  if (!audio || !activity || !validParts.includes(part) || !routineId || !concern) {
     res.status(400).json({ error: "Bad request" });
     return;
   }
@@ -32,12 +33,12 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     const usersTodayMidnight = setToMidnight({ date: new Date(), timeZone: req.timeZone });
 
     const todaysDiaryRecords = await doWithRetries(async () =>
-      db.collection("Diary").findOne({ createdAt: { $gt: usersTodayMidnight } })
+      db.collection("Diary").findOne({ createdAt: { $gt: usersTodayMidnight }, concern })
     );
 
     if (todaysDiaryRecords) {
       res.status(200).json({
-        error: "You've already added a diary note for today. Come back tomorrow.",
+        error: `You've already added a diary note for ${normalizeString(concern)} today. Come back tomorrow.`,
       });
       return;
     }
@@ -112,10 +113,12 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       concerns: [],
     };
 
-    newDiaryRecord.isPublic = await checkIfPublic({
+    const isPublicResponse = await checkIfPublic({
       userId: req.userId,
-      part,
+      concern,
     });
+    
+    newDiaryRecord.isPublic = isPublicResponse.isPublic;
 
     const { name } = userInfo;
     if (name) newDiaryRecord.userName = name;

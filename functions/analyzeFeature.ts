@@ -72,30 +72,6 @@ export default async function analyzeFeature({
       },
     ];
 
-    // const firstResponse = await askRepeatedly({
-    //   runs,
-    //   userId,
-    //   systemContent,
-    //   categoryName,
-    //   functionName: "analyzeFeature",
-    // });
-
-    // const formatSystemContent =
-    //   "Paraphrase this text in the 2nd tense (you/your) and casual language. Don't add any new information, only paraphrase the existing.";
-
-    // const formatRuns = [
-    //   {
-    //     model: "gpt-4o-mini",
-    //     content: [
-    //       {
-    //         type: "text" as "text",
-    //         text: firstResponse,
-    //       },
-    //     ],
-    //     responseFormat: zodResponseFormat(FeatureResponseFormatType, "analysis"),
-    //   },
-    // ];
-
     const { score, explanation } = await askRepeatedly({
       runs,
       userId,

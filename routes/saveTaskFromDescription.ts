@@ -308,7 +308,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     const concernExists = concerns.find((obj: { name: string }) => obj.name === generalTaskInfo.concern);
 
     if (!concernExists) {
-      concerns.push({ name: generalTaskInfo.concern, isDisabled: false });
+      concerns.push({ name: generalTaskInfo.concern, part });
     }
 
     /* update all tasks */

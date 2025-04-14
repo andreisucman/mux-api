@@ -222,8 +222,6 @@ export type StreaksType = {
 export type UserConcernType = {
   name: string;
   part: PartEnum;
-  importance: number;
-  isDisabled: boolean;
 };
 
 export type BlurredUrlType = {
@@ -251,6 +249,10 @@ export enum CategoryNameEnum {
   OTHER = "other",
 }
 
+export type LatestProgressImagesType = {
+  [key: string]: ProgressImageType[];
+};
+
 export type ProgressType = {
   _id: ObjectId;
   userId: ObjectId;
@@ -258,15 +260,15 @@ export type ProgressType = {
   initialDate: Date;
   createdAt: Date;
   demographics: DemographicsType;
-  concerns?: UserConcernType[];
   images: ProgressImageType[];
   initialImages: ProgressImageType[];
-  concernScores?: ScoreType[];
-  concernScoresDifference?: ScoreDifferenceType[];
+  concernScore?: ScoreType;
+  concernScoreDifference?: ScoreDifferenceType;
   featureScores?: ScoreType[];
   featureScoresDifference?: ScoreDifferenceType[];
   specialConsiderations: string;
   isPublic: boolean;
+  concern: string;
   userName?: string;
   deletedOn?: Date;
   moderationStatus: ModerationStatusEnum;
@@ -366,14 +368,14 @@ export type BeforeAfterType = {
   initialDate: Date;
   updatedAt: Date;
   demographics: DemographicsType;
-  concerns?: UserConcernType[];
   images: ProgressImageType[];
   initialImages: ProgressImageType[];
-  concernScores?: ScoreType[];
-  concernScoresDifference?: ScoreDifferenceType[];
+  concernScore?: ScoreType;
+  concernScoreDifference?: ScoreDifferenceType;
   featureScores?: ScoreType[];
   featureScoresDifference?: ScoreDifferenceType[];
   isPublic: boolean;
+  concern: string;
   avatar?: { [key: string]: any };
   userName?: string;
   routineName?: string;
