@@ -41,7 +41,6 @@ type Props = {
 type LocalProgressType = {
   _id: ObjectId;
   concernScore: ScoreType;
-  featuresScores: ScoreType[];
   images: ProgressImageType[];
   createdAt: Date;
 };
@@ -132,11 +131,9 @@ export default async function analyzePart({
     }));
 
     const initialConcernScores = initialProgresses.map((obj) => obj.concernScore);
-    const initialFeatureScores = initialProgresses[0]?.featuresScores || [];
 
     const response = await getScoresAndFeedback({
       initialConcernScores,
-      initialFeatureScores,
       partUserUploadedConcerns,
       categoryName,
       imageObjects,
@@ -146,8 +143,6 @@ export default async function analyzePart({
 
     concernScores = response.concernScores;
     concernScoresDifference = response.concernScoresDifference;
-    featureScores = response.featureScores;
-    featureScoresDifference = response.featureScoresDifference;
 
     newConcerns = response.concerns;
     partResult.concerns = newConcerns;

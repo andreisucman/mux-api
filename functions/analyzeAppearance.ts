@@ -137,11 +137,6 @@ export default async function analyzeAppearance({
       return a;
     }, {});
 
-    const newLatestFeaturesScores = analysesResults.reduce((a: { [key: string]: any }, c) => {
-      a[c.part] = c.latestFeatureScores;
-      return a;
-    }, {});
-
     const newLatestFeatureScoresDifference = analysesResults.reduce((a: { [key: string]: any }, c) => {
       a[c.part] = c.featureScoresDifference;
       return a;
@@ -162,11 +157,6 @@ export default async function analyzeAppearance({
     toUpdateUser.$set.latestConcernScores = {
       ...latestConcernScores,
       ...newLatestConcernScores,
-    };
-
-    toUpdateUser.$set.latestFeatureScores = {
-      ...latestFeatureScores,
-      ...newLatestFeaturesScores,
     };
 
     toUpdateUser.$set.latestConcernScoresDifference = {

@@ -4,11 +4,9 @@ import { CategoryNameEnum, UserConcernType, PartEnum, ProgressType } from "@/typ
 import { ObjectId } from "mongodb";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import analyzeConcerns from "./analyzeConcerns.js";
-import { maintenanceConcerns } from "@/data/maintenanceConcerns.js";
 import { calculateScoreDifferences, daysFrom } from "@/helpers/utils.js";
 import { ScoreType } from "@/types.js";
 import calculateConcernScores from "./calculateConcernScores.js";
-import calculateFeatureScores from "./calculateFeatureScores.js";
 
 export type ImageObject = {
   part: string;
@@ -20,7 +18,6 @@ type Props = {
   userId: string;
   progressIdToExclude?: ObjectId;
   initialConcernScores?: ScoreType[];
-  initialFeatureScores?: ScoreType[];
   categoryName: CategoryNameEnum;
   imageObjects: ImageObject[];
   partUserUploadedConcerns: UserConcernType[];
@@ -30,7 +27,6 @@ export default async function getScoresAndFeedback({
   part,
   userId,
   initialConcernScores,
-  initialFeatureScores,
   categoryName,
   imageObjects,
   progressIdToExclude,
@@ -88,17 +84,6 @@ export default async function getScoresAndFeedback({
   const safeInitialConcernScores = initialConcernScores.length > 0 ? initialConcernScores : concernScores;
   const concernScoresDifference = calculateScoreDifferences(safeInitialConcernScores, concernScores);
 
-  const featureScores = await calculateFeatureScores({
-    categoryName,
-    currentImages: imageObjects.map((imo) => imo.url),
-    previousScan,
-    userId,
-    part,
-  });
-
-  const safeInitialFeatureScores = initialFeatureScores.length > 0 ? initialFeatureScores : featureScores;
-  const featureScoresDifference = calculateScoreDifferences(safeInitialFeatureScores, featureScores);
-
   const concernsThatAreTrulyPresent = concerns.filter((co) =>
     concernScores.find((so) => so.part === co.part && so.value >= 10)
   );
@@ -106,8 +91,6 @@ export default async function getScoresAndFeedback({
   return {
     concernScores,
     concernScoresDifference,
-    featureScores,
-    featureScoresDifference,
     concerns: concernsThatAreTrulyPresent,
   };
 }
