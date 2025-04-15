@@ -12,12 +12,11 @@ import getUserInfo from "../functions/getUserInfo.js";
 import updateTasksAnalytics from "../functions/updateTasksAnalytics.js";
 import getMinAndMaxRoutineDates from "../helpers/getMinAndMaxRoutineDates.js";
 import { db } from "../init.js";
-import getClosestRoutine from "@/functions/getClosestRoutine.js";
 
 const route = Router();
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { taskId, startDate, isVoid } = req.body;
+  const { taskId, startDate, targetRoutineId, isVoid } = req.body;
 
   const { isValidDate, isFutureDate } = checkDateValidity(startDate, req.timeZone);
 
@@ -70,11 +69,18 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     const { minDate: minHostDate, maxDate: maxHostDate } = getMinAndMaxRoutineDates(updatedHostAllTasks);
 
     if (updatedHostAllTasks.length === 0) {
-      await doWithRetries(async () => db.collection("Routine").deleteOne({ _id: new ObjectId(taskInfo.routineId) }));
+      await doWithRetries(async () =>
+        db
+          .collection("Routine")
+          .updateOne(
+            { _id: new ObjectId(taskInfo.routineId), userId: new ObjectId(req.userId) },
+            { $set: { deletedOn: new Date() } }
+          )
+      );
     } else {
       await doWithRetries(async () =>
         db.collection("Routine").updateOne(
-          { _id: new ObjectId(taskInfo.routineId) },
+          { _id: new ObjectId(taskInfo.routineId), userId: new ObjectId(req.userId) },
           {
             $set: {
               allTasks: updatedHostAllTasks,
@@ -87,30 +93,20 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       );
     }
 
-    let targetRoutine = (await doWithRetries(async () =>
-      db
-        .collection("Routine")
-        .find({
+    const targetRoutineFilter = targetRoutineId
+      ? { _id: new ObjectId(targetRoutineId) }
+      : {
           userId: new ObjectId(req.userId),
           part: taskInfo.part,
           status: RoutineStatusEnum.ACTIVE,
           startsAt: { $lte: new Date(startDate) },
           lastDate: { $gte: new Date(startDate) },
-        })
-        .sort({ startsAt: 1 })
-        .next()
-    )) as unknown as RoutineType;
+          deletedOn: { $exists: false },
+        };
 
-    if (!targetRoutine) {
-      targetRoutine = await getClosestRoutine(
-        {
-          userId: new ObjectId(req.userId),
-          part: taskInfo.part,
-          status: RoutineStatusEnum.ACTIVE,
-        },
-        startDate
-      );
-    }
+    let targetRoutine = (await doWithRetries(async () =>
+      db.collection("Routine").find(targetRoutineFilter).sort({ startsAt: 1 }).next()
+    )) as unknown as RoutineType;
 
     const newStartDate = new Date(startDate);
     const newAllTaskId = { _id: taskInfo._id, startsAt: newStartDate, status: TaskStatusEnum.ACTIVE };
@@ -164,7 +160,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       updateRoutineId = targetRoutine._id;
       await doWithRetries(async () =>
         db.collection("Routine").updateOne(
-          { _id: new ObjectId(targetRoutine._id) },
+          { _id: new ObjectId(targetRoutine._id), userId: new ObjectId(req.userId) },
           {
             $set: {
               finalSchedule: updatedTargetSchedule,

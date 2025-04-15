@@ -6,7 +6,7 @@ import { ObjectId, Sort } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import { ModerationStatusEnum } from "types.js";
-import { DiaryRecordType } from "@/types/saveDiaryRecordTypes.js";
+import { DiaryType } from "@/types/saveDiaryRecordTypes.js";
 import { CustomRequest } from "types.js";
 import { db } from "init.js";
 import { daysFrom } from "@/helpers/utils.js";
@@ -77,9 +77,9 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
         .skip(skip || 0)
         .limit(21)
         .toArray()
-    )) as unknown as DiaryRecordType[];
+    )) as unknown as DiaryType[];
 
-    if (!purchases.length && userName) diary = diary.map((r) => maskDiaryRow(r as DiaryRecordType));
+    if (!purchases.length && userName) diary = diary.map((r) => maskDiaryRow(r as DiaryType));
 
     res.status(200).json({
       message: { data: diary, purchases, notPurchased, priceData },

@@ -93,7 +93,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       );
     }
 
-    const updateRoutineFilter = { "allTasks.ids._id": new ObjectId(taskId) };
+    const updateRoutineFilter = { "allTasks.ids._id": new ObjectId(taskId), userId: new ObjectId(req.userId) };
     const updateRoutinePayload: { [key: string]: any } = { $set: { "allTasks.$.ids.$[element].status": newStatus } };
     if (newStatus === TaskStatusEnum.ACTIVE || numberOfTasksWithAnotherStatus === 0) {
       updateRoutinePayload.$set.status = newStatus;
@@ -136,7 +136,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       response.routine = await doWithRetries(() =>
         db.collection("Routine").findOne({
           _id: new ObjectId(taskToUpdate.routineId),
-          deletedOn: { $exists: false },
         })
       );
     }

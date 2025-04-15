@@ -391,6 +391,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         {
           _id: new ObjectId(routineId),
           "allTasks.ids._id": new ObjectId(taskId),
+          userId: new ObjectId(req.userId),
         },
         {
           $set: {

@@ -1,5 +1,5 @@
 import { ProofType, RoutineType } from "@/types.js";
-import { DiaryRecordType } from "@/types/saveDiaryRecordTypes.js";
+import { DiaryType } from "@/types/saveDiaryRecordTypes.js";
 
 export function maskRoutine(routine: RoutineType) {
   return {
@@ -20,7 +20,7 @@ export function maskRoutine(routine: RoutineType) {
   };
 }
 
-export function maskDiaryRow(diaryRecord: DiaryRecordType) {
+export function maskDiaryRow(diaryRecord: DiaryType) {
   return {
     ...diaryRecord,
     _id: null,
@@ -62,8 +62,7 @@ export function maskProof(proof: ProofType) {
     taskName: Array(proof.taskName.length).fill("*").join(""),
     requisite: Array(proof.requisite.length).fill("*").join(""),
     mainUrl: { name: "", url: placeholder },
-    mainThumbnail:
-      proof.contentType === "image" ? null : { name: "", url: thumbnail },
+    mainThumbnail: proof.contentType === "image" ? null : { name: "", url: thumbnail },
     icon: "❓",
     concern: Array(proof.concern.length).fill("*").join(""),
   };

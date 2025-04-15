@@ -49,6 +49,7 @@ export type LatestScoresDifferenceType = {
 export type PurchaseType = {
   name: string;
   part: string;
+  concern: string;
   createdAt: Date;
   contentStartDate: Date;
   contentEndDate?: Date;
@@ -399,5 +400,4 @@ export type ProofType = {
   moderationStatus: ModerationStatusEnum;
   isPublic: boolean;
   deletedOn?: Date;
-  concerns: UserConcernType[];
 };

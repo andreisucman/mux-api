@@ -17,8 +17,6 @@ import { checkDateValidity, daysFrom, toSnakeCase } from "helpers/utils.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import createTextEmbedding from "functions/createTextEmbedding.js";
 import findEmoji from "helpers/findEmoji.js";
-import incrementProgress from "@/helpers/incrementProgress.js";
-import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import moderateContent from "@/functions/moderateContent.js";
 import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
@@ -28,11 +26,23 @@ import { validParts } from "@/data/other.js";
 import getUsersImages from "@/functions/getUserImages.js";
 import generateImage from "@/functions/generateImage.js";
 import searchYoutubeVideos from "@/functions/searchYoutubeVideos.js";
+import getLatestTasks from "@/functions/getLatestTasks.js";
 
 const route = Router();
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { part, concern, description, instruction, startDate, frequency, exampleVideoId } = req.body;
+  const {
+    part,
+    concern,
+    description,
+    instruction,
+    startDate,
+    frequency,
+    exampleVideoId,
+    returnTasks,
+    returnRoutine,
+    selectedDestinationRoutine,
+  } = req.body;
 
   const { isValidDate, isFutureDate } = checkDateValidity(startDate, req.timeZone);
 
@@ -97,38 +107,16 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         })
       );
       res.status(200).json({
-        error:
-          "This task violates our ToS or is too dangerous for general use. Please modify your description or instruction and try again.",
+        error: "This task violates our ToS. Please modify your description or instruction and try again.",
       });
       return;
     }
 
-    await doWithRetries(async () =>
-      db.collection("AnalysisStatus").updateOne(
-        { userId: new ObjectId(req.userId), operationKey: "routine" },
-        {
-          $set: { isRunning: true, progress: 1 },
-          $unset: { isError: "" },
-        },
-        { upsert: true }
-      )
-    );
-
-    res.status(200).end();
-
-    const startDateMidnight = setToMidnight({
-      date: new Date(startDate),
-      timeZone: req.timeZone,
-    });
-
-    const relevantRoutine = await doWithRetries(async () =>
-      db.collection("Routine").findOne({
-        userId: new ObjectId(req.userId),
-        status: RoutineStatusEnum.ACTIVE,
-        part,
-        startsAt: { $lte: startDateMidnight },
-      })
-    );
+    const relevantRoutine = selectedDestinationRoutine
+      ? await doWithRetries(async () =>
+          db.collection("Routine").findOne({ _id: new ObjectId(selectedDestinationRoutine) })
+        )
+      : undefined;
 
     const systemContent = `The user gives you the description and instruction of an activity and a list of concerns. Your goal is to create a task based on this info. If no products are needed to complete this task return an empty array for productTypes.`;
 
@@ -169,12 +157,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       userId: req.userId,
       categoryName: CategoryNameEnum.TASKS,
       functionName: "saveTaskFromDescription",
-    });
-
-    await incrementProgress({
-      operationKey: "routine",
-      userId: req.userId,
-      value: 10,
     });
 
     const color = generateRandomPastelColor();
@@ -232,19 +214,13 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     generalTaskInfo.icon = iconsMap[generalTaskInfo.name];
 
-    const info = `${description}.${instruction}`;
-    const embedding = await createTextEmbedding({
-      userId: req.userId,
-      text: info,
-      dimensions: 1536,
-      categoryName: CategoryNameEnum.TASKS,
-    });
-
-    await incrementProgress({
-      operationKey: "routine",
-      userId: req.userId,
-      value: 25,
-    });
+    // const info = `${description}.${instruction}`;
+    // const embedding = await createTextEmbedding({
+    //   userId: req.userId,
+    //   text: info,
+    //   dimensions: 1536,
+    //   categoryName: CategoryNameEnum.TASKS,
+    // });
 
     const moderatedFrequency = Math.min(frequency, 70);
 
@@ -272,7 +248,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       draftTasks.push({
         ...generalTaskInfo,
         _id: new ObjectId(),
-        embedding,
+        // embedding,
         startsAt: starts,
         expiresAt: expires,
         completedAt: null,
@@ -329,12 +305,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       instruction,
     });
 
-    await incrementProgress({
-      operationKey: "routine",
-      userId: req.userId,
-      value: 20,
-    });
-
     const { minDate, maxDate } = getMinAndMaxRoutineDates(allTasks);
 
     const routinePayload: Partial<RoutineType> = {
@@ -357,35 +327,33 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       routinePayload.createdAt = new Date();
     }
 
-    await incrementProgress({
-      operationKey: "routine",
-      userId: req.userId,
-      value: 15,
-    });
+    let routineId;
 
     if (relevantRoutine) {
+      routineId = relevantRoutine._id;
+
       draftTasks = draftTasks.map((t) => ({
         ...t,
-        routineId: new ObjectId(relevantRoutine._id),
+        routineId: new ObjectId(routineId),
       }));
 
       await doWithRetries(async () =>
         db.collection("Routine").updateOne(
-          { _id: new ObjectId(relevantRoutine._id) },
+          { _id: new ObjectId(routineId), userId: new ObjectId(req.userId) },
           {
             $set: routinePayload,
           }
         )
       );
     } else {
-      const newRoutineId = new ObjectId();
+      routineId = new ObjectId();
 
       draftTasks = draftTasks.map((t) => ({
         ...t,
-        routineId: newRoutineId,
+        routineId,
       }));
 
-      routinePayload._id = newRoutineId;
+      routinePayload._id = routineId;
 
       await doWithRetries(async () => db.collection("Routine").insertOne(routinePayload));
     }
@@ -408,13 +376,19 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         }
       )
     );
+
+    const reponse = { tasks: [], routine: null };
+
+    if (returnRoutine) {
+      reponse.routine = await doWithRetries(() => db.collection("Routine").find({ _id: routineId }).next());
+    }
+
+    if (returnTasks) {
+      reponse.tasks = await getLatestTasks({ userId: req.userId, timeZone: req.timeZone });
+    }
+
+    res.status(200).json({ message: reponse });
   } catch (err) {
-    await addAnalysisStatusError({
-      userId: req.userId,
-      message: "An unexpected error occured. Please try again.",
-      originalMessage: err.message,
-      operationKey: "routine",
-    });
     next(err);
   }
 });

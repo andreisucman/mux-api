@@ -12,19 +12,18 @@ import getUserInfo from "@/functions/getUserInfo.js";
 import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
-import { db } from "init.js";
 import { addTaskToSchedule, removeTaskFromAllTasks, removeTaskFromSchedule } from "@/helpers/rescheduleTaskHelpers.js";
 import combineAllTasks from "@/helpers/combineAllTasks.js";
-import getClosestRoutine from "@/functions/getClosestRoutine.js";
+import { db } from "init.js";
 
 const route = Router();
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { taskKey, routineId, startDate } = req.body;
+  const { taskKey, currentRoutineId, targetRoutineId, startDate } = req.body;
 
   const { isValidDate, isFutureDate } = checkDateValidity(startDate, req.timeZone);
 
-  if (!taskKey || !routineId || !isValidDate || !isFutureDate) {
+  if (!taskKey || !currentRoutineId || !isValidDate || !isFutureDate) {
     res.status(400).json({ error: "Bad request" });
     return;
   }
@@ -40,7 +39,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     let taskInfo = (await doWithRetries(async () =>
       db
         .collection("Task")
-        .find({ routineId: new ObjectId(routineId), key: taskKey, userId: new ObjectId(req.userId) })
+        .find({ routineId: new ObjectId(currentRoutineId), key: taskKey, userId: new ObjectId(req.userId) })
         .sort({ expiresAt: 1 })
         .next()
     )) as unknown as TaskType;
@@ -51,12 +50,12 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       db
         .collection("Routine")
         .findOne(
-          { _id: new ObjectId(routineId), userId: new ObjectId(req.userId) },
+          { _id: new ObjectId(currentRoutineId), userId: new ObjectId(req.userId) },
           { projection: { allTasks: 1, finalSchedule: 1 } }
         )
     )) as unknown as RoutineType;
 
-    if (!hostRoutine) throw httpError(`${routineId} routine not found.`);
+    if (!hostRoutine) throw httpError(`${currentRoutineId} routine not found.`);
 
     const { allTasks: hostAllTasks, finalSchedule: hostFinalSchedule } = hostRoutine;
 
@@ -85,12 +84,17 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     if (hostAllTasksWithoutTask.length === 0) {
       await doWithRetries(async () =>
-        db.collection("Routine").deleteOne({ _id: new ObjectId(routineId), userId: new ObjectId(req.userId) })
+        db
+          .collection("Routine")
+          .updateOne(
+            { _id: new ObjectId(currentRoutineId), userId: new ObjectId(req.userId) },
+            { $set: { deletedOn: new Date() } }
+          )
       );
     } else {
       await doWithRetries(async () =>
         db.collection("Routine").updateOne(
-          { _id: new ObjectId(routineId), userId: new ObjectId(req.userId) },
+          { _id: new ObjectId(currentRoutineId), userId: new ObjectId(req.userId) },
           {
             $set: {
               allTasks: hostAllTasksWithoutTask,
@@ -103,30 +107,20 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       );
     }
 
-    let targetRoutine = (await doWithRetries(async () =>
-      db
-        .collection("Routine")
-        .find({
+    const targetRoutineFilter = targetRoutineId
+      ? { _id: new ObjectId(targetRoutineId) }
+      : {
           userId: new ObjectId(req.userId),
           part: taskInfo.part,
           status: RoutineStatusEnum.ACTIVE,
           startsAt: { $lte: new Date(startDate) },
           lastDate: { $gte: new Date(startDate) },
-        })
-        .sort({ startsAt: 1 })
-        .next()
-    )) as unknown as RoutineType;
+          deletedOn: { $exists: false },
+        };
 
-    if (!targetRoutine) {
-      targetRoutine = await getClosestRoutine(
-        {
-          userId: new ObjectId(req.userId),
-          part: taskInfo.part,
-          status: RoutineStatusEnum.ACTIVE,
-        },
-        startDate
-      );
-    }
+    let targetRoutine = (await doWithRetries(async () =>
+      db.collection("Routine").find(targetRoutineFilter).sort({ startsAt: 1 }).next()
+    )) as unknown as RoutineType;
 
     let {
       concerns: currentConcerns,
@@ -151,7 +145,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
       await doWithRetries(async () =>
         db.collection("Routine").updateOne(
-          { _id: new ObjectId(targetRoutine._id) },
+          { _id: new ObjectId(targetRoutine._id), userId: new ObjectId(req.userId) },
           {
             $set: {
               finalSchedule: targetSchedule,

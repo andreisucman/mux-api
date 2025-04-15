@@ -11,6 +11,7 @@ import { SuspiciousRecordCollectionEnum } from "@/functions/addSuspiciousRecord.
 import updateContent from "@/functions/updateContent.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import cancelRoutineSubscribers from "@/functions/cancelRoutineSubscribers.js";
+import checkPublishingRequirements from "@/functions/checkRoutineDataPublishingRequirements.js";
 
 const route = Router();
 
@@ -55,14 +56,10 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         });
         return;
       }
-
-      const numberOfProgresses = await doWithRetries(() =>
-        db.collection("Progress").countDocuments({ userId: new ObjectId(req.userId), "concerns.name": concern })
-      );
-
-      if (numberOfProgresses < 2) {
+      const { passed, message } = await checkPublishingRequirements({ userId: req.userId, concern });
+      if (!passed) {
         res.status(200).json({
-          error: `You have to have at least one pair of before-after images for ${concern} to publish your routine.`,
+          error: message,
         });
         return;
       }
@@ -135,16 +132,27 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       )
     );
 
+    const payload: { [key: string]: any } = {
+      isPublic: status === "public",
+      avatar,
+      userName,
+    };
+
     await updateContent({
-      collections: ["BeforeAfter", "Progress", "Routine", "Proof", "Diary"],
-      updatePayload: {
-        isPublic: status === "public",
-        avatar,
-        userName,
-      },
+      collections: ["BeforeAfter", "Progress", "Proof"],
+      updatePayload: payload,
       filter: {
         userId: new ObjectId(req.userId),
-        "concerns.name": concern,
+        concern,
+      },
+    });
+
+    await updateContent({
+      collections: ["Routine", "Diary"],
+      updatePayload: payload,
+      filter: {
+        userId: new ObjectId(req.userId),
+        concerns: { $in: [concern] },
       },
     });
 

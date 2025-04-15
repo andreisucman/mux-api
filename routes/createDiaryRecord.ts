@@ -85,6 +85,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
             mainThumbnail: 1,
             icon: 1,
             part: 1,
+            concern: 1,
             taskId: 1,
           },
         })
@@ -101,6 +102,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         thumbnail: proof.contentType === "video" ? proof.mainThumbnail.url : "",
         icon: proof.icon,
         contentType: proof.contentType,
+        concern: proof.concern,
       });
     }
 

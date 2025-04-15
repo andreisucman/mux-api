@@ -14,7 +14,7 @@ const route = Router();
 
 route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFunction) => {
   const { userName } = req.params;
-  const { filter, skip, sort } = aqp(req.query as any) as AqpQuery;
+  const { filter, projection, skip, sort } = aqp(req.query as any) as AqpQuery;
 
   try {
     let purchases = [];
@@ -48,17 +48,21 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
       }
     }
 
-    const projection = {
-      _id: 1,
-      startsAt: 1,
-      userId: 1,
-      part: 1,
-      allTasks: 1,
-      createdAt: 1,
-      status: 1,
-      lastDate: 1,
-      isPublic: 1,
-    };
+    const hasProjection = Object.keys(projection || {}).length > 0;
+
+    const finalProjecton = hasProjection
+      ? projection
+      : {
+          _id: 1,
+          startsAt: 1,
+          userId: 1,
+          part: 1,
+          allTasks: 1,
+          createdAt: 1,
+          status: 1,
+          lastDate: 1,
+          isPublic: 1,
+        };
 
     const finalSort = { ...(sort || { startsAt: -1 }) };
 
@@ -67,7 +71,7 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
         .collection("Routine")
         .aggregate([
           { $match: finalFilter },
-          { $project: projection },
+          { $project: finalProjecton },
           { $sort: finalSort },
           { $skip: Number(skip) || 0 },
           { $limit: 21 },

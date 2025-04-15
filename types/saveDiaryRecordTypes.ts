@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
-import { ModerationStatusEnum, PartEnum, UserConcernType } from "@/types.js";
+import { ModerationStatusEnum, PartEnum } from "@/types.js";
 
-export type DiaryRecordType = {
+export type DiaryType = {
   _id: ObjectId;
   part: PartEnum;
   audio: string;
@@ -14,7 +14,7 @@ export type DiaryRecordType = {
   isPublic: boolean;
   moderationStatus: ModerationStatusEnum;
   deletedOn?: Date;
-  concerns: UserConcernType[];
+  concerns: string[];
 };
 
 export type DiaryActivityType = {
@@ -24,5 +24,6 @@ export type DiaryActivityType = {
   url: string;
   thumbnail?: string;
   icon?: string;
+  concern: string;
   contentType: "image" | "video";
 };

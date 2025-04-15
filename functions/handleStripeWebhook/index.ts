@@ -44,7 +44,7 @@ async function createRoutinePurchase(routineDataId: string, buyerId: string, pay
 
     if (!relatedRoutineData) return;
 
-    const { name, part, userId: sellerId, contentStartDate, contentEndDate } = relatedRoutineData;
+    const { name, part, concern, userId: sellerId, contentStartDate, contentEndDate } = relatedRoutineData;
 
     const [sellerInfo, buyerInfo] = await Promise.all([
       getUserInfo({
@@ -64,6 +64,7 @@ async function createRoutinePurchase(routineDataId: string, buyerId: string, pay
 
     const newPurchase: PurchaseType = {
       name,
+      concern,
       part,
       buyerId: new ObjectId(buyerId),
       sellerId: new ObjectId(sellerId),
@@ -126,6 +127,7 @@ async function fetchRoutineData(routineDataId: string) {
           projection: {
             updatePrice: 1,
             price: 1,
+            concern: 1,
             name: 1,
             part: 1,
             userId: 1,
@@ -144,7 +146,7 @@ async function fetchRoutineData(routineDataId: string) {
         .collection("Routine")
         .find({
           userId: new ObjectId(relatedRoutineData.userId),
-          part: relatedRoutineData.part,
+          concern: relatedRoutineData.concern,
         })
         .project({ createdAt: 1 })
         .sort({ createdAt: -1 })
@@ -348,17 +350,30 @@ export async function fetchUserInfo(filter: { [key: string]: any }, projection =
   }
 }
 
-function calculateTotalScanQuantity(lineItems: Stripe.LineItem[], scanPlan: any) {
-  return lineItems.reduce((total, item) => {
-    if (item.price?.id === scanPlan.priceId) {
-      return total + (item.quantity || 0);
-    }
-    return total;
-  }, 0);
-}
-
 export async function markEventAsProcessed(eventId: string) {
   await adminDb.collection("ProcessedEvent").insertOne({ eventId, createdAt: new Date() });
+}
+
+async function handleOneTimePayment(session: Stripe.Checkout.Session) {
+  try {
+    const { routineDataId, buyerId, part } = session.metadata || {};
+
+    if (routineDataId) {
+      await createRoutinePurchase(routineDataId, buyerId, session.payment_intent as string);
+    } else {
+      const customerId = session.customer as string;
+
+      const relatedUser = await fetchUserInfo({ stripeUserId: customerId }, { nextScans: 1 });
+
+      const updatedScans = relatedUser.nextScans.map((obj) => (obj.part === part ? { ...obj, date: null } : obj));
+
+      await doWithRetries(() =>
+        db.collection("User").updateOne({ stripeUserId: customerId }, { $set: { nextScans: updatedScans } })
+      );
+    }
+  } catch (err) {
+    throw httpError(err);
+  }
 }
 
 //#endregion
@@ -408,6 +423,9 @@ async function handleStripeWebhook(event: Stripe.Event) {
       case "checkout.session.completed":
         if (data.object.mode === "subscription") {
           await handleSubscriptionPayment(data.object as Stripe.Checkout.Session, plans);
+        }
+        if (data.object.mode === "payment") {
+          await handleOneTimePayment(data.object as Stripe.Checkout.Session);
         }
         break;
     }

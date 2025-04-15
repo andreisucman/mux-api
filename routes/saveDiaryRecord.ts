@@ -10,7 +10,7 @@ import moderateContent from "@/functions/moderateContent.js";
 import { ModerationStatusEnum, CustomRequest, CategoryNameEnum, PartEnum } from "types.js";
 import addSuspiciousRecord, { SuspiciousRecordCollectionEnum } from "@/functions/addSuspiciousRecord.js";
 import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.js";
-import { DiaryRecordType } from "@/types/saveDiaryRecordTypes.js";
+import { DiaryType } from "@/types/saveDiaryRecordTypes.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import createTextEmbedding from "@/functions/createTextEmbedding.js";
 import { checkIfPublic } from "./checkIfPublic.js";
@@ -98,7 +98,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       dimensions: 1536,
     });
 
-    const newDiaryRecord: DiaryRecordType = {
+    const newDiaryRecord: DiaryType = {
       _id: new ObjectId(),
       part,
       audio,
@@ -110,14 +110,14 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       transcription: body.message,
       createdAt: new Date(),
       moderationStatus: ModerationStatusEnum.ACTIVE,
-      concerns: [],
+      concerns: activity.map((a) => a.concern),
     };
 
     const isPublicResponse = await checkIfPublic({
       userId: req.userId,
       concern,
     });
-    
+
     newDiaryRecord.isPublic = isPublicResponse.isPublic;
 
     const { name } = userInfo;

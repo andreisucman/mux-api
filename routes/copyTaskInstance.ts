@@ -14,12 +14,11 @@ import { db } from "init.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import httpError from "@/helpers/httpError.js";
 import { addTaskToSchedule } from "@/helpers/rescheduleTaskHelpers.js";
-import getClosestRoutine from "@/functions/getClosestRoutine.js";
 
 const route = Router();
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { taskId, startDate, userName, returnTask } = req.body;
+  const { taskId, startDate, targetRoutineId, userName, returnTask } = req.body;
 
   const { isValidDate, isFutureDate } = checkDateValidity(startDate, req.timeZone);
 
@@ -46,31 +45,20 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     const midnightStartDate = setToMidnight({ date: startDate, timeZone: req.timeZone });
 
-    let targetRoutine = (await doWithRetries(async () =>
-      db
-        .collection("Routine")
-        .find({
+    const targetRoutineFilter = targetRoutineId
+      ? { _id: new ObjectId(targetRoutineId), userId: new ObjectId(req.userId) }
+      : {
           userId: new ObjectId(req.userId),
           part: currentTask.part,
           status: RoutineStatusEnum.ACTIVE,
           startsAt: { $lte: new Date(midnightStartDate) },
           lastDate: { $gte: new Date(midnightStartDate) },
-        })
-        .project(projection)
-        .sort({ startsAt: 1 })
-        .next()
-    )) as unknown as RoutineType;
+          deletedOn: { $exists: false },
+        };
 
-    if (!targetRoutine) {
-      targetRoutine = await getClosestRoutine(
-        {
-          userId: new ObjectId(req.userId),
-          part: currentTask.part,
-          status: RoutineStatusEnum.ACTIVE,
-        },
-        startDate
-      );
-    }
+    let targetRoutine = (await doWithRetries(async () =>
+      db.collection("Routine").find(targetRoutineFilter).project(projection).sort({ startsAt: 1 }).next()
+    )) as unknown as RoutineType;
 
     const { allTasks, concerns, finalSchedule } = targetRoutine || {};
 
@@ -139,7 +127,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
       await doWithRetries(async () =>
         db.collection("Routine").updateOne(
-          { _id: new ObjectId(targetRoutine._id) },
+          { _id: new ObjectId(targetRoutine._id), userId: new ObjectId(req.userId) },
           {
             $set: {
               finalSchedule: updatedSchedule,

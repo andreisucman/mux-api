@@ -71,6 +71,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     const updateRoutineFilter = {
       "allTasks.ids._id": new ObjectId(taskId),
+      userId: new ObjectId(req.userId),
     };
 
     const updateRoutinePayload: { [key: string]: any } = {

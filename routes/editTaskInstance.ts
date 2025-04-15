@@ -168,7 +168,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     await doWithRetries(async () =>
       db.collection("Routine").updateOne(
-        { _id: new ObjectId(relevantTask.routineId) },
+        { _id: new ObjectId(relevantTask.routineId), userId: new ObjectId(req.userId) },
         {
           $set: routineUpdatePayload,
         }
