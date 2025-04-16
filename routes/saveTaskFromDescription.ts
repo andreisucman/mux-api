@@ -15,7 +15,6 @@ import setToMidnight from "@/helpers/setToMidnight.js";
 import sortTasksInScheduleByDate from "@/helpers/sortTasksInScheduleByDate.js";
 import { checkDateValidity, daysFrom, toSnakeCase } from "helpers/utils.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import createTextEmbedding from "functions/createTextEmbedding.js";
 import findEmoji from "helpers/findEmoji.js";
 import moderateContent from "@/functions/moderateContent.js";
 import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
@@ -27,6 +26,7 @@ import getUsersImages from "@/functions/getUserImages.js";
 import generateImage from "@/functions/generateImage.js";
 import searchYoutubeVideos from "@/functions/searchYoutubeVideos.js";
 import getLatestTasks from "@/functions/getLatestTasks.js";
+import { checkIfPublic } from "./checkIfPublic.js";
 
 const route = Router();
 
@@ -214,14 +214,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     generalTaskInfo.icon = iconsMap[generalTaskInfo.name];
 
-    // const info = `${description}.${instruction}`;
-    // const embedding = await createTextEmbedding({
-    //   userId: req.userId,
-    //   text: info,
-    //   dimensions: 1536,
-    //   categoryName: CategoryNameEnum.TASKS,
-    // });
-
     const moderatedFrequency = Math.min(frequency, 70);
 
     const distanceInDays = Math.round(Math.max(7 / moderatedFrequency, 1));
@@ -281,10 +273,10 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     finalSchedule = sortTasksInScheduleByDate(finalSchedule);
 
     /* update concerns */
-    const concernExists = concerns.find((obj: { name: string }) => obj.name === generalTaskInfo.concern);
+    const concernExists = concerns.includes(generalTaskInfo.concern);
 
     if (!concernExists) {
-      concerns.push({ name: generalTaskInfo.concern, part });
+      concerns.push(generalTaskInfo.concern);
     }
 
     /* update all tasks */
@@ -307,24 +299,27 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     const { minDate, maxDate } = getMinAndMaxRoutineDates(allTasks);
 
-    const routinePayload: Partial<RoutineType> = {
+    const isPublicResponse = await checkIfPublic({
+      userId: String(req.userId),
+      concerns: [concern],
+    });
+
+    const routinePayload: RoutineType = {
       ...relevantRoutine,
       userId: new ObjectId(req.userId),
       concerns,
       part,
       allTasks,
       finalSchedule,
+      createdAt: createdAt || new Date(),
       startsAt: new Date(minDate),
       lastDate: new Date(maxDate),
       status: RoutineStatusEnum.ACTIVE,
+      isPublic: isPublicResponse.isPublic,
     };
 
     if (userInfo.name) {
       routinePayload.userName = userInfo.name;
-    }
-
-    if (!createdAt) {
-      routinePayload.createdAt = new Date();
     }
 
     let routineId;

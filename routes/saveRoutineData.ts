@@ -11,7 +11,6 @@ import { SuspiciousRecordCollectionEnum } from "@/functions/addSuspiciousRecord.
 import updateContent from "@/functions/updateContent.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import cancelRoutineSubscribers from "@/functions/cancelRoutineSubscribers.js";
-import checkPublishingRequirements from "@/functions/checkRoutineDataPublishingRequirements.js";
 
 const route = Router();
 
@@ -50,19 +49,19 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     };
 
     if (status === "public") {
-      if (!userInfo.club.payouts.payoutsEnabled) {
-        res.status(200).json({
-          error: "You can't publish a routine while your payouts are disabled.",
-        });
-        return;
-      }
-      const { passed, message } = await checkPublishingRequirements({ userId: req.userId, concern });
-      if (!passed) {
-        res.status(200).json({
-          error: message,
-        });
-        return;
-      }
+      // if (!userInfo.club.payouts.payoutsEnabled) {
+      //   res.status(200).json({
+      //     error: "You can't publish a routine while your payouts are disabled.",
+      //   });
+      //   return;
+      // }
+      // const { passed, message } = await checkPublishingRequirements({ userId: req.userId, concern });
+      // if (!passed) {
+      //   res.status(200).json({
+      //     error: message,
+      //   });
+      //   return;
+      // }
     }
 
     for (const text of [name, description]) {
@@ -97,7 +96,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       const firstRoutineOfConcern = await doWithRetries(async () =>
         db
           .collection("Routine")
-          .find({ userId: new ObjectId(req.userId), "concerns.name": concern })
+          .find({ userId: new ObjectId(req.userId), concerns: { $in: [concern] } })
           .sort({ createdAt: 1 })
           .next()
       );
@@ -125,7 +124,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     await doWithRetries(async () =>
       db.collection("BeforeAfter").updateOne(
-        { userId: new ObjectId(req.userId), "concerns.name": concern },
+        { userId: new ObjectId(req.userId), concern },
         {
           $set: { routineName: name },
         }

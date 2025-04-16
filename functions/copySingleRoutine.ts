@@ -9,6 +9,7 @@ import { ObjectId } from "mongodb";
 import { db } from "@/init.js";
 import updateAnalytics from "./updateAnalytics.js";
 import updateTasksAnalytics from "./updateTasksAnalytics.js";
+import { checkIfPublic } from "@/routes/checkIfPublic.js";
 
 type Props = {
   userId: string;
@@ -122,18 +123,23 @@ export default async function copySingleRoutine({
 
     const { minDate, maxDate } = getMinAndMaxRoutineDates(updatedAllTasks);
 
-    const newRoutine = {
+    const isPublicResponse = await checkIfPublic({
+      userId: String(userId),
+      concerns: hostRoutine.concerns,
+    });
+
+    const newRoutine: RoutineType = {
       ...hostRoutine,
       _id: newRoutineId,
       userId: new ObjectId(userId),
       createdAt: new Date(),
       finalSchedule,
       userName,
-      isPublic: false,
       allTasks: updatedAllTasks,
       startsAt: new Date(minDate),
       lastDate: new Date(maxDate),
       status: RoutineStatusEnum.ACTIVE,
+      isPublic: isPublicResponse.isPublic,
     };
 
     delete newRoutine.deletedOn;

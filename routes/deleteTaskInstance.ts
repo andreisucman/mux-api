@@ -41,7 +41,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     );
 
     if (!taskToDelete) {
-      res.status(200).json({ error: "No active tasks to update" });
+      res.status(200).json({ error: "No active tasks to update." });
       return;
     }
 

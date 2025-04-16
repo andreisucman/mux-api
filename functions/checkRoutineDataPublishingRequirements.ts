@@ -12,7 +12,7 @@ const checkPublishingRequirements = async ({ userId, concern }: Props) => {
   const response = { passed: false, message: "" };
 
   const numberOfProgresses = await doWithRetries(() =>
-    db.collection("Progress").countDocuments({ userId: new ObjectId(userId), "concerns.name": concern })
+    db.collection("Progress").countDocuments({ userId: new ObjectId(userId), concern })
   );
 
   const concernName = normalizeString(concern).toLowerCase();
@@ -25,7 +25,7 @@ const checkPublishingRequirements = async ({ userId, concern }: Props) => {
   const earliestConcernScoreRecord = await doWithRetries(() =>
     db
       .collection("Progress")
-      .find({ userId: new ObjectId(userId), "concerns.name": concern })
+      .find({ userId: new ObjectId(userId), concern })
       .project({ concernScore: 1 })
       .sort({ createdAt: 1 })
       .next()
@@ -36,7 +36,7 @@ const checkPublishingRequirements = async ({ userId, concern }: Props) => {
   const latestConcernScoreRecord = await doWithRetries(() =>
     db
       .collection("Progress")
-      .find({ userId: new ObjectId(userId), "concerns.name": concern })
+      .find({ userId: new ObjectId(userId), concern })
       .project({ concernScore: 1 })
       .sort({ createdAt: -1 })
       .next()

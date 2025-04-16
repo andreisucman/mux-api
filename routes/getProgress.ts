@@ -4,7 +4,7 @@ import aqp, { AqpQuery } from "api-query-params";
 import { ModerationStatusEnum, CustomRequest } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { db } from "init.js";
-import getPurchasedFilters from "@/functions/getPurchasedFilters.js";
+import getPurchasedFilters, { PriceDataType, PurchaseType } from "@/functions/getPurchasedFilters.js";
 
 const route = Router();
 
@@ -19,17 +19,17 @@ route.get("/:userName?", async (req: CustomRequest, res, next: NextFunction) => 
   }
 
   try {
-    let purchases = [];
+    let purchases: PurchaseType[] = [];
+    let notPurchased: string[] = [];
+    let priceData: PriceDataType[] = [];
     let progress = [];
-    let notPurchased = [];
-    let priceData = [];
 
-    let finalFilters: { [key: string]: any } = {
+    let finalFilter: { [key: string]: any } = {
       concern,
       moderationStatus: ModerationStatusEnum.ACTIVE,
     };
 
-    if (part) finalFilters.part = part;
+    if (part) finalFilter.part = part;
 
     const projection: { [key: string]: any } = {
       _id: 1,
@@ -42,7 +42,7 @@ route.get("/:userName?", async (req: CustomRequest, res, next: NextFunction) => 
     };
 
     if (userName) {
-      finalFilters.userName = userName;
+      finalFilter.userName = userName;
 
       projection["images.mainUrl"] = 1;
       projection["initialImages.mainUrl"] = 1;
@@ -55,15 +55,23 @@ route.get("/:userName?", async (req: CustomRequest, res, next: NextFunction) => 
       purchases = response.purchases;
       priceData = response.priceData;
       notPurchased = response.notPurchased;
-      finalFilters = { ...finalFilters, ...response.additionalFilters };
+
+      if (priceData.length === 0) {
+        finalFilter.isPublic = true;
+      } else {
+        finalFilter.$and = [{ concern: { $in: priceData.map((o) => o.concern) } }];
+        if (concern) finalFilter.$and.push({ concern: { $in: [concern] } });
+      }
+
+      finalFilter = { ...finalFilter, ...response.additionalFilters };
     } else {
       if (req.userId) {
-        finalFilters.userId = new ObjectId(req.userId);
+        finalFilter.userId = new ObjectId(req.userId);
         projection["images"] = 1;
         projection["initialImages"] = 1;
       } else {
-        finalFilters.isPublic = true;
-        finalFilters.deletedOn = { $exists: false };
+        finalFilter.isPublic = true;
+        finalFilter.deletedOn = { $exists: false };
       }
     }
 
@@ -71,7 +79,7 @@ route.get("/:userName?", async (req: CustomRequest, res, next: NextFunction) => 
       db
         .collection("Progress")
         .aggregate([
-          { $match: finalFilters },
+          { $match: finalFilter },
           {
             $project: projection,
           },

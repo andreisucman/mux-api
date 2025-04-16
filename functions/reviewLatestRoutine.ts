@@ -6,17 +6,17 @@ import {
   CategoryNameEnum,
   RoutineStatusEnum,
   ProgressImageType,
+  RoutineType,
 } from "types.js";
 import { CreateRoutineUserInfoType } from "types/createRoutineTypes.js";
 import httpError from "helpers/httpError.js";
 import updateTasksAnalytics from "./updateTasksAnalytics.js";
 import { db } from "init.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
-import chooseSolutionsForConcerns, {
-  ConcernsSolutionsAndFrequenciesType,
-} from "./chooseSolutionsForConcerns.js";
+import chooseSolutionsForConcerns, { ConcernsSolutionsAndFrequenciesType } from "./chooseSolutionsForConcerns.js";
 import createSolutionData from "./createSolutionData.js";
 import createScheduleAndTasks from "./createScheduleAndTasks.js";
+import { checkIfPublic } from "@/routes/checkIfPublic.js";
 
 type Props = {
   part: PartEnum;
@@ -41,75 +41,71 @@ export default async function reviewLatestRoutine({
   routineStartDate,
   incrementMultiplier = 1,
 }: Props) {
-  const {
-    _id: userId,
-    timeZone,
-    name: userName,
-    specialConsiderations,
-    demographics,
-    country,
-  } = userInfo;
+  const { _id: userId, timeZone, name: userName, specialConsiderations, demographics, country } = userInfo;
 
   try {
     if (!latestRoutineId) throw httpError("No latest routineId");
 
-    const { updatedListOfSolutions, areCurrentSolutionsOkay } =
-      await chooseSolutionsForConcerns({
-        userId: String(userId),
-        part,
-        timeZone,
-        country,
-        latestSolutions,
-        categoryName,
-        demographics,
-        partConcerns,
-        partImages,
-        incrementMultiplier,
-        specialConsiderations,
-      });
+    const { updatedListOfSolutions, areCurrentSolutionsOkay } = await chooseSolutionsForConcerns({
+      userId: String(userId),
+      part,
+      timeZone,
+      country,
+      latestSolutions,
+      categoryName,
+      demographics,
+      partConcerns,
+      partImages,
+      incrementMultiplier,
+      specialConsiderations,
+    });
 
     if (areCurrentSolutionsOkay) return;
 
-    const { allSolutions: updatedAllSolutions, allTasks: updatedAllTasks } =
-      await createSolutionData({
-        categoryName,
-        concernsSolutionsAndFrequencies:
-          updatedListOfSolutions as unknown as ConcernsSolutionsAndFrequenciesType,
-        part,
-        userId: String(userId),
-      });
+    const { allSolutions: updatedAllSolutions, allTasks: updatedAllTasks } = await createSolutionData({
+      categoryName,
+      concernsSolutionsAndFrequencies: updatedListOfSolutions as unknown as ConcernsSolutionsAndFrequenciesType,
+      part,
+      userId: String(userId),
+    });
 
-    const { allTasksWithDateAndIds, finalSchedule, tasksToInsert } =
-      await createScheduleAndTasks({
-        part,
-        userInfo,
-        allSolutions: updatedAllSolutions,
-        allTasks: updatedAllTasks,
-        categoryName,
-        incrementMultiplier,
-        partConcerns,
-        routineStartDate,
-        specialConsiderations,
-      });
+    const { allTasksWithDateAndIds, finalSchedule, tasksToInsert } = await createScheduleAndTasks({
+      part,
+      userInfo,
+      allSolutions: updatedAllSolutions,
+      allTasks: updatedAllTasks,
+      categoryName,
+      incrementMultiplier,
+      partConcerns,
+      routineStartDate,
+      specialConsiderations,
+    });
 
-    const { minDate, maxDate } = getMinAndMaxRoutineDates(
-      allTasksWithDateAndIds
-    );
+    const { minDate, maxDate } = getMinAndMaxRoutineDates(allTasksWithDateAndIds);
 
-    const newRoutineObject = await doWithRetries(async () =>
-      db.collection("Routine").insertOne({
-        userId: new ObjectId(userId),
-        userName,
-        concerns: partConcerns,
-        finalSchedule,
-        status: RoutineStatusEnum.ACTIVE,
-        createdAt: new Date(),
-        allTasks: allTasksWithDateAndIds,
-        startsAt: new Date(minDate),
-        lastDate: new Date(maxDate),
-        part,
-      })
-    );
+    const concernNames = partConcerns.map((c) => c.name);
+
+    const isPublicResponse = await checkIfPublic({
+      userId: String(userId),
+      concerns: concernNames,
+    });
+
+    const newRoutine: RoutineType = {
+      _id: new ObjectId(),
+      userId: new ObjectId(userId),
+      userName,
+      concerns: concernNames,
+      finalSchedule,
+      status: RoutineStatusEnum.ACTIVE,
+      createdAt: new Date(),
+      allTasks: allTasksWithDateAndIds,
+      startsAt: new Date(minDate),
+      lastDate: new Date(maxDate),
+      part,
+      isPublic: isPublicResponse.isPublic,
+    };
+
+    const newRoutineObject = await doWithRetries(async () => db.collection("Routine").insertOne(newRoutine));
 
     const tasksToInsertWithRoutineId = tasksToInsert.map((rt) => ({
       ...rt,
@@ -117,9 +113,7 @@ export default async function reviewLatestRoutine({
     }));
 
     if (tasksToInsert.length > 0)
-      await doWithRetries(async () =>
-        db.collection("Task").insertMany(tasksToInsertWithRoutineId)
-      );
+      await doWithRetries(async () => db.collection("Task").insertMany(tasksToInsertWithRoutineId));
 
     updateTasksAnalytics({
       userId: String(userId),

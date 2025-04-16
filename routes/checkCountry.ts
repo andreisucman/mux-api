@@ -53,7 +53,7 @@ route.post(
       const { isValid, countryCode } = response;
 
       if (!isValid) {
-        res.status(200).json({ error: "Invalid country" });
+        res.status(200).json({ error: "Invalid country." });
         return;
       }
 

@@ -5,7 +5,6 @@ export type DiaryType = {
   _id: ObjectId;
   part: PartEnum;
   audio: string;
-  embedding: number[];
   activity: DiaryActivityType[];
   userId: ObjectId;
   transcription: string;

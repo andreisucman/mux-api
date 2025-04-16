@@ -20,7 +20,7 @@ route.post("/", async (req: Request, res: Response, next: NextFunction) => {
   }
 
   if (!password) {
-    res.status(200).json({ error: "Please provide a password" });
+    res.status(200).json({ error: "Please provide a password." });
     return;
   }
 

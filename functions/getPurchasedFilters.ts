@@ -10,11 +10,14 @@ type Props = {
   concern?: string;
 };
 
+export type PurchaseType = { concern: string; contentEndDate: Date };
+export type PriceDataType = { name: string; description: string; price: number; concern: string };
+
 export default async function getPurchasedFilters({ userName, userId, concern }: Props) {
   const additionalFilters: { [key: string]: any } = {};
-  let purchases = [];
-  let priceData = [];
-  let notPurchased = [];
+  let purchases: PurchaseType[] = [];
+  let priceData: PriceDataType[] = [];
+  let notPurchased: string[] = [];
 
   additionalFilters.userName = userName;
 
@@ -24,16 +27,17 @@ export default async function getPurchasedFilters({ userName, userId, concern }:
       projection: { _id: 1 },
     });
 
-    priceData = await doWithRetries(async () =>
-      db
-        .collection("RoutineData")
-        .find(
-          { userId: new ObjectId(sellerIdObj?._id), status: "public" },
-          {
-            projection: { name: 1, description: 1, price: 1, concern: 1 },
-          }
-        )
-        .toArray()
+    priceData = await doWithRetries(
+      async () =>
+        db
+          .collection("RoutineData")
+          .find(
+            { userId: new ObjectId(sellerIdObj?._id), status: "public" },
+            {
+              projection: { name: 1, description: 1, price: 1, concern: 1 },
+            }
+          )
+          .toArray() as unknown as PriceDataType[]
     );
 
     if (!userId) {
@@ -48,19 +52,20 @@ export default async function getPurchasedFilters({ userName, userId, concern }:
 
     if (concern) filter.concern = concern;
 
-    purchases = await doWithRetries(async () =>
-      db
-        .collection("Purchase")
-        .find(filter, {
-          projection: {
-            contentEndDate: 1,
-            concern: 1,
-          },
-        })
-        .toArray()
+    purchases = await doWithRetries(
+      async () =>
+        db
+          .collection("Purchase")
+          .find(filter, {
+            projection: {
+              contentEndDate: 1,
+              concern: 1,
+            },
+          })
+          .toArray() as unknown as PurchaseType[]
     );
 
-    const purchasedParts = purchases.map((obj) => obj.part);
+    const purchasedParts = purchases.map((obj) => obj.concern);
 
     notPurchased = priceData.filter((pd) => !purchasedParts.includes(pd.concern)).map((obj) => obj.concern);
 

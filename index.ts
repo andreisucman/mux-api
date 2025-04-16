@@ -63,7 +63,7 @@ import getProgress from "routes/getProgress.js";
 import getFilters from "routes/getFilters.js";
 import createRoutine from "routes/createRoutine.js";
 import checkCountry from "routes/checkCountry.js";
-import getDiaryRecords from "routes/getDiaryRecords.js";
+import getDiary from "@/routes/getDiary.js";
 import createDiaryRecord from "routes/createDiaryRecord.js";
 import saveDiaryRecord from "routes/saveDiaryRecord.js";
 import transcribe from "routes/transcribe.js";
@@ -89,6 +89,7 @@ import updateStatusOfTask from "routes/updateStatusOfTask.js";
 import rescheduleTaskInstance from "routes/rescheduleTaskInstance.js";
 import deleteToAnalyze from "routes/deleteToAnalyze.js";
 import getConcerns from "routes/getConcerns.js";
+import getIsFromEu from "@/routes/getIsFromEu.js";
 
 import { client } from "init.js";
 
@@ -129,6 +130,7 @@ app.use("*", setHeaders);
 app.use(limiter);
 
 app.use("/", rootRoute);
+app.use("/getIsFromEu", getIsFromEu);
 
 app.use(timeout("2m"));
 app.use("/metrics", metrics);
@@ -146,7 +148,7 @@ app.use("/getPublicUserData", getPublicUserData);
 app.use("/getRoutines", getRoutines);
 app.use("/getProof", getProof);
 app.use("/getProgress", getProgress);
-app.use("/getDiaryRecords", getDiaryRecords);
+app.use("/getDiary", getDiary);
 app.use("/updateTaskExamples", updateTaskExamples);
 
 app.use("/verifyEmail", verifyEmail);

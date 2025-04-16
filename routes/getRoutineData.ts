@@ -29,13 +29,15 @@ route.get("/", async (req: CustomRequest, res: Response, next: NextFunction) => 
             {
               $group: {
                 _id: null,
-                concerns: { $addToSet: "$concerns.name" },
+                concerns: { $addToSet: "$concerns" },
               },
             },
             { $project: { _id: 0, concerns: 1 } },
           ])
           .next()
     );
+
+    console.log("routineConcernNameObjects", routineConcernNameObjects);
 
     const routineData = await doWithRetries(async () =>
       db

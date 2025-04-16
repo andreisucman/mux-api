@@ -15,6 +15,7 @@ import setToMidnight from "@/helpers/setToMidnight.js";
 import { addTaskToSchedule, removeTaskFromAllTasks, removeTaskFromSchedule } from "@/helpers/rescheduleTaskHelpers.js";
 import combineAllTasks from "@/helpers/combineAllTasks.js";
 import { db } from "init.js";
+import { checkIfPublic } from "./checkIfPublic.js";
 
 const route = Router();
 
@@ -160,21 +161,27 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     } else {
       updateRoutineId = new ObjectId();
 
-      await doWithRetries(async () =>
-        db.collection("Routine").insertOne({
-          _id: updateRoutineId,
-          userId: new ObjectId(req.userId),
-          allTasks: targetAllTasks,
-          finalSchedule: targetSchedule,
-          part: taskInfo.part,
-          concerns: [taskInfo.concern],
-          status: RoutineStatusEnum.ACTIVE,
-          startsAt: new Date(minDate),
-          lastDate: new Date(maxDate),
-          createdAt: new Date(),
-          userName: userInfo.name,
-        })
-      );
+      const isPublicResponse = await checkIfPublic({
+        userId: String(req.userId),
+        concerns: [taskInfo.concern],
+      });
+
+      const newRoutine: RoutineType = {
+        _id: updateRoutineId,
+        userId: new ObjectId(req.userId),
+        allTasks: targetAllTasks,
+        finalSchedule: targetSchedule,
+        part: taskInfo.part,
+        concerns: [taskInfo.concern],
+        status: RoutineStatusEnum.ACTIVE,
+        startsAt: new Date(minDate),
+        lastDate: new Date(maxDate),
+        createdAt: new Date(),
+        userName: userInfo.name,
+        isPublic: isPublicResponse.isPublic,
+      };
+
+      await doWithRetries(async () => db.collection("Routine").insertOne(newRoutine));
     }
 
     let taskUpdateOps: any[] = updatedAllTask.ids.map((obj) => {

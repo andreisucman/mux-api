@@ -313,14 +313,12 @@ export type TaskType = {
   expiresAt: Date | null;
   completedAt: Date | null;
   restDays: number;
-  embedding: number[];
   copiedFrom?: string;
 };
 
 export type RoutineType = {
   _id: ObjectId;
   userId: ObjectId;
-  type: string;
   part: string;
   concerns: string[];
   finalSchedule: { [key: string]: any };
@@ -329,8 +327,8 @@ export type RoutineType = {
   startsAt: Date;
   allTasks: AllTaskTypeWithIds[];
   lastDate: Date;
-  copiedFrom: string;
-  userName: string;
+  copiedFrom?: string;
+  userName?: string;
   isPublic: boolean;
   deletedOn?: Date;
 };

@@ -52,7 +52,7 @@ route.post(
       } = routineInfo;
 
       if (String(req.userId) === String(sellerId)) {
-        res.status(200).json({ error: "You can't buy from yourself" });
+        res.status(200).json({ error: "You can't buy from yourself." });
         return;
       }
 

@@ -45,7 +45,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     );
 
     if (!taskToUpdate) {
-      res.status(200).json({ error: "Task not found" });
+      res.status(200).json({ error: "Task not found." });
       return;
     }
 

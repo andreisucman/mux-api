@@ -12,6 +12,7 @@ import getUserInfo from "../functions/getUserInfo.js";
 import updateTasksAnalytics from "../functions/updateTasksAnalytics.js";
 import getMinAndMaxRoutineDates from "../helpers/getMinAndMaxRoutineDates.js";
 import { db } from "../init.js";
+import { checkIfPublic } from "./checkIfPublic.js";
 
 const route = Router();
 
@@ -174,21 +175,28 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       );
     } else {
       updateRoutineId = new ObjectId();
-      await doWithRetries(async () =>
-        db.collection("Routine").insertOne({
-          _id: updateRoutineId,
-          userId: new ObjectId(req.userId),
-          allTasks: updatedTargetAllTasks,
-          finalSchedule: updatedTargetSchedule,
-          part: taskInfo.part,
-          concerns: targetConcerns,
-          status: RoutineStatusEnum.ACTIVE,
-          startsAt: new Date(minDate),
-          lastDate: new Date(maxDate),
-          createdAt: new Date(),
-          userName: userInfo.name,
-        })
-      );
+
+      const isPublicResponse = await checkIfPublic({
+        userId: String(req.userId),
+        concerns: [taskInfo.concern],
+      });
+
+      const newRoutine: RoutineType = {
+        _id: updateRoutineId,
+        userId: new ObjectId(req.userId),
+        allTasks: updatedTargetAllTasks,
+        finalSchedule: updatedTargetSchedule,
+        part: taskInfo.part,
+        concerns: targetConcerns,
+        status: RoutineStatusEnum.ACTIVE,
+        startsAt: new Date(minDate),
+        lastDate: new Date(maxDate),
+        createdAt: new Date(),
+        userName: userInfo.name,
+        isPublic: isPublicResponse.isPublic,
+      };
+
+      await doWithRetries(async () => db.collection("Routine").insertOne(newRoutine));
     }
 
     const taskUpdateOps = updatedTargetAllTasks

@@ -5,13 +5,18 @@ import { ObjectId } from "mongodb";
 
 type Props = {
   userId: string;
-  concern: string;
+  concern?: string;
+  concerns?: string[];
 };
 
-export async function checkIfPublic({ userId, concern }: Props) {
+export async function checkIfPublic({ userId, concern, concerns }: Props) {
   try {
+    const filter: { [key: string]: any } = { userId: new ObjectId(userId) };
+    if (concern) filter.concern = concern;
+    if (concerns) filter.concerns = concerns;
+
     const routineData = await doWithRetries(() =>
-      db.collection("RoutineData").findOne({ userId: new ObjectId(userId), concern }, { projection: { status: 1 } })
+      db.collection("RoutineData").findOne(filter, { projection: { status: 1 } })
     );
 
     return { concern, isPublic: routineData?.status === "public" };

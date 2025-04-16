@@ -44,7 +44,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     );
 
     if (tasksToDeleteFilter.length === 0) {
-      res.status(200).json({ error: "No tasks to update" });
+      res.status(200).json({ error: "No tasks to update." });
       return;
     }
 

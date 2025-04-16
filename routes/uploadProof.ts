@@ -323,7 +323,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       userName: name,
       isPublic: false,
       moderationStatus: ModerationStatusEnum.ACTIVE,
-      concerns: [],
     };
 
     const isPublicResponse = await checkIfPublic({ userId: req.userId, concern });
@@ -351,18 +350,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         status: TaskStatusEnum.COMPLETED,
       },
     };
-
-    const routine = await doWithRetries(async () =>
-      db.collection("Routine").findOne(
-        {
-          _id: new ObjectId(routineId),
-          userId: new ObjectId(req.userId),
-        },
-        { projection: { concerns: 1 } }
-      )
-    );
-
-    newProof.concerns = routine.concerns;
 
     updateTasksAnalytics({
       userId: req.userId,

@@ -9,7 +9,7 @@ import { ModerationStatusEnum, ProofType } from "types.js";
 import { CustomRequest } from "types.js";
 import { db } from "init.js";
 import { maskProof } from "@/helpers/mask.js";
-import getPurchasedFilters from "@/functions/getPurchasedFilters.js";
+import getPurchasedFilters, { PriceDataType, PurchaseType } from "@/functions/getPurchasedFilters.js";
 
 const route = Router();
 
@@ -18,19 +18,19 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
   const { filter, skip, sort } = aqp(req.query as any) as AqpQuery;
   const { routineId, taskKey, concern, type, part, query } = filter || {};
 
-  if ((!userName && !req.userId) || !concern) {
+  if (!userName && !req.userId) {
     res.status(400).json({ error: "Bad request" });
     return;
   }
 
   try {
-    let purchases = [];
+    let purchases: PurchaseType[] = [];
+    let notPurchased: string[] = [];
+    let priceData: PriceDataType[] = [];
     let proof = [];
-    let notPurchased = [];
-    let priceData = [];
 
     let match: { [key: string]: any } = {
-      "concerns.name": concern,
+      concern,
       moderationStatus: ModerationStatusEnum.ACTIVE,
     };
 
@@ -55,8 +55,17 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
       purchases = response.purchases;
       priceData = response.priceData;
       notPurchased = response.notPurchased;
+
+      if (priceData.length === 0) {
+        match.isPublic = true;
+      } else {
+        match.$and = [{ concern: { $in: priceData.map((o) => o.concern) } }];
+        if (concern) match.$and.push({ concern: { $in: [concern] } });
+      }
+
       match = { ...match, ...response.additionalFilters };
     } else {
+      match.concern = { $in: [concern] };
       if (req.userId) {
         match.userId = new ObjectId(req.userId);
         match.deletedOn = { $exists: false };

@@ -8,10 +8,10 @@ import doWithRetries from "helpers/doWithRetries.js";
 import { ModerationStatusEnum } from "types.js";
 import { DiaryType } from "@/types/saveDiaryRecordTypes.js";
 import { CustomRequest } from "types.js";
-import { db } from "init.js";
 import { daysFrom } from "@/helpers/utils.js";
-import getPurchasedFilters from "@/functions/getPurchasedFilters.js";
+import getPurchasedFilters, { PriceDataType, PurchaseType } from "@/functions/getPurchasedFilters.js";
 import { maskDiaryRow } from "@/helpers/mask.js";
+import { db } from "init.js";
 
 const route = Router();
 
@@ -20,19 +20,13 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
   const { filter, sort, skip } = aqp(req.query as any) as AqpQuery;
   const { dateFrom, dateTo, part, concern } = filter;
 
-  if (!concern) {
-    res.status(400).json({ error: "Bad request" });
-    return;
-  }
-
   try {
-    let purchases = [];
+    let purchases: PurchaseType[] = [];
+    let notPurchased: string[] = [];
+    let priceData: PriceDataType[] = [];
     let diary = [];
-    let notPurchased = [];
-    let priceData = [];
 
     let finalFilters: { [key: string]: any } = {
-      "concerns.name": concern,
       moderationStatus: ModerationStatusEnum.ACTIVE,
     };
 
@@ -47,8 +41,18 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
       purchases = response.purchases;
       priceData = response.priceData;
       notPurchased = response.notPurchased;
+
+      if (priceData.length === 0) {
+        finalFilters.isPublic = true;
+      } else {
+        finalFilters.$and = [{ concerns: { $in: priceData.map((o) => o.concern) } }];
+        if (concern) finalFilters.$and.push({ concerns: { $in: [concern] } });
+      }
+
       finalFilters = { ...finalFilters, ...response.additionalFilters };
     } else {
+      finalFilters.concerns = { $in: [concern] };
+
       if (req.userId) {
         finalFilters.userId = new ObjectId(req.userId);
         finalFilters.deletedOn = { $exists: false };

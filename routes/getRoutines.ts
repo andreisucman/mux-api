@@ -2,49 +2,59 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import { ObjectId } from "mongodb";
+import getPurchasedFilters, { PriceDataType, PurchaseType } from "@/functions/getPurchasedFilters.js";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import { CustomRequest, RoutineType } from "types.js";
 import aqp, { AqpQuery } from "api-query-params";
-import { db } from "init.js";
 import { maskRoutine } from "@/helpers/mask.js";
-import getPurchasedFilters from "@/functions/getPurchasedFilters.js";
+import { db } from "init.js";
 
 const route = Router();
 
 route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFunction) => {
   const { userName } = req.params;
   const { filter, projection, skip, sort } = aqp(req.query as any) as AqpQuery;
+  const { concern, ...restFilter } = filter;
 
   try {
-    let purchases = [];
+    let purchases: PurchaseType[] = [];
+    let notPurchased: string[] = [];
+    let priceData: PriceDataType[] = [];
     let routines = [];
-    let notPurchased = [];
-    let priceData = [];
 
-    let finalFilter: { [key: string]: any } = {
-      ...filter,
+    let finalFilters: { [key: string]: any } = {
+      ...restFilter,
     };
 
     if (userName) {
-      finalFilter.userName = userName;
+      finalFilters.userName = userName;
 
       const response = await getPurchasedFilters({
         userId: req.userId,
         userName,
-        concern: filter.concern,
+        concern,
       });
+
       purchases = response.purchases;
       priceData = response.priceData;
       notPurchased = response.notPurchased;
-      finalFilter = { ...finalFilter, ...response.additionalFilters };
+
+      if (priceData.length === 0) {
+        finalFilters.isPublic = true;
+      } else {
+        finalFilters.$and = [{ concerns: { $in: priceData.map((o) => o.concern) } }];
+        if (concern) finalFilters.$and.push({ concerns: { $in: [concern] } });
+      }
+
+      finalFilters = { ...finalFilters, ...response.additionalFilters };
     } else {
       if (req.userId) {
-        finalFilter.userId = new ObjectId(req.userId);
-        finalFilter.deletedOn = { $exists: false };
+        finalFilters.userId = new ObjectId(req.userId);
+        finalFilters.deletedOn = { $exists: false };
       } else {
-        finalFilter.isPublic = true;
-        finalFilter.deletedOn = { $exists: false };
+        finalFilters.isPublic = true;
+        finalFilters.deletedOn = { $exists: false };
       }
     }
 
@@ -58,6 +68,7 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
           userId: 1,
           part: 1,
           allTasks: 1,
+          concerns: 1,
           createdAt: 1,
           status: 1,
           lastDate: 1,
@@ -70,7 +81,7 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
       db
         .collection("Routine")
         .aggregate([
-          { $match: finalFilter },
+          { $match: finalFilters },
           { $project: finalProjecton },
           { $sort: finalSort },
           { $skip: Number(skip) || 0 },
