@@ -8,12 +8,13 @@ type Props = {
   userName: string;
   userId: string;
   concern?: string;
+  part?: string;
 };
 
-export type PurchaseType = { concern: string; contentEndDate: Date };
-export type PriceDataType = { name: string; description: string; price: number; concern: string };
+export type PurchaseType = { concern: string; part: string; contentEndDate: Date };
+export type PriceDataType = { name: string; description: string; price: number; concern: string; part: string };
 
-export default async function getPurchasedFilters({ userName, userId, concern }: Props) {
+export default async function getPurchasedFilters({ userName, userId, concern, part }: Props) {
   const additionalFilters: { [key: string]: any } = {};
   let purchases: PurchaseType[] = [];
   let priceData: PriceDataType[] = [];
@@ -34,14 +35,14 @@ export default async function getPurchasedFilters({ userName, userId, concern }:
           .find(
             { userId: new ObjectId(sellerIdObj?._id), status: "public" },
             {
-              projection: { name: 1, description: 1, price: 1, concern: 1 },
+              projection: { name: 1, description: 1, price: 1, concern: 1, part: 1 },
             }
           )
           .toArray() as unknown as PriceDataType[]
     );
 
     if (!userId) {
-      notPurchased = priceData.map((obj) => obj.concern);
+      notPurchased = priceData.map((obj) => `${obj.part}-${obj.concern}`);
       return { purchases, priceData, notPurchased, additionalFilters };
     }
 
@@ -51,6 +52,7 @@ export default async function getPurchasedFilters({ userName, userId, concern }:
     };
 
     if (concern) filter.concern = concern;
+    if (part) filter.part = part;
 
     purchases = await doWithRetries(
       async () =>
@@ -60,30 +62,33 @@ export default async function getPurchasedFilters({ userName, userId, concern }:
             projection: {
               contentEndDate: 1,
               concern: 1,
+              part: 1,
             },
           })
           .toArray() as unknown as PurchaseType[]
     );
 
-    const purchasedParts = purchases.map((obj) => obj.concern);
+    const purchasedCombinatons = purchases.map((obj) => `${obj.part}-${obj.concern}`);
+    const soldCombinations = priceData.map((obj) => `${obj.part}-${obj.concern}`);
 
-    notPurchased = priceData.filter((pd) => !purchasedParts.includes(pd.concern)).map((obj) => obj.concern);
+    notPurchased = soldCombinations.filter((sc) => !purchasedCombinatons.includes(sc));
 
-    if (purchases.length) {
-      const purchasedConcerns = [];
-      const withinPurchasedPeriod: { [key: string]: any } = {};
+    // if (purchases.length) {
+    //   const purchasedConcerns = [];
+    //   const withinPurchasedPeriod: { [key: string]: any } = {};
 
-      for (const obj of purchases) {
-        const { contentEndDate, concern: purchassedConcern } = obj;
-        purchasedConcerns.push(purchassedConcern);
-        withinPurchasedPeriod.$lte = new Date(contentEndDate);
-      }
+    //   for (const obj of purchases) {
+    //     const { contentEndDate, concern: purchassedConcern } = obj;
+    //     purchasedConcerns.push(purchassedConcern);
+    //     withinPurchasedPeriod.$lte = new Date(contentEndDate);
+    //   }
 
-      additionalFilters.concern = { $in: purchasedConcerns };
-      additionalFilters.createdAt = withinPurchasedPeriod;
-    }
+    //   additionalFilters.concern = { $in: purchasedConcerns };
+    //   additionalFilters.createdAt = withinPurchasedPeriod;
+    // }
 
-    return { purchases, priceData, notPurchased, additionalFilters };
+    // return { purchases, priceData, notPurchasedConcerns, notPurchasedParts, additionalFilters };
+    return { purchases, priceData, notPurchased };
   } catch (err) {
     throw httpError(err);
   }

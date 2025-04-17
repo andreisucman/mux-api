@@ -28,7 +28,6 @@ import createProgressRecords from "./createProgressRecords.js";
 type Props = {
   userId: string;
   name: string;
-  avatar: { [key: string]: any } | null;
   part: PartEnum;
   club: ClubDataType;
   specialConsiderations: string;
@@ -48,7 +47,6 @@ type LocalProgressType = {
 export default async function analyzePart({
   userId,
   name,
-  avatar,
   part,
   categoryName,
   demographics,
@@ -163,7 +161,6 @@ export default async function analyzePart({
 
       return createProgressRecords({
         userId: new ObjectId(userId),
-        avatar,
         concern: co.name,
         concernScore: relevantConcernScore,
         concernScoreDifference: relevantConcernScoreDifference,
@@ -179,7 +176,7 @@ export default async function analyzePart({
       });
     });
 
-    const updatedIds = await Promise.all(promises);
+    const baAndProgressIds = await Promise.all(promises);
 
     partResult.latestConcernScores = concernScores;
     partResult.concernScoresDifference = concernScoresDifference;
@@ -195,11 +192,11 @@ export default async function analyzePart({
       });
 
       if (isSuspicious) {
-        for (const item of updatedIds) {
+        for (const obj of baAndProgressIds) {
           addSuspiciousRecord({
             collection: SuspiciousRecordCollectionEnum.PROGRESS,
             moderationResults,
-            contentId: String(item.progressId),
+            contentId: String(obj.progressId),
             userId,
           });
         }

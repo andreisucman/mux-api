@@ -30,14 +30,13 @@ route.get("/", async (req: CustomRequest, res: Response, next: NextFunction) => 
               $group: {
                 _id: null,
                 concerns: { $addToSet: "$concerns" },
+                parts: { $addToSet: "$part" },
               },
             },
-            { $project: { _id: 0, concerns: 1 } },
+            { $project: { _id: 0, concerns: 1, parts: 1 } },
           ])
           .next()
     );
-
-    console.log("routineConcernNameObjects", routineConcernNameObjects);
 
     const routineData = await doWithRetries(async () =>
       db
@@ -49,6 +48,7 @@ route.get("/", async (req: CustomRequest, res: Response, next: NextFunction) => 
     res.status(200).json({
       message: {
         concerns: routineConcernNameObjects.concerns,
+        parts: routineConcernNameObjects.parts,
         routineData,
       },
     });

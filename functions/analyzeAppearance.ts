@@ -102,7 +102,6 @@ export default async function analyzeAppearance({
       return doWithRetries(async () =>
         analyzePart({
           name,
-          avatar,
           club,
           part: part as PartEnum,
           userId,

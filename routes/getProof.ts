@@ -16,7 +16,7 @@ const route = Router();
 route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFunction) => {
   const { userName } = req.params;
   const { filter, skip, sort } = aqp(req.query as any) as AqpQuery;
-  const { routineId, taskKey, concern, type, part, query } = filter || {};
+  const { routineId, taskKey, concern, part, query } = filter || {};
 
   if (!userName && !req.userId) {
     res.status(400).json({ error: "Bad request" });
@@ -51,6 +51,7 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
         userId: req.userId,
         userName,
         concern,
+        part
       });
       purchases = response.purchases;
       priceData = response.priceData;
@@ -59,13 +60,16 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
       if (priceData.length === 0) {
         match.isPublic = true;
       } else {
-        match.$and = [{ concern: { $in: priceData.map((o) => o.concern) } }];
+        match.$and = [
+          { concern: { $in: priceData.map((o) => o.concern) } },
+          { part: { $in: priceData.map((o) => o.part) } },
+        ];
         if (concern) match.$and.push({ concern: { $in: [concern] } });
+        if (part) match.$and.push({ part });
       }
 
       match = { ...match, ...response.additionalFilters };
     } else {
-      match.concern = { $in: [concern] };
       if (req.userId) {
         match.userId = new ObjectId(req.userId);
         match.deletedOn = { $exists: false };
@@ -84,7 +88,6 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
     }
 
     if (concern) match.concern = concern;
-    if (type) match.type = type;
     if (part) match.part = part;
 
     pipeline.push(

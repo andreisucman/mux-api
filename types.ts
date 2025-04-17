@@ -373,6 +373,7 @@ export type BeforeAfterType = {
   concern: string;
   avatar?: { [key: string]: any };
   userName?: string;
+  userId: ObjectId;
   routineName?: string;
   part: PartEnum;
 };

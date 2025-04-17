@@ -11,7 +11,7 @@ export function maskRoutine(routine: RoutineType) {
         ...t,
         icon: "❓",
         name: Array(t.name.length).fill("*").join(""),
-        key: Array(t.key.length).fill("*").join(""),
+        key: null,
         description: Array(10).fill("*").join("") + "...",
         instruction: Array(15).fill("*").join("") + "...",
         ids: t.ids.map((obj) => ({ ...obj, _id: null })),

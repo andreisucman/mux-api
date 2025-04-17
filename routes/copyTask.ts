@@ -83,13 +83,16 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       })),
     };
 
-    const hasAccessTo = await checkPurchaseAccess({
+    const accessObject = await checkPurchaseAccess({
       parts: [taskInfo.part],
+      concerns: [taskInfo.concern],
       targetUserId: String(taskInfo.userId),
       userId: req.userId,
     });
 
-    if (!hasAccessTo.includes(taskInfo.part)) {
+    const hasAccess = accessObject.parts.length + accessObject.concerns.length > 0;
+
+    if (!hasAccess) {
       res.status(400).json({ error: "Bad request" });
       return;
     }

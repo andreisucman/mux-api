@@ -37,6 +37,7 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
         userId: req.userId,
         userName,
         concern,
+        part,
       });
       purchases = response.purchases;
       priceData = response.priceData;
@@ -45,14 +46,16 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
       if (priceData.length === 0) {
         finalFilters.isPublic = true;
       } else {
-        finalFilters.$and = [{ concerns: { $in: priceData.map((o) => o.concern) } }];
+        finalFilters.$and = [
+          { concerns: { $in: priceData.map((o) => o.concern) } },
+          { part: { $in: priceData.map((o) => o.part) } },
+        ];
         if (concern) finalFilters.$and.push({ concerns: { $in: [concern] } });
+        if (part) finalFilters.$and.push({ part: { $in: [part] } });
       }
 
       finalFilters = { ...finalFilters, ...response.additionalFilters };
     } else {
-      finalFilters.concerns = { $in: [concern] };
-
       if (req.userId) {
         finalFilters.userId = new ObjectId(req.userId);
         finalFilters.deletedOn = { $exists: false };
@@ -64,6 +67,10 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
 
     if (part) {
       finalFilters.part = part;
+    }
+
+    if (concern) {
+      finalFilters.concerns = { $in: [concern] };
     }
 
     if (dateFrom && dateTo) {

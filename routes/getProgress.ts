@@ -13,7 +13,7 @@ route.get("/:userName?", async (req: CustomRequest, res, next: NextFunction) => 
   const { filter, skip, sort } = aqp(req.query as any) as AqpQuery;
   const { part, concern } = filter;
 
-  if ((!userName && !req.userId) || !concern) {
+  if (!userName && !req.userId) {
     res.status(400).json({ error: "Bad request" });
     return;
   }
@@ -25,11 +25,11 @@ route.get("/:userName?", async (req: CustomRequest, res, next: NextFunction) => 
     let progress = [];
 
     let finalFilter: { [key: string]: any } = {
-      concern,
       moderationStatus: ModerationStatusEnum.ACTIVE,
     };
 
     if (part) finalFilter.part = part;
+    if (concern) finalFilter.concern = concern;
 
     const projection: { [key: string]: any } = {
       _id: 1,
@@ -38,6 +38,8 @@ route.get("/:userName?", async (req: CustomRequest, res, next: NextFunction) => 
       concernScoreDifference: 1,
       initialDate: 1,
       userId: 1,
+      concern: 1,
+      part: 1,
       deletedOn: 1,
     };
 
@@ -51,6 +53,7 @@ route.get("/:userName?", async (req: CustomRequest, res, next: NextFunction) => 
         userId: req.userId,
         userName,
         concern,
+        part
       });
       purchases = response.purchases;
       priceData = response.priceData;
@@ -59,8 +62,12 @@ route.get("/:userName?", async (req: CustomRequest, res, next: NextFunction) => 
       if (priceData.length === 0) {
         finalFilter.isPublic = true;
       } else {
-        finalFilter.$and = [{ concern: { $in: priceData.map((o) => o.concern) } }];
+        finalFilter.$and = [
+          { concern: { $in: priceData.map((o) => o.concern) } },
+          { part: { $in: priceData.map((o) => o.part) } },
+        ];
         if (concern) finalFilter.$and.push({ concern: { $in: [concern] } });
+        if (part) finalFilter.$and.push({ part });
       }
 
       finalFilter = { ...finalFilter, ...response.additionalFilters };

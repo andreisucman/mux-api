@@ -15,17 +15,17 @@ import checkPurchaseAccess from "@/functions/checkPurchaseAccess.js";
 const route = Router();
 
 type Props = {
-  routineIds: string[];
+  routineId: string;
   startDate: string;
   ignoreIncompleteTasks?: boolean;
 };
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { routineIds, startDate, ignoreIncompleteTasks }: Props = req.body;
+  const { routineId, startDate, ignoreIncompleteTasks }: Props = req.body;
 
   const { isValidDate, isFutureDate } = checkDateValidity(startDate, req.timeZone);
 
-  if (!routineIds || !isValidDate || !isFutureDate) {
+  if (!routineId || !isValidDate || !isFutureDate) {
     res.status(400).json({ error: "Bad request" });
     return;
   }
@@ -38,69 +38,41 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     if (!userInfo) throw httpError(`User ${req.userId} not found`);
 
-    const routinesToAdd = (await doWithRetries(async () =>
-      db
-        .collection("Routine")
-        .find({
-          _id: { $in: routineIds.map((id: string) => new ObjectId(id)) },
-        })
-        .toArray()
-    )) as unknown as RoutineType[];
+    const routineToAdd = (await doWithRetries(async () =>
+      db.collection("Routine").findOne({
+        _id: new ObjectId(routineId),
+      })
+    )) as unknown as RoutineType;
 
-    if (!routinesToAdd.length) throw httpError(`Routines ${routineIds.join(", ")} not found`);
+    if (!routineToAdd) throw httpError(`Routine ${routineId} not found`);
 
-    const targetUserId = routinesToAdd[0].userId;
-    const routineParts = routinesToAdd.map((r) => r.part);
-    const uniqueRoutineParts = [...new Set(routineParts)];
-
-    const hasAccessTo = await checkPurchaseAccess({
-      parts: uniqueRoutineParts,
-      targetUserId: String(targetUserId),
+    const accessObject = await checkPurchaseAccess({
+      parts: [routineToAdd.part],
+      concerns: routineToAdd.concerns,
+      targetUserId: String(routineToAdd.userId),
       userId: req.userId,
     });
 
-    if (!hasAccessTo.length) {
+    const hasAccess = accessObject.parts.length > 0 && accessObject.concerns.length > 0;
+
+    if (!hasAccess) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
 
-    const accessibleRoutines = routinesToAdd
-      .filter((r) => hasAccessTo.includes(r.part))
-      .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+    const daysDifference = calculateDaysDifference(new Date(routineToAdd.startsAt), new Date(startDate));
 
-    const batchSize = 5;
-    let promises = [];
-    let clonedRoutines = [];
+    const clonedRoutine = await doWithRetries(() =>
+      copySingleRoutine({
+        hostRoutine: routineToAdd,
+        userId: req.userId,
+        userName: userInfo.name,
+        ignoreIncompleteTasks,
+        daysDifference,
+      })
+    );
 
-    const daysDifference = calculateDaysDifference(new Date(accessibleRoutines[0].startsAt), new Date(startDate));
-
-    for (let i = 0; i < accessibleRoutines.length; i++) {
-      promises.push(
-        doWithRetries(() =>
-          copySingleRoutine({
-            hostRoutine: accessibleRoutines[i],
-            userId: req.userId,
-            userName: userInfo.name,
-            ignoreIncompleteTasks,
-            daysDifference,
-          })
-        )
-      );
-
-      if (promises.length === batchSize) {
-        const result = await doWithRetries(async () => await Promise.all(promises));
-        clonedRoutines.push(...result);
-        promises.length = 0;
-      }
-    }
-
-    if (promises.length > 0) {
-      const result = await doWithRetries(async () => await Promise.all(promises));
-      clonedRoutines.push(...result);
-      promises.length = 0;
-    }
-
-    res.status(200).json({ message: clonedRoutines });
+    res.status(200).json({ message: [clonedRoutine] });
   } catch (error) {
     next(error);
   }

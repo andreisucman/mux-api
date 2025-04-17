@@ -4,18 +4,20 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import { Router, Response, NextFunction } from "express";
-import { CustomRequest } from "types.js";
+import { BeforeAfterType, CustomRequest } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import checkTextSafety from "@/functions/checkTextSafety.js";
 import { SuspiciousRecordCollectionEnum } from "@/functions/addSuspiciousRecord.js";
 import updateContent from "@/functions/updateContent.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import cancelRoutineSubscribers from "@/functions/cancelRoutineSubscribers.js";
+import httpError from "@/helpers/httpError.js";
+import publishBeforeAfter from "@/functions/publishBeforeAfter.js";
 
 const route = Router();
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { status, concern, name, description, price, updatePrice } = req.body;
+  const { status, concern, part, name, description, price, updatePrice } = req.body;
 
   if (
     Number(price) < 5 ||
@@ -23,6 +25,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     isNaN(Number(price)) ||
     isNaN(Number(updatePrice)) ||
     !concern ||
+    !part ||
     name.length > 50 ||
     description.length > 2000
   ) {
@@ -80,7 +83,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     }
 
     const existingRecord = await doWithRetries(async () =>
-      db.collection("RoutineData").findOne({ userId: new ObjectId(req.userId), concern })
+      db.collection("RoutineData").findOne({ userId: new ObjectId(req.userId), concern, part })
     );
 
     if (existingRecord) {
@@ -96,16 +99,38 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       const firstRoutineOfConcern = await doWithRetries(async () =>
         db
           .collection("Routine")
-          .find({ userId: new ObjectId(req.userId), concerns: { $in: [concern] } })
+          .find({ userId: new ObjectId(req.userId), concerns: { $in: [concern] }, part })
           .sort({ createdAt: 1 })
           .next()
       );
 
       updatePayload.contentStartDate = firstRoutineOfConcern.createdAt;
 
+      const concernBeforeAfterCount = await doWithRetries(() =>
+        db.collection("BeforeAfter").countDocuments({ userId: new ObjectId(req.userId), concern, part })
+      );
+
+      if (concernBeforeAfterCount === 0) {
+        const { name: userName, avatar } =
+          (await getUserInfo({
+            userId: req.userId,
+            projection: { name: 1, avatar: 1 },
+          })) || {};
+
+        publishBeforeAfter({
+          firstRoutineStartDate: firstRoutineOfConcern.createdAt,
+          userId: req.userId,
+          userName,
+          avatar,
+          concern,
+          part,
+          routineName: name,
+        });
+      }
+
       await doWithRetries(async () =>
         db.collection("RoutineData").updateOne(
-          { userId: new ObjectId(req.userId), concern },
+          { userId: new ObjectId(req.userId), concern, part },
           {
             $set: updatePayload,
           },
@@ -115,12 +140,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     }
 
     res.status(200).end();
-
-    const { name: userName, avatar } =
-      (await getUserInfo({
-        userId: req.userId,
-        projection: { name: 1, avatar: 1 },
-      })) || {};
 
     await doWithRetries(async () =>
       db.collection("BeforeAfter").updateOne(
@@ -133,8 +152,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     const payload: { [key: string]: any } = {
       isPublic: status === "public",
-      avatar,
-      userName,
     };
 
     await updateContent({
@@ -160,7 +177,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     );
 
     if (status !== "public") {
-      await cancelRoutineSubscribers({ sellerId: new ObjectId(req.userId) });
+      await cancelRoutineSubscribers({ sellerId: new ObjectId(req.userId), part, concern });
     }
   } catch (err) {
     next(err);

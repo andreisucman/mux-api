@@ -69,6 +69,10 @@ export function calculateDaysDifference(dateFrom: Date, dateTo: Date) {
   }
 }
 
+export function arrayElementExistsWithinArray(arrayOne: string[], arrayTwo: string[]) {
+  return arrayOne.some((record) => arrayTwo.includes(record));
+}
+
 export function convertKeysAndValuesTotoSnakeCase(obj: { [key: string]: any }) {
   const newObj: { [key: string]: any } = {};
 

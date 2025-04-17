@@ -4,7 +4,7 @@ import { CategoryNameEnum, UserConcernType, PartEnum, ProgressType } from "@/typ
 import { ObjectId } from "mongodb";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import analyzeConcerns from "./analyzeConcerns.js";
-import { calculateScoreDifferences, daysFrom } from "@/helpers/utils.js";
+import { calculateScoreDifferences } from "@/helpers/utils.js";
 import { ScoreType } from "@/types.js";
 import calculateConcernScores from "./calculateConcernScores.js";
 
@@ -34,12 +34,9 @@ export default async function getScoresAndFeedback({
 }: Props) {
   let concerns: UserConcernType[] = [...partUserUploadedConcerns];
 
-  const minimumDistance = daysFrom({ days: -7 });
-
   const previousScanFilter: { [key: string]: any } = {
     userId: new ObjectId(userId),
     concernScores: { $exists: true },
-    createdAt: { $lte: minimumDistance },
     part,
   };
 
@@ -85,7 +82,7 @@ export default async function getScoresAndFeedback({
   const concernScoresDifference = calculateScoreDifferences(safeInitialConcernScores, concernScores);
 
   const concernsThatAreTrulyPresent = concerns.filter((co) =>
-    concernScores.find((so) => so.part === co.part && so.name === co.name && so.value >= 0)
+    concernScores.find((so) => so.part === co.part && so.name === co.name && so.value > 0)
   );
 
   return {

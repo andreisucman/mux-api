@@ -15,7 +15,7 @@ const route = Router();
 route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFunction) => {
   const { userName } = req.params;
   const { filter, projection, skip, sort } = aqp(req.query as any) as AqpQuery;
-  const { concern, ...restFilter } = filter;
+  const { concern, part, ...restFilter } = filter;
 
   try {
     let purchases: PurchaseType[] = [];
@@ -34,6 +34,7 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
         userId: req.userId,
         userName,
         concern,
+        part
       });
 
       purchases = response.purchases;
@@ -43,8 +44,12 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
       if (priceData.length === 0) {
         finalFilters.isPublic = true;
       } else {
-        finalFilters.$and = [{ concerns: { $in: priceData.map((o) => o.concern) } }];
+        finalFilters.$and = [
+          { concerns: { $in: priceData.map((o) => o.concern) } },
+          { part: { $in: priceData.map((o) => o.part) } },
+        ];
         if (concern) finalFilters.$and.push({ concerns: { $in: [concern] } });
+        if (part) finalFilters.$and.push({ part });
       }
 
       finalFilters = { ...finalFilters, ...response.additionalFilters };

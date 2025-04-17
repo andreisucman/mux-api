@@ -15,9 +15,10 @@ const collectionMap: { [key: string]: string } = {
   proof: "Proof",
   task: "Task",
   routine: "Routine",
+  diary: "Diary",
 };
 
-const addModerationStatusCollections = ["progress", "proof"];
+const addModerationStatusCollections = ["progress", "proof", "diary"];
 
 route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFunction) => {
   const { userName } = req.params;
@@ -32,11 +33,6 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
   try {
     const fields = Object.keys(projection);
 
-    const groupParams = fields.reduce((a: { [key: string]: any }, c) => {
-      a[c] = { $addToSet: `$${c}` };
-      return a;
-    }, {});
-
     let match: { [key: string]: any } = {};
 
     if (filter) match = { ...rest };
@@ -49,27 +45,28 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
       match.userId = new ObjectId(req.userId);
     }
 
+    const pipeline = [
+      { $match: match },
+      ...fields.map((f) => ({ $unwind: { path: `$${f}` } })),
+      {
+        $group: {
+          _id: null,
+          ...fields.reduce((a, c) => {
+            a[c] = { $addToSet: `$${c}` };
+            return a;
+          }, {}),
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          ...projection,
+        },
+      },
+    ];
+
     const filters = await doWithRetries(async () =>
-      db
-        .collection(collectionMap[collection])
-        .aggregate([
-          {
-            $match: match,
-          },
-          {
-            $group: {
-              _id: null,
-              ...groupParams,
-            },
-          },
-          {
-            $project: {
-              _id: 0,
-              ...projection,
-            },
-          },
-        ])
-        .next()
+      db.collection(collectionMap[collection]).aggregate(pipeline).next()
     );
 
     res.status(200).json({ message: filters });
