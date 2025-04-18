@@ -12,7 +12,6 @@ import addSuspiciousRecord, { SuspiciousRecordCollectionEnum } from "@/functions
 import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.js";
 import { DiaryType } from "@/types/saveDiaryRecordTypes.js";
 import getUserInfo from "@/functions/getUserInfo.js";
-import createTextEmbedding from "@/functions/createTextEmbedding.js";
 import { checkIfPublic } from "./checkIfPublic.js";
 import { db } from "init.js";
 import { normalizeString } from "@/helpers/utils.js";
@@ -91,19 +90,11 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       projection: { name: 1, avatar: 1 },
     });
 
-    const embedding = await createTextEmbedding({
-      categoryName: CategoryNameEnum.DIARY,
-      text: body.message,
-      userId: req.userId,
-      dimensions: 1536,
-    });
-
     const newDiaryRecord: DiaryType = {
       _id: new ObjectId(),
       part,
       audio,
       activity,
-      embedding,
       isPublic: false,
       userName: null,
       userId: new ObjectId(req.userId),

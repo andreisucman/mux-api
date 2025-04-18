@@ -13,7 +13,7 @@ route.get("/", async (req: CustomRequest, res: Response, next: NextFunction) => 
   try {
     const routineConcernNameObjects = await doWithRetries(
       async () =>
-        await db
+        (await db
           .collection("Routine")
           .aggregate([
             {
@@ -35,7 +35,7 @@ route.get("/", async (req: CustomRequest, res: Response, next: NextFunction) => 
             },
             { $project: { _id: 0, concerns: 1, parts: 1 } },
           ])
-          .next()
+          .next()) || { concerns: [], parts: [] }
     );
 
     const routineData = await doWithRetries(async () =>
