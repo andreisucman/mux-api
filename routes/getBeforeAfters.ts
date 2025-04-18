@@ -15,10 +15,10 @@ route.get("/", async (req: CustomRequest, res, next: NextFunction) => {
 
     const filter: { [key: string]: any } = {
       isPublic: true,
-      concern,
     };
 
     if (part) filter.part = part;
+    if (concern) filter.concern = concern;
     if (sex) filter["demographics.sex"] = sex;
     if (ageInterval) filter["demographics.ageInterval"] = ageInterval;
     if (ethnicity) filter["demographics.ethnicity"] = ethnicity;

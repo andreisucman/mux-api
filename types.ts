@@ -62,6 +62,7 @@ export type PurchaseType = {
   routineDataId: ObjectId;
   paymentIntentId: string;
   subscriptionId?: string;
+  isDeactivated?: boolean;
 };
 
 export type UserType = {

@@ -69,12 +69,8 @@ export default async function createProgressRecords({
   };
 
   const baResponse = await doWithRetries(async () =>
-    db.collection("BeforeAfter").updateOne({ userId: new ObjectId(userId), concern, part }, updateOperation)
+    db.collection("BeforeAfter").updateOne({ userId: new ObjectId(userId), concern, part }, { $set: beforeAfterUpdate })
   );
-
-  const updateOperation: any = {
-    $set: beforeAfterUpdate,
-  };
 
   const progressResponse = await doWithRetries(async () => db.collection("Progress").insertOne(recordOfProgress));
 
