@@ -137,11 +137,11 @@ app.use("/metrics", metrics);
 
 app.use("/sendPasswordResetEmail", sendPasswordResetEmail);
 app.use("/setPassword", setPassword);
-app.use("/authorize", authorize);
-app.use("/authenticate", authenticate);
 app.use("/getConcerns", getConcerns);
 
 app.use((req, res, next) => checkAccess(req, res, next, true));
+app.use("/authorize", authorize);
+app.use("/authenticate", authenticate);
 app.use("/createRoutineCheckoutSession", createRoutineCheckoutSession);
 app.use("/getUserData", getUserData);
 app.use("/getPublicUserData", getPublicUserData);

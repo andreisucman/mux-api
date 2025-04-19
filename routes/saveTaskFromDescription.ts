@@ -62,9 +62,18 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
   if (description.length < 50 || instruction.length < 50) {
     res.status(200).json({
-      error: "Make your description and instruction at least 50 characters long.",
+      error: "short",
     });
+    return;
   }
+
+  if (description.length > 200 || instruction.length > 200) {
+    res.status(200).json({
+      error: "long",
+    });
+    return;
+  }
+
   try {
     const userImages = await getUsersImages({
       userId: req.userId,
@@ -73,7 +82,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     if (!userImages) {
       res.status(200).json({
-        error: `You need to scan your ${part} first.`,
+        error: "scan",
       });
       return;
     }
@@ -86,7 +95,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     if (!isSafe) {
       res.status(200).json({
-        error: `Your text seems to contain inappropriate language. Please try again.`,
+        error: `inappropriate`,
       });
       return;
     }
@@ -107,7 +116,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         })
       );
       res.status(200).json({
-        error: "This task violates our ToS. Please modify your description or instruction and try again.",
+        error: "violates",
       });
       return;
     }

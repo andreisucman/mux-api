@@ -36,7 +36,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
   try {
     const userInfo = await getUserInfo({
       userId: req.userId,
-      projection: { "club.payouts.payoutsEnabled": 1 },
+      projection: { "club.payouts.payoutsEnabled": 1, name: 1 },
     });
 
     if (!userInfo.club) {
@@ -49,6 +49,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       description,
       price,
       updatePrice,
+      userName: userInfo.name
     };
 
     if (status === "public") {

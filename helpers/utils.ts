@@ -165,20 +165,18 @@ export function setToUtcMidnight(date: Date) {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 }
 
-export function checkDateValidity(
-  date: Date | string,
-  timeZone: string
-): {
-  isValidDate: boolean;
-  isFutureDate: boolean;
-} {
-  const dateObj = typeof date === "string" ? new Date(date) : date;
+export function checkDateValidity(date: Date | string, timeZone: string) {
+  const dateObj = typeof date === "string" ? DateTime.fromISO(date, { zone: timeZone }).toJSDate() : date;
+
   const isValidDate = !isNaN(dateObj.getTime());
 
-  const nowUtcMidnight = setToMidnight({ date: new Date(), timeZone });
-  const dateUtcMidnight = setToMidnight({ date: new Date(date), timeZone });
+  if (!isValidDate) {
+    return { isValidDate: false, isFutureDate: false };
+  }
 
-  const isFutureDate = isValidDate && dateUtcMidnight >= nowUtcMidnight;
+  const nowUtcMidnight = setToMidnight({ date: new Date(), timeZone });
+  const dateUtcMidnight = setToMidnight({ date: dateObj, timeZone });
+  const isFutureDate = dateUtcMidnight >= nowUtcMidnight;
 
   return { isValidDate, isFutureDate };
 }

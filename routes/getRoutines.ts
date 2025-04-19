@@ -34,7 +34,7 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
         userId: req.userId,
         userName,
         concern,
-        part
+        part,
       });
 
       purchases = response.purchases;

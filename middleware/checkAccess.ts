@@ -16,7 +16,7 @@ async function checkAccess(req: CustomRequest, res: Response, next: NextFunction
   const accessToken = req.cookies["MUX_accessToken"];
   const csrfTokenFromClient = req.cookies["MUX_csrfToken"];
   const csrfSecret = req.cookies["MUX_csrfSecret"];
-  req.timeZone = req.query.timeZone as string;
+  req.timeZone = req.cookies["MUX_timeZone"];
 
   if (allowUnauthorized && !accessToken) {
     next();
