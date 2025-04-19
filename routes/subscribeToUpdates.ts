@@ -13,9 +13,9 @@ import getSubscriptionPriceId from "../functions/getSubscriptionPriceId.js";
 const route = Router();
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { sellerId, part, redirectUrl, cancelUrl } = req.body;
+  const { sellerId, part, concern, redirectUrl, cancelUrl } = req.body;
 
-  if (!ObjectId.isValid(sellerId) || !part || !redirectUrl || !cancelUrl) {
+  if (!ObjectId.isValid(sellerId) || !part || !concern || !redirectUrl || !cancelUrl) {
     res.status(400).json("Bad request");
     return;
   }
@@ -23,13 +23,14 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
   try {
     const routineData = await doWithRetries(() =>
       db.collection("RoutineData").findOne(
-        { userId: new ObjectId(sellerId), part },
+        { userId: new ObjectId(sellerId), part, concern },
         {
           projection: {
             updatePrice: 1,
             userId: 1,
             name: 1,
             status: 1,
+            userName: 1,
           },
         }
       )
@@ -40,10 +41,10 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       return;
     }
 
-    const { updatePrice, name, status } = routineData;
+    const { updatePrice, status, userName } = routineData;
 
     if (status !== "public") {
-      res.status(200).json({ error: "The owner has disabled updates." });
+      res.status(200).json({ error: "The seller has disabled updates." });
       return;
     }
 
@@ -56,10 +57,10 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     const sellerInfo = await getUserInfo({
       userId: sellerId,
-      projection: { "club.payouts.connectId": 1 },
+      projection: { "club.payouts.connectId": 1, country: 1 },
     });
 
-    const { club } = sellerInfo;
+    const { club, country } = sellerInfo;
     const { payouts } = club;
     const { connectId: sellerConnectId } = payouts;
 
@@ -68,8 +69,9 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       sellerId: String(sellerId),
     };
 
+    const description = `Subscribe to routine, progress, proof and diary updates as the ${userName} uploads them.`;
+
     const priceId = await getSubscriptionPriceId({
-      name,
       amount: updatePrice,
     });
 
@@ -84,12 +86,8 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         },
       ],
       subscription_data: {
+        description,
         metadata,
-        application_fee_percent: Number(process.env.PLATFORM_FEE_PERCENT) * 100,
-        on_behalf_of: sellerConnectId,
-        transfer_data: {
-          destination: sellerConnectId,
-        },
       },
       success_url: redirectUrl,
       cancel_url: cancelUrl,

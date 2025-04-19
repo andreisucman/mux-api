@@ -1,7 +1,7 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import { adminDb, db, stripe } from "init.js";
+import { db, stripe } from "init.js";
 import Stripe from "stripe";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
@@ -10,7 +10,7 @@ import updateAnalytics from "./updateAnalytics.js";
 import getEmailContent from "@/helpers/getEmailContent.js";
 import sendEmail from "./sendEmail.js";
 import updateContent from "./updateContent.js";
-import { markEventAsProcessed, fetchUserInfo } from "./handleStripeWebhook/index.js";
+import { fetchUserInfo } from "./handleStripeWebhook/index.js";
 import cancelRoutineSubscribers from "./cancelRoutineSubscribers.js";
 
 async function handleUpdateBalance(connectId: string | undefined) {
@@ -172,15 +172,6 @@ async function handleConnectWebhook(event: Stripe.Event) {
   try {
     if (!allowedEvents.includes(event.type)) return;
 
-    const existingEvent = await adminDb.collection("ProcessedEvent").findOne({
-      eventId: event.id,
-    });
-
-    if (existingEvent) {
-      console.log(`Event ${event.id} already processed, skipping`);
-      return;
-    }
-
     switch (event.type) {
       case "transfer.created":
       case "transfer.updated":
@@ -193,8 +184,6 @@ async function handleConnectWebhook(event: Stripe.Event) {
         await handleAccountUpdated(event);
         break;
     }
-
-    await markEventAsProcessed(event.id);
   } catch (err) {
     const statusCode = err.statusCode && err.statusCode < 500 ? 400 : 500;
     throw httpError(`Webhook processing failed: ${err.message}`, statusCode);

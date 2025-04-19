@@ -15,12 +15,9 @@ export type PurchaseType = { concern: string; part: string; contentEndDate: Date
 export type PriceDataType = { name: string; description: string; price: number; concern: string; part: string };
 
 export default async function getPurchasedFilters({ userName, userId, concern, part }: Props) {
-  const additionalFilters: { [key: string]: any } = {};
   let purchases: PurchaseType[] = [];
   let priceData: PriceDataType[] = [];
   let notPurchased: string[] = [];
-
-  additionalFilters.userName = userName;
 
   try {
     const sellerIdObj = await getUserInfo({
@@ -43,7 +40,7 @@ export default async function getPurchasedFilters({ userName, userId, concern, p
 
     if (!userId) {
       notPurchased = priceData.map((obj) => `${obj.part}-${obj.concern}`);
-      return { purchases, priceData, notPurchased, additionalFilters };
+      return { purchases, priceData, notPurchased };
     }
 
     const filter: { [key: string]: any } = {

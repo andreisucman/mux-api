@@ -1,7 +1,7 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import { adminDb, db, stripe } from "init.js";
+import { db, stripe } from "init.js";
 import Stripe from "stripe";
 import doWithRetries from "helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
@@ -203,8 +203,19 @@ async function handleInvoicePayment(invoice: Stripe.Invoice) {
         newSubscribedUntil,
         new ObjectId(routineDataId),
         sellerId,
-        sellerInfo.club.payouts.connectId
+        sellerInfo.club.payouts.connectId,
+        subscriptionId
       );
+
+      const chargeId = invoice.charge;
+      const amountToTransfer = invoice.amount_paid - Number(process.env.PLATFORM_FEE_PERCENT) * invoice.amount_paid;
+
+      await stripe.transfers.create({
+        amount: amountToTransfer,
+        currency: invoice.currency,
+        destination: sellerInfo.club.payouts.connectId,
+        source_transaction: chargeId as string,
+      });
     } else {
       const plans = await getCachedPlans(lastPlanFetch, cachedPlans);
 
@@ -250,11 +261,11 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   try {
     const stripeUserId = subscription.customer as string;
 
-    const correspondingPriceRecord = await doWithRetries(() =>
-      db.collection("Price").findOne({ subscriptionId: subscription.id })
+    const correspondingPurchase = await doWithRetries(() =>
+      db.collection("Purchase").findOne({ subscriptionId: subscription.id })
     );
 
-    if (correspondingPriceRecord) {
+    if (correspondingPurchase) {
       const buyerInfo = await fetchUserInfo({ stripeUserId }, { _id: 1 });
 
       await doWithRetries(() =>
@@ -270,15 +281,15 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   try {
     const stripeUserId = subscription.customer as string;
 
-    const correspondingPriceRecord = await doWithRetries(() =>
-      db.collection("Price").findOne({ subscriptionId: subscription.id })
+    const correspondingPurchase = await doWithRetries(() =>
+      db.collection("Purchase").findOne({ subscriptionId: subscription.id })
     );
 
-    if (correspondingPriceRecord) {
+    if (correspondingPurchase) {
       const buyerInfo = await fetchUserInfo({ stripeUserId });
       let updatePayload: { [key: string]: any } = {};
 
-      if (subscription.cancel_at || subscription.cancel_at_period_end) {
+      if (subscription.cancel_at_period_end) {
         updatePayload = { $set: { isDeactivated: true } };
       } else {
         updatePayload = { $unset: { isDeactivated: null } };
@@ -356,10 +367,6 @@ export async function fetchUserInfo(filter: { [key: string]: any }, projection =
   }
 }
 
-export async function markEventAsProcessed(eventId: string) {
-  await adminDb.collection("ProcessedEvent").insertOne({ eventId, createdAt: new Date() });
-}
-
 async function handleOneTimePayment(session: Stripe.Checkout.Session) {
   try {
     const { routineDataId, buyerId, part } = session.metadata || {};
@@ -397,15 +404,6 @@ async function handleStripeWebhook(event: Stripe.Event) {
   try {
     if (!allowedEvents.includes(type)) return;
 
-    const existingEvent = await adminDb.collection("ProcessedEvent").findOne({
-      eventId: event.id,
-    });
-
-    if (existingEvent) {
-      console.log(`Event ${event.id} already processed, skipping`);
-      return;
-    }
-
     switch (type) {
       case "invoice.payment_succeeded": // fires each time a subscription is renewed whether platform or routine subscription
         await handleInvoicePayment(data.object);
@@ -425,8 +423,6 @@ async function handleStripeWebhook(event: Stripe.Event) {
         }
         break;
     }
-
-    await markEventAsProcessed(event.id);
   } catch (err) {
     const statusCode = err.statusCode && err.statusCode < 500 ? 400 : 500;
     throw httpError(`Webhook processing failed: ${err.message}`, statusCode);

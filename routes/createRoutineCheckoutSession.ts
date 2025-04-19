@@ -31,8 +31,9 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
             concern: 1,
             name: 1,
             userId: 1,
+            userName: 1,
             part: 1,
-            conctentStartDate: 1,
+            contentStartDate: 1,
           },
         }
       )
@@ -47,7 +48,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       price,
       name,
       part,
-      conctentStartDate,
+      contentStartDate,
       userName,
       concern,
       userId: sellerId,
@@ -84,7 +85,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     const description = `${normalizeString(part)} routines for ${normalizeString(
       concern
-    ).toLowerCase()} from user ${userName} from ${conctentStartDate.toString()} to ${new Date().toString()}.`;
+    ).toLowerCase()} from user ${userName} from ${contentStartDate.toString()} to ${new Date().toString()}.`;
 
     const session = await stripe.checkout.sessions.create({
       customer: stripeUserId,

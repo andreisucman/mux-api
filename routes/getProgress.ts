@@ -53,7 +53,7 @@ route.get("/:userName?", async (req: CustomRequest, res, next: NextFunction) => 
         userId: req.userId,
         userName,
         concern,
-        part
+        part,
       });
       purchases = response.purchases;
       priceData = response.priceData;
@@ -69,8 +69,6 @@ route.get("/:userName?", async (req: CustomRequest, res, next: NextFunction) => 
         if (concern) finalFilter.$and.push({ concern: { $in: [concern] } });
         if (part) finalFilter.$and.push({ part });
       }
-
-      finalFilter = { ...finalFilter, ...response.additionalFilters };
     } else {
       if (req.userId) {
         finalFilter.userId = new ObjectId(req.userId);

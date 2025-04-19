@@ -5,19 +5,15 @@ import { db, stripe } from "@/init.js";
 
 type Props = {
   amount: number;
-  name: string;
 };
 
-export default async function getSubscriptionPriceId({ amount, name }: Props) {
+export default async function getSubscriptionPriceId({ amount }: Props) {
   try {
-    const currency = "usd";
-    const formattedAmount = formatAmountForStripe(amount, currency);
+    const formattedAmount = formatAmountForStripe(amount, "usd");
 
     let priceId = null;
 
-    const storedPrice = await doWithRetries(() =>
-      db.collection("StripePrice").findOne({ amount: formattedAmount })
-    );
+    const storedPrice = await doWithRetries(() => db.collection("StripePrice").findOne({ amount: formattedAmount }));
 
     priceId = storedPrice?.priceId;
 
@@ -26,10 +22,10 @@ export default async function getSubscriptionPriceId({ amount, name }: Props) {
 
       const price = await stripe.prices.create({
         unit_amount: formattedAmount,
-        currency,
+        currency: "usd",
         recurring: { interval },
         product_data: {
-          name: `${name} routine update fee`,
+          name: "routines updates",
         },
       });
 

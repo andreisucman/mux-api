@@ -34,6 +34,7 @@
     "formdata-node": "^6.0.3",
     "geoip-lite": "^1.4.10",
     "googleapis": "^128.0.0",
+    "locale-currency": "^0.0.4",
     "luxon": "^3.5.0",
     "make-random-color": "^0.0.4",
     "match-sorter": "^8.0.0",

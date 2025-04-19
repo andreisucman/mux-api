@@ -14,7 +14,6 @@ type Props = {
   returnOnlyRoutines?: boolean;
 };
 
-
 export default async function getLatestTasks({ userId, timeZone }: Props) {
   try {
     const todayMidnight = setToMidnight({

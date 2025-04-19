@@ -19,8 +19,6 @@ import getUserData from "@/functions/getUserData.js";
 import checkIfSuspended from "@/functions/checkIfSuspended.js";
 import getOAuthAuthenticationData from "@/functions/getOAuthAuthenticationData.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
-import createRandomName from "@/functions/createRandomName.js";
-import createRandomAvatar from "@/helpers/createAvatar.js";
 
 const route = Router();
 
@@ -290,3 +288,5 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 });
 
 export default route;
+
+

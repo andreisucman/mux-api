@@ -59,11 +59,12 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     if (clubData) {
       clubData.isActive = true;
+      clubData.intro = "I love skincare and living healthy";
       incrementPayload = { "overview.club.rejoined": 1 };
     } else {
       clubData = {
         isActive: true,
-        intro: "I love working out and eating healthy.",
+        intro: "I love skincare and living healthy.",
         socials: [],
         payouts: defaultClubPayoutData,
       };

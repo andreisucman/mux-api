@@ -163,11 +163,11 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       if (name) updatePublicityPayload.userName = name;
       if (avatar) updatePublicityPayload.avatar = avatar;
 
-      updateContent({
+      const response = await updateContent({
         filter: {
           userId: new ObjectId(req.userId),
         },
-        collections: ["Proof", "Progres", "Diary", "Task", "Routine", "BeforeAfter"],
+        collections: ["Proof", "Progress", "Diary", "Task", "Routine", "BeforeAfter"],
         updatePayload: updatePublicityPayload,
       });
     }
