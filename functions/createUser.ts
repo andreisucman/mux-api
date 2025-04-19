@@ -6,15 +6,13 @@ import { ModerationStatusEnum, UserType } from "types.js";
 import updateAnalytics from "./updateAnalytics.js";
 import { getTimezoneOffset } from "@/helpers/utils.js";
 import httpError from "@/helpers/httpError.js";
+import createRandomAvatar from "@/helpers/createAvatar.js";
+import createRandomName from "./createRandomName.js";
 
 async function createUser(props: Partial<UserType>) {
   let { _id: userId, ...otherProps } = props || {};
 
   try {
-    if (!userId) {
-      userId = new ObjectId();
-    }
-
     const timeZoneOffsetInMinutes = getTimezoneOffset(otherProps.timeZone);
 
     const updatePayload = {
@@ -22,6 +20,15 @@ async function createUser(props: Partial<UserType>) {
       ...otherProps,
       timeZoneOffsetInMinutes: Math.round(timeZoneOffsetInMinutes),
     };
+
+    if (!userId) {
+      userId = new ObjectId();
+    } else {
+      const avatar = createRandomAvatar(otherProps.demographics?.ethnicity);
+      const name = await createRandomName();
+      updatePayload.avatar = avatar;
+      updatePayload.name = name;
+    }
 
     await doWithRetries(
       async () =>

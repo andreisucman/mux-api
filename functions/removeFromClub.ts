@@ -48,7 +48,7 @@ export default async function removeFromClub(userId: string) {
     updateContent({
       filter: { userId: new ObjectId(userId) },
       collections: ["BeforeAfter", "Progress", "Proof", "Diary", "Routine"],
-      updatePayload: { isPublic: false, userName: null, avatar: null },
+      updatePayload: { isPublic: false },
     });
 
     cancelRoutineSubscribers({ sellerId: new ObjectId(userId) });

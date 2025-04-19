@@ -55,7 +55,7 @@ const pickRandomValue = (array: string[]) => {
 
 const randomColor = generateRandomPastelColor();
 
-export default function generateAvatarParams(ethnicity: string) {
+export default function generateAvatarParams(ethnicity?: string) {
   return {
     baseColor: skinColorMap[ethnicity] ? [skinColorMap[ethnicity]] : ["f5e6da"],
     mouth: [pickRandomValue(mouthCollection)],

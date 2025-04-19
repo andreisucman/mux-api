@@ -16,8 +16,7 @@ async function checkAccess(req: CustomRequest, res: Response, next: NextFunction
   const accessToken = req.cookies["MUX_accessToken"];
   const csrfTokenFromClient = req.cookies["MUX_csrfToken"];
   const csrfSecret = req.cookies["MUX_csrfSecret"];
-  const timeZone = req.headers["timezone"];
-  req.timeZone = timeZone as string;
+  req.timeZone = req.query.timeZone as string;
 
   if (allowUnauthorized && !accessToken) {
     next();
@@ -61,7 +60,7 @@ async function checkAccess(req: CustomRequest, res: Response, next: NextFunction
       doWithRetries(async () =>
         db
           .collection("User")
-          .updateOne({ _id: new ObjectId(req.userId) }, { $set: { lastActiveOn: new Date(), timeZone } })
+          .updateOne({ _id: new ObjectId(req.userId) }, { $set: { lastActiveOn: new Date(), timeZone: req.timeZone } })
       );
 
       const tomorrow = daysFrom({ days: 1 });

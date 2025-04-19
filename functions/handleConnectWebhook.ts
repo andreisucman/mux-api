@@ -13,7 +13,7 @@ import updateContent from "./updateContent.js";
 import { markEventAsProcessed, fetchUserInfo } from "./handleStripeWebhook/index.js";
 import cancelRoutineSubscribers from "./cancelRoutineSubscribers.js";
 
-async function handleBalanceAvailable(connectId: string | undefined) {
+async function handleUpdateBalance(connectId: string | undefined) {
   if (!connectId) return;
 
   try {
@@ -160,11 +160,17 @@ async function handleAccountUpdated(event: Stripe.AccountUpdatedEvent) {
   }
 }
 
+const allowedEvents = [
+  "transfer.created",
+  "transfer.updated",
+  "transfer.reversed",
+  "balance.available",
+  "account.updated",
+];
+
 async function handleConnectWebhook(event: Stripe.Event) {
   try {
-    if (event.type !== "balance.available" && event.type !== "account.updated") {
-      return;
-    }
+    if (!allowedEvents.includes(event.type)) return;
 
     const existingEvent = await adminDb.collection("ProcessedEvent").findOne({
       eventId: event.id,
@@ -176,8 +182,11 @@ async function handleConnectWebhook(event: Stripe.Event) {
     }
 
     switch (event.type) {
+      case "transfer.created":
+      case "transfer.updated":
+      case "transfer.reversed":
       case "balance.available":
-        await handleBalanceAvailable(event.account);
+        await handleUpdateBalance(event.account);
         break;
 
       case "account.updated":

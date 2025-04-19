@@ -18,14 +18,20 @@ const getUserCountry = (ip: string) => {
 };
 
 route.get("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const userIP = req.ip || (req.headers["x-forwarded-for"] as string)?.split(",")[0];
+  const ipHeader = req.headers["cf-connecting-ip"] as string;
+  const userIP = ipHeader || req.ip;
 
+  console.log("ipHeader", ipHeader);
+  console.log("req.ip", req.ip);
   try {
     const country = getUserCountry(userIP);
+    console.log("country", country);
     let isEu = true;
     if (country) {
       isEu = isEU(country);
     }
+
+    console.log("isEu", isEu);
 
     res.status(200).json({ message: isEu });
   } catch (err) {

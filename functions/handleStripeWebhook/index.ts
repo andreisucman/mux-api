@@ -384,19 +384,18 @@ async function handleOneTimePayment(session: Stripe.Checkout.Session) {
 
 //#endregion
 
+const allowedEvents = [
+  "invoice.payment_succeeded",
+  "checkout.session.completed",
+  "customer.subscription.deleted",
+  "customer.subscription.updated",
+];
+
 async function handleStripeWebhook(event: Stripe.Event) {
   const { type, data } = event;
 
   try {
-    if (
-      type !== "invoice.payment_succeeded" &&
-      type !== "checkout.session.completed" &&
-      type !== "customer.subscription.created" &&
-      type !== "customer.subscription.deleted" &&
-      type !== "customer.subscription.updated"
-    ) {
-      return;
-    }
+    if (!allowedEvents.includes(type)) return;
 
     const existingEvent = await adminDb.collection("ProcessedEvent").findOne({
       eventId: event.id,
