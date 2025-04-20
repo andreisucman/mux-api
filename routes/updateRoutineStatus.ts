@@ -12,14 +12,14 @@ import deactivateHangingBaAndRoutineData from "@/functions/deactivateHangingBaAn
 const route = Router();
 
 type Props = {
-  routineIds: string[];
+  routineId: string;
   newStatus: "active" | "canceled";
 };
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { routineIds, newStatus }: Props = req.body;
+  const { routineId, newStatus }: Props = req.body;
 
-  if (!routineIds) {
+  if (!routineId) {
     res.status(400).json({ error: "Bad request" });
     return;
   }
@@ -30,33 +30,16 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
   }
 
   try {
-    const batchSize = 5;
-    let promises = [];
-
-    for (let i = 0; i < routineIds.length; i++) {
-      promises.push(
-        doWithRetries(() =>
-          updateRoutineStatus({
-            newStatus: newStatus as RoutineStatusEnum,
-            routineId: routineIds[i],
-          })
-        )
-      );
-
-      if (promises.length === batchSize) {
-        await doWithRetries(async () => await Promise.all(promises));
-        promises.length = 0;
-      }
-    }
-
-    if (promises.length > 0) {
-      await doWithRetries(async () => await Promise.all(promises));
-      promises.length = 0;
-    }
+    await doWithRetries(() =>
+      updateRoutineStatus({
+        newStatus: newStatus as RoutineStatusEnum,
+        routineId,
+      })
+    );
 
     if (newStatus === RoutineStatusEnum.CANCELED) {
       await deactivateHangingBaAndRoutineData({
-        routineIds,
+        routineIds: [routineId],
         userId: req.userId,
       });
     }
@@ -65,7 +48,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       db
         .collection("Routine")
         .find({
-          _id: { $in: routineIds.map((id) => new ObjectId(id)) },
+          _id: new ObjectId(routineId),
           userId: new ObjectId(req.userId),
           deletedOn: { $exists: false },
         })

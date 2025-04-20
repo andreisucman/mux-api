@@ -67,8 +67,6 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
         if (concern) match.$and.push({ concern: { $in: [concern] } });
         if (part) match.$and.push({ part });
       }
-
-      match = { ...match, ...response.additionalFilters };
     } else {
       if (req.userId) {
         match.userId = new ObjectId(req.userId);

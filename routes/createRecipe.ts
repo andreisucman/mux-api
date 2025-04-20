@@ -94,9 +94,12 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         {
           projection: {
             key: 1,
-            recipe: 1,
+            previousRecipe: 1,
             concern: 1,
             instruction: 1,
+            name: 1,
+            description: 1,
+            productTypes: 1,
           },
         }
       )
@@ -104,9 +107,9 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     if (!taskInfo) throw httpError(`Task ${taskId} not found`);
 
-    const { name, instruction, concern, recipe } = taskInfo;
+    const { name, instruction, concern, previousRecipe } = taskInfo;
 
-    if (recipe && !recipe?.canPersonalize) {
+    if (previousRecipe && !previousRecipe?.canPersonalize) {
       res.status(200).json({
         error: `You have already generated a new recipe.`,
       });
@@ -275,13 +278,17 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         { _id: new ObjectId(taskId) },
         {
           $set: {
-            recipe: {
+            name: response.name,
+            productTypes: response.productTypes,
+            description: response.description,
+            instruction: response.instruction,
+            previousRecipe: {
+              name: taskInfo.name,
+              productTypes: taskInfo.productTypes,
+              description: taskInfo.description,
+              instruction: taskInfo.instruction,
               examples: [{ type: "image", url: image }],
               canPersonalize: false,
-              name: response.name,
-              productTypes: response.productTypes,
-              description: response.description,
-              instruction: response.instruction,
             },
           },
         }

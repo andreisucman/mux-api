@@ -86,11 +86,8 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       copiedFrom: userName,
     };
 
-    if (resetTask.recipe) {
-      resetTask.recipe = {
-        ...resetTask.recipe,
-        canPersonalize: true,
-      };
+    if (resetTask.previousRecipe) {
+      resetTask.previousRecipe = null;
     }
 
     const newAllTaskRecord = {
@@ -142,7 +139,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       );
     } else {
       updateRoutineId = new ObjectId();
-      resetTask.routineId = updateRoutineId;
 
       const isPublicResponse = await checkIfPublic({
         userId: String(req.userId),
@@ -167,6 +163,8 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
       await doWithRetries(async () => db.collection("Routine").insertOne(newRoutine));
     }
+
+    resetTask.routineId = updateRoutineId;
 
     await doWithRetries(async () => db.collection("Task").insertOne(resetTask));
 

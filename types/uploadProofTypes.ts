@@ -26,7 +26,7 @@ export type UploadProofTaskType = {
   isDish: boolean;
   description: string;
   instruction: string;
-  recipe: RecipeType;
+  previousRecipe: RecipeType;
   restDays: number;
   isCreated: boolean;
   startsAt: Date;

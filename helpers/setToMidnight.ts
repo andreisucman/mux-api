@@ -5,7 +5,17 @@ type SetToMidnight = {
   timeZone?: string;
 };
 
-export default function setToMidnight({ date, timeZone }: SetToMidnight): Date {
-  const midnightDate = DateTime.fromJSDate(date, { zone: timeZone }).startOf("day").toUTC();
-  return midnightDate.toJSDate();
+export default function setToMidnight({ date, timeZone }: SetToMidnight) {
+  let midnightDate = DateTime.fromJSDate(new Date(date), { zone: timeZone });
+
+  midnightDate = midnightDate.set({
+    hour: 0,
+    minute: 0,
+    second: 0,
+    millisecond: 0,
+  });
+
+  const utcMidnightDate = midnightDate.toUTC();
+
+  return utcMidnightDate.toJSDate();
 }

@@ -56,7 +56,7 @@ export function minutesFromNow(minutes: number) {
   return new Date(Math.round(new Date().getTime() + minutes * 60000));
 }
 
-export function calculateDaysDifference(dateFrom: Date, dateTo: Date) {
+export function calculateDaysDifference(dateFrom: Date | string, dateTo: Date | string) {
   try {
     const from = new Date(dateFrom).getTime();
     const to = new Date(dateTo).getTime();

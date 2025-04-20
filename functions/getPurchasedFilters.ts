@@ -70,21 +70,6 @@ export default async function getPurchasedFilters({ userName, userId, concern, p
 
     notPurchased = soldCombinations.filter((sc) => !purchasedCombinatons.includes(sc));
 
-    // if (purchases.length) {
-    //   const purchasedConcerns = [];
-    //   const withinPurchasedPeriod: { [key: string]: any } = {};
-
-    //   for (const obj of purchases) {
-    //     const { contentEndDate, concern: purchassedConcern } = obj;
-    //     purchasedConcerns.push(purchassedConcern);
-    //     withinPurchasedPeriod.$lte = new Date(contentEndDate);
-    //   }
-
-    //   additionalFilters.concern = { $in: purchasedConcerns };
-    //   additionalFilters.createdAt = withinPurchasedPeriod;
-    // }
-
-    // return { purchases, priceData, notPurchasedConcerns, notPurchasedParts, additionalFilters };
     return { purchases, priceData, notPurchased };
   } catch (err) {
     throw httpError(err);

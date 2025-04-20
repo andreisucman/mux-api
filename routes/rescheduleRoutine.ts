@@ -14,16 +14,16 @@ import rescheduleSingleRoutine from "@/functions/rescheduleSingleRoutine.js";
 const route = Router();
 
 type Props = {
-  routineIds: string[];
+  routineId: string;
   startDate: string;
 };
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { routineIds, startDate }: Props = req.body;
+  const { routineId, startDate }: Props = req.body;
 
   const { isValidDate, isFutureDate } = checkDateValidity(startDate, req.timeZone);
 
-  if (!routineIds || !isValidDate || !isFutureDate) {
+  if (!routineId || !isValidDate || !isFutureDate) {
     res.status(400).json({ error: "Bad request" });
     return;
   }
@@ -41,7 +41,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         .collection("Routine")
         .find(
           {
-            _id: { $in: routineIds.map((id: string) => new ObjectId(id)) },
+            _id: new ObjectId(routineId),
             userId: new ObjectId(req.userId),
           },
           { projection: { finalSchedule: 0, concerns: 0 } }
@@ -49,7 +49,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         .toArray()
     )) as unknown as RoutineType[];
 
-    if (!routinesToReschedule.length) throw httpError(`Routines ${routineIds.join(", ")} not found`);
+    if (!routinesToReschedule.length) throw httpError(`Routines ${routineId} not found`);
 
     const batchSize = 5;
     let promises = [];
@@ -84,7 +84,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       db
         .collection("Routine")
         .find({
-          _id: { $in: routineIds.map((id) => new ObjectId(id)) },
+          _id: new ObjectId(routineId),
         })
         .toArray()
     );

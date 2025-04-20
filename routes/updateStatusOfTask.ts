@@ -38,7 +38,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       db
         .collection("Task")
         .find(tasksToUpdateFilter, {
-          projection: { part: 1, isCreated: 1 },
+          projection: { part: 1, isCreated: 1, routineId: 1 },
         })
         .toArray()
     );
@@ -89,6 +89,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       const update: { [key: string]: any } = {
         "allTasks.$.ids.$[element].status": newStatus,
       };
+
       if (numberOfTasksWithAnotherStatus === 0) {
         update.status = newStatus;
       }

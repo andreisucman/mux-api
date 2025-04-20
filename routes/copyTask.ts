@@ -60,10 +60,9 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       (a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime()
     )[0];
 
-    const differenceInDays = calculateDaysDifference(
-      earliestTask.startsAt,
-      setToMidnight({ date: startDate, timeZone: req.timeZone })
-    );
+    const newDate = setToMidnight({ date: startDate, timeZone: req.timeZone });
+
+    const differenceInDays = calculateDaysDifference(earliestTask.startsAt, newDate);
 
     const updatedIds = relevantAllTask.ids.filter((id) => {
       let criteria = !id.deletedOn;
@@ -106,15 +105,8 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       copiedFrom: userName,
       userId: new ObjectId(req.userId),
       status: TaskStatusEnum.ACTIVE,
+      previousRecipe: null,
     };
-
-    if (taskInfo.recipe) {
-      taskInfo.name = taskInfo.recipe.name;
-      taskInfo.description = taskInfo.recipe.description;
-      taskInfo.instruction = taskInfo.recipe.instruction;
-      taskInfo.productTypes = taskInfo.recipe.productTypes;
-      taskInfo.examples = taskInfo.recipe.examples;
-    }
 
     let draftTasks: TaskType[] = updatedAllTask.ids.map((obj) => {
       return {
@@ -172,7 +164,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       );
     } else {
       updateRoutineId = new ObjectId();
-      draftTasks = draftTasks.map((t) => ({ ...t, routineId: updateRoutineId }));
 
       const isPublicResponse = await checkIfPublic({
         userId: String(req.userId),
@@ -198,6 +189,8 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       await doWithRetries(async () => db.collection("Routine").insertOne(newRoutine));
     }
 
+    draftTasks = draftTasks.map((t) => ({ ...t, routineId: updateRoutineId }));
+
     await doWithRetries(async () => db.collection("Task").insertMany(draftTasks));
 
     updateTasksAnalytics({
@@ -213,14 +206,14 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       keyTwo: "manualTasksCopied",
     });
 
-    const copiedRoutine = await doWithRetries(async () =>
+    const updatedRoutine = await doWithRetries(async () =>
       db.collection("Routine").findOne({
         _id: new ObjectId(updateRoutineId),
       })
     );
 
     res.status(200).json({
-      message: copiedRoutine,
+      message: updatedRoutine,
     });
   } catch (err) {
     next(err);

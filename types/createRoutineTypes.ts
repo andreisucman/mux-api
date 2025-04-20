@@ -25,7 +25,7 @@ export type CreateRoutineAllSolutionsType = {
   key: string;
   productTypes: string[];
   isDish: boolean;
-  recipe: RecipeType;
+  previousRecipe: RecipeType;
   restDays: number;
 };
 

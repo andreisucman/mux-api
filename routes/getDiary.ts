@@ -54,7 +54,6 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
         if (part) finalFilters.$and.push({ part: { $in: [part] } });
       }
 
-      finalFilters = { ...finalFilters, ...response.additionalFilters };
     } else {
       if (req.userId) {
         finalFilters.userId = new ObjectId(req.userId);

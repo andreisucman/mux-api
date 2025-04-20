@@ -67,7 +67,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     return;
   }
 
-  if (description.length > 200 || instruction.length > 200) {
+  if (description.length > 300 || instruction.length > 300) {
     res.status(200).json({
       error: "long",
     });

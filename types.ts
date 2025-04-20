@@ -308,7 +308,7 @@ export type TaskType = {
   proofId: string;
   isCreated: boolean;
   isDish: boolean;
-  recipe: RecipeType | null;
+  previousRecipe: RecipeType | null;
   examples: TaskExampleType[];
   productTypes: string[] | null;
   startsAt: Date | null;

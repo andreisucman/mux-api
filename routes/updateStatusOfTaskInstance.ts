@@ -98,6 +98,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     if (newStatus === TaskStatusEnum.ACTIVE || numberOfTasksWithAnotherStatus === 0) {
       updateRoutinePayload.$set.status = newStatus;
     }
+
     await doWithRetries(async () =>
       db.collection("Routine").updateOne(updateRoutineFilter, updateRoutinePayload, {
         arrayFilters: [{ "element._id": new ObjectId(taskId) }],

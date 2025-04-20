@@ -56,14 +56,9 @@ export default async function copySingleRoutine({
         expiresAt: daysFrom({ date: task.expiresAt, days: daysDifference }),
         completedAt: null,
         userName,
+        previousRecipe: null,
       };
-      if (newTask.recipe) {
-        newTask.name = newTask.recipe.name;
-        newTask.description = newTask.recipe.description;
-        newTask.instruction = newTask.recipe.instruction;
-        newTask.productTypes = newTask.recipe.productTypes;
-        newTask.examples = newTask.recipe.examples;
-      }
+
       return newTask;
     });
 
