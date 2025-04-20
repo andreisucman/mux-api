@@ -155,16 +155,18 @@ export default async function copySingleRoutine({
       userId,
       tasksToInsert: replacementTasks,
       keyOne: "tasksCopied",
-      keyTwo: "manualtasksCopied",
+      keyTwo: "manualTasksCopied",
     });
 
-    updateAnalytics({
-      userId,
-      incrementPayload: {
-        "overview.usage.routinesStolen": 1,
-        [`overview.tasks.part.routinesStolen.${hostRoutine.part}`]: 1,
-      },
-    });
+    if (userName) {
+      updateAnalytics({
+        userId,
+        incrementPayload: {
+          "overview.usage.routinesStolen": 1,
+          [`overview.tasks.part.routinesStolen.${hostRoutine.part}`]: 1,
+        },
+      });
+    }
 
     return newRoutine;
   } catch (error) {

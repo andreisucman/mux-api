@@ -97,7 +97,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     updateAnalytics({
       userId: req.userId,
       incrementPayload: {
-        [`overview.payment.checkout.update`]: 1,
+        [`overview.payment.checkout.routines.subscription`]: 1,
       },
     });
 

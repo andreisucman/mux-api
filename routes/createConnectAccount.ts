@@ -129,7 +129,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         url: `https://muxout.com/club/progress/${name}`,
       },
       settings: {
-        payments: { statement_descriptor: "MUXOUT" },
+        payments: { statement_descriptor: "MUX" },
       },
     };
 

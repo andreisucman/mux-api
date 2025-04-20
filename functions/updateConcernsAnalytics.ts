@@ -17,7 +17,7 @@ export default async function updateConcernsAnalytics({ concerns, userId }: Prop
     }, {});
 
     const keyConcerns = concerns.reduce((a: { [key: string]: number }, c: ConcernInputType) => {
-      const key = `overview.usage.concerns.key.${c.name}`;
+      const key = `overview.usage.concerns.name.${c.name}`;
       a[key] = 1;
       return a;
     }, {});

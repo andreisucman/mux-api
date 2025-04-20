@@ -193,6 +193,12 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     await doWithRetries(async () => db.collection("Task").insertMany(draftTasks));
 
+    const updatedRoutine = await doWithRetries(async () =>
+      db.collection("Routine").findOne({
+        _id: new ObjectId(updateRoutineId),
+      })
+    );
+
     updateTasksAnalytics({
       userId: req.userId,
       tasksToInsert: draftTasks,
@@ -206,11 +212,14 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       keyTwo: "manualTasksCopied",
     });
 
-    const updatedRoutine = await doWithRetries(async () =>
-      db.collection("Routine").findOne({
-        _id: new ObjectId(updateRoutineId),
-      })
-    );
+    if (userName) {
+      updateTasksAnalytics({
+        userId: req.userId,
+        tasksToInsert: draftTasks,
+        keyOne: "tasksStolen",
+        keyTwo: "manualTasksStolen",
+      });
+    }
 
     res.status(200).json({
       message: updatedRoutine,

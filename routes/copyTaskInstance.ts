@@ -15,6 +15,7 @@ import getUserInfo from "@/functions/getUserInfo.js";
 import httpError from "@/helpers/httpError.js";
 import { addTaskToSchedule } from "@/helpers/rescheduleTaskHelpers.js";
 import { checkIfPublic } from "./checkIfPublic.js";
+import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 
 const route = Router();
 
@@ -176,6 +177,28 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     if (updatedRoutine) result.routine = updatedRoutine;
     if (returnTask) result.newTask = resetTask;
+
+    updateTasksAnalytics({
+      userId: req.userId,
+      tasksToInsert: [resetTask],
+      keyOne: "tasksCreated",
+    });
+
+    updateTasksAnalytics({
+      userId: req.userId,
+      tasksToInsert: [resetTask],
+      keyOne: "tasksCopied",
+      keyTwo: "manualTasksCopied",
+    });
+
+    if (userName) {
+      updateTasksAnalytics({
+        userId: req.userId,
+        tasksToInsert: [resetTask],
+        keyOne: "tasksStolen",
+        keyTwo: "manualTasksStolen",
+      });
+    }
 
     res.status(200).json({
       message: result,

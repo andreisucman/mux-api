@@ -175,7 +175,11 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     const contentUrlTypes: BlurredUrlType[] = [{ name: "original" as "original", url: image }];
     let mainUrl = { url: image, name: "original" };
 
+    const analyticsPayload: { [key: string]: number } = { [`overview.usage.scans.progressImageUploads.${part}`]: 1 };
+
     if (blurDots.length) {
+      analyticsPayload["overview.usage.blur.blurred"] = 1;
+
       const response = await doWithRetries(() =>
         fetch(`${process.env.PROCESSING_SERVER_URL}/blurImageManually`, {
           method: "POST",
@@ -193,6 +197,8 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         url: json.message,
       };
       contentUrlTypes.push(mainUrl as BlurredUrlType);
+    } else {
+      analyticsPayload["overview.usage.blur.original"] = 1;
     }
 
     const updateUrl = { url: beforeImage, name: BlurTypeEnum.ORIGINAL };
@@ -232,9 +238,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     updateAnalytics({
       userId: req.userId,
-      incrementPayload: {
-        [`overview.usage.scans.progressImageUploads.${part}`]: 1,
-      },
+      incrementPayload: analyticsPayload,
     });
   } catch (err) {
     await addAnalysisStatusError({

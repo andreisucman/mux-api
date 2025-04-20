@@ -138,6 +138,8 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       )
     )) as unknown as ProgressType;
 
+    
+
     res.status(200).json({
       message: {
         images: finalRecord.images,

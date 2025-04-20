@@ -66,7 +66,7 @@ async function createRoutinePurchase(routineDataId: string, buyerId: string, pay
     updateAnalytics({
       userId: String(buyerInfo._id),
       incrementPayload: {
-        [`overview.payment.purchase.oneTime`]: 1,
+        [`overview.payment.purchase.routines.oneTime`]: 1,
       },
     });
 
@@ -383,6 +383,13 @@ async function handleOneTimePayment(session: Stripe.Checkout.Session) {
       await doWithRetries(() =>
         db.collection("User").updateOne({ stripeUserId: customerId }, { $set: { nextScan: updatedScans } })
       );
+
+      updateAnalytics({
+        userId: String(buyerId),
+        incrementPayload: {
+          [`overview.payment.purchase.platform`]: 1,
+        },
+      });
     }
   } catch (err) {
     throw httpError(err);
