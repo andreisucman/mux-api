@@ -5,7 +5,6 @@ import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "../helpers/doWithRetries.js";
 import { calculateDaysDifference, checkDateValidity, daysFrom } from "helpers/utils.js";
-import sortTasksInScheduleByDate from "helpers/sortTasksInScheduleByDate.js";
 import { CustomRequest, RoutineStatusEnum, RoutineType, TaskStatusEnum, TaskType } from "types.js";
 import { db } from "init.js";
 import httpError from "@/helpers/httpError.js";
@@ -14,7 +13,6 @@ import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 import checkPurchaseAccess from "@/functions/checkPurchaseAccess.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
-import { addTaskToSchedule } from "@/helpers/rescheduleTaskHelpers.js";
 import combineAllTasks from "@/helpers/combineAllTasks.js";
 import { checkIfPublic } from "./checkIfPublic.js";
 
@@ -133,10 +131,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       db.collection("Routine").find(targetRoutineFilter).sort({ startsAt: 1 }).next()
     )) as unknown as RoutineType;
 
-    let { concerns, allTasks: currentAllTasks, finalSchedule: currentFinalSchedule } = targetRoutine || {};
-
-    let finalSchedule = addTaskToSchedule(currentFinalSchedule, taskKey, taskInfo.concern, updatedAllTask.ids);
-    finalSchedule = sortTasksInScheduleByDate(finalSchedule);
+    let { concerns, allTasks: currentAllTasks } = targetRoutine || {};
 
     let allTasks = combineAllTasks({ oldAllTasks: currentAllTasks, newAllTasks: [updatedAllTask] });
     if (!allTasks) allTasks = [updatedAllTask];
@@ -153,7 +148,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
           { _id: new ObjectId(targetRoutine._id), userId: new ObjectId(req.userId) },
           {
             $set: {
-              finalSchedule,
               allTasks,
               concerns: [...new Set([...(concerns || []), taskInfo.concern])],
               startsAt: new Date(minDate),
@@ -174,7 +168,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         _id: updateRoutineId,
         userId: new ObjectId(req.userId),
         allTasks,
-        finalSchedule,
         part: taskInfo.part,
         concerns: [taskInfo.concern],
         status: RoutineStatusEnum.ACTIVE,

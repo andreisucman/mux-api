@@ -40,7 +40,7 @@ export default function generateTaskIntervals({
     }
 
     if (total === 1) {
-      return [startDate.toDateString()];
+      return [startDate.toUTCString()];
     }
 
     const dates: Date[] = [];
@@ -55,7 +55,7 @@ export default function generateTaskIntervals({
       dates.push(newDate);
     }
 
-    return dates.map((date) => date.toDateString());
+    return dates.map((date) => date.toUTCString());
   } catch (error) {
     console.error("generateTaskIntervals", error.message);
     throw error;

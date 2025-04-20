@@ -1,8 +1,6 @@
 import doWithRetries from "@/helpers/doWithRetries.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 import httpError from "@/helpers/httpError.js";
-import sortTasksInScheduleByDate from "@/helpers/sortTasksInScheduleByDate.js";
-import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import { daysFrom } from "@/helpers/utils.js";
 import { RoutineStatusEnum, RoutineType, TaskStatusEnum, TaskType } from "@/types.js";
 import { ObjectId } from "mongodb";
@@ -62,29 +60,6 @@ export default async function copySingleRoutine({
       return newTask;
     });
 
-    let finalSchedule: {
-      [key: string]: ScheduleTaskType[];
-    } = {};
-
-    /* update final schedule */
-    for (let i = 0; i < replacementTasks.length; i++) {
-      const task = replacementTasks[i];
-      const dateString = new Date(task.startsAt).toDateString();
-
-      const simpleTaskContent: ScheduleTaskType = {
-        key: task.key,
-        concern: task.concern,
-      };
-
-      if (finalSchedule[dateString]) {
-        finalSchedule[dateString].push(simpleTaskContent);
-      } else {
-        finalSchedule[dateString] = [simpleTaskContent];
-      }
-    }
-
-    finalSchedule = sortTasksInScheduleByDate(finalSchedule);
-
     /* update allTasks */
     const uniqueTaskKeys = [...new Set(replacementTasks.map((t) => t.key))];
 
@@ -128,7 +103,6 @@ export default async function copySingleRoutine({
       _id: newRoutineId,
       userId: new ObjectId(userId),
       createdAt: new Date(),
-      finalSchedule,
       userName,
       allTasks: updatedAllTasks,
       startsAt: new Date(minDate),

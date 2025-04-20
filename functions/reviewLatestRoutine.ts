@@ -69,7 +69,7 @@ export default async function reviewLatestRoutine({
       userId: String(userId),
     });
 
-    const { allTasksWithDateAndIds, finalSchedule, tasksToInsert } = await createScheduleAndTasks({
+    const { allTasksWithDateAndIds, tasksToInsert } = await createScheduleAndTasks({
       part,
       userInfo,
       allSolutions: updatedAllSolutions,
@@ -95,7 +95,6 @@ export default async function reviewLatestRoutine({
       userId: new ObjectId(userId),
       userName,
       concerns: concernNames,
-      finalSchedule,
       status: RoutineStatusEnum.ACTIVE,
       createdAt: new Date(),
       allTasks: allTasksWithDateAndIds,

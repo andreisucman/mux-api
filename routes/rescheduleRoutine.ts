@@ -44,7 +44,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
             _id: new ObjectId(routineId),
             userId: new ObjectId(req.userId),
           },
-          { projection: { finalSchedule: 0, concerns: 0 } }
+          { projection: { concerns: 0 } }
         )
         .toArray()
     )) as unknown as RoutineType[];

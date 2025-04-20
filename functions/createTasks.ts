@@ -23,14 +23,7 @@ type Props = {
   categoryName: CategoryNameEnum;
 };
 
-export default async function createTasks({
-  part,
-  userInfo,
-  finalSchedule,
-  allSolutions,
-  categoryName,
-  createOnlyTheseKeys,
-}: Props) {
+export default async function createTasks({ part, userInfo, finalSchedule, allSolutions, createOnlyTheseKeys }: Props) {
   const { _id: userId, name: userName } = userInfo;
 
   try {

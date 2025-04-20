@@ -255,30 +255,11 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       });
     }
 
-    let { concerns, allTasks, createdAt, finalSchedule } = relevantRoutine || {
+    let { concerns, allTasks, createdAt } = relevantRoutine || {
       concerns: [],
       allTasks: [],
       createdAt: null,
-      finalSchedule: {},
     };
-
-    for (let i = 0; i < draftTasks.length; i++) {
-      const task = draftTasks[i];
-      const dateString = new Date(task.startsAt).toDateString();
-
-      const simpleTaskContent: ScheduleTaskType = {
-        key: task.key,
-        concern: task.concern,
-      };
-
-      if (finalSchedule[dateString]) {
-        finalSchedule[dateString].push(simpleTaskContent);
-      } else {
-        finalSchedule[dateString] = [simpleTaskContent];
-      }
-    }
-
-    finalSchedule = sortTasksInScheduleByDate(finalSchedule);
 
     /* update concerns */
     const concernExists = concerns.includes(generalTaskInfo.concern);
@@ -301,8 +282,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       color: generalTaskInfo.color,
       key: generalTaskInfo.key,
       concern: generalTaskInfo.concern,
-      description,
-      instruction,
     });
 
     const { minDate, maxDate } = getMinAndMaxRoutineDates(allTasks);
@@ -318,7 +297,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       concerns,
       part,
       allTasks,
-      finalSchedule,
       createdAt: createdAt || new Date(),
       startsAt: new Date(minDate),
       lastDate: new Date(maxDate),

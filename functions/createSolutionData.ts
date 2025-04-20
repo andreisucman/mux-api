@@ -60,30 +60,24 @@ export default async function createSolutionData({
       )
     );
 
-    const taskKeyDescriptionInstruction = await Promise.all(
-      descriptionAndInstructionsPromises
-    );
+    const taskKeyDescriptionInstruction = await Promise.all(descriptionAndInstructionsPromises);
 
-    const taskInfoPromises = taskKeyDescriptionInstruction.map(
-      ({ key, description, instruction }) => {
-        const concern = solutionConcernMap[key];
+    const taskInfoPromises = taskKeyDescriptionInstruction.map(({ key, description, instruction }) => {
+      const concern = solutionConcernMap[key];
 
-        return doWithRetries(async () =>
-          createSolutionInfo({
-            categoryName,
-            concern,
-            description,
-            instruction,
-            solution: key,
-            userId,
-          })
-        );
-      }
-    );
+      return doWithRetries(async () =>
+        createSolutionInfo({
+          categoryName,
+          concern,
+          description,
+          instruction,
+          solution: key,
+          userId,
+        })
+      );
+    });
 
-    let taskInfoRecords: CreateRoutineAllSolutionsType[] = await Promise.all(
-      taskInfoPromises
-    );
+    let taskInfoRecords: CreateRoutineAllSolutionsType[] = await Promise.all(taskInfoPromises);
 
     const iconsMap = await findEmoji({
       userId,
@@ -103,7 +97,7 @@ export default async function createSolutionData({
 
       if (!relevantSolution) continue;
 
-      const { name, icon, color, description, instruction } = relevantSolution;
+      const { name, icon, color } = relevantSolution;
 
       const total = Math.max(
         Math.round(Number(frequencyMap[key]) / 4.285714301020408), // needed to turn monthly frequency into weekly
@@ -115,8 +109,6 @@ export default async function createSolutionData({
         key,
         icon,
         color,
-        description,
-        instruction,
         concern: null,
         total,
       };

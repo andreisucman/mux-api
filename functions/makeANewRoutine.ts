@@ -44,7 +44,7 @@ export default async function makeANewRoutine({
   try {
     const { demographics, name: userName, timeZone, country } = userInfo;
 
-    console.log("userInfo time zone", timeZone)
+    console.log("userInfo time zone", timeZone);
 
     const { updatedListOfSolutions } = await chooseSolutionsForConcerns({
       userId: String(userId),
@@ -66,7 +66,7 @@ export default async function makeANewRoutine({
       userId: String(userId),
     });
 
-    const { allTasksWithDateAndIds, finalSchedule, tasksToInsert } = await createScheduleAndTasks({
+    const { allTasksWithDateAndIds, tasksToInsert } = await createScheduleAndTasks({
       allSolutions,
       allTasks,
       categoryName,
@@ -92,7 +92,6 @@ export default async function makeANewRoutine({
       userId: new ObjectId(userId),
       userName,
       concerns: concernNames,
-      finalSchedule,
       status: RoutineStatusEnum.ACTIVE,
       createdAt: new Date(),
       allTasks: allTasksWithDateAndIds,

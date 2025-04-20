@@ -323,7 +323,6 @@ export type RoutineType = {
   userId: ObjectId;
   part: string;
   concerns: string[];
-  finalSchedule: { [key: string]: any };
   status: RoutineStatusEnum;
   createdAt: Date;
   startsAt: Date;
@@ -348,8 +347,6 @@ export type AllTaskType = {
   icon: string;
   concern: string;
   total: number;
-  description: string;
-  instruction: string;
 };
 
 export type AllTaskIdType = {

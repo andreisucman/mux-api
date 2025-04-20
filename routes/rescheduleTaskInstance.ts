@@ -41,14 +41,12 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     if (!taskInfo) throw httpError(`Task ${taskId} not found.`);
 
     const hostRoutine = (await doWithRetries(async () =>
-      db
-        .collection("Routine")
-        .findOne({ _id: new ObjectId(taskInfo.routineId) }, { projection: { allTasks: 1, finalSchedule: 1 } })
+      db.collection("Routine").findOne({ _id: new ObjectId(taskInfo.routineId) }, { projection: { allTasks: 1 } })
     )) as unknown as RoutineType;
 
     if (!hostRoutine) throw httpError(`${taskInfo.routineId} routine not found.`);
 
-    const { allTasks: hostAllTasks, finalSchedule: hostFinalSchedule } = hostRoutine;
+    const { allTasks: hostAllTasks } = hostRoutine;
 
     const updatedHostAllTasks = hostAllTasks
       .map((at) => {
@@ -60,12 +58,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         return at;
       })
       .filter(Boolean);
-
-    const updatedHostSchedule = Object.fromEntries(
-      Object.entries(hostFinalSchedule)
-        .map(([date, values]) => [date, values.filter((obj) => String(obj._id) !== String(taskInfo._id))])
-        .filter(([date, values]) => values.length > 0)
-    );
 
     const { minDate: minHostDate, maxDate: maxHostDate } = getMinAndMaxRoutineDates(updatedHostAllTasks);
 
@@ -85,7 +77,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
           {
             $set: {
               allTasks: updatedHostAllTasks,
-              finalSchedule: updatedHostSchedule,
               startsAt: new Date(minHostDate),
               lastDate: new Date(maxHostDate),
             },
@@ -118,7 +109,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     let currentConcerns = targetRoutine?.concerns || [];
     let currentAllTasks = targetRoutine?.allTasks || [];
-    let currentFinalSchedule = targetRoutine?.finalSchedule || {};
 
     let updatedTargetAllTasks = [];
     if (currentAllTasks.length > 0) {
@@ -142,16 +132,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       updatedTargetAllTasks = [newAllTask];
     }
 
-    const newScheduleEntry = {
-      key: taskInfo.key,
-      concern: taskInfo.concern,
-      date: newStartDate,
-    };
-    currentFinalSchedule[newStartDate.toDateString()] = currentFinalSchedule[newStartDate.toDateString()]
-      ? [...currentFinalSchedule[newStartDate.toDateString()], newScheduleEntry]
-      : [newScheduleEntry];
-    const updatedTargetSchedule = sortTasksInScheduleByDate(currentFinalSchedule);
-
     const targetConcerns = [...new Set([...currentConcerns, taskInfo.concern])];
 
     const { minDate, maxDate } = getMinAndMaxRoutineDates(updatedTargetAllTasks);
@@ -164,7 +144,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
           { _id: new ObjectId(targetRoutine._id), userId: new ObjectId(req.userId) },
           {
             $set: {
-              finalSchedule: updatedTargetSchedule,
               allTasks: updatedTargetAllTasks,
               concerns: targetConcerns,
               startsAt: new Date(minDate),
@@ -185,7 +164,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         _id: updateRoutineId,
         userId: new ObjectId(req.userId),
         allTasks: updatedTargetAllTasks,
-        finalSchedule: updatedTargetSchedule,
         part: taskInfo.part,
         concerns: targetConcerns,
         status: RoutineStatusEnum.ACTIVE,

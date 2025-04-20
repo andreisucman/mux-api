@@ -5,14 +5,13 @@ import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "../helpers/doWithRetries.js";
 import { calculateDaysDifference, checkDateValidity, daysFrom } from "helpers/utils.js";
-import sortTasksInScheduleByDate from "helpers/sortTasksInScheduleByDate.js";
 import { CustomRequest, RoutineStatusEnum, RoutineType, TaskType } from "types.js";
 import httpError from "@/helpers/httpError.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
-import { addTaskToSchedule, removeTaskFromAllTasks, removeTaskFromSchedule } from "@/helpers/rescheduleTaskHelpers.js";
+import { removeTaskFromAllTasks } from "@/helpers/rescheduleTaskHelpers.js";
 import combineAllTasks from "@/helpers/combineAllTasks.js";
 import { db } from "init.js";
 import { checkIfPublic } from "./checkIfPublic.js";
@@ -52,13 +51,13 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         .collection("Routine")
         .findOne(
           { _id: new ObjectId(currentRoutineId), userId: new ObjectId(req.userId) },
-          { projection: { allTasks: 1, finalSchedule: 1 } }
+          { projection: { allTasks: 1 } }
         )
     )) as unknown as RoutineType;
 
     if (!hostRoutine) throw httpError(`${currentRoutineId} routine not found.`);
 
-    const { allTasks: hostAllTasks, finalSchedule: hostFinalSchedule } = hostRoutine;
+    const { allTasks: hostAllTasks } = hostRoutine;
 
     const relevantAllTask = hostAllTasks.find((allTask) => allTask.key === taskKey);
 
@@ -80,7 +79,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     };
 
     const hostAllTasksWithoutTask = removeTaskFromAllTasks(taskKey, hostAllTasks);
-    const hostScheduleWithoutTask = removeTaskFromSchedule(taskKey, hostFinalSchedule);
     const { minDate: minHostDate, maxDate: maxHostDate } = getMinAndMaxRoutineDates(hostAllTasksWithoutTask);
 
     if (hostAllTasksWithoutTask.length === 0) {
@@ -99,7 +97,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
           {
             $set: {
               allTasks: hostAllTasksWithoutTask,
-              finalSchedule: hostScheduleWithoutTask,
               startsAt: new Date(minHostDate),
               lastDate: new Date(maxHostDate),
             },
@@ -123,14 +120,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       db.collection("Routine").find(targetRoutineFilter).sort({ startsAt: 1 }).next()
     )) as unknown as RoutineType;
 
-    let {
-      concerns: currentConcerns,
-      allTasks: currentAllTasks,
-      finalSchedule: currentFinalSchedule,
-    } = targetRoutine || {};
-
-    let targetSchedule = addTaskToSchedule(currentFinalSchedule || {}, taskKey, taskInfo.concern, updatedAllTask.ids);
-    targetSchedule = sortTasksInScheduleByDate(targetSchedule);
+    let { concerns: currentConcerns, allTasks: currentAllTasks } = targetRoutine || {};
 
     const targetConcerns = [...new Set([...(currentConcerns || []), taskInfo.concern])];
 
@@ -149,7 +139,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
           { _id: new ObjectId(targetRoutine._id), userId: new ObjectId(req.userId) },
           {
             $set: {
-              finalSchedule: targetSchedule,
               allTasks: targetAllTasks,
               concerns: targetConcerns,
               startsAt: new Date(minDate),
@@ -170,7 +159,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         _id: updateRoutineId,
         userId: new ObjectId(req.userId),
         allTasks: targetAllTasks,
-        finalSchedule: targetSchedule,
         part: taskInfo.part,
         concerns: [taskInfo.concern],
         status: RoutineStatusEnum.ACTIVE,

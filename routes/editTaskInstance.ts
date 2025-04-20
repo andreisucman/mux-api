@@ -3,16 +3,13 @@ dotenv.config();
 
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
-import { AllTaskTypeWithIds, CategoryNameEnum, CustomRequest, RoutineType, TaskStatusEnum, TaskType } from "types.js";
+import { CategoryNameEnum, CustomRequest, TaskStatusEnum, TaskType } from "types.js";
 import isActivityHarmful from "@/functions/isActivityHarmful.js";
-import sortTasksInScheduleByDate from "@/helpers/sortTasksInScheduleByDate.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import checkIfTaskIsSimilar from "@/functions/checkIfTaskIsSimilar.js";
 import moderateContent from "@/functions/moderateContent.js";
-import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import httpError from "@/helpers/httpError.js";
 import { adminDb, db } from "init.js";
-import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 
 const route = Router();
 
@@ -108,33 +105,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       instruction: updatedInstruction,
     };
 
-    const relevantRoutine = (await doWithRetries(async () =>
-      db
-        .collection("Routine")
-        .findOne(
-          { _id: new ObjectId(relevantTask.routineId) },
-          { projection: { finalSchedule: 1, allTasks: 1, startsAt: 1 } }
-        )
-    )) as unknown as RoutineType;
-
-    let finalSchedule: { [key: string]: ScheduleTaskType[] } = relevantRoutine.finalSchedule || {};
-
-    finalSchedule = sortTasksInScheduleByDate(finalSchedule);
-
-    const relevantAllTask: AllTaskTypeWithIds = relevantRoutine.allTasks.find(
-      (t: AllTaskTypeWithIds) => t.key === relevantTask.key
-    );
-
-    const newAllTaskRecord = {
-      ...relevantAllTask,
-      description: updatedDescription || relevantTask.description,
-      instruction: updatedInstruction || relevantTask.instruction,
-    };
-
-    const newAllTasks = relevantRoutine.allTasks.map((atObj) =>
-      atObj.key === newAllTaskRecord.key ? newAllTaskRecord : atObj
-    );
-
     if (applyToAll) {
       await doWithRetries(async () =>
         db.collection("Task").updateMany(
@@ -155,25 +125,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         db.collection("Task").updateOne({ _id: new ObjectId(taskId) }, { $set: updateTaskPayload })
       );
     }
-
-    /* recalculate the routines startsAt date */
-    const { minDate, maxDate } = getMinAndMaxRoutineDates(newAllTasks);
-
-    const routineUpdatePayload: { [key: string]: any } = {
-      finalSchedule,
-      allTasks: newAllTasks,
-      lastDate: new Date(maxDate),
-      startsAt: new Date(minDate),
-    };
-
-    await doWithRetries(async () =>
-      db.collection("Routine").updateOne(
-        { _id: new ObjectId(relevantTask.routineId), userId: new ObjectId(req.userId) },
-        {
-          $set: routineUpdatePayload,
-        }
-      )
-    );
 
     if (returnRoutine) {
       const routine = await doWithRetries(async () =>
