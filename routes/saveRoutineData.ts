@@ -4,15 +4,15 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { db } from "init.js";
 import { Router, Response, NextFunction } from "express";
-import { BeforeAfterType, CustomRequest } from "types.js";
+import { CustomRequest } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import checkTextSafety from "@/functions/checkTextSafety.js";
 import { SuspiciousRecordCollectionEnum } from "@/functions/addSuspiciousRecord.js";
 import updateContent from "@/functions/updateContent.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import cancelRoutineSubscribers from "@/functions/cancelRoutineSubscribers.js";
-import httpError from "@/helpers/httpError.js";
 import publishBeforeAfter from "@/functions/publishBeforeAfter.js";
+import checkPublishingRequirements from "@/functions/checkRoutineDataPublishingRequirements.js";
 
 const route = Router();
 
@@ -49,23 +49,23 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       description,
       price,
       updatePrice,
-      userName: userInfo.name
+      userName: userInfo.name,
     };
 
     if (status === "public") {
-      // if (!userInfo.club.payouts.payoutsEnabled) {
-      //   res.status(200).json({
-      //     error: "You can't publish a routine while your payouts are disabled.",
-      //   });
-      //   return;
-      // }
-      // const { passed, message } = await checkPublishingRequirements({ userId: req.userId, concern });
-      // if (!passed) {
-      //   res.status(200).json({
-      //     error: message,
-      //   });
-      //   return;
-      // }
+      if (!userInfo.club.payouts.payoutsEnabled) {
+        res.status(200).json({
+          error: "You can't publish a routine while your payouts are disabled.",
+        });
+        return;
+      }
+      const { passed, message } = await checkPublishingRequirements({ userId: req.userId, concern });
+      if (!passed) {
+        res.status(200).json({
+          error: message,
+        });
+        return;
+      }
     }
 
     for (const text of [name, description]) {

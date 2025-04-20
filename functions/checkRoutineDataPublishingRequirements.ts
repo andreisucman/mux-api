@@ -65,9 +65,9 @@ const checkPublishingRequirements = async ({ userId, concern }: Props) => {
   if (proofCompletionRate < Number(process.env.PROOF_COMPLETION_RATE_TRESHOLD)) {
     response.message = `You have to have at least ${
       Number(process.env.PROOF_COMPLETION_RATE_TRESHOLD) * 100
-    }% of completions with proofs for the ${concernName} concern. Your current rate is ${
-      Math.round(proofCompletionRate) * 100
-    }%`;
+    }% of completions with proofs for the ${concernName} concern. Your current rate is ${Math.round(
+      proofCompletionRate * 100
+    )}%`;
     return response;
   }
 

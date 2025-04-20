@@ -44,6 +44,8 @@ export default async function makeANewRoutine({
   try {
     const { demographics, name: userName, timeZone, country } = userInfo;
 
+    console.log("userInfo time zone", timeZone)
+
     const { updatedListOfSolutions } = await chooseSolutionsForConcerns({
       userId: String(userId),
       part,

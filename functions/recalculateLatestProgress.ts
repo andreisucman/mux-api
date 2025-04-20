@@ -1,4 +1,4 @@
-import { LatestScoresDifferenceType, LatestScoresType, ProgressImageType, ProgressType } from "types.js";
+import { LatestScoresDifferenceType, LatestScoresType, ProgressImageType } from "types.js";
 import httpError from "@/helpers/httpError.js";
 
 function updateObject(overallObject: { [key: string]: any }) {

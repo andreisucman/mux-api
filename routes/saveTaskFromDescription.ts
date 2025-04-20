@@ -249,7 +249,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       draftTasks.push({
         ...generalTaskInfo,
         _id: new ObjectId(),
-        // embedding,
         startsAt: starts,
         expiresAt: expires,
         completedAt: null,

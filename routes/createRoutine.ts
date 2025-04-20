@@ -23,12 +23,16 @@ const route = Router();
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
   const { part, creationMode = "scratch", routineStartDate, specialConsiderations } = req.body;
 
+  console.log("req.timeZone", req.timeZone);
+
   if (!part || (part && !validParts.includes(part))) {
     res.status(400).json({ error: "Bad request" });
     return;
   }
 
   const { isValidDate, isFutureDate } = checkDateValidity(routineStartDate, req.timeZone);
+
+  console.log("routineStartDate", routineStartDate);
 
   if (!isValidDate || !isFutureDate) {
     res.status(400).json({ error: "Bad request" });

@@ -41,6 +41,8 @@ export default async function createScheduleAndTasks({
       })
     );
 
+    console.log("rawSchedule", rawSchedule);
+
     await incrementProgress({
       value: 5 * incrementMultiplier,
       operationKey: "routine",
@@ -58,6 +60,9 @@ export default async function createScheduleAndTasks({
         specialConsiderations,
       })
     );
+
+    console.log("finalSchedule", finalSchedule);
+
 
     let tasksToInsert = await doWithRetries(async () =>
       createTasks({

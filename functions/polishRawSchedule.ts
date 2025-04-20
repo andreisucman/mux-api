@@ -22,7 +22,6 @@ export default async function polishRawSchedule({
   rawSchedule,
   concerns,
   userId,
-  part,
   categoryName,
   incrementMultiplier = 1,
   specialConsiderations,
@@ -43,6 +42,8 @@ export default async function polishRawSchedule({
 
     if (systemContent)
       systemContent += `The user has the following special consideration: ${specialConsiderations}. Consider it when optimizing the schedule.`;
+
+    systemContent += `Now is ${new Date().toUTCString()}. Ensure there are no tasks scheduled to past.`
 
     const userContent: RunType[] = [
       {

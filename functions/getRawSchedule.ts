@@ -16,46 +16,36 @@ type Props = {
   timeZone: string;
 };
 
-export default async function getRawSchedule({
-  allTasks,
-  routineStartDate,
-  timeZone,
-  days,
-}: Props) {
+export default async function getRawSchedule({ allTasks, routineStartDate, timeZone, days }: Props) {
   try {
     const dateOne = setToMidnight({
       date: new Date(routineStartDate),
       timeZone,
     });
+
+    console.log("getRawSchedule dateOne", dateOne);
+
     const dateTwo = daysFrom({ date: dateOne, days: days > 0 ? days : 7 });
     const lastMonth = daysFrom({ days: -30 });
 
     const pastTasks = await doWithRetries(async () =>
       db
         .collection("Task")
-        .find(
-          { createdAt: { $gt: lastMonth } },
-          { projection: { key: 1, earliestNextStartDate: 1 } }
-        )
+        .find({ createdAt: { $gt: lastMonth } }, { projection: { key: 1, earliestNextStartDate: 1 } })
         .toArray()
     );
 
-    const earliestStartMap = pastTasks.reduce(
-      (acc: { [key: string]: Date }, current) => {
-        if (acc[current.key]) {
-          const greater =
-            new Date(current.earliestNextStartDate) >
-            new Date(acc[current.key]);
-          if (greater) {
-            acc[current.key] = new Date(current.earliestNextStartDate); // to take the farthest next date among the same tasks
-          }
-        } else {
-          acc[current.key] = new Date(current.earliestNextStartDate);
+    const earliestStartMap = pastTasks.reduce((acc: { [key: string]: Date }, current) => {
+      if (acc[current.key]) {
+        const greater = new Date(current.earliestNextStartDate) > new Date(acc[current.key]);
+        if (greater) {
+          acc[current.key] = new Date(current.earliestNextStartDate); // to take the farthest next date among the same tasks
         }
-        return acc;
-      },
-      {}
-    );
+      } else {
+        acc[current.key] = new Date(current.earliestNextStartDate);
+      }
+      return acc;
+    }, {});
 
     const sortedSchedule = turnTasksIntoSchedule({
       dateOne,
