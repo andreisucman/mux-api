@@ -9,16 +9,16 @@ import { db, stripe } from "init.js";
 import { getTimezoneOffset, daysFrom } from "helpers/utils.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import createUser from "@/functions/createUser.js";
-import checkIfUserExists from "functions/checkIfUserExists.js";
+import checkIfUserExists, { defaultUserProjection } from "functions/checkIfUserExists.js";
 import { CategoryNameEnum, CustomRequest, ModerationStatusEnum, UserType } from "types.js";
 import sendConfirmationCode from "@/functions/sendConfirmationCode.js";
 import { getHashedPassword } from "helpers/utils.js";
 import createCsrf from "@/functions/createCsrf.js";
 import { defaultUser } from "@/data/defaultUser.js";
-import getUserData from "@/functions/getUserData.js";
 import checkIfSuspended from "@/functions/checkIfSuspended.js";
 import getOAuthAuthenticationData from "@/functions/getOAuthAuthenticationData.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
+import getUserInfo from "@/functions/getUserInfo.js";
 
 const route = Router();
 
@@ -144,7 +144,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
           },
         });
 
-        userData = await getUserData({ userId: String(userId) });
+        userData = await getUserInfo({ userId: String(userId), projection: defaultUserProjection });
       } else {
         // registration after the analysis
         const { stripeUserId } = userInfo;
@@ -179,7 +179,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
           )
         );
 
-        userData = await getUserData({ userId: String(userId) });
+        userData = await getUserInfo({ userId: String(userId), projection: defaultUserProjection });
 
         if (auth === "e") {
           await sendConfirmationCode({
@@ -288,5 +288,3 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 });
 
 export default route;
-
-

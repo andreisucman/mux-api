@@ -17,7 +17,7 @@ type Props = {
 
 export default async function checkImageRequirements({ userId, image, categoryName }: Props) {
   try {
-    const systemContent = `1. Does the person on the image appear to be a minor (younger than 18 years)? 2. Is the subject clearly visible with no shadows or glitter obscuring their features? 3. How many people are on the image?`;
+    const systemContent = `1. Does the person on the image appear to be a minor (younger than 16 years)? 2. Is the subject clearly visible with no shadows or glitter obscuring their features? 3. How many people are on the image?`;
 
     const CheckImagePositionResponseType = z.object({
       isMinor: z.boolean().describe("true if appears to be a minor, false if not"),

@@ -29,10 +29,10 @@ export default async function analyzeFeature({
   userId,
 }: Props) {
   try {
-    let systemContent = `You are a dermatologist. Rate the severity of the ${name} concern on the provided images from 0 to 100, where 0 represents non-existed and 100 represents the most severe condition. Don't assume, base your opinion on the available information only. Don't suggest anything. Think step-by-step.`;
+    let systemContent = `You are a dermatologist. Rate the severity of the ${name} concern on the provided images from 0 to 100, where 0 represents non-existed and 100 represents the most severe condition. Don't assume, base your opinion on the available information only. Don't suggest any solutions or seeing dermatologist. Think step-by-step.`;
 
     if (assessmentCriteria) {
-      systemContent = `You are a dermatologist. Rate the ${name} of the person's ${part} on the provided images from 0 to 100 according to the following criteria: ### Criteria: ${assessmentCriteria}###. Don't mention the criteria in your response. Don't suggest anything. Think step-by-step.`;
+      systemContent = `You are a dermatologist. Rate the ${name} of the person's ${part} on the provided images from 0 to 100 according to the following criteria: ### Criteria: ${assessmentCriteria}###. Don't mention the criteria in your response. Don't suggest any solutions or seeing dermatologist. Think step-by-step.`;
     }
 
     const scoreDecription = assessmentCriteria

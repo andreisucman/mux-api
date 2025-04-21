@@ -4,7 +4,8 @@ import { ObjectId } from "mongodb";
 import doWithRetries from "helpers/doWithRetries.js";
 import { db } from "init.js";
 import { CustomRequest } from "types.js";
-import getUserData from "functions/getUserData.js";
+import { defaultUserProjection } from "@/functions/checkIfUserExists.js";
+import getUserInfo from "@/functions/getUserInfo.js";
 
 const route = Router();
 
@@ -55,6 +56,8 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
           { $unset: { operationKey: "" } }
         )
       );
+
+      return;
     }
 
     if (job.isRunning) {
@@ -67,7 +70,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       return;
     }
 
-    const userData = await getUserData({ userId });
+    const userData = await getUserInfo({ userId: String(userId), projection: defaultUserProjection });
 
     res.status(200).json({
       message: {

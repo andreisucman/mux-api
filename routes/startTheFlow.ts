@@ -1,11 +1,12 @@
 import * as dotenv from "dotenv";
 dotenv.config();
-import { Router, Request, Response, NextFunction } from "express";
-import getUserData from "functions/getUserData.js";
+import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
 import createUser from "@/functions/createUser.js";
-import { CustomRequest, DemographicsType, UserType } from "types.js";
+import { CustomRequest, DemographicsType } from "types.js";
 import { defaultDemographics } from "@/data/defaultUser.js";
+import getUserInfo from "@/functions/getUserInfo.js";
+import { defaultUserProjection } from "@/functions/checkIfUserExists.js";
 
 const route = Router();
 
@@ -27,9 +28,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         })
     );
 
-    const userData = (await doWithRetries(async () =>
-      getUserData({ userId: String(createUserResponse._id) })
-    )) as unknown as UserType;
+    const userData = await getUserInfo({ userId: String(createUserResponse._id), projection: defaultUserProjection });
 
     res.status(200).json({
       message: { ...createUserResponse, ...userData },

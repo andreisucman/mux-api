@@ -102,7 +102,6 @@ export type UserType = {
   nextNameUpdateAt: Date | null;
   moderationStatus: ModerationStatusEnum;
   lastActiveOn: Date | null;
-  tasks: TaskType[];
 };
 
 export type ToAnalyzeType = {

@@ -77,6 +77,5 @@ export const defaultUser: UserType = {
   canRejoinClubAfter: null,
   lastActiveOn: null,
   isPublic: false,
-  tasks: [],
   moderationStatus: ModerationStatusEnum.ACTIVE,
 };

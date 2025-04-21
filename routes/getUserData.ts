@@ -1,32 +1,27 @@
 import { Router, Response, NextFunction } from "express";
 import { CustomRequest, ModerationStatusEnum } from "types.js";
-import getUserData from "functions/getUserData.js";
-import doWithRetries from "helpers/doWithRetries.js";
 import signOut from "@/functions/signOut.js";
+import { defaultUserProjection } from "@/functions/checkIfUserExists.js";
+import getUserInfo from "@/functions/getUserInfo.js";
 
 const route = Router();
 
-route.get(
-  "/",
-  async (req: CustomRequest, res: Response, next: NextFunction) => {
-    try {
-      const userData = await doWithRetries(
-        async () => await getUserData({ userId: req.userId })
-      );
+route.get("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
+  try {
+    const userInfo = await getUserInfo({ userId: req.userId, projection: defaultUserProjection });
 
-      if (
-        userData?.moderationStatus === ModerationStatusEnum.BLOCKED ||
-        userData?.moderationStatus === ModerationStatusEnum.SUSPENDED
-      ) {
-        signOut(res, 402, `Account ${userData?.moderationStatus}`);
-        return;
-      }
-
-      res.status(200).json({ message: userData });
-    } catch (err) {
-      next(err);
+    if (
+      userInfo?.moderationStatus === ModerationStatusEnum.BLOCKED ||
+      userInfo?.moderationStatus === ModerationStatusEnum.SUSPENDED
+    ) {
+      signOut(res, 402, `Account ${userInfo?.moderationStatus}`);
+      return;
     }
+
+    res.status(200).json({ message: userInfo });
+  } catch (err) {
+    next(err);
   }
-);
+});
 
 export default route;

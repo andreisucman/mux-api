@@ -122,12 +122,12 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       return;
     }
 
-    if (isMinor) {
-      res.status(200).json({
-        error: "The person on the image appears to be a minor.",
-      });
-      return;
-    }
+    // if (isMinor) {
+    //   res.status(200).json({
+    //     error: "The person on the image appears to be a minor.",
+    //   });
+    //   return;
+    // }
 
     if (beforeImage && image) {
       const { isValidForComparison, explanation } = await checkAngleAndPartBetweenImages({

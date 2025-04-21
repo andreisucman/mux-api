@@ -32,6 +32,21 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
   }
 
   try {
+    let sanitatedConcerns = userUploadedConcerns;
+
+    if (userUploadedConcerns.length > 0) {
+      const sanitatedUserUploadedConcerns = await doWithRetries(() =>
+        db
+          .collection("Concern")
+          .find({ name: { $in: userUploadedConcerns.map((c) => c.name) } }, { projection: { name: 1 } })
+          .toArray()
+      );
+
+      const arrayOfExistingConcerns = sanitatedUserUploadedConcerns.map((co) => co.name);
+
+      sanitatedConcerns = userUploadedConcerns.filter((co) => arrayOfExistingConcerns.includes(co.name));
+    }
+
     const userInfo = (await doWithRetries(async () =>
       db.collection("User").findOne(
         {
@@ -63,7 +78,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     let {
       name,
-      avatar,
       toAnalyze,
       nextScan,
       club,
@@ -103,10 +117,9 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       club,
       userId,
       name,
-      avatar,
       nextScan,
       allConcerns: concerns || [],
-      userUploadedConcerns,
+      userUploadedConcerns: sanitatedConcerns,
       categoryName: CategoryNameEnum.SCAN,
       demographics,
       toAnalyze,

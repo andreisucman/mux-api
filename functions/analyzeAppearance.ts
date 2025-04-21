@@ -25,7 +25,6 @@ type Props = {
   userId: string;
   name: string;
   nextScan: NextActionType[];
-  avatar: { [key: string]: any } | null;
   categoryName: CategoryNameEnum;
   defaultToUpdateUser?: { $set: { [key: string]: unknown } };
   club: ClubDataType;
@@ -42,7 +41,6 @@ type Props = {
 export default async function analyzeAppearance({
   userId,
   name,
-  avatar,
   club,
   nextScan,
   allConcerns,

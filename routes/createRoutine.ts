@@ -87,6 +87,8 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     availableRoutines = availableRoutines.filter((r) => r.part === part);
 
+    console.log("availableRoutines",availableRoutines)
+
     if (availableRoutines.length === 0) {
       const formattedDate = formatDate({
         date: new Date(canRoutineDate),

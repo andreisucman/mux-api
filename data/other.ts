@@ -1,7 +1,6 @@
 import { ClubPayoutDataType } from "@/types.js";
 
-export const validParts = ["face", "mouth", "hair", "body"];
-export const validPositions = ["front", "right", "left", "back"];
+export const validParts = ["face", "hair"];
 
 export const defaultClubPayoutData: ClubPayoutDataType = {
   connectId: null,

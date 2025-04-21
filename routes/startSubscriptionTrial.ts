@@ -73,7 +73,7 @@ route.post(
       const updatedSubscription = {
         ...relevantSubscription,
         isTrialUsed: true,
-        validUntil: daysFrom({ days: 1 }),
+        validUntil: daysFrom({ days: 7 }),
       };
 
       const updatedSubscriptions = {
