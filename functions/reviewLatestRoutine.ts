@@ -41,10 +41,20 @@ export default async function reviewLatestRoutine({
   routineStartDate,
   incrementMultiplier = 1,
 }: Props) {
-  const { _id: userId, timeZone, name: userName, specialConsiderations, demographics, country } = userInfo;
+  const {
+    _id: userId,
+    timeZone,
+    name: userName,
+    specialConsiderations,
+    demographics,
+    country,
+    latestConcernScores,
+  } = userInfo;
 
   try {
     if (!latestRoutineId) throw httpError("No latest routineId");
+
+    const partScores = latestConcernScores[part];
 
     const { updatedListOfSolutions, areCurrentSolutionsOkay } = await chooseSolutionsForConcerns({
       userId: String(userId),
@@ -56,6 +66,7 @@ export default async function reviewLatestRoutine({
       demographics,
       partConcerns,
       partImages,
+      partScores,
       incrementMultiplier,
       specialConsiderations,
     });

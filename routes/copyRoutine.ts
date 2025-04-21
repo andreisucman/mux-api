@@ -5,12 +5,13 @@ import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import { db } from "init.js";
 import doWithRetries from "helpers/doWithRetries.js";
-import { CustomRequest, RoutineType } from "types.js";
+import { CustomRequest, PartEnum, RoutineType } from "types.js";
 import { calculateDaysDifference, checkDateValidity } from "helpers/utils.js";
 import httpError from "@/helpers/httpError.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import copySingleRoutine from "@/functions/copySingleRoutine.js";
 import checkPurchaseAccess from "@/functions/checkPurchaseAccess.js";
+import updateRoutineDataStats from "@/functions/updateRoutineDataStats.js";
 
 const route = Router();
 
@@ -71,6 +72,8 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         daysDifference,
       })
     );
+
+    updateRoutineDataStats({ userId: req.userId, part: routineToAdd.part as PartEnum, concerns: routineToAdd.concerns });
 
     res.status(200).json({ message: [clonedRoutine] });
   } catch (error) {

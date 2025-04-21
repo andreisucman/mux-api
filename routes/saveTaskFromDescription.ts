@@ -12,13 +12,11 @@ import { adminDb, db } from "init.js";
 import askRepeatedly from "functions/askRepeatedly.js";
 import isActivityHarmful from "@/functions/isActivityHarmful.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
-import sortTasksInScheduleByDate from "@/helpers/sortTasksInScheduleByDate.js";
 import { checkDateValidity, daysFrom, toSnakeCase } from "helpers/utils.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import findEmoji from "helpers/findEmoji.js";
 import moderateContent from "@/functions/moderateContent.js";
 import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
-import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 import { validParts } from "@/data/other.js";
@@ -27,6 +25,7 @@ import generateImage from "@/functions/generateImage.js";
 import searchYoutubeVideos from "@/functions/searchYoutubeVideos.js";
 import getLatestTasks from "@/functions/getLatestTasks.js";
 import { checkIfPublic } from "./checkIfPublic.js";
+import updateRoutineDataStats from "@/functions/updateRoutineDataStats.js";
 
 const route = Router();
 
@@ -357,6 +356,8 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         }
       )
     );
+
+    updateRoutineDataStats({ userId: req.userId, part, concerns: [concern] });
 
     const reponse = { tasks: [], routine: null };
 

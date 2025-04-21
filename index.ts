@@ -90,6 +90,7 @@ import rescheduleTaskInstance from "routes/rescheduleTaskInstance.js";
 import deleteToAnalyze from "routes/deleteToAnalyze.js";
 import getConcerns from "routes/getConcerns.js";
 import getIsFromEu from "@/routes/getIsFromEu.js";
+import submitFeedback from "@/routes/submitFeedback.js";
 
 import { client } from "init.js";
 
@@ -171,6 +172,7 @@ app.use("/deleteToAnalyze", deleteToAnalyze);
 
 // protected routes
 app.use((req, res, next) => checkAccess(req, res, next, false));
+app.use("/submitFeedback", submitFeedback);
 app.use("/deleteTask", deleteTask);
 app.use("/updateStatusOfTask", updateStatusOfTask);
 app.use("/rescheduleTaskInstance", rescheduleTaskInstance);

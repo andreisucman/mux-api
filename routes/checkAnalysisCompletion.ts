@@ -47,7 +47,14 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         error: job.message,
       });
 
-      return;
+      await doWithRetries(async () =>
+        db.collection("AnalysisStatus").updateOne(
+          {
+            _id: job._id,
+          },
+          { $unset: { operationKey: "" } }
+        )
+      );
     }
 
     if (job.isRunning) {

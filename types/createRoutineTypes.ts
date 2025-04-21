@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { UserConcernType, RecipeType, DemographicsType, NextActionType } from "@/types.js";
+import { UserConcernType, RecipeType, DemographicsType, NextActionType, LatestScoresType } from "@/types.js";
 
 export type CreateRoutineUserInfoType = {
   _id: ObjectId;
@@ -10,6 +10,7 @@ export type CreateRoutineUserInfoType = {
   timeZone: string;
   nextRoutine: NextActionType;
   specialConsiderations: string;
+  latestConcernScores: LatestScoresType;
 };
 
 export type TaskExampleType = { type: string; url: string };

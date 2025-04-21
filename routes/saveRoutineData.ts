@@ -13,6 +13,25 @@ import getUserInfo from "@/functions/getUserInfo.js";
 import cancelRoutineSubscribers from "@/functions/cancelRoutineSubscribers.js";
 import publishBeforeAfter from "@/functions/publishBeforeAfter.js";
 import checkPublishingRequirements from "@/functions/checkRoutineDataPublishingRequirements.js";
+import { getStatsForRoutineData } from "@/functions/updateRoutineDataStats.js";
+
+export type RoutineDataStatsType = {
+  routines: number;
+  completedTasks: number;
+  completedTasksWithProof: number;
+  diaryRecords: number;
+};
+
+export type RoutineDataType = {
+  concern: string;
+  part: string;
+  name: string;
+  status: string;
+  description: string;
+  price: number;
+  updatePrice: number;
+  stats?: RoutineDataStatsType;
+};
 
 const route = Router();
 
@@ -52,6 +71,10 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       userName: userInfo.name,
     };
 
+    const existingRecord = await doWithRetries(async () =>
+      db.collection("RoutineData").findOne({ userId: new ObjectId(req.userId), concern, part })
+    );
+
     if (status === "public") {
       if (!userInfo.club.payouts.payoutsEnabled) {
         res.status(200).json({
@@ -59,7 +82,11 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         });
         return;
       }
-      const { passed, message } = await checkPublishingRequirements({ userId: req.userId, concern });
+      const { passed, message } = await checkPublishingRequirements({
+        userId: req.userId,
+        part,
+        concern,
+      });
       if (!passed) {
         res.status(200).json({
           error: message,
@@ -83,10 +110,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       }
     }
 
-    const existingRecord = await doWithRetries(async () =>
-      db.collection("RoutineData").findOne({ userId: new ObjectId(req.userId), concern, part })
-    );
-
     if (existingRecord) {
       await doWithRetries(async () =>
         db.collection("RoutineData").updateOne(
@@ -97,6 +120,14 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         )
       );
     } else {
+      const stats = await getStatsForRoutineData({
+        concerns: [concern],
+        part,
+        userId: req.userId,
+      });
+
+      updatePayload.stats = stats;
+
       const firstRoutineOfConcern = await doWithRetries(async () =>
         db
           .collection("Routine")

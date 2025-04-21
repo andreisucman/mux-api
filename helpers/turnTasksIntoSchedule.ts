@@ -43,18 +43,15 @@ export default function turnTasksIntoSchedule({
     }
   });
 
-  const schedule = scheduleTasks.reduce(
-    (acc: { [key: string]: ScheduleTaskType[] }, current) => {
-      const { date, ...otherCurrent } = current;
-      if (acc[date]) {
-        acc[date].push(current);
-      } else {
-        acc[date] = [otherCurrent];
-      }
-      return acc;
-    },
-    {}
-  );
+  const schedule = scheduleTasks.reduce((acc: { [key: string]: ScheduleTaskType[] }, current) => {
+    const { date, ...otherCurrent } = current;
+    if (acc[date]) {
+      acc[date].push(current);
+    } else {
+      acc[date] = [otherCurrent];
+    }
+    return acc;
+  }, {});
 
   const sortedSchedule = sortTasksInScheduleByDate(schedule);
 

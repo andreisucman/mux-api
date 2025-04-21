@@ -14,6 +14,7 @@ import getUserInfo from "@/functions/getUserInfo.js";
 import httpError from "@/helpers/httpError.js";
 import { checkIfPublic } from "./checkIfPublic.js";
 import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
+import updateRoutineDataStats from "@/functions/updateRoutineDataStats.js";
 
 const route = Router();
 
@@ -77,12 +78,13 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       userId: new ObjectId(req.userId),
       startsAt: newStartsAt,
       expiresAt: newExpiresAt,
-      proofId: null,
       completedAt: null,
       status: TaskStatusEnum.ACTIVE,
       userName: userInfo.name,
       copiedFrom: userName,
     };
+
+    delete resetTask.proofId;
 
     if (resetTask.previousRecipe) {
       resetTask.previousRecipe = null;
@@ -191,6 +193,8 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         keyTwo: "manualTasksStolen",
       });
     }
+
+    updateRoutineDataStats({ userId: req.userId, part: currentTask.part, concerns: [currentTask.concern] });
 
     res.status(200).json({
       message: result,

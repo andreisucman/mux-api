@@ -42,9 +42,9 @@ export default async function makeANewRoutine({
   specialConsiderations,
 }: Props) {
   try {
-    const { demographics, name: userName, timeZone, country } = userInfo;
+    const { demographics, name: userName, timeZone, country, latestConcernScores } = userInfo;
 
-    console.log("userInfo time zone", timeZone);
+    const partScores = latestConcernScores[part];
 
     const { updatedListOfSolutions } = await chooseSolutionsForConcerns({
       userId: String(userId),
@@ -55,6 +55,7 @@ export default async function makeANewRoutine({
       demographics,
       partConcerns,
       partImages,
+      partScores,
       incrementMultiplier,
       specialConsiderations,
     });

@@ -15,6 +15,7 @@ import checkPurchaseAccess from "@/functions/checkPurchaseAccess.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
 import combineAllTasks from "@/helpers/combineAllTasks.js";
 import { checkIfPublic } from "./checkIfPublic.js";
+import updateRoutineDataStats from "@/functions/updateRoutineDataStats.js";
 
 const route = Router();
 
@@ -98,13 +99,14 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       ...taskInfo,
       proofEnabled: true,
       completedAt: null,
-      proofId: null,
       userName: userInfo.name,
       copiedFrom: userName,
       userId: new ObjectId(req.userId),
       status: TaskStatusEnum.ACTIVE,
       previousRecipe: null,
     };
+
+    delete taskInfo.proofId;
 
     let draftTasks: TaskType[] = updatedAllTask.ids.map((obj) => {
       return {
@@ -213,6 +215,8 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         keyTwo: "manualTasksStolen",
       });
     }
+
+    updateRoutineDataStats({ userId: req.userId, part: taskInfo.part, concerns: [taskInfo.concern] });
 
     res.status(200).json({
       message: updatedRoutine,

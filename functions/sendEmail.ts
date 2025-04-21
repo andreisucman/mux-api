@@ -1,22 +1,19 @@
 import { sesClient } from "init.js";
-import { SendEmailCommand } from "@aws-sdk/client-ses";
+import { SendEmailCommand, SendEmailCommandInput } from "@aws-sdk/client-ses";
 import httpError from "@/helpers/httpError.js";
 
 type Props = {
   to: string;
   from?: string;
+  replyTo?: string;
   subject: string;
   html: string;
 };
 
-const sendEmail = async ({
-  to,
-  from = process.env.SES_FROM_ADDRESS,
-  subject,
-  html,
-}: Props) => {
-  const payload = {
+const sendEmail = async ({ to, from = process.env.SES_FROM_ADDRESS, replyTo, subject, html }: Props) => {
+  const payload: SendEmailCommandInput = {
     Destination: { ToAddresses: [to] },
+    ReplyToAddresses: [replyTo],
     Message: {
       Body: {
         Html: { Data: html },

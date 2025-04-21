@@ -55,6 +55,7 @@ export default async function createRoutine({
             country: 1,
             timeZone: 1,
             nextRoutine: 1,
+            latestConcernScores: 1,
             specialConsiderations: 1,
           },
         }
@@ -116,12 +117,6 @@ export default async function createRoutine({
       });
     }
   } catch (error) {
-    await addAnalysisStatusError({
-      userId: String(userId),
-      message: "An unexpected error occured. Please try again.",
-      originalMessage: error.message,
-      operationKey: "routine",
-    });
     throw httpError(error);
   }
 }

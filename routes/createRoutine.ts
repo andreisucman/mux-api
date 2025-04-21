@@ -17,13 +17,12 @@ import { db } from "init.js";
 import { validParts } from "@/data/other.js";
 import { checkDateValidity, delayExecution } from "@/helpers/utils.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
+import updateRoutineDataStats from "@/functions/updateRoutineDataStats.js";
 
 const route = Router();
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
   const { part, creationMode = "scratch", routineStartDate, specialConsiderations } = req.body;
-
-  console.log("req.timeZone", req.timeZone);
 
   if (!part || (part && !validParts.includes(part))) {
     res.status(400).json({ error: "Bad request" });
@@ -31,8 +30,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
   }
 
   const { isValidDate, isFutureDate } = checkDateValidity(routineStartDate, req.timeZone);
-
-  console.log("routineStartDate", routineStartDate);
 
   if (!isValidDate || !isFutureDate) {
     res.status(400).json({ error: "Bad request" });
@@ -157,6 +154,9 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
           { $set: { isRunning: false, progress: 99 } }
         )
     );
+
+    updateRoutineDataStats({ userId: req.userId, part, concerns: partConcerns.map((c) => c.name) });
+
     global.stopInterval();
   } catch (err) {
     await addAnalysisStatusError({

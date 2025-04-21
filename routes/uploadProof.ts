@@ -23,6 +23,7 @@ import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.j
 import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 import { checkIfPublic } from "./checkIfPublic.js";
 import createImageCollage from "@/functions/createImageCollage.js";
+import updateRoutineDataStats from "@/functions/updateRoutineDataStats.js";
 
 const route = Router();
 
@@ -407,6 +408,8 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         });
       }
     }
+
+    await updateRoutineDataStats({ userId: req.userId, part, concerns: [concern] });
 
     await doWithRetries(async () =>
       db.collection("AnalysisStatus").updateOne(

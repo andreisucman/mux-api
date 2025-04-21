@@ -23,8 +23,6 @@ export default async function getRawSchedule({ allTasks, routineStartDate, timeZ
       timeZone,
     });
 
-    console.log("getRawSchedule dateOne", dateOne);
-
     const dateTwo = daysFrom({ date: dateOne, days: days > 0 ? days : 7 });
     const lastMonth = daysFrom({ days: -30 });
 

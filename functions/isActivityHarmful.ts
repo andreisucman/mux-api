@@ -17,7 +17,7 @@ export default async function isActivityHarmful({
   categoryName,
 }: Props) {
   try {
-    const systemContent = `The user gives you a description of an activity. Your goal is to check if it has an intent of harming the person who performs it. An activity has an intent of harming if it clearly leads to health damage.`;
+    const systemContent = `The user gives you a description of an activity. Your goal is to check if it has an intent of harming or defaming the person who performs it. An activity has an intent of harming or defaming if it clearly leads to health or dignity damage.`;
 
     const IsSafeResponseType = z.object({
       isHarmful: z.boolean().describe("true if harfmul, false if not"),

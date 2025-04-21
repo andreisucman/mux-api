@@ -17,13 +17,11 @@ type Props = {
     | "yourPlanPurchased"
     | "payoutsRejected"
     | "payoutsPaused"
-    | "payoutsEnabled";
+    | "payoutsEnabled"
+    | "feedback";
 };
 
-export default async function getEmailContent({
-  accessToken,
-  emailType,
-}: Props) {
+export default async function getEmailContent({ accessToken, emailType }: Props) {
   let title = "";
   let body = "";
   let signedUrl = "";
@@ -36,9 +34,7 @@ export default async function getEmailContent({
       case "passwordReset":
         title = "Muxout - Reset password";
         bodyPath = path.join(baseEmailPath, "passwordReset.html");
-        signedUrl = `${
-          process.env.CLIENT_URL
-        }/set-password?accessToken=${encodeURIComponent(accessToken)}`;
+        signedUrl = `${process.env.CLIENT_URL}/set-password?accessToken=${encodeURIComponent(accessToken)}`;
         break;
       case "confirmationCode":
         title = "Muxout - Confirmation code";
@@ -63,6 +59,9 @@ export default async function getEmailContent({
       case "yourPlanPurchased":
         title = "Muxout - Sale notification";
         bodyPath = path.join(baseEmailPath, "saleNotification.html");
+        break;
+      case "feedback":
+        bodyPath = path.join(baseEmailPath, "feedback.html");
         break;
     }
 

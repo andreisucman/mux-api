@@ -38,12 +38,10 @@ export default async function polishRawSchedule({
     const listOfConcerns = JSON.stringify(concerns);
 
     let systemContent =
-      "You are a dermatologist, dentist, and a fitness coach. The user gives you their improvement routine. Your goal is to optimize the order of the tasks for their maximum safety and effectiveness. DON'T REMOVE OR MODIFY THE NAMES OF THE TASKS. MAINTAIN THE SCHEMA FORMAT OF THE SCHEDULE. Be concise and to the point.";
+      "You are a dermatologist. The user gives you their improvement routine. Your goal is 1. Check iIf there are incompatible tasks and if yes separate them in to to a safe distance. 2. Optimize the position (order) of each task within the day for maximum effectiveness. DON'T REMOVE OR MODIFY THE NAMES OF THE TASKS. MAINTAIN THE SCHEMA FORMAT OF THE SCHEDULE. Be concise and to the point.";
 
     if (systemContent)
       systemContent += `The user has the following special consideration: ${specialConsiderations}. Consider it when optimizing the schedule.`;
-
-    systemContent += `Now is ${new Date().toUTCString()}. Ensure there are no tasks scheduled to past.`
 
     const userContent: RunType[] = [
       {
