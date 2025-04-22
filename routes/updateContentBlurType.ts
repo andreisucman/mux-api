@@ -25,13 +25,12 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         {
           projection: {
             images: 1,
-            part: 1,
           },
         }
       )
     )) as unknown as ProgressType;
 
-    const { images, part } = relevantRecord as ProgressType;
+    const { images } = relevantRecord as ProgressType;
 
     const relevantImageObject = images.find((imageObj) => imageObj.urls.some((urlObj) => urlObj.url === url));
 
@@ -47,7 +46,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       const response = await doWithRetries(() =>
         fetch(`${process.env.PROCESSING_SERVER_URL}/blurImageManually`, {
           method: "POST",
-          body: JSON.stringify({ blurDots, url }),
+          body: JSON.stringify({ blurDots, url, resetOld: true }),
           headers: {
             "Content-Type": "application/json",
             Cookie: cookieString,
@@ -72,8 +71,10 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         io.urls.some((urlObj) => urlObj.url === url) ? { ...io, ...newRelevantImageObject } : io
       );
     } else {
-      const newMainUrlObject = relevantImageObject.urls.find((urlObj) => urlObj.url === url);
-      newMainUrl = relevantImageObject.mainUrl;
+      const currentBlurType = relevantImageObject.mainUrl.name;
+
+      const newMainUrlObject = relevantImageObject.urls.find((urlObj) => urlObj.name !== currentBlurType);
+
       if (newMainUrlObject) newMainUrl = newMainUrlObject;
 
       const newRelevantImageObject = {
@@ -89,13 +90,11 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     updatePayload.$set = { images: updatedImages };
 
     await doWithRetries(async () =>
-      db
-        .collection("Progress")
-        .updateOne({ _id: new ObjectId(contentId), userId: new ObjectId(req.userId) }, updatePayload)
+      db.collection("Progress").updateMany({ "images.urls.url": url, userId: new ObjectId(req.userId) }, updatePayload)
     );
 
     await doWithRetries(() =>
-      db.collection("Progress").updateOne(
+      db.collection("Progress").updateMany(
         {
           userId: new ObjectId(req.userId),
           "initialImages.urls.url": url,
@@ -105,10 +104,9 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     );
 
     await doWithRetries(() =>
-      db.collection("BeforeAfter").updateOne(
+      db.collection("BeforeAfter").updateMany(
         {
           userId: new ObjectId(req.userId),
-          part,
           "images.urls.url": url,
         },
         { $set: { images: updatedImages } }
@@ -116,35 +114,32 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     );
 
     await doWithRetries(() =>
-      db.collection("BeforeAfter").updateOne(
+      db.collection("BeforeAfter").updateMany(
         {
           userId: new ObjectId(req.userId),
-          part,
           "initialImages.urls.url": url,
         },
         { $set: { initialImages: updatedImages } }
       )
     );
 
-    const finalRecord = (await doWithRetries(async () =>
-      db.collection("Progress").findOne(
-        { _id: new ObjectId(contentId), userId: new ObjectId(req.userId) },
-        {
-          projection: {
-            images: 1,
-            initialImages: 1,
-          },
-        }
-      )
+    const updatedRecords = (await doWithRetries(async () =>
+      db
+        .collection("Progress")
+        .find(
+          { "initialImages.urls.url": url, userId: new ObjectId(req.userId) },
+          {
+            projection: {
+              images: 1,
+              initialImages: 1,
+            },
+          }
+        )
+        .toArray()
     )) as unknown as ProgressType;
 
-    
-
     res.status(200).json({
-      message: {
-        images: finalRecord.images,
-        initialImages: finalRecord.initialImages,
-      },
+      message: updatedRecords,
     });
   } catch (err) {
     next(err);

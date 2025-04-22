@@ -97,13 +97,15 @@ export default async function analyzeAppearance({
     toUpdateUser.$set.nextScan = updateNextScan({ nextScan, toAnalyze });
 
     const analyzePartPromises = parts.map((part) => {
+      const partUserUploadedConcernObjects = userUploadedConcerns.filter((co) => co.part === part);
+
       return doWithRetries(async () =>
         analyzePart({
           name,
           club,
           part: part as PartEnum,
           userId,
-          userUploadedConcerns,
+          partUserUploadedConcerns: partUserUploadedConcernObjects.map((co) => co.name),
           categoryName,
           demographics,
           toAnalyze,

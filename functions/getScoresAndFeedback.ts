@@ -1,6 +1,6 @@
 import doWithRetries from "@/helpers/doWithRetries.js";
 import { db } from "@/init.js";
-import { CategoryNameEnum, UserConcernType, PartEnum, ProgressType } from "@/types.js";
+import { CategoryNameEnum, PartEnum, ProgressType } from "@/types.js";
 import { ObjectId } from "mongodb";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import analyzeConcerns from "./analyzeConcerns.js";
@@ -20,7 +20,7 @@ type Props = {
   initialConcernScores?: ScoreType[];
   categoryName: CategoryNameEnum;
   imageObjects: ImageObject[];
-  partUserUploadedConcerns: UserConcernType[];
+  partUserUploadedConcerns: string[];
 };
 
 export default async function getScoresAndFeedback({
@@ -32,7 +32,7 @@ export default async function getScoresAndFeedback({
   progressIdToExclude,
   partUserUploadedConcerns,
 }: Props) {
-  let concerns: UserConcernType[] = [...partUserUploadedConcerns];
+  let concerns: string[] = [...partUserUploadedConcerns];
 
   const previousScanFilter: { [key: string]: any } = {
     userId: new ObjectId(userId),
@@ -58,8 +58,7 @@ export default async function getScoresAndFeedback({
     currentImages: imageObjects.map((obj) => obj.url),
   });
 
-  const newConcernNames = newConcerns.map((o) => o.name);
-  const uploadedConcernsExist = concerns.some((obj) => newConcernNames.includes(obj.name));
+  const uploadedConcernsExist = concerns.some((concern) => newConcerns.includes(concern));
 
   if (!uploadedConcernsExist) {
     if (newConcerns.length > 0) {
@@ -78,11 +77,12 @@ export default async function getScoresAndFeedback({
 
   await incrementProgress({ value: 4, operationKey: "progress", userId });
 
-  const safeInitialConcernScores = initialConcernScores.length > 0 ? initialConcernScores : concernScores;
+  const safeInitialConcernScores =
+    initialConcernScores && initialConcernScores.length > 0 ? initialConcernScores : concernScores;
   const concernScoresDifference = calculateScoreDifferences(safeInitialConcernScores, concernScores);
 
-  const concernsThatAreTrulyPresent = concerns.filter((co) =>
-    concernScores.find((so) => so.part === co.part && so.name === co.name && so.value > 0)
+  const concernsThatAreTrulyPresent = concerns.filter((concern) =>
+    concernScores.find((so) => so.name === concern && so.value > 0)
   );
 
   return {

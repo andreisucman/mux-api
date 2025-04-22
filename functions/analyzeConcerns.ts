@@ -77,7 +77,7 @@ export default async function analyzeConcerns({ userId, part, currentImages, cat
 
     updateConcernsAnalytics({ userId, concerns: userConcerns });
 
-    return userConcerns;
+    return response.concerns;
   } catch (err) {
     httpError(err);
   }

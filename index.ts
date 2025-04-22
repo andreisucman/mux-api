@@ -145,14 +145,12 @@ app.use((req, res, next) => checkAccess(req, res, next, true));
 app.use("/authorize", authorize);
 app.use("/authenticate", authenticate);
 app.use("/createRoutineCheckoutSession", createRoutineCheckoutSession);
-app.use("/getUserData", getUserData);
 app.use("/getPublicUserData", getPublicUserData);
 app.use("/getRoutines", getRoutines);
 app.use("/getProof", getProof);
 app.use("/getProgress", getProgress);
 app.use("/getDiary", getDiary);
 app.use("/updateTaskExamples", updateTaskExamples);
-
 app.use("/verifyEmail", verifyEmail);
 app.use("/changeEmailStepOne", changeEmailStepOne);
 app.use("/changeEmailStepTwo", changeEmailStepTwo);
@@ -173,6 +171,7 @@ app.use("/deleteToAnalyze", deleteToAnalyze);
 
 // protected routes
 app.use((req, res, next) => checkAccess(req, res, next, false));
+app.use("/getUserData", getUserData);
 app.use("/getTasks", getTasks);
 app.use("/submitFeedback", submitFeedback);
 app.use("/deleteTask", deleteTask);

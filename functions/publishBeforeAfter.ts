@@ -30,7 +30,7 @@ const publishBeforeAfter = async ({
         {
           $match: {
             userId: new ObjectId(userId),
-            concern,
+            concerns: { $in: [concern] },
             part,
             createdAt: { $lte: new Date(firstRoutineStartDate) },
           },
@@ -48,7 +48,7 @@ const publishBeforeAfter = async ({
   const latestProgressRecord = await doWithRetries(() =>
     db
       .collection("Progress")
-      .find({ userId: new ObjectId(userId), concern, part })
+      .find({ userId: new ObjectId(userId), concerns: { $in: [concern] }, part })
       .sort({ createdAt: -1 })
       .next()
   );

@@ -1,6 +1,7 @@
 import doWithRetries from "@/helpers/doWithRetries.js";
 import { normalizeString } from "@/helpers/utils.js";
 import { db } from "@/init.js";
+import { ProgressType } from "@/types.js";
 import { ObjectId } from "mongodb";
 
 type Props = {
@@ -13,7 +14,7 @@ const checkPublishingRequirements = async ({ userId, part, concern }: Props) => 
   const response = { passed: false, message: "" };
 
   const numberOfProgresses = await doWithRetries(() =>
-    db.collection("Progress").countDocuments({ userId: new ObjectId(userId), part, concern })
+    db.collection("Progress").countDocuments({ userId: new ObjectId(userId), part, concerns: { $in: [concern] } })
   );
 
   const concernName = normalizeString(concern).toLowerCase();
@@ -23,29 +24,33 @@ const checkPublishingRequirements = async ({ userId, part, concern }: Props) => 
     return response;
   }
 
-  const earliestConcernScoreRecord = await doWithRetries(() =>
+  const earliestConcernScoreRecord = (await doWithRetries(() =>
     db
       .collection("Progress")
-      .find({ userId: new ObjectId(userId), part, concern })
-      .project({ concernScore: 1 })
+      .find({ userId: new ObjectId(userId), part, concerns: { $in: [concern] } })
+      .project({ concernScores: 1 })
       .sort({ createdAt: 1 })
       .next()
-  );
+  )) as unknown as Partial<ProgressType>;
 
-  const { concernScore: firstConcernScoreObject } = earliestConcernScoreRecord;
+  const { concernScores: firstConcernScoresObject } = earliestConcernScoreRecord;
 
-  const latestConcernScoreRecord = await doWithRetries(() =>
+  const latestConcernScoreRecord = (await doWithRetries(() =>
     db
       .collection("Progress")
-      .find({ userId: new ObjectId(userId), part, concern })
-      .project({ concernScore: 1 })
+      .find({ userId: new ObjectId(userId), part, concerns: { $in: [concern] } })
+      .project({ concernScores: 1 })
       .sort({ createdAt: -1 })
       .next()
-  );
+  )) as unknown as Partial<ProgressType>;
 
-  const { concernScore: lastConcernScoreObject } = latestConcernScoreRecord;
+  const { concernScores: lastConcernScoresObject } = latestConcernScoreRecord;
+  const relevantFirstConcernScoreObject = firstConcernScoresObject.find((co) => co.name === concern);
+  const relevantLastConcernScoreObject = lastConcernScoresObject.find((co) => co.name === concern);
+
   const improvementTresholdPassed =
-    lastConcernScoreObject.value - firstConcernScoreObject.value <= Number(process.env.IMPROVEMENT_RATE_TRESHOLD) * -1;
+    relevantLastConcernScoreObject.value - relevantFirstConcernScoreObject.value <=
+    Number(process.env.IMPROVEMENT_RATE_TRESHOLD) * -1;
 
   if (improvementTresholdPassed) {
     response.message = `You have to have at least ${Number(

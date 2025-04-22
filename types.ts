@@ -261,14 +261,14 @@ export type ProgressType = {
   part: PartEnum;
   initialDate: Date;
   createdAt: Date;
+  isPublic: boolean;
   demographics: DemographicsType;
   images: ProgressImageType[];
   initialImages: ProgressImageType[];
-  concernScore?: ScoreType;
-  concernScoreDifference?: ScoreDifferenceType;
+  concernScores?: ScoreType[];
+  concernScoresDifference?: ScoreDifferenceType[];
   specialConsiderations: string;
-  isPublic: boolean;
-  concern: string;
+  concerns: string[];
   userName?: string;
   deletedOn?: Date;
   moderationStatus: ModerationStatusEnum;

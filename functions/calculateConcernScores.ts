@@ -1,11 +1,11 @@
 import doWithRetries from "@/helpers/doWithRetries.js";
-import { CategoryNameEnum, PartEnum, ProgressType, UserConcernType } from "@/types.js";
+import { CategoryNameEnum, PartEnum, ProgressType } from "@/types.js";
 import compareFeatureProgress from "./compareFeatureProgress.js";
 import analyzeFeature from "./analyzeFeature.js";
 
 type Props = {
   previousScan: ProgressType;
-  concerns: UserConcernType[];
+  concerns: string[];
   part: PartEnum;
   userId: string;
   categoryName: CategoryNameEnum;
@@ -20,15 +20,13 @@ export default async function calculateConcernScores({
   currentImages,
   concerns,
 }: Props) {
-
   if (previousScan) {
     const previousImages = previousScan.images.map((obj) => obj.mainUrl.url);
+    const relevantPreviouConcernObject = previousScan.concernScores.find((co) => co.part === part);
 
     return await doWithRetries(async () =>
       Promise.all(
-        concerns.map(async (concernObject: UserConcernType) => {
-          const relevantPreviousRecord = previousScan.concernScore;
-
+        concerns.map(async (concern: string) => {
           return doWithRetries(() => {
             return compareFeatureProgress({
               part,
@@ -36,9 +34,9 @@ export default async function calculateConcernScores({
               categoryName,
               previousImages,
               currentImages,
-              name: concernObject.name,
-              previousScore: relevantPreviousRecord.value,
-              previousExplanation: relevantPreviousRecord.explanation,
+              name: concern,
+              previousScore: relevantPreviouConcernObject.value,
+              previousExplanation: relevantPreviouConcernObject.explanation,
             });
           });
         })
@@ -48,12 +46,12 @@ export default async function calculateConcernScores({
     // first scan case
     return await doWithRetries(async () =>
       Promise.all(
-        concerns.map(async (concernObject: UserConcernType) => {
+        concerns.map(async (concern: string) => {
           return doWithRetries(() =>
             analyzeFeature({
               part,
               userId,
-              name: concernObject.name,
+              name: concern,
               categoryName,
               relevantImages: currentImages,
             })

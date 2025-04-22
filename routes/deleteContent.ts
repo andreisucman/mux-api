@@ -73,14 +73,14 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
             substituteProgressImagesRecord: substituteProgressRecord.images,
           });
 
-          const { images, concern, createdAt, concernScore, concernScoreDifference } = substituteProgressRecord;
+          const { images, concerns, createdAt, concernScores, concernScoresDifference } = substituteProgressRecord;
 
           const toUpdatePayload = {
-            concernScore,
+            concernScores,
             images,
-            concern,
+            concerns,
             updatedAt: createdAt,
-            concernScoreDifference,
+            concernScoresDifference,
           };
 
           await doWithRetries(() =>

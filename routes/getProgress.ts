@@ -29,16 +29,16 @@ route.get("/:userName?", async (req: CustomRequest, res, next: NextFunction) => 
     };
 
     if (part) finalFilter.part = part;
-    if (concern) finalFilter.concern = concern;
+    if (concern) finalFilter.concerns = { $in: [concern] };
 
     const projection: { [key: string]: any } = {
       _id: 1,
       isPublic: 1,
       createdAt: 1,
-      concernScoreDifference: 1,
+      concernScoresDifference: 1,
       initialDate: 1,
       userId: 1,
-      concern: 1,
+      concerns: 1,
       part: 1,
       deletedOn: 1,
     };
@@ -63,10 +63,10 @@ route.get("/:userName?", async (req: CustomRequest, res, next: NextFunction) => 
         finalFilter.isPublic = true;
       } else {
         finalFilter.$and = [
-          { concern: { $in: priceData.map((o) => o.concern) } },
+          { concerns: { $in: priceData.map((o) => o.concern) } },
           { part: { $in: priceData.map((o) => o.part) } },
         ];
-        if (concern) finalFilter.$and.push({ concern: { $in: [concern] } });
+        if (concern) finalFilter.$and.push({ concerns: { $in: [concern] } });
         if (part) finalFilter.$and.push({ part });
       }
     } else {
