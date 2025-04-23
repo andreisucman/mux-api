@@ -166,7 +166,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         .collection("AnalysisStatus")
         .updateOne(
           { userId: new ObjectId(req.userId), operationKey: "routine" },
-          { $set: { isRunning: false, progress: 99 } }
+          { $set: { isRunning: false, progress: 0 }, $unset: { createdAt: null } }
         )
     );
 

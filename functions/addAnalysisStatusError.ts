@@ -11,14 +11,13 @@ export default async function addAnalysisStatusError({
 }: UpdateErrorProps) {
   try {
     await doWithRetries(async () =>
-      db
-        .collection("AnalysisStatus")
-        .updateOne(
-          { userId: new ObjectId(userId), operationKey },
-          {
-            $set: { isRunning: false, isError: true, message, originalMessage },
-          }
-        )
+      db.collection("AnalysisStatus").updateOne(
+        { userId: new ObjectId(userId), operationKey },
+        {
+          $set: { isRunning: false, isError: true, message, originalMessage },
+          $unset: { createdAt: null },
+        }
+      )
     );
   } catch (err) {
     console.log("Error in addAnalysisStatusError: ", err);

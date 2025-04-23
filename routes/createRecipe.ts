@@ -133,9 +133,9 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     await doWithRetries(async () =>
       db.collection("AnalysisStatus").updateOne(
-        { userId: new ObjectId(req.userId), operationKey: analysisType, createdAt: new Date() },
+        { userId: new ObjectId(req.userId), operationKey: analysisType },
         {
-          $set: { isRunning: true, progress: 1 },
+          $set: { isRunning: true, progress: 1, createdAt: new Date() },
           $unset: { isError: "" },
         },
         { upsert: true }
@@ -283,7 +283,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         { userId: new ObjectId(req.userId), operationKey: analysisType },
         {
           $set: { isRunning: false, progress: 0 },
-          $unset: { isError: "" },
+          $unset: { isError: "", createdAt: null },
         }
       )
     );

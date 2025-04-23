@@ -80,7 +80,7 @@ export default async function chooseSolutionsForConcerns({
 
     const concernsWithSeverities = partScores
       .filter((so) => so.value > 0)
-      .map((so) => `Name: ${so.name}. Severity: ${so.value}/100`)
+      .map((so) => `Name: ${so.name}. Severity: ${so.value}/100. Explanation: ${so.explanation}.`)
       .join("\n");
 
     const content: ChatCompletionContentPart[] = [

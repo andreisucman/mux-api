@@ -184,7 +184,7 @@ export default async function analyzeAppearance({
         .collection("AnalysisStatus")
         .updateOne(
           { userId: new ObjectId(userId), operationKey: "progress" },
-          { $set: { isRunning: false, progress: 0 } }
+          { $set: { isRunning: false, progress: 0 }, $unset: { createdAt: null } }
         )
     );
 

@@ -120,45 +120,47 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         )
       );
     } else {
-      const stats = await getStatsForRoutineData({
-        concerns: [concern],
-        part,
-        userId: req.userId,
-      });
-
-      updatePayload.stats = stats;
-
-      const firstRoutineOfConcern = await doWithRetries(async () =>
-        db
-          .collection("Routine")
-          .find({ userId: new ObjectId(req.userId), concerns: { $in: [concern] }, part })
-          .sort({ createdAt: 1 })
-          .next()
-      );
-
-      updatePayload.contentStartDate = firstRoutineOfConcern.createdAt;
-
-      const concernBeforeAfterCount = await doWithRetries(() =>
-        db.collection("BeforeAfter").countDocuments({ userId: new ObjectId(req.userId), concern, part })
-      );
-
-      if (concernBeforeAfterCount === 0) {
-        const { name: userName, avatar } =
-          (await getUserInfo({
-            userId: req.userId,
-            projection: { name: 1, avatar: 1 },
-          })) || {};
-
-        publishBeforeAfter({
-          firstRoutineStartDate: firstRoutineOfConcern.createdAt,
-          userId: req.userId,
-          userName,
-          avatar,
-          concern,
+      if (status === "public") {
+        const stats = await getStatsForRoutineData({
+          concerns: [concern],
           part,
-          isPublic: status === "public",
-          routineName: name,
+          userId: req.userId,
         });
+
+        updatePayload.stats = stats;
+
+        const firstRoutineOfConcern = await doWithRetries(async () =>
+          db
+            .collection("Routine")
+            .find({ userId: new ObjectId(req.userId), concerns: { $in: [concern] }, part })
+            .sort({ createdAt: 1 })
+            .next()
+        );
+
+        updatePayload.contentStartDate = firstRoutineOfConcern.createdAt;
+
+        const concernBeforeAfterCount = await doWithRetries(() =>
+          db.collection("BeforeAfter").countDocuments({ userId: new ObjectId(req.userId), concern, part })
+        );
+
+        if (concernBeforeAfterCount === 0) {
+          const { name: userName, avatar } =
+            (await getUserInfo({
+              userId: req.userId,
+              projection: { name: 1, avatar: 1 },
+            })) || {};
+
+          publishBeforeAfter({
+            firstRoutineStartDate: firstRoutineOfConcern.createdAt,
+            userId: req.userId,
+            userName,
+            avatar,
+            concern,
+            part,
+            isPublic: status === "public",
+            routineName: name,
+          });
+        }
       }
 
       await doWithRetries(async () =>

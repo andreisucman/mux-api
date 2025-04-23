@@ -1,5 +1,4 @@
 import doWithRetries from "@/helpers/doWithRetries.js";
-import httpError from "@/helpers/httpError.js";
 import { db } from "@/init.js";
 import { BeforeAfterType, PartEnum, ProgressType } from "@/types.js";
 import { ObjectId } from "mongodb";
@@ -34,52 +33,49 @@ const publishBeforeAfter = async ({
             userId: new ObjectId(userId),
             concerns: { $in: [concern] },
             part,
-            createdAt: { $lte: new Date(firstRoutineStartDate) },
           },
         },
-        { $addFields: { diff: { $abs: { $subtract: ["$createdAt", new Date(firstRoutineStartDate)] } } } },
-        { $sort: { diff: 1 } },
+        { $sort: { _id: 1 } },
         { $limit: 1 },
-        { $unset: "diff" },
       ])
       .next()
   )) as unknown as ProgressType | null;
 
-  if (!earliestProgressRecord) throw httpError("Publishing routine without before progress record");
+  if (earliestProgressRecord) {
+    const latestProgressRecord = (await doWithRetries(() =>
+      db
+        .collection("Progress")
+        .find({ userId: new ObjectId(userId), concerns: { $in: [concern] }, part })
+        .sort({ _id: -1 })
+        .next()
+    )) as unknown as ProgressType | null;
 
-  const latestProgressRecord = (await doWithRetries(() =>
-    db
-      .collection("Progress")
-      .find({ userId: new ObjectId(userId), concerns: { $in: [concern] }, part })
-      .sort({ createdAt: -1 })
-      .next()
-  )) as unknown as ProgressType | null;
+    if (latestProgressRecord) {
+      const relevantLatestConcernScore = latestProgressRecord.concernScores.find((co) => co.name === concern);
+      const relevantLatestConcernScoreDifference = latestProgressRecord.concernScoresDifference.find(
+        (co) => co.name === concern
+      );
 
-  if (!latestProgressRecord) throw httpError("Publishing routine without after progress record");
+      const newBARecord: BeforeAfterType = {
+        userId: new ObjectId(userId),
+        concern,
+        part,
+        images: latestProgressRecord.images,
+        demographics: latestProgressRecord.demographics,
+        isPublic,
+        avatar,
+        userName,
+        concernScore: relevantLatestConcernScore,
+        concernScoreDifference: relevantLatestConcernScoreDifference,
+        updatedAt: latestProgressRecord.createdAt,
+        initialDate: earliestProgressRecord.createdAt,
+        initialImages: earliestProgressRecord.images,
+        routineName,
+      };
 
-  const relevantLatestConcernScore = latestProgressRecord.concernScores.find((co) => co.name === concern);
-  const relevantLatestConcernScoreDifference = latestProgressRecord.concernScoresDifference.find(
-    (co) => co.name === concern
-  );
-
-  const newBARecord: BeforeAfterType = {
-    userId: new ObjectId(userId),
-    concern,
-    part,
-    images: latestProgressRecord.images,
-    demographics: latestProgressRecord.demographics,
-    isPublic,
-    avatar,
-    userName,
-    concernScore: relevantLatestConcernScore,
-    concernScoreDifference: relevantLatestConcernScoreDifference,
-    updatedAt: latestProgressRecord.createdAt,
-    initialDate: earliestProgressRecord.createdAt,
-    initialImages: earliestProgressRecord.images,
-    routineName,
-  };
-
-  await doWithRetries(async () => db.collection("BeforeAfter").insertOne(newBARecord));
+      await doWithRetries(async () => db.collection("BeforeAfter").insertOne(newBARecord));
+    }
+  }
 };
 
 export default publishBeforeAfter;

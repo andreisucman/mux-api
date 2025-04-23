@@ -53,7 +53,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
           {
             _id: job._id,
           },
-          { $unset: { operationKey: "" } }
+          { $unset: { operationKey: "", createdAt: null } }
         )
       );
 

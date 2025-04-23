@@ -93,7 +93,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         { userId: new ObjectId(req.userId), operationKey: taskId },
         {
           $set: { isRunning: true, progress: 1 },
-          $unset: { isError: null, message: "" },
+          $unset: { isError: null, message: "", createdAt: null },
         },
         { upsert: true }
       )
@@ -419,7 +419,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         { userId: new ObjectId(req.userId), operationKey: taskId },
         {
           $set: { isRunning: false, progress: 0 },
-          $unset: { isError: "", message: "" },
+          $unset: { isError: "", message: "", createdAt: null },
         }
       )
     );

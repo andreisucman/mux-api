@@ -27,7 +27,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     const todayAdded = await doWithRetries(async () =>
       db
         .collection("Diary")
-        .find({ createdAt: { $gte: usersTodayMidnight }, part, concern })
+        .find({ userId: new ObjectId(req.userId), createdAt: { $gte: usersTodayMidnight }, part, concern })
         .toArray()
     );
 
@@ -41,6 +41,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     const todaysDiaryRecord = (await doWithRetries(async () =>
       db.collection("Diary").findOne({
+        userId: new ObjectId(req.userId),
         part,
         concern,
         createdAt: { $gte: usersTodayMidnight },
