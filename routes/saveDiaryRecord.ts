@@ -14,34 +14,20 @@ import { DiaryType } from "@/types/saveDiaryRecordTypes.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import { checkIfPublic } from "./checkIfPublic.js";
 import { db } from "init.js";
-import { normalizeString } from "@/helpers/utils.js";
 
 const route = Router();
 
 const validParts = [PartEnum.FACE, PartEnum.HAIR];
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { audio, activity, part, concern, routineId } = req.body;
+  const { audio, part, concern, activity } = req.body;
 
-  if (!audio || !activity || !validParts.includes(part) || !routineId || !concern) {
+  if (!audio || !activity || !validParts.includes(part) || !concern) {
     res.status(400).json({ error: "Bad request" });
     return;
   }
 
   try {
-    const usersTodayMidnight = setToMidnight({ date: new Date(), timeZone: req.timeZone });
-
-    const todaysDiaryRecords = await doWithRetries(async () =>
-      db.collection("Diary").findOne({ createdAt: { $gt: usersTodayMidnight }, concern })
-    );
-
-    if (todaysDiaryRecords) {
-      res.status(200).json({
-        error: `You've already added a diary note for ${normalizeString(concern)} today. Come back tomorrow.`,
-      });
-      return;
-    }
-
     const cookieString = Object.entries(req.cookies)
       .map(([name, value]) => `${name}=${value}`)
       .join("; ");
@@ -85,57 +71,79 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       return;
     }
 
-    const userInfo = await getUserInfo({
-      userId: req.userId,
-      projection: { name: 1, avatar: 1 },
-    });
+    const usersTodayMidnight = setToMidnight({ date: new Date(), timeZone: req.timeZone });
 
-    const newDiaryRecord: DiaryType = {
-      _id: new ObjectId(),
-      part,
-      audio,
-      activity,
-      isPublic: false,
-      userName: null,
-      userId: new ObjectId(req.userId),
-      transcription: body.message,
-      createdAt: new Date(),
-      moderationStatus: ModerationStatusEnum.ACTIVE,
-      concerns: activity.map((a) => a.concern),
-    };
-
-    const isPublicResponse = await checkIfPublic({
-      userId: req.userId,
-      concern,
-    });
-
-    newDiaryRecord.isPublic = isPublicResponse.isPublic;
-
-    const { name } = userInfo;
-    if (name) newDiaryRecord.userName = name;
-
-    const routine = await doWithRetries(async () =>
-      db.collection("Routine").findOne(
-        {
-          _id: new ObjectId(routineId),
-          userId: new ObjectId(req.userId),
-        },
-        { projection: { concerns: 1 } }
-      )
+    const todayAdded = await doWithRetries(async () =>
+      db
+        .collection("Diary")
+        .find({ createdAt: { $gte: usersTodayMidnight }, part, concern })
+        .toArray()
     );
 
-    newDiaryRecord.concerns = routine.concerns;
+    if (todayAdded) {
+      const addedCount = todayAdded.flatMap((rec) => rec.audio).length;
+      if (addedCount > 9) {
+        res.status(200).json({ error: "No more than 10 records per day." });
+        return;
+      }
+    }
 
-    await doWithRetries(async () => db.collection("Diary").insertOne(newDiaryRecord));
+    const todaysDiaryRecord = await doWithRetries(async () =>
+      db
+        .collection("Diary")
+        .findOne({ createdAt: { $gte: usersTodayMidnight }, part, concern, deletedOn: { $exists: false } })
+    );
+
+    let updatedId;
+
+    if (todaysDiaryRecord) {
+      const updateOp: any = {
+        $push: {
+          transcriptions: { createdAt: new Date(), text: body.message },
+          audio: { createdAt: new Date(), url: audio },
+        },
+      };
+
+      await doWithRetries(async () => db.collection("Diary").updateOne({ _id: todaysDiaryRecord._id }, updateOp));
+      updatedId = todaysDiaryRecord._id;
+    } else {
+      const userInfo = await getUserInfo({
+        userId: req.userId,
+        projection: { name: 1 },
+      });
+
+      const newDiaryRecord: DiaryType = {
+        _id: new ObjectId(),
+        part,
+        audio: [{ createdAt: new Date(), url: audio }],
+        activity,
+        concern,
+        isPublic: false,
+        userName: null,
+        userId: new ObjectId(req.userId),
+        transcriptions: [{ createdAt: new Date(), text: body.message }],
+        createdAt: new Date(),
+        moderationStatus: ModerationStatusEnum.ACTIVE,
+      };
+
+      const isPublicResponse = await checkIfPublic({
+        userId: req.userId,
+        concern,
+      });
+
+      newDiaryRecord.isPublic = isPublicResponse.isPublic;
+
+      const { name } = userInfo;
+      if (name) newDiaryRecord.userName = name;
+
+      const response = await doWithRetries(async () => db.collection("Diary").insertOne(newDiaryRecord));
+      updatedId = response.insertedId;
+    }
+
+    const updatedRecord = await doWithRetries(async () => db.collection("Diary").findOne({ _id: updatedId }));
 
     res.status(200).json({
-      message: {
-        _id: newDiaryRecord._id,
-        part: newDiaryRecord.part,
-        audio: newDiaryRecord.audio,
-        createdAt: newDiaryRecord.createdAt,
-        transcription: newDiaryRecord.transcription,
-      },
+      message: updatedRecord,
     });
 
     if (moderationResults.length > 0) {
@@ -151,7 +159,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         addSuspiciousRecord({
           collection: SuspiciousRecordCollectionEnum.DIARY,
           moderationResults,
-          contentId: String(newDiaryRecord._id),
+          contentId: String(updatedRecord._id),
           userId: req.userId,
         });
       }

@@ -187,9 +187,10 @@ export function calculateScoreDifferences(initialScores: ScoreType[], currentSco
       const relevantNewScoreObject = currentScores.find((newObj) => newObj.name === obj.name);
 
       if (relevantNewScoreObject) {
-        return { name: obj.name, value: relevantNewScoreObject.value - obj.value, part: obj.part };
+        return { name: obj.name, value: relevantNewScoreObject.value - obj.value };
       }
       return null;
     })
     .filter(Boolean);
 }
+

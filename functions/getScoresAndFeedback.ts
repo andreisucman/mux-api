@@ -19,7 +19,7 @@ type Props = {
   progressIdToExclude?: ObjectId;
   initialConcernScores?: ScoreType[];
   categoryName: CategoryNameEnum;
-  imageObjects: ImageObject[];
+  toAnalyzeImages: string[];
   partUserUploadedConcerns: string[];
 };
 
@@ -28,7 +28,7 @@ export default async function getScoresAndFeedback({
   userId,
   initialConcernScores,
   categoryName,
-  imageObjects,
+  toAnalyzeImages,
   progressIdToExclude,
   partUserUploadedConcerns,
 }: Props) {
@@ -55,7 +55,7 @@ export default async function getScoresAndFeedback({
     part,
     userId,
     categoryName,
-    currentImages: imageObjects.map((obj) => obj.url),
+    currentImages: toAnalyzeImages,
   });
 
   const uploadedConcernsExist = concerns.some((concern) => newConcerns.includes(concern));
@@ -69,7 +69,7 @@ export default async function getScoresAndFeedback({
   const concernScores = await calculateConcernScores({
     categoryName,
     concerns,
-    currentImages: imageObjects.map((imo) => imo.url),
+    currentImages: toAnalyzeImages,
     part,
     previousScan,
     userId,

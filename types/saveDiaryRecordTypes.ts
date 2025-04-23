@@ -4,16 +4,16 @@ import { ModerationStatusEnum, PartEnum } from "@/types.js";
 export type DiaryType = {
   _id: ObjectId;
   part: PartEnum;
-  audio: string;
+  concern: string;
+  audio: { createdAt: Date; url: string }[];
   activity: DiaryActivityType[];
   userId: ObjectId;
-  transcription: string;
+  transcriptions: { createdAt: Date; text: string }[];
   createdAt: Date;
   userName: string | null;
   isPublic: boolean;
   moderationStatus: ModerationStatusEnum;
   deletedOn?: Date;
-  concerns: string[];
 };
 
 export type DiaryActivityType = {

@@ -20,6 +20,7 @@ import httpError from "@/helpers/httpError.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import updateAnalytics from "./updateAnalytics.js";
 import updateNextScan from "@/helpers/updateNextScan.js";
+import { delayExecution } from "@/helpers/utils.js";
 
 type Props = {
   userId: string;
@@ -93,6 +94,8 @@ export default async function analyzeAppearance({
       demographics = { ...(demographics || {}), ...newDemographics };
     }
 
+    await delayExecution(3000);
+
     toUpdateUser.$set.demographics = demographics;
     toUpdateUser.$set.nextScan = updateNextScan({ nextScan, toAnalyze });
 
@@ -115,6 +118,9 @@ export default async function analyzeAppearance({
     });
 
     const analysesResults = await Promise.all(analyzePartPromises);
+
+    await delayExecution(2000);
+
     const partsAnalyzed = analysesResults.map((rec) => rec.part);
 
     const newConcerns = analysesResults.flatMap((rec) => rec.concerns);
@@ -170,6 +176,8 @@ export default async function analyzeAppearance({
         toUpdateUser
       )
     );
+
+    await delayExecution(10000);
 
     await doWithRetries(async () =>
       db

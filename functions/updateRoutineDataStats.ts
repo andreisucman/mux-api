@@ -11,23 +11,30 @@ type Props = {
 };
 
 export async function getStatsForRoutineData({ userId, part, concerns }: Props) {
-  const routines =
+  const routineIdObjects =
     (await doWithRetries(() =>
-      db.collection("Routine").countDocuments({
-        userId: new ObjectId(userId),
-        part,
-        status: { $ne: RoutineStatusEnum.CANCELED },
-        concerns: { $in: concerns },
-        deletedOn: { $exists: false },
-      })
-    )) || 0;
+      db
+        .collection("Routine")
+        .find(
+          {
+            userId: new ObjectId(userId),
+            part,
+            status: { $ne: RoutineStatusEnum.CANCELED },
+            concerns: { $in: concerns },
+            deletedOn: { $exists: false },
+          },
+          { projection: { _id: 1 } }
+        )
+        .toArray()
+    )) || [];
+
+  const routineIds = routineIdObjects.map((obj) => obj._id);
 
   const completedTasks =
     (await doWithRetries(() =>
       db.collection("Task").countDocuments({
         userId: new ObjectId(userId),
-        part,
-        concern: { $in: concerns },
+        routineId: { $in: routineIds },
         status: TaskStatusEnum.COMPLETED,
       })
     )) || 0;
@@ -36,8 +43,7 @@ export async function getStatsForRoutineData({ userId, part, concerns }: Props) 
     (await doWithRetries(() =>
       db.collection("Task").countDocuments({
         userId: new ObjectId(userId),
-        part,
-        concern: { $in: concerns },
+        routineId: { $in: routineIds },
         status: TaskStatusEnum.COMPLETED,
         proofId: { $exists: true },
       })
@@ -48,11 +54,11 @@ export async function getStatsForRoutineData({ userId, part, concerns }: Props) 
       db.collection("Diary").countDocuments({
         userId: new ObjectId(userId),
         part,
-        concerns: { $in: concerns },
+        concern: { $in: concerns },
       })
     )) || 0;
 
-  return { routines, completedTasks, completedTasksWithProof, diaryRecords };
+  return { routines: routineIds.length, completedTasks, completedTasksWithProof, diaryRecords };
 }
 
 export default async function updateRoutineDataStats({ userId, part, concerns }: Props) {

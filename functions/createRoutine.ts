@@ -7,6 +7,7 @@ import {
   ModerationStatusEnum,
   CategoryNameEnum,
   RoutineStatusEnum,
+  AllTaskTypeWithIds,
 } from "@/types.js";
 import { CreateRoutineUserInfoType } from "@/types/createRoutineTypes.js";
 import makeANewRoutine from "functions/makeANewRoutine.js";
@@ -83,12 +84,8 @@ export default async function createRoutine({
     if (creationMode === "continue" && latestPartRoutine) {
       const latestTasks = latestPartRoutine ? latestPartRoutine.allTasks : [];
 
-      const latestSolutions = latestTasks.reduce((a: { [key: string]: number }, c: TaskType) => {
-        if (a[c.key]) {
-          a[c.key] += 1;
-        } else {
-          a[c.key] = 1;
-        }
+      const latestSolutions = latestTasks.reduce((a: { [key: string]: number }, c: AllTaskTypeWithIds) => {
+        a[c.key] = c.ids.length * 4;
         return a;
       }, {});
 

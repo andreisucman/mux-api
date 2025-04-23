@@ -58,12 +58,27 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     const partConcerns = existingConcerns.filter((co) => co.part === part);
 
+    const analysisAlreadyStarted = await doWithRetries(async () =>
+      db.collection("AnalysisStatus").countDocuments({
+        userId: new ObjectId(req.userId),
+        operationKey: "routine",
+        isRunning: true,
+      })
+    );
+
+    if (analysisAlreadyStarted) {
+      res.status(400).json({
+        error: "Bad request",
+      });
+      return;
+    }
+
     await doWithRetries(async () =>
       db
         .collection("AnalysisStatus")
         .updateOne(
           { userId: new ObjectId(req.userId), operationKey: "routine" },
-          { $set: { isRunning: true, progress: 1, isError: false } },
+          { $set: { isRunning: true, progress: 1, isError: false, createdAt: new Date() } },
           { upsert: true }
         )
     );
@@ -86,8 +101,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     });
 
     availableRoutines = availableRoutines.filter((r) => r.part === part);
-
-    console.log("availableRoutines",availableRoutines)
 
     if (availableRoutines.length === 0) {
       const formattedDate = formatDate({

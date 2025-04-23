@@ -156,6 +156,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
           avatar,
           concern,
           part,
+          isPublic: status === "public",
           routineName: name,
         });
       }
@@ -187,7 +188,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     };
 
     await updateContent({
-      collections: ["BeforeAfter", "Progress", "Proof"],
+      collections: ["BeforeAfter", "Progress", "Proof", "Diary"],
       updatePayload: payload,
       filter: {
         userId: new ObjectId(req.userId),
@@ -196,7 +197,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     });
 
     await updateContent({
-      collections: ["Routine", "Diary"],
+      collections: ["Routine"],
       updatePayload: payload,
       filter: {
         userId: new ObjectId(req.userId),

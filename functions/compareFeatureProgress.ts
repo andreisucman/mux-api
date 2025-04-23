@@ -106,7 +106,6 @@ export default async function compareFeatureProgress({
       value: Math.round(score),
       explanation,
       name,
-      part,
     };
 
     return response;

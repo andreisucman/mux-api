@@ -119,16 +119,13 @@ export default async function analyzePart({
         .next()
     )) as unknown as LocalProgressType;
 
-    const imageObjects = toAnalyze.map((tAo) => ({
-      part: tAo.part,
-      url: tAo.mainUrl.url,
-    }));
+    const toAnalyzeImages = toAnalyze.map((tAo) => tAo.mainUrl.url);
 
     const response = await getScoresAndFeedback({
       initialConcernScores: initialProgress?.concernScores,
       partUserUploadedConcerns,
       categoryName,
-      imageObjects,
+      toAnalyzeImages,
       userId,
       part,
     });

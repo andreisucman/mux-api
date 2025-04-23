@@ -73,7 +73,11 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       })
     );
 
-    updateRoutineDataStats({ userId: req.userId, part: routineToAdd.part as PartEnum, concerns: routineToAdd.concerns });
+    updateRoutineDataStats({
+      userId: req.userId,
+      part: routineToAdd.part as PartEnum,
+      concerns: routineToAdd.concerns,
+    });
 
     res.status(200).json({ message: [clonedRoutine] });
   } catch (error) {

@@ -21,6 +21,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     const userInfo = await getUserInfo({ userId: req.userId, projection: { email: 1 } });
     let { body: html } = await getEmailContent({ emailType: "feedback", accessToken: null });
     let updatedHtml = html.replace("{{feedback}}", text);
+    updatedHtml = html.replace("{{userId}}", req.userId);
 
     if (screenShots && screenShots.length > 0) {
       const images = screenShots

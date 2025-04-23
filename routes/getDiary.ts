@@ -47,13 +47,12 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
         finalFilters.isPublic = true;
       } else {
         finalFilters.$and = [
-          { concerns: { $in: priceData.map((o) => o.concern) } },
+          { concern: { $in: priceData.map((o) => o.concern) } },
           { part: { $in: priceData.map((o) => o.part) } },
         ];
-        if (concern) finalFilters.$and.push({ concerns: { $in: [concern] } });
+        if (concern) finalFilters.$and.push({ concern: { $in: [concern] } });
         if (part) finalFilters.$and.push({ part: { $in: [part] } });
       }
-
     } else {
       if (req.userId) {
         finalFilters.userId = new ObjectId(req.userId);
@@ -69,7 +68,7 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
     }
 
     if (concern) {
-      finalFilters.concerns = { $in: [concern] };
+      finalFilters.concern = concern;
     }
 
     if (dateFrom && dateTo) {

@@ -347,16 +347,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       keyTwo: "manualTasksCreated",
     });
 
-    await doWithRetries(async () =>
-      db.collection("AnalysisStatus").updateOne(
-        { userId: new ObjectId(req.userId), operationKey: "routine" },
-        {
-          $set: { isRunning: false, progress: 0 },
-          $unset: { isError: "" },
-        }
-      )
-    );
-
     updateRoutineDataStats({ userId: req.userId, part, concerns: [concern] });
 
     const reponse = { tasks: [], routine: null };

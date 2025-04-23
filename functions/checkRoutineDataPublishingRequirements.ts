@@ -24,6 +24,20 @@ const checkPublishingRequirements = async ({ userId, part, concern }: Props) => 
     return response;
   }
 
+  const diaryRecords =
+    (await doWithRetries(() =>
+      db.collection("Diary").countDocuments({
+        userId: new ObjectId(userId),
+        part,
+        concern,
+      })
+    )) || 0;
+
+  if (diaryRecords < 1) {
+    response.message = `You have to have at least one diary record that includes an activity about ${concernName}.`;
+    return response;
+  }
+
   const earliestConcernScoreRecord = (await doWithRetries(() =>
     db
       .collection("Progress")
@@ -45,14 +59,15 @@ const checkPublishingRequirements = async ({ userId, part, concern }: Props) => 
   )) as unknown as Partial<ProgressType>;
 
   const { concernScores: lastConcernScoresObject } = latestConcernScoreRecord;
+
   const relevantFirstConcernScoreObject = firstConcernScoresObject.find((co) => co.name === concern);
   const relevantLastConcernScoreObject = lastConcernScoresObject.find((co) => co.name === concern);
 
-  const improvementTresholdPassed =
-    relevantLastConcernScoreObject.value - relevantFirstConcernScoreObject.value <=
-    Number(process.env.IMPROVEMENT_RATE_TRESHOLD) * -1;
+  const differenceInScores = relevantLastConcernScoreObject.value - relevantFirstConcernScoreObject.value;
 
-  if (improvementTresholdPassed) {
+  const improvementTresholdPassed = differenceInScores <= Number(process.env.IMPROVEMENT_RATE_TRESHOLD) * -1;
+
+  if (!improvementTresholdPassed) {
     response.message = `You have to have at least ${Number(
       process.env.IMPROVEMENT_RATE_TRESHOLD
     )} points of improvement between your before-after images for the ${concernName} concern.`;
@@ -60,6 +75,8 @@ const checkPublishingRequirements = async ({ userId, part, concern }: Props) => 
   }
 
   response.passed = true;
+
+  return response;
 };
 
 export default checkPublishingRequirements;

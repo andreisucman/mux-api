@@ -69,7 +69,8 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         keyTwo: "manualTasksMarkedCompleted",
         userId: req.userId,
       });
-      taskUpdatePayload.$set.completedAt = new Date();
+      const todayMidnight = setToMidnight({ date: new Date(), timeZone: req.timeZone, dontSetToMidnight: true });
+      taskUpdatePayload.$set.completedAt = todayMidnight;
     }
 
     await doWithRetries(async () =>

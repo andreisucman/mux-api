@@ -1,7 +1,7 @@
 import doWithRetries from "@/helpers/doWithRetries.js";
 import httpError from "@/helpers/httpError.js";
 import { db } from "@/init.js";
-import { BeforeAfterType, PartEnum } from "@/types.js";
+import { BeforeAfterType, PartEnum, ProgressType } from "@/types.js";
 import { ObjectId } from "mongodb";
 
 type PublishBeforeAfterProps = {
@@ -11,6 +11,7 @@ type PublishBeforeAfterProps = {
   concern: string;
   part: PartEnum;
   routineName: string;
+  isPublic: boolean;
   avatar: { [key: string]: any };
 };
 
@@ -18,12 +19,13 @@ const publishBeforeAfter = async ({
   firstRoutineStartDate,
   userId,
   concern,
+  isPublic,
   part,
   avatar,
   userName,
   routineName,
 }: PublishBeforeAfterProps) => {
-  const closestProgressBeforeTheRoutine = await doWithRetries(() =>
+  const earliestProgressRecord = (await doWithRetries(() =>
     db
       .collection("Progress")
       .aggregate([
@@ -41,19 +43,24 @@ const publishBeforeAfter = async ({
         { $unset: "diff" },
       ])
       .next()
-  );
+  )) as unknown as ProgressType | null;
 
-  if (!closestProgressBeforeTheRoutine) throw httpError("Publishing routine without before progress record");
+  if (!earliestProgressRecord) throw httpError("Publishing routine without before progress record");
 
-  const latestProgressRecord = await doWithRetries(() =>
+  const latestProgressRecord = (await doWithRetries(() =>
     db
       .collection("Progress")
       .find({ userId: new ObjectId(userId), concerns: { $in: [concern] }, part })
       .sort({ createdAt: -1 })
       .next()
-  );
+  )) as unknown as ProgressType | null;
 
   if (!latestProgressRecord) throw httpError("Publishing routine without after progress record");
+
+  const relevantLatestConcernScore = latestProgressRecord.concernScores.find((co) => co.name === concern);
+  const relevantLatestConcernScoreDifference = latestProgressRecord.concernScoresDifference.find(
+    (co) => co.name === concern
+  );
 
   const newBARecord: BeforeAfterType = {
     userId: new ObjectId(userId),
@@ -61,14 +68,14 @@ const publishBeforeAfter = async ({
     part,
     images: latestProgressRecord.images,
     demographics: latestProgressRecord.demographics,
-    isPublic: true,
+    isPublic,
     avatar,
     userName,
-    concernScore: latestProgressRecord.concernScore,
-    concernScoreDifference: latestProgressRecord.concernScoreDifference,
+    concernScore: relevantLatestConcernScore,
+    concernScoreDifference: relevantLatestConcernScoreDifference,
     updatedAt: latestProgressRecord.createdAt,
-    initialDate: closestProgressBeforeTheRoutine.createdAt,
-    initialImages: closestProgressBeforeTheRoutine.images,
+    initialDate: earliestProgressRecord.createdAt,
+    initialImages: earliestProgressRecord.images,
     routineName,
   };
 

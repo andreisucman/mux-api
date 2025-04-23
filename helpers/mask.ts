@@ -23,14 +23,15 @@ export function maskDiaryRow(diaryRecord: DiaryType) {
     ...diaryRecord,
     _id: null,
     userId: null,
-    audio: "/",
-    transcription: Array(diaryRecord.transcription.length).fill("*").join(""),
+    audio: diaryRecord.audio.map((ar) => ({ createdAt: null, url: "/" })),
+    transcriptions: diaryRecord.transcriptions.map((to) => ({
+      createdAt: null,
+      text: Array(to.text.length).fill("*").join(""),
+    })),
     activity: diaryRecord.activity.map((a) => {
-      const thumbnail = `https://placehold.co/480x720/3b3b3b/3b3b3b/webp?text=%27&font=poppins`;
+      const thumbnail = `https://placehold.co/480x720/f1f3f5/f1f3f5/webp?text=%27&font=poppins`;
       const placeholder =
-        a.contentType === "image"
-          ? `https://placehold.co/480x720/3b3b3b/3b3b3b/webp?text=%27&font=poppins`
-          : "https://mux.nyc3.cdn.digitaloceanspaces.com/video.mp4";
+        a.contentType === "image" ? `https://placehold.co/480x720/f1f3f5/f1f3f5/webp?text=%27&font=poppins` : "/";
 
       return {
         ...a,
@@ -46,11 +47,9 @@ export function maskDiaryRow(diaryRecord: DiaryType) {
 }
 
 export function maskProof(proof: ProofType) {
-  const thumbnail = `https://placehold.co/480x720/3b3b3b/3b3b3b/webp?text=%27&font=poppins`;
+  const thumbnail = `https://placehold.co/480x720/f1f3f5/f1f3f5/webp?text=%27&font=poppins`;
   const placeholder =
-    proof.contentType === "image"
-      ? `https://placehold.co/480x720/3b3b3b/3b3b3b/webp?text=%27&font=poppins`
-      : "https://mux.nyc3.cdn.digitaloceanspaces.com/video.mp4";
+    proof.contentType === "image" ? `https://placehold.co/480x720/f1f3f5/f1f3f5/webp?text=%27&font=poppins` : "/";
   return {
     ...proof,
     _id: null,

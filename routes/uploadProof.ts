@@ -24,6 +24,7 @@ import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 import { checkIfPublic } from "./checkIfPublic.js";
 import createImageCollage from "@/functions/createImageCollage.js";
 import updateRoutineDataStats from "@/functions/updateRoutineDataStats.js";
+import setToMidnight from "@/helpers/setToMidnight.js";
 
 const route = Router();
 
@@ -288,14 +289,14 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       categoryName: CategoryNameEnum.PROOF,
     });
 
-    if (!proofAccepted) {
-      await addAnalysisStatusError({
-        userId: String(req.userId),
-        operationKey: taskId,
-        message: verdictExplanation,
-      });
-      return;
-    }
+    // if (!proofAccepted) {
+    //   await addAnalysisStatusError({
+    //     userId: String(req.userId),
+    //     operationKey: taskId,
+    //     message: verdictExplanation,
+    //   });
+    //   return;
+    // }
 
     let mainThumbnail = { name: BlurTypeEnum.ORIGINAL, url: proofImages[0] };
     let mainUrl = { name: BlurTypeEnum.ORIGINAL, url };
@@ -344,10 +345,12 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     if (streaksToIncrement) userUpdatePayload.$inc = streaksToIncrement;
     if (newStreakDates) userUpdatePayload.$set = { streakDates: newStreakDates };
 
+    const todayMidnight = setToMidnight({ date: new Date(), timeZone: req.timeZone });
+
     const taskUpdate = {
       $set: {
         proofId: newProof._id,
-        completedAt: new Date(),
+        completedAt: todayMidnight,
         status: TaskStatusEnum.COMPLETED,
       },
     };

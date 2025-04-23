@@ -56,7 +56,7 @@ export default async function reviewLatestRoutine({
 
     const partScores = latestConcernScores[part];
 
-    const { updatedListOfSolutions, areCurrentSolutionsOkay } = await chooseSolutionsForConcerns({
+    const updatedListOfSolutions = await chooseSolutionsForConcerns({
       userId: String(userId),
       part,
       timeZone,
@@ -71,7 +71,9 @@ export default async function reviewLatestRoutine({
       specialConsiderations,
     });
 
-    if (areCurrentSolutionsOkay) return;
+    const empty = Object.values(updatedListOfSolutions).flat().length === 0;
+
+    if (empty) throw httpError(`Empty routine for user ${userId}`);
 
     const { allSolutions: updatedAllSolutions, allTasks: updatedAllTasks } = await createSolutionData({
       categoryName,

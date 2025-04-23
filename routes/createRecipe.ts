@@ -39,6 +39,21 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
   }
 
   try {
+    const analysisAlreadyStarted = await doWithRetries(async () =>
+      db.collection("AnalysisStatus").countDocuments({
+        userId: new ObjectId(req.userId),
+        operationKey: analysisType,
+        isRunning: true,
+      })
+    );
+
+    if (analysisAlreadyStarted) {
+      res.status(400).json({
+        error: "Bad request",
+      });
+      return;
+    }
+
     const subscriptionIsValid: boolean = await checkSubscriptionStatus({
       userId: req.userId,
       subscriptionType: SubscriptionTypeNamesEnum.IMPROVEMENT,
@@ -118,7 +133,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     await doWithRetries(async () =>
       db.collection("AnalysisStatus").updateOne(
-        { userId: new ObjectId(req.userId), operationKey: analysisType },
+        { userId: new ObjectId(req.userId), operationKey: analysisType, createdAt: new Date() },
         {
           $set: { isRunning: true, progress: 1 },
           $unset: { isError: "" },

@@ -22,23 +22,35 @@ export default async function calculateConcernScores({
 }: Props) {
   if (previousScan) {
     const previousImages = previousScan.images.map((obj) => obj.mainUrl.url);
-    const relevantPreviouConcernObject = previousScan.concernScores.find((co) => co.part === part);
 
     return await doWithRetries(async () =>
       Promise.all(
         concerns.map(async (concern: string) => {
-          return doWithRetries(() => {
-            return compareFeatureProgress({
-              part,
-              userId,
-              categoryName,
-              previousImages,
-              currentImages,
-              name: concern,
-              previousScore: relevantPreviouConcernObject.value,
-              previousExplanation: relevantPreviouConcernObject.explanation,
-            });
-          });
+          const relevantPreviouConcernObject = previousScan.concernScores.find((co) => co.name === concern);
+          if (relevantPreviouConcernObject) {
+            return doWithRetries(() =>
+              compareFeatureProgress({
+                part,
+                userId,
+                categoryName,
+                previousImages,
+                currentImages,
+                name: concern,
+                previousScore: relevantPreviouConcernObject.value,
+                previousExplanation: relevantPreviouConcernObject.explanation,
+              })
+            );
+          } else {
+            return doWithRetries(() =>
+              analyzeFeature({
+                part,
+                userId,
+                name: concern,
+                categoryName,
+                relevantImages: currentImages,
+              })
+            );
+          }
         })
       )
     );

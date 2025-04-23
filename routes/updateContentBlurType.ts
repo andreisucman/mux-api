@@ -90,11 +90,11 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     updatePayload.$set = { images: updatedImages };
 
     await doWithRetries(async () =>
-      db.collection("Progress").updateMany({ "images.urls.url": url, userId: new ObjectId(req.userId) }, updatePayload)
+      db.collection("Progress").updateOne({ "images.urls.url": url, userId: new ObjectId(req.userId) }, updatePayload)
     );
 
     await doWithRetries(() =>
-      db.collection("Progress").updateMany(
+      db.collection("Progress").updateOne(
         {
           userId: new ObjectId(req.userId),
           "initialImages.urls.url": url,
@@ -123,23 +123,20 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       )
     );
 
-    const updatedRecords = (await doWithRetries(async () =>
-      db
-        .collection("Progress")
-        .find(
-          { "initialImages.urls.url": url, userId: new ObjectId(req.userId) },
-          {
-            projection: {
-              images: 1,
-              initialImages: 1,
-            },
-          }
-        )
-        .toArray()
+    const updatedRecord = (await doWithRetries(async () =>
+      db.collection("Progress").findOne(
+        { _id: new ObjectId(contentId) },
+        {
+          projection: {
+            images: 1,
+            initialImages: 1,
+          },
+        }
+      )
     )) as unknown as ProgressType;
 
     res.status(200).json({
-      message: updatedRecords,
+      message: updatedRecord,
     });
   } catch (err) {
     next(err);

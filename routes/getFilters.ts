@@ -47,7 +47,7 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
 
     const pipeline = [
       { $match: match },
-      ...fields.map((f) => ({ $unwind: { path: `$${f}` } })),
+      ...fields.map((f) => ({ $unwind: `$${f}` })),
       {
         $group: {
           _id: null,

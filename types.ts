@@ -29,7 +29,6 @@ export type ScoreType = {
   value: number;
   explanation: string;
   name: string;
-  part: PartEnum;
 };
 
 export type LatestScoresType = {
@@ -39,7 +38,6 @@ export type LatestScoresType = {
 export type ScoreDifferenceType = {
   value: number;
   name: string;
-  part: PartEnum;
 };
 
 export type LatestScoresDifferenceType = {
@@ -98,7 +96,6 @@ export type UserType = {
   emailVerified: boolean;
   canRejoinClubAfter: Date | null;
   nextAvatarUpdateAt: Date | null;
-  nextDiaryRecordAfter: { [key: string]: Date | null } | null;
   nextNameUpdateAt: Date | null;
   moderationStatus: ModerationStatusEnum;
   lastActiveOn: Date | null;

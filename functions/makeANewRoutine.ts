@@ -46,7 +46,7 @@ export default async function makeANewRoutine({
 
     const partScores = latestConcernScores[part];
 
-    const { updatedListOfSolutions } = await chooseSolutionsForConcerns({
+    const updatedListOfSolutions = await chooseSolutionsForConcerns({
       userId: String(userId),
       part,
       timeZone,

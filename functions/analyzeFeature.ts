@@ -86,7 +86,6 @@ export default async function analyzeFeature({
       value: Math.round(score),
       explanation,
       name,
-      part,
     };
 
     return response;

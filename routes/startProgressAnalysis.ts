@@ -34,6 +34,21 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
   try {
     let sanitatedConcerns = userUploadedConcerns;
 
+    const analysisAlreadyStarted = await doWithRetries(async () =>
+      db.collection("AnalysisStatus").countDocuments({
+        userId: new ObjectId(req.userId),
+        operationKey: "progress",
+        isRunning: true,
+      })
+    );
+
+    if (analysisAlreadyStarted) {
+      res.status(400).json({
+        error: "Bad request",
+      });
+      return;
+    }
+
     if (userUploadedConcerns.length > 0) {
       const sanitatedUserUploadedConcerns = await doWithRetries(() =>
         db
@@ -94,7 +109,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         .collection("AnalysisStatus")
         .updateOne(
           { userId: new ObjectId(finalUserId), operationKey: "progress" },
-          { $set: { isRunning: true, progress: 1, isError: null } },
+          { $set: { isRunning: true, progress: 1, isError: null, createdAt: new Date() } },
           { upsert: true }
         )
     );
