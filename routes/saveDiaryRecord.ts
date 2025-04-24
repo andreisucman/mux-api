@@ -14,6 +14,7 @@ import { DiaryType } from "@/types/saveDiaryRecordTypes.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import { checkIfPublic } from "./checkIfPublic.js";
 import { db } from "init.js";
+import updateRoutineDataStats from "@/functions/updateRoutineDataStats.js";
 
 const route = Router();
 
@@ -89,15 +90,13 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     }
 
     const todaysDiaryRecord = await doWithRetries(async () =>
-      db
-        .collection("Diary")
-        .findOne({
-          userId: new ObjectId(req.userId),
-          createdAt: { $gte: usersTodayMidnight },
-          part,
-          concern,
-          deletedOn: { $exists: false },
-        })
+      db.collection("Diary").findOne({
+        userId: new ObjectId(req.userId),
+        createdAt: { $gte: usersTodayMidnight },
+        part,
+        concern,
+        deletedOn: { $exists: false },
+      })
     );
 
     let updatedId;
@@ -147,6 +146,8 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     }
 
     const updatedRecord = await doWithRetries(async () => db.collection("Diary").findOne({ _id: updatedId }));
+
+    updateRoutineDataStats({ userId: req.userId, part, concerns: [concern] });
 
     res.status(200).json({
       message: updatedRecord,

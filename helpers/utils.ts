@@ -69,6 +69,18 @@ export function calculateDaysDifference(dateFrom: Date | string, dateTo: Date | 
   }
 }
 
+export const isValidYouTubeEmbedUrl = async (url) => {
+  const regex = /^https:\/\/www\.youtube\.com\/embed\/[a-zA-Z0-9_-]{11}$/;
+  if (!regex.test(url)) return false;
+
+  try {
+    const response = await fetch(url, { method: "HEAD" });
+    return response.ok;
+  } catch {
+    return false;
+  }
+};
+
 export function arrayElementExistsWithinArray(arrayOne: string[], arrayTwo: string[]) {
   return arrayOne.some((record) => arrayTwo.includes(record));
 }
@@ -193,4 +205,3 @@ export function calculateScoreDifferences(initialScores: ScoreType[], currentSco
     })
     .filter(Boolean);
 }
-

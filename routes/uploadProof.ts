@@ -289,14 +289,14 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       categoryName: CategoryNameEnum.PROOF,
     });
 
-    // if (!proofAccepted) {
-    //   await addAnalysisStatusError({
-    //     userId: String(req.userId),
-    //     operationKey: taskId,
-    //     message: verdictExplanation,
-    //   });
-    //   return;
-    // }
+    if (!proofAccepted) {
+      await addAnalysisStatusError({
+        userId: String(req.userId),
+        operationKey: taskId,
+        message: verdictExplanation,
+      });
+      return;
+    }
 
     let mainThumbnail = { name: BlurTypeEnum.ORIGINAL, url: proofImages[0] };
     let mainUrl = { name: BlurTypeEnum.ORIGINAL, url };

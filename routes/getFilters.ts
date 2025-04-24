@@ -16,8 +16,10 @@ const collectionMap: { [key: string]: string } = {
   task: "Task",
   routine: "Routine",
   diary: "Diary",
+  concern: "Concern",
 };
 
+const removeUserIdCollections = ["concern"];
 const addModerationStatusCollections = ["progress", "proof", "diary"];
 
 route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFunction) => {
@@ -41,7 +43,7 @@ route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFun
 
     if (userName) {
       match.userName = userName;
-    } else {
+    } else if (!removeUserIdCollections.includes(collection)) {
       match.userId = new ObjectId(req.userId);
     }
 

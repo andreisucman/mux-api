@@ -8,7 +8,7 @@ import { db } from "init.js";
 
 const route = Router();
 
-const acceptedParts = [PartEnum.FACE, PartEnum.HAIR];
+const acceptedParts = [PartEnum.FACE, PartEnum.HAIR, PartEnum.BODY];
 
 route.get("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
   const { part, q, skip } = req.query;

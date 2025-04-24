@@ -5,8 +5,6 @@ import { z } from "zod";
 import askRepeatedly from "./askRepeatedly.js";
 import httpError from "@/helpers/httpError.js";
 import { generateRandomPastelColor } from "make-random-color";
-import searchYoutubeVideos from "./searchYoutubeVideos.js";
-import generateImage from "./generateImage.js";
 
 type Props = {
   solution: string;
@@ -79,25 +77,11 @@ export default async function createSolutionInfo({
       description,
       instruction,
       productTypes: data.productTypes.filter((s: string) => s),
+      examples: [],
     };
 
     if (data.isFood) {
-      response.recipe = null;
-      const dishImage = await generateImage({
-        description,
-        categoryName,
-        userId,
-      });
-      response.examples = [{ type: "image", url: dishImage }];
-    } else {
-      const youtubeVideos = await searchYoutubeVideos(`How to ${data.name}`);
-
-      if (youtubeVideos.length) {
-        response.examples = youtubeVideos.map((url: string) => ({
-          type: "video",
-          url,
-        }));
-      }
+      response.previousRecipe = null;
     }
 
     return response;

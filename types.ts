@@ -156,6 +156,7 @@ export enum BlurTypeEnum {
 export enum PartEnum {
   FACE = "face",
   HAIR = "hair",
+  BODY = "body",
 }
 
 export enum SexEnum {
@@ -274,6 +275,7 @@ export type ProgressType = {
 export type LatestProgressType = {
   face: ProgressType;
   hair: ProgressType;
+  body: ProgressType;
 };
 
 export type RecipeType = {
@@ -304,6 +306,7 @@ export type TaskType = {
   proofId: string;
   isCreated: boolean;
   isDish: boolean;
+  isFood: boolean;
   previousRecipe: RecipeType | null;
   examples: TaskExampleType[];
   productTypes: string[] | null;
@@ -333,7 +336,7 @@ export type RoutineType = {
 export type ConcernType = {
   name: string;
   parts: PartEnum[];
-  sex: SexEnum;
+  tags: string[];
 };
 
 export type AllTaskType = {

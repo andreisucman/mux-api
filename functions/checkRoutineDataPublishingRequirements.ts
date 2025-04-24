@@ -1,7 +1,7 @@
 import doWithRetries from "@/helpers/doWithRetries.js";
 import { normalizeString } from "@/helpers/utils.js";
 import { db } from "@/init.js";
-import { ProgressType } from "@/types.js";
+import { ProgressType, RoutineStatusEnum } from "@/types.js";
 import { ObjectId } from "mongodb";
 
 type Props = {
@@ -24,6 +24,16 @@ const checkPublishingRequirements = async ({ userId, part, concern }: Props) => 
     return response;
   }
 
+  const routineCount = await doWithRetries(() =>
+    db.collection("Routine").countDocuments({
+      userId: new ObjectId(userId),
+      part,
+      status: { $ne: RoutineStatusEnum.CANCELED },
+      concerns: { $in: [concern] },
+      deletedOn: { $exists: false },
+    })
+  ) || 1;
+
   const diaryRecords =
     (await doWithRetries(() =>
       db.collection("Diary").countDocuments({
@@ -34,7 +44,9 @@ const checkPublishingRequirements = async ({ userId, part, concern }: Props) => 
     )) || 0;
 
   if (diaryRecords < 1) {
-    response.message = `You have to have at least one diary record that includes an activity about ${concernName}.`;
+    response.message = `You have to have at least ${routineCount} diary record${
+      routineCount > 1 ? "s" : ""
+    } that includes an activity about ${concernName}.`;
     return response;
   }
 

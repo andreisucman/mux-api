@@ -23,6 +23,7 @@ import { adminDb, db } from "init.js";
 import httpError from "@/helpers/httpError.js";
 import extractProductsFromImage from "@/functions/extractProductsFromImage.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
+import findEmoji from "@/helpers/findEmoji.js";
 
 const route = Router();
 
@@ -266,11 +267,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       functionName: "createRecipe",
     });
 
-    const image = await generateImage({
-      description: `A plate of ${response.name}.`,
-      userId: req.userId,
-      categoryName: CategoryNameEnum.TASKS,
-    });
+    const icons = await findEmoji({ taskNames: [response.name], userId: req.userId });
 
     await incrementProgress({
       value: 15,
@@ -297,12 +294,15 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
             productTypes: response.productTypes,
             description: response.description,
             instruction: response.instruction,
+            icon: icons[response.name],
+            examples: [],
             previousRecipe: {
               name: taskInfo.name,
+              icon: taskInfo.icon,
               productTypes: taskInfo.productTypes,
               description: taskInfo.description,
               instruction: taskInfo.instruction,
-              examples: [{ type: "image", url: image }],
+              examples: taskInfo.examples,
               canPersonalize: false,
             },
           },

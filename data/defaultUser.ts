@@ -39,6 +39,7 @@ const defaultStreaks = {
 export const defaultLatestScores = {
   face: null,
   hair: null,
+  body: null,
 };
 
 export const defaultUser: UserType = {
@@ -60,6 +61,7 @@ export const defaultUser: UserType = {
   latestProgressImages: {
     face: null,
     hair: null,
+    body: null,
   },
   createdAt: new Date(),
   streaks: defaultStreaks,

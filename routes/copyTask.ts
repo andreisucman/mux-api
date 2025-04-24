@@ -64,11 +64,11 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     const differenceInDays = calculateDaysDifference(earliestTask.startsAt, newDate);
 
     const updatedIds = relevantAllTask.ids.filter((id) => {
-      let criteria = !id.deletedOn;
+      let rule = !id.deletedOn;
       if (ignoreIncompleteTasks) {
-        criteria = criteria && [TaskStatusEnum.COMPLETED, TaskStatusEnum.ACTIVE].includes(id.status);
+        rule = rule && [TaskStatusEnum.COMPLETED, TaskStatusEnum.ACTIVE].includes(id.status);
       }
-      return criteria;
+      return rule;
     });
 
     const updatedAllTask = {

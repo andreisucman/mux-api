@@ -92,6 +92,8 @@ import getConcerns from "routes/getConcerns.js";
 import getIsFromEu from "@/routes/getIsFromEu.js";
 import submitFeedback from "@/routes/submitFeedback.js";
 import getTasks from "@/routes/getTasks.js";
+import addExampleYoutubeVideo from "@/routes/addExampleYoutubeVideo.js";
+import findExamples from "@/routes/findExamples.js";
 
 import { client } from "init.js";
 
@@ -171,6 +173,8 @@ app.use("/deleteToAnalyze", deleteToAnalyze);
 
 // protected routes
 app.use((req, res, next) => checkAccess(req, res, next, false));
+app.use("/findExamples", findExamples);
+app.use("/addExampleYoutubeVideo", addExampleYoutubeVideo);
 app.use("/getUserData", getUserData);
 app.use("/getTasks", getTasks);
 app.use("/submitFeedback", submitFeedback);

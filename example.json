@@ -1,0 +1,162 @@
+[
+  {
+    "name": "hypopigmentaton",
+    "parts": ["face", "body"],
+    "tags": ["light spots", "loss of skin pigment"]
+  },
+  {
+    "name": "hyperpigmentation",
+    "parts": ["face", "body"],
+    "tags": ["dark spots", "melasma"]
+  },
+  {
+    "name": "uneven_skin_tone",
+    "parts": ["face", "body"],
+    "tags": ["dyschromia", "skin discoloration"]
+  },
+  {
+    "name": "large_pores",
+    "parts": ["face", "body"],
+    "tags": ["enlarged pores", "disorder of sebaceous glands"]
+  },
+  {
+    "name": "acne_vulgaris",
+    "parts": ["face", "body"],
+    "tags": ["blackheads", "whiteheads", "pimples", "bacne"]
+  },
+  {
+    "name": "dry_skin",
+    "parts": ["face", "body"],
+    "tags": ["xerosis_cutis"]
+  },
+  {
+    "name": "uneven_texture",
+    "parts": ["face", "body"],
+    "tags": ["keratosis pilaris", "rough skin"]
+  },
+  {
+    "name": "milia",
+    "parts": ["face", "body"],
+    "tags": ["milk spots"]
+  },
+  {
+    "name": "atopic dermatitis",
+    "parts": ["face", "body"],
+    "tags": ["eczema"]
+  },
+  {
+    "name": "rosacea",
+    "parts": ["face"],
+    "tags": ["facial redness"]
+  },
+  {
+    "name": "chapped lips",
+    "parts": ["face"],
+    "tags": ["cheilitis"]
+  },
+  {
+    "name": "oily skin",
+    "parts": ["face", "body"],
+    "tags": ["greasy skin"]
+  },
+  {
+    "name": "seborrheic dermatitis",
+    "parts": ["hair"],
+    "tags": ["dandruff"]
+  },
+  {
+    "name": "sun spots",
+    "parts": ["face", "body"],
+    "tags": ["solar lentigines"]
+  },
+  {
+    "name": "ingrown hairs",
+    "parts": ["body"],
+    "tags": []
+  },
+  {
+    "name": "contact dermatitis",
+    "parts": ["face", "body"],
+    "tags": ["skin rash", "eczema"]
+  },
+  {
+    "name": "perioral dermatitis",
+    "parts": ["face"],
+    "tags": []
+  },
+  {
+    "name": "hair thinning",
+    "parts": ["hair"],
+    "tags": ["androgenetic alopecia"]
+  },
+  {
+    "name": "receding hairline",
+    "parts": ["hair"],
+    "tags": ["androgenetic alopecia"]
+  },
+  {
+    "name": "split ends",
+    "parts": ["hair"],
+    "tags": []
+  },
+  {
+    "name": "frizzines",
+    "parts": ["hair"],
+    "tags": ["frizz"]
+  },
+  {
+    "name": "thinning eyebrows",
+    "parts": ["face", "hair"],
+    "tags": []
+  },
+  {
+    "name": "wrinkles",
+    "parts": ["face"],
+    "tags": []
+  },
+  {
+    "name": "crepe skin",
+    "parts": ["body"],
+    "tags": []
+  },
+  {
+    "name": "sagging skin",
+    "parts": ["face", "body"],
+    "tags": ["loose skin", "skin laxity", "drooping skin", "ptosis"]
+  },
+  {
+    "name": "puffy eyes",
+    "parts": ["face"],
+    "tags": []
+  },
+  {
+    "name": "double chin",
+    "parts": ["face", "body"],
+    "tags": []
+  },
+  {
+    "name": "calluses",
+    "parts": ["body"],
+    "tags": []
+  },
+  {
+    "name": "corns",
+    "parts": ["body"],
+    "tags": []
+  },
+  {
+    "name": "stretch marks",
+    "parts": ["body"],
+    "tags": []
+  },
+  {
+    "name": "cellulite",
+    "parts": ["body"],
+    "tags": []
+  },
+  {
+    "name": "brittle nails",
+    "parts": ["body"],
+    "tags": []
+  }
+]

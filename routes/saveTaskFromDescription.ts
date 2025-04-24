@@ -192,29 +192,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       productTypes: response.productTypes.filter((s: string) => s),
     };
 
-    if (response.isFood) {
-      const image = await generateImage({
-        categoryName: CategoryNameEnum.TASKS,
-        description,
-        userId: req.userId,
-      });
-      generalTaskInfo.examples = [{ type: "image", url: image }];
-    } else if (exampleVideoId) {
-      generalTaskInfo.examples = [
-        {
-          type: "video",
-          url: `https://www.youtube.com/embed/${exampleVideoId}`,
-        },
-      ];
-    } else {
-      const relatedYoutubeVideos = await searchYoutubeVideos(generalTaskInfo.name);
-
-      generalTaskInfo.examples = relatedYoutubeVideos.map((url) => ({
-        type: "video",
-        url,
-      }));
-    }
-
     const iconsMap = await findEmoji({
       userId: req.userId,
       taskNames: [generalTaskInfo.name],
