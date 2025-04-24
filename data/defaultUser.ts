@@ -3,22 +3,6 @@ import { UserType, PartEnum, DemographicsType, NextActionType, ModerationStatusE
 
 dotenv.config();
 
-export const defaultSubscriptions = {
-  improvement: {
-    isTrialUsed: false,
-    subscriptionId: null as string | null,
-    validUntil: null as Date | null,
-  },
-};
-
-export const defaultTriedSubscriptions = {
-  improvement: {
-    isTrialUsed: true,
-    subscriptionId: null as string | null,
-    validUntil: null as Date | null,
-  },
-};
-
 export const defaultDemographics: DemographicsType = {
   sex: null,
   ageInterval: null,
@@ -29,11 +13,13 @@ export const defaultDemographics: DemographicsType = {
 const defaultNextAction: NextActionType[] = [
   { part: PartEnum.FACE, date: null },
   { part: PartEnum.HAIR, date: null },
+  { part: PartEnum.BODY, date: null },
 ];
 
 const defaultStreaks = {
   faceStreak: 0,
   hairStreak: 0,
+  bodyStreak: 0,
 };
 
 export const defaultLatestScores = {
@@ -67,13 +53,11 @@ export const defaultUser: UserType = {
   streaks: defaultStreaks,
   specialConsiderations: "",
   tosAccepted: false,
-  nextRoutine: defaultNextAction,
   nextScan: defaultNextAction,
   streakDates: {},
   password: null,
   emailVerified: false,
   concerns: null,
-  subscriptions: defaultSubscriptions,
   toAnalyze: [],
   canRejoinClubAfter: null,
   lastActiveOn: null,

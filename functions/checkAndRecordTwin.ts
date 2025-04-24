@@ -6,7 +6,6 @@ import httpError from "@/helpers/httpError.js";
 import checkIfSuspended from "./checkIfSuspended.js";
 import { CategoryNameEnum } from "@/types.js";
 import { db } from "@/init.js";
-import transferTrials from "./transferTrials.js";
 
 type Props = {
   requestUserId?: string;
@@ -59,11 +58,6 @@ export default async function checkAndRecordTwin({
         }));
 
         doWithRetries(async () => db.collection("User").bulkWrite(updates));
-
-        transferTrials({
-          twinIds,
-          newUserId: requestUserId,
-        });
       } else {
         response.mustLogin = true; // prompt to login if not logged in and twin exists
       }

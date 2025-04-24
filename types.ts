@@ -79,7 +79,6 @@ export type UserType = {
   specialConsiderations: string;
   streaks: StreaksType;
   nextScan: NextActionType[];
-  nextRoutine: NextActionType[];
   streakDates: {};
   latestProgressImages: LatestProgressImagesType;
   concerns: UserConcernType[] | null;
@@ -88,9 +87,6 @@ export type UserType = {
   latestConcernScoresDifference: LatestScoresDifferenceType;
   club: ClubDataType;
   deleteOn: Date;
-  subscriptions: {
-    improvement: SubscriptionType;
-  };
   toAnalyze: ToAnalyzeType[];
   stripeUserId: string;
   emailVerified: boolean;
@@ -217,6 +213,7 @@ export enum RoutineStatusEnum {
 export type StreaksType = {
   faceStreak: number;
   hairStreak: number;
+  bodyStreak: number;
 };
 
 export type UserConcernType = {

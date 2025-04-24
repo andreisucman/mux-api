@@ -17,7 +17,6 @@ import {
 } from "types.js";
 import askRepeatedly from "functions/askRepeatedly.js";
 import generateImage from "functions/generateImage.js";
-import checkSubscriptionStatus from "functions/checkSubscription.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import { adminDb, db } from "init.js";
 import httpError from "@/helpers/httpError.js";
@@ -52,16 +51,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       res.status(400).json({
         error: "Bad request",
       });
-      return;
-    }
-
-    const subscriptionIsValid: boolean = await checkSubscriptionStatus({
-      userId: req.userId,
-      subscriptionType: SubscriptionTypeNamesEnum.IMPROVEMENT,
-    });
-
-    if (!subscriptionIsValid) {
-      res.status(200).json({ error: "subscription expired" });
       return;
     }
 

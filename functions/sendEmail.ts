@@ -13,7 +13,6 @@ type Props = {
 const sendEmail = async ({ to, from = process.env.SES_FROM_ADDRESS, replyTo, subject, html }: Props) => {
   const payload: SendEmailCommandInput = {
     Destination: { ToAddresses: [to] },
-    ReplyToAddresses: [replyTo],
     Message: {
       Body: {
         Html: { Data: html },
@@ -22,6 +21,8 @@ const sendEmail = async ({ to, from = process.env.SES_FROM_ADDRESS, replyTo, sub
     },
     Source: from,
   };
+
+  if (replyTo) payload.ReplyToAddresses = [replyTo];
 
   try {
     const sendEmailCommand = new SendEmailCommand(payload);
