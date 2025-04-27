@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { nanoid } from "nanoid";
 import { deepSeek, db, redis } from "@/init.js";
-import { setupSSE, toSentenceCase } from "@/helpers/utils.js";
+import { daysFrom, setupSSE, toSentenceCase } from "@/helpers/utils.js";
 import doWithRetries from "@/helpers/doWithRetries.js";
 import { ObjectId } from "mongodb";
 import { CustomRequest } from "@/types.js";
@@ -98,6 +98,30 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
 
     if (previousExperience) {
       userContent += ` <-- Here is what I've tried -->\n\n ${previousExperience}.`;
+    }
+
+    const lastMonth = daysFrom({ days: -30 });
+
+    const pastTasks = await doWithRetries(async () =>
+      db
+        .collection("Task")
+        .find({ userId: req.userId, createdAt: { $gt: lastMonth } }, { projection: { key: 1 } })
+        .toArray()
+    );
+
+    if (pastTasks.length > 0) {
+      const pastTasksMap = pastTasks.reduce((a, c) => {
+        if (a[c.key]) {
+          a[c.key] += 1;
+        } else {
+          a[c.key] = 1;
+        }
+        return a;
+      }, {});
+
+      userContent += `<-- Here are the tasks I've done in the last month and their count -->\n\n ${JSON.stringify(
+        pastTasksMap
+      )}`;
     }
 
     if (questionAnswers) {

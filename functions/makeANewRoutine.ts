@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb";
 import doWithRetries from "helpers/doWithRetries.js";
-import { UserConcernType, PartEnum, CategoryNameEnum, RoutineStatusEnum, RoutineType, UserType } from "types.js";
+import { UserConcernType, PartEnum, CategoryNameEnum, RoutineStatusEnum, RoutineType } from "types.js";
 import { CreateRoutineUserInfoType } from "types/createRoutineTypes.js";
 import { db } from "init.js";
 import httpError from "helpers/httpError.js";

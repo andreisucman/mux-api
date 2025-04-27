@@ -1,17 +1,9 @@
 type GenerateTaskIntervalsProps = {
-  key: string;
   dateOne: Date;
   dateTwo: Date;
   total: number;
-  earliestStartMap: { [key: string]: string };
 };
-export default function generateTaskIntervals({
-  key,
-  dateOne,
-  dateTwo,
-  total,
-  earliestStartMap,
-}: GenerateTaskIntervalsProps) {
+export default function generateTaskIntervals({ dateOne, dateTwo, total }: GenerateTaskIntervalsProps) {
   try {
     let startDate = new Date(dateOne);
     if (isNaN(startDate.getTime())) {
@@ -20,15 +12,6 @@ export default function generateTaskIntervals({
     const endDate = new Date(dateTwo);
     if (isNaN(endDate.getTime())) {
       throw new Error(`Invalid dateTwo value: ${dateTwo}`);
-    }
-
-    const earliestStart = new Date(earliestStartMap[key]);
-    if (earliestStartMap[key] && isNaN(earliestStart.getTime())) {
-      throw new Error(`Invalid date in earliestStartMap for key: ${key}`);
-    }
-
-    if (earliestStart > startDate) {
-      startDate = earliestStart;
     }
 
     if (startDate > endDate) {

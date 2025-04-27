@@ -6,7 +6,6 @@ type TurnTasksIntoScheduleProps = {
   allTasks: AllTaskType[];
   dateOne: Date;
   dateTwo: Date;
-  earliestStartMap: { [key: string]: any };
 };
 
 export type ScheduleTaskType = {
@@ -15,19 +14,12 @@ export type ScheduleTaskType = {
   concern: string;
 };
 
-export default function turnTasksIntoSchedule({
-  allTasks,
-  earliestStartMap,
-  dateOne,
-  dateTwo,
-}: TurnTasksIntoScheduleProps) {
+export default function turnTasksIntoSchedule({ allTasks, dateOne, dateTwo }: TurnTasksIntoScheduleProps) {
   const scheduleTasks: ScheduleTaskType[] = [];
 
   allTasks.forEach((solution) => {
     const intervals = generateTaskIntervals({
-      key: solution.key,
       total: solution.total,
-      earliestStartMap,
       dateOne,
       dateTwo,
     });
