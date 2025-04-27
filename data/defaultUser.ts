@@ -3,22 +3,6 @@ import { UserType, PartEnum, DemographicsType, NextActionType, ModerationStatusE
 
 dotenv.config();
 
-export const defaultSubscriptions = {
-  improvement: {
-    isTrialUsed: false,
-    subscriptionId: null as string | null,
-    validUntil: null as Date | null,
-  },
-};
-
-export const defaultTriedSubscriptions = {
-  improvement: {
-    isTrialUsed: true,
-    subscriptionId: null as string | null,
-    validUntil: null as Date | null,
-  },
-};
-
 export const defaultDemographics: DemographicsType = {
   sex: null,
   ageInterval: null,
@@ -69,11 +53,11 @@ export const defaultUser: UserType = {
   tosAccepted: false,
   nextRoutine: defaultNextAction,
   nextScan: defaultNextAction,
+  nextRoutineSuggestion: defaultNextAction,
   streakDates: {},
   password: null,
   emailVerified: false,
   concerns: null,
-  subscriptions: defaultSubscriptions,
   toAnalyze: [],
   canRejoinClubAfter: null,
   lastActiveOn: null,

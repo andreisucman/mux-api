@@ -8,16 +8,8 @@ import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import isActivityHarmful from "@/functions/isActivityHarmful.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import { RunType } from "types/askOpenaiTypes.js";
-import {
-  CategoryNameEnum,
-  CustomRequest,
-  ModerationStatusEnum,
-  SubscriptionTypeNamesEnum,
-  UserInfoType,
-} from "types.js";
+import { CategoryNameEnum, CustomRequest, ModerationStatusEnum, UserInfoType } from "types.js";
 import askRepeatedly from "functions/askRepeatedly.js";
-import generateImage from "functions/generateImage.js";
-import checkSubscriptionStatus from "functions/checkSubscription.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import { adminDb, db } from "init.js";
 import httpError from "@/helpers/httpError.js";
@@ -52,16 +44,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       res.status(400).json({
         error: "Bad request",
       });
-      return;
-    }
-
-    const subscriptionIsValid: boolean = await checkSubscriptionStatus({
-      userId: req.userId,
-      subscriptionType: SubscriptionTypeNamesEnum.IMPROVEMENT,
-    });
-
-    if (!subscriptionIsValid) {
-      res.status(200).json({ error: "subscription expired" });
       return;
     }
 
@@ -313,7 +295,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     global.stopInterval();
     res.status(200).end();
   } catch (err) {
-    await addAnalysisStatusError({
+    addAnalysisStatusError({
       operationKey: analysisType,
       userId: String(req.userId),
       message: "An unexpected error occured. Please try again and inform us if the error persists.",

@@ -3,18 +3,17 @@ dotenv.config();
 
 import { AllTaskType, CategoryNameEnum, PartEnum } from "types.js";
 import httpError from "helpers/httpError.js";
-import { ConcernsSolutionsAndFrequenciesType } from "./chooseSolutionsForConcerns.js";
 import createSolutionDescriptionAndInstruction from "./createSolutionDescrptionAndInstruction.js";
 import doWithRetries from "@/helpers/doWithRetries.js";
 import createSolutionInfo from "./createSolutionInfo.js";
-import findEmoji from "@/helpers/findEmoji.js";
 import { CreateRoutineAllSolutionsType } from "@/types/createRoutineTypes.js";
+import { RoutineSuggestionTaskType } from "@/types/updateRoutineSuggestionTypes.js";
 
 type Props = {
   userId: string;
   part: PartEnum;
   categoryName: CategoryNameEnum;
-  concernsSolutionsAndFrequencies: ConcernsSolutionsAndFrequenciesType;
+  concernsSolutionsAndFrequencies: { [concern: string]: RoutineSuggestionTaskType[] };
 };
 
 export default async function createSolutionData({
@@ -27,10 +26,10 @@ export default async function createSolutionData({
     const frequencyMap = Object.values(concernsSolutionsAndFrequencies)
       .flat()
       .reduce((a, c) => {
-        if (a[c.solution]) {
-          a[c.solution] += c.monthlyFrequency;
+        if (a[c.task]) {
+          a[c.task] += c.numberOfTimesInAMonth;
         } else {
-          a[c.solution] = c.monthlyFrequency;
+          a[c.task] = c.numberOfTimesInAMonth;
         }
         return a;
       }, {});
@@ -38,10 +37,10 @@ export default async function createSolutionData({
     const solutionConcernMap = Object.values(concernsSolutionsAndFrequencies)
       .flat()
       .reduce((a, c) => {
-        if (a[c.solution]) {
-          a[c.solution] += c.concern;
+        if (a[c.task]) {
+          a[c.task] += c.concern;
         } else {
-          a[c.solution] = c.concern;
+          a[c.task] = c.concern;
         }
         return a;
       }, {});
@@ -52,7 +51,7 @@ export default async function createSolutionData({
       doWithRetries(() =>
         createSolutionDescriptionAndInstruction({
           categoryName,
-          solution: key,
+          task: key,
           part,
           userId,
           concern: solutionConcernMap[key],
@@ -71,23 +70,13 @@ export default async function createSolutionData({
           concern,
           description,
           instruction,
-          solution: key,
+          task: key,
           userId,
         })
       );
     });
 
     let taskInfoRecords: CreateRoutineAllSolutionsType[] = await Promise.all(taskInfoPromises);
-
-    const iconsMap = await findEmoji({
-      userId,
-      taskNames: taskInfoRecords.map((obj) => obj.name),
-    });
-
-    taskInfoRecords = taskInfoRecords.map((t) => ({
-      ...t,
-      icon: iconsMap[t.name],
-    }));
 
     /* change names of solutions to snake case */
     const valuesWithConcerns: AllTaskType[] = [];

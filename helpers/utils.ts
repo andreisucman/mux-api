@@ -3,6 +3,7 @@ import { DateTime } from "luxon";
 import bcrypt from "bcrypt";
 import setToMidnight from "./setToMidnight.js";
 import { ScoreType } from "@/types.js";
+import { Response } from "express";
 
 export function delayExecution(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -95,9 +96,9 @@ export function convertKeysAndValuesTotoSnakeCase(obj: { [key: string]: any }) {
 
       if (Array.isArray(obj[key])) {
         toSnakeCaseValues = obj[key].map(
-          ({ solution, monthlyFrequency }: { solution: string; monthlyFrequency: number }) => ({
-            solution: toSnakeCase(solution),
-            monthlyFrequency,
+          ({ task, numberOfTimesInAMonth }: { task: string; numberOfTimesInAMonth: number }) => ({
+            task: toSnakeCase(task),
+            numberOfTimesInAMonth,
             concern: key,
           })
         );
@@ -127,8 +128,8 @@ export function combineSolutions(
 ) {
   const combinedSolutions: { [key: string]: string[] } = {};
 
-  for (const [concern, solution] of Object.entries(findSolutionsResponse)) {
-    combinedSolutions[concern] = [solution, ...(findAdditionalSolutionsResponse[solution] || [])];
+  for (const [concern, task] of Object.entries(findSolutionsResponse)) {
+    combinedSolutions[concern] = [task, ...(findAdditionalSolutionsResponse[task] || [])];
   }
 
   return combinedSolutions;
@@ -204,4 +205,21 @@ export function calculateScoreDifferences(initialScores: ScoreType[], currentSco
       return null;
     })
     .filter(Boolean);
+}
+
+export function setupSSE(res: Response) {
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+  });
+}
+
+export function deepsekJsonParser(str) {
+  return JSON.parse(
+    str
+      .replace(/^```json\s*/, "")
+      .replace(/```$/, "")
+      .trim()
+  );
 }

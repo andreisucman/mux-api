@@ -7,7 +7,7 @@ import httpError from "@/helpers/httpError.js";
 import { generateRandomPastelColor } from "make-random-color";
 
 type Props = {
-  solution: string;
+  task: string;
   concern: string;
   description: string;
   instruction: string;
@@ -16,7 +16,7 @@ type Props = {
 };
 
 export default async function createSolutionInfo({
-  solution,
+  task,
   description,
   instruction,
   userId,
@@ -30,7 +30,7 @@ export default async function createSolutionInfo({
       z
         .array(z.string().describe("name of a product or empty string"))
         .describe(
-          'An array of product types that are required for completing this task in singular form or empty string if not products are required (example: ["olive oil","tomato","onion",...]).'
+          'An array of product types that are required for completing this task in singular form or empty string if not products are required (example: ["moisturizer","tomato","brush",...]).'
         ),
       z.null(),
     ]);
@@ -65,14 +65,11 @@ export default async function createSolutionInfo({
       functionName: "saveTaskFromDescription",
     });
 
-    const color = generateRandomPastelColor();
-
     const { isFood, ...restData } = data;
 
     const response = {
       ...restData,
-      key: solution,
-      color,
+      key: task,
       concern,
       description,
       instruction,

@@ -374,21 +374,41 @@ async function handleOneTimePayment(session: Stripe.Checkout.Session) {
     if (routineDataId) {
       await createRoutinePurchase(routineDataId, buyerId, session.payment_intent as string);
     } else {
-      const customerId = session.customer as string;
+      const expandedSession = await stripe.checkout.sessions.retrieve(session.id, {
+        expand: ["line_items.data.price.product"],
+      });
 
+      const lineItems = expandedSession.line_items?.data || [];
+      const priceIds = lineItems.map((item) => item.price?.id);
+
+      const plans = await getCachedPlans(lastPlanFetch, cachedPlans);
+
+      const isResetScan = priceIds.some((id) => id === plans.find((obj) => obj.name === "scan"));
+      const isResetSuggestion = priceIds.some((id) => id === plans.find((obj) => obj.name === "suggestion"));
+
+      const customerId = session.customer as string;
       const relatedUser = await fetchUserInfo({ stripeUserId: customerId }, { nextScan: 1 });
 
-      const updatedScans = relatedUser.nextScan.map((obj) => (obj.part === part ? { ...obj, date: null } : obj));
+      const updatePayload: { [key: string]: any } = {};
+      const incrementPayload: { [key: string]: any } = { [`overview.payment.purchase.platform`]: 1 };
 
-      await doWithRetries(() =>
-        db.collection("User").updateOne({ stripeUserId: customerId }, { $set: { nextScan: updatedScans } })
-      );
+      if (isResetScan) {
+        const updatedScans = relatedUser.nextScan.map((obj) => (obj.part === part ? { ...obj, date: null } : obj));
+        updatePayload.nextScan = updatedScans;
+      }
+
+      if (isResetSuggestion) {
+        const updatedSuggestions = relatedUser.nextRoutineSuggestion.map((obj) =>
+          obj.part === part ? { ...obj, date: null } : obj
+        );
+        updatePayload.nextRoutineSuggestion = updatedSuggestions;
+      }
+
+      await doWithRetries(() => db.collection("User").updateOne({ stripeUserId: customerId }, { $set: updatePayload }));
 
       updateAnalytics({
         userId: String(buyerId),
-        incrementPayload: {
-          [`overview.payment.purchase.platform`]: 1,
-        },
+        incrementPayload,
       });
     }
   } catch (err) {

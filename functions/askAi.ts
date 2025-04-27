@@ -9,26 +9,17 @@ import updateSpend from "./updateSpend.js";
 import { ChatCompletionCreateParams } from "openai/resources/index.mjs";
 import getCompletionCost from "@/helpers/getCompletionCost.js";
 import { ChatCompletion } from "openai/src/resources/index.js";
+import { deepsekJsonParser } from "@/helpers/utils.js";
 
 const openAiModels = ["gpt", "o3", "ft:"];
 const llamaModels = ["meta-llama"];
 const deepseekModels = ["deepseek"];
 
-async function askAi({
-  messages,
-  seed,
-  model,
-  functionName,
-  categoryName,
-  userId,
-  responseFormat,
-}: AskOpenaiProps) {
+async function askAi({ messages, seed, model, functionName, categoryName, userId, responseFormat }: AskOpenaiProps) {
   try {
     const isOpenaiModel = openAiModels.some((name) => model.startsWith(name));
     const isLlamaModel = llamaModels.some((name) => model.startsWith(name));
-    const isDeepseekModel = deepseekModels.some((name) =>
-      model.startsWith(name)
-    );
+    const isDeepseekModel = deepseekModels.some((name) => model.startsWith(name));
 
     let client: any = openai;
     if (isLlamaModel) client = together;
@@ -41,13 +32,11 @@ async function askAi({
     };
 
     if (isOpenaiModel) {
-      if (!model.startsWith("o3")) options.temperature = 0;
+      if (!(model.startsWith("o3") && model.startsWith("o4"))) options.temperature = 0;
       if (responseFormat) options.response_format = responseFormat;
     }
 
-    const completion: ChatCompletion = await doWithRetries(async () =>
-      client.chat.completions.create(options)
-    );
+    const completion: ChatCompletion = await doWithRetries(async () => client.chat.completions.create(options));
 
     const inputTokens = completion.usage.prompt_tokens;
     const outputTokens = completion.usage.completion_tokens;
@@ -69,7 +58,9 @@ async function askAi({
     });
 
     return responseFormat
-      ? JSON.parse(completion.choices[0].message.content)
+      ? isDeepseekModel
+        ? deepsekJsonParser(completion.choices[0].message.content)
+        : JSON.parse(completion.choices[0].message.content)
       : completion.choices[0].message.content;
   } catch (err) {
     throw httpError(err);

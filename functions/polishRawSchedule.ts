@@ -14,23 +14,14 @@ type Props = {
   userId: string;
   part: PartEnum;
   categoryName: CategoryNameEnum;
-  specialConsiderations: string;
-  incrementMultiplier?: number;
 };
 
-export default async function polishRawSchedule({
-  rawSchedule,
-  concerns,
-  userId,
-  categoryName,
-  incrementMultiplier = 1,
-  specialConsiderations,
-}: Props) {
+export default async function polishRawSchedule({ rawSchedule, concerns, userId, categoryName }: Props) {
   try {
     const callback = (value: number) => {
       incrementProgress({
         operationKey: "routine",
-        value: value * incrementMultiplier,
+        value: 1,
         userId,
       });
     };
@@ -39,9 +30,6 @@ export default async function polishRawSchedule({
 
     let systemContent =
       "You are a dermatologist. The user gives you their improvement routine. Your goal is 1. Check iIf there are incompatible tasks and if yes separate them in to to a safe distance. 2. Optimize the position (order) of each task within the day for maximum effectiveness. DON'T REMOVE OR MODIFY THE NAMES OF THE TASKS. MAINTAIN THE SCHEMA FORMAT OF THE SCHEDULE. Be concise and to the point.";
-
-    if (systemContent)
-      systemContent += `The user has the following special consideration: ${specialConsiderations}. Consider it when optimizing the schedule.`;
 
     const userContent: RunType[] = [
       {

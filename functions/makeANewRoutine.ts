@@ -1,68 +1,41 @@
 import { ObjectId } from "mongodb";
 import doWithRetries from "helpers/doWithRetries.js";
-import {
-  UserConcernType,
-  PartEnum,
-  CategoryNameEnum,
-  RoutineStatusEnum,
-  ProgressImageType,
-  RoutineType,
-} from "types.js";
+import { UserConcernType, PartEnum, CategoryNameEnum, RoutineStatusEnum, RoutineType, UserType } from "types.js";
 import { CreateRoutineUserInfoType } from "types/createRoutineTypes.js";
 import { db } from "init.js";
 import httpError from "helpers/httpError.js";
 import updateTasksAnalytics from "./updateTasksAnalytics.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 import createSolutionData from "./createSolutionData.js";
-import chooseSolutionsForConcerns from "./chooseSolutionsForConcerns.js";
 import createScheduleAndTasks from "./createScheduleAndTasks.js";
 import { checkIfPublic } from "@/routes/checkIfPublic.js";
+import { RoutineSuggestionTaskType } from "@/types/updateRoutineSuggestionTypes.js";
 
 type Props = {
   userId: string;
   part: PartEnum;
-  incrementMultiplier?: number;
   routineStartDate: string;
-  partImages: ProgressImageType[];
   userInfo: CreateRoutineUserInfoType;
   partConcerns: UserConcernType[];
-  specialConsiderations: string;
   categoryName: CategoryNameEnum;
+  suggestedTasks: { [concern: string]: RoutineSuggestionTaskType[] };
 };
 
 export default async function makeANewRoutine({
   userId,
   part,
-  incrementMultiplier,
   routineStartDate,
-  partImages,
+  suggestedTasks,
   userInfo,
   partConcerns,
   categoryName,
-  specialConsiderations,
 }: Props) {
   try {
-    const { demographics, name: userName, timeZone, country, latestConcernScores } = userInfo;
-
-    const partScores = latestConcernScores[part];
-
-    const updatedListOfSolutions = await chooseSolutionsForConcerns({
-      userId: String(userId),
-      part,
-      timeZone,
-      country,
-      categoryName,
-      demographics,
-      partConcerns,
-      partImages,
-      partScores,
-      incrementMultiplier,
-      specialConsiderations,
-    });
+    const { name: userName } = userInfo;
 
     const { allSolutions, allTasks } = await createSolutionData({
       categoryName,
-      concernsSolutionsAndFrequencies: updatedListOfSolutions,
+      concernsSolutionsAndFrequencies: suggestedTasks,
       part,
       userId: String(userId),
     });
@@ -71,12 +44,10 @@ export default async function makeANewRoutine({
       allSolutions,
       allTasks,
       categoryName,
-      incrementMultiplier,
       part,
       partConcerns,
       routineStartDate,
       userInfo,
-      specialConsiderations,
     });
 
     const { minDate, maxDate } = getMinAndMaxRoutineDates(allTasksWithDateAndIds);

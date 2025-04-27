@@ -25,6 +25,12 @@ export type RequirementType = {
   part: PartEnum;
 };
 
+export enum AnalysisStatusEnum {
+  ROUTINE = "routine",
+  ANALYSIS = "analysis",
+  ROUTINE_SUGGESTION = "routineSuggestion",
+}
+
 export type ScoreType = {
   value: number;
   explanation: string;
@@ -80,6 +86,7 @@ export type UserType = {
   streaks: StreaksType;
   nextScan: NextActionType[];
   nextRoutine: NextActionType[];
+  nextRoutineSuggestion: NextActionType[];
   streakDates: {};
   latestProgressImages: LatestProgressImagesType;
   concerns: UserConcernType[] | null;
@@ -88,9 +95,6 @@ export type UserType = {
   latestConcernScoresDifference: LatestScoresDifferenceType;
   club: ClubDataType;
   deleteOn: Date;
-  subscriptions: {
-    improvement: SubscriptionType;
-  };
   toAnalyze: ToAnalyzeType[];
   stripeUserId: string;
   emailVerified: boolean;

@@ -4,10 +4,8 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import doWithRetries from "helpers/doWithRetries.js";
-import createRoutine from "@/functions/createRoutine.js";
-import checkSubscriptionStatus from "functions/checkSubscription.js";
-import { CustomRequest, SubscriptionTypeNamesEnum, ModerationStatusEnum, CategoryNameEnum } from "types.js";
-import updateNextRoutine from "helpers/updateNextRoutine.js";
+import { CustomRequest, ModerationStatusEnum, CategoryNameEnum } from "types.js";
+import updateNextRun from "helpers/updateNextRun.js";
 import formatDate from "helpers/formatDate.js";
 import httpError from "@/helpers/httpError.js";
 import getUserInfo from "@/functions/getUserInfo.js";
@@ -18,11 +16,14 @@ import { validParts } from "@/data/other.js";
 import { checkDateValidity, delayExecution } from "@/helpers/utils.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import updateRoutineDataStats from "@/functions/updateRoutineDataStats.js";
+import makeANewRoutine from "@/functions/makeANewRoutine.js";
+import { CreateRoutineUserInfoType } from "@/types/createRoutineTypes.js";
+import { RoutineSuggestionType } from "@/types/updateRoutineSuggestionTypes.js";
 
 const route = Router();
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { part, creationMode = "scratch", routineStartDate, specialConsiderations } = req.body;
+  const { part, routineStartDate } = req.body;
 
   if (!part || (part && !validParts.includes(part))) {
     res.status(400).json({ error: "Bad request" });
@@ -37,20 +38,10 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
   }
 
   try {
-    const subscriptionIsValid: boolean = await checkSubscriptionStatus({
+    const userInfo = (await getUserInfo({
       userId: req.userId,
-      subscriptionType: SubscriptionTypeNamesEnum.IMPROVEMENT,
-    });
-
-    if (!subscriptionIsValid) {
-      res.status(200).json({ error: "subscription expired" });
-      return;
-    }
-
-    const userInfo = await getUserInfo({
-      userId: req.userId,
-      projection: { nextRoutine: 1, concerns: 1 },
-    });
+      projection: { nextRoutine: 1, concerns: 1, name: 1, timeZone: 1 },
+    })) as CreateRoutineUserInfoType;
 
     if (!userInfo) throw httpError("User not found");
 
@@ -116,26 +107,37 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       return;
     }
 
-    const promises = availableRoutines.map((r) =>
-      doWithRetries(
-        async () =>
-          await createRoutine({
+    const latestSuggestion = (await doWithRetries(() =>
+      db
+        .collection("RoutineSuggestion")
+        .find(
+          {
             userId: req.userId,
-            part: r.part,
-            creationMode,
-            incrementMultiplier: 5 - availableRoutines.length,
-            partConcerns,
-            specialConsiderations,
-            categoryName: CategoryNameEnum.TASKS,
-            routineStartDate,
-          })
-      )
-    );
+            part,
+          },
+          { projection: { tasks: 1 } }
+        )
+        .sort({ createdAt: -1 })
+        .toArray()
+    )) as unknown as RoutineSuggestionType | null;
 
-    await Promise.all(promises);
+    if (!latestSuggestion || !latestSuggestion.tasks) {
+      res.status(400).json({ error: "Bad request" });
+      return;
+    }
 
-    const updatedNextRoutine = updateNextRoutine({
-      nextRoutine,
+    await makeANewRoutine({
+      part,
+      userId: req.userId,
+      userInfo,
+      partConcerns,
+      routineStartDate,
+      categoryName: CategoryNameEnum.TASKS,
+      suggestedTasks: latestSuggestion.tasks,
+    });
+
+    const updatedNextRoutine = updateNextRun({
+      nextRun: nextRoutine,
       parts: availableRoutines.map((r) => r.part),
     });
 

@@ -21,8 +21,6 @@ import getUserInfo from "@/functions/getUserInfo.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 import { validParts } from "@/data/other.js";
 import getUsersImages from "@/functions/getUserImages.js";
-import generateImage from "@/functions/generateImage.js";
-import searchYoutubeVideos from "@/functions/searchYoutubeVideos.js";
 import getLatestTasks from "@/functions/getLatestTasks.js";
 import { checkIfPublic } from "./checkIfPublic.js";
 import updateRoutineDataStats from "@/functions/updateRoutineDataStats.js";

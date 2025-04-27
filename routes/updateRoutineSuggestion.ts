@@ -1,0 +1,172 @@
+import * as dotenv from "dotenv";
+dotenv.config();
+
+import { ObjectId } from "mongodb";
+import { Router, Response, NextFunction } from "express";
+import { db } from "init.js";
+import { AnalysisStatusEnum, CategoryNameEnum, CustomRequest, PartEnum } from "types.js";
+import doWithRetries from "helpers/doWithRetries.js";
+import getUserInfo from "@/functions/getUserInfo.js";
+import setToMidnight from "@/helpers/setToMidnight.js";
+import moderateContent from "@/functions/moderateContent.js";
+import createRoutineSuggestionQuestions from "@/functions/createRoutineSuggestionQuestion.js";
+import incrementProgress from "@/helpers/incrementProgress.js";
+import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
+import { daysFrom } from "@/helpers/utils.js";
+
+const route = Router();
+
+type Props = {
+  part: PartEnum;
+  routineSuggestionId?: string;
+  previousExperience: { [key: string]: string };
+  questionsAndAnswers: { [key: string]: string };
+};
+
+const validParts = [PartEnum.BODY, PartEnum.FACE, PartEnum.HAIR];
+
+route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
+  let { part, routineSuggestionId, previousExperience = {}, questionsAndAnswers = {} }: Props = req.body;
+  const partIsValid = validParts.includes(part);
+
+  if (
+    !partIsValid ||
+    (routineSuggestionId && !ObjectId.isValid(routineSuggestionId)) ||
+    (previousExperience && typeof previousExperience !== "object") ||
+    (questionsAndAnswers && typeof questionsAndAnswers !== "object")
+  ) {
+    res.status(400).json({ error: "Bad request" });
+    return;
+  }
+
+  try {
+    const experience = Object.values(previousExperience).join("\n");
+    const answers = Object.values(previousExperience).join("\n");
+    const text = experience + answers;
+
+    if (text.trim()) {
+      const textModerationResponse = await moderateContent({
+        content: [
+          {
+            type: "text",
+            text,
+          },
+        ],
+      });
+
+      if (!textModerationResponse.isSafe) {
+        res
+          .status(200)
+          .json({ error: "Your text appears to have inappropriate language. Please revise and try again." });
+        return;
+      }
+    }
+
+    const now = setToMidnight({ date: new Date(), timeZone: req.timeZone });
+    const afterSevenDays = daysFrom({ date: now, days: 7 });
+
+    const userInfo = await getUserInfo({ userId: req.userId, projection: { concerns: 1, latestConcernScores: 1 } });
+    const concernNames = userInfo.concerns.map((co) => co.name);
+
+    const sanitizedExperience = Object.fromEntries(
+      Object.entries(previousExperience).filter(([concern, description]) => concernNames.includes(concern))
+    );
+
+    let sanitizedQuestionsAndAnswers = Object.fromEntries(
+      Object.entries(questionsAndAnswers).map(([question, answer]) => [question.slice(0, 200), answer.slice(0, 200)])
+    );
+
+    const nonZeroConcerns = userInfo.latestConcernScores[part].filter((co) => co.value > 0);
+
+    const updatePayload: { [key: string]: any } = { concernScores: nonZeroConcerns };
+
+    const experienceExists = Object.keys(sanitizedExperience).length > 0;
+    if (experienceExists) updatePayload.previousExperience = sanitizedExperience;
+
+    const existingSuggestion = await doWithRetries(() =>
+      db
+        .collection("RoutineSuggestion")
+        .find({
+          userId: new ObjectId(req.userId),
+          part,
+          $and: [{ createdAt: { $gte: now } }, { createdAt: { $lte: afterSevenDays } }],
+        })
+        .sort({ createdAt: -1 })
+        .next()
+    );
+
+    res.status(200).end();
+
+    if (!existingSuggestion) {
+      await doWithRetries(async () =>
+        db.collection("AnalysisStatus").updateOne(
+          {
+            userId: new ObjectId(req.userId),
+            operationKey: AnalysisStatusEnum.ROUTINE_SUGGESTION,
+            isRunning: true,
+          },
+          { $set: { createdAt: new Date() }, $unset: { isError: null } },
+          { upsert: true }
+        )
+      );
+
+      global.startInterval(() =>
+        incrementProgress({ operationKey: AnalysisStatusEnum.ROUTINE_SUGGESTION, value: 25, userId: req.userId })
+      );
+
+      const questions = await createRoutineSuggestionQuestions({
+        categoryName: CategoryNameEnum.TASKS,
+        part,
+        partConcernScores: userInfo.latestConcernScores[part],
+        previousExperience,
+        userId: req.userId,
+      });
+
+      sanitizedQuestionsAndAnswers = questions.reduce((a, c) => {
+        a[c] = "";
+        return a;
+      }, {});
+
+      global.stopInterval();
+
+      await doWithRetries(async () =>
+        db.collection("AnalysisStatus").updateOne(
+          {
+            userId: new ObjectId(req.userId),
+            operationKey: AnalysisStatusEnum.ROUTINE_SUGGESTION,
+          },
+          { $set: { isRunning: false, progress: 0 }, $unset: { createdAt: null, isError: null } }
+        )
+      );
+    }
+
+    const questionsAndAnswersExist = Object.keys(sanitizedQuestionsAndAnswers).length > 0;
+    if (questionsAndAnswersExist) updatePayload.questionsAndAnswers = sanitizedQuestionsAndAnswers;
+
+    await doWithRetries(async () =>
+      db.collection("RoutineSuggestion").updateOne(
+        {
+          userId: new ObjectId(req.userId),
+          part,
+          createdAt: now,
+          $and: [{ createdAt: { $gte: now } }, { createdAt: { $lte: afterSevenDays } }],
+        },
+        {
+          $set: updatePayload,
+        },
+        { upsert: true }
+      )
+    );
+  } catch (err) {
+    addAnalysisStatusError({
+      operationKey: AnalysisStatusEnum.ROUTINE_SUGGESTION,
+      userId: String(req.userId),
+      message: "An unexpected error occured. Please try again and inform us if the error persists.",
+      originalMessage: err.message,
+    });
+    global.stopInterval();
+    next(err);
+  }
+});
+
+export default route;

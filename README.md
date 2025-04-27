@@ -27,3 +27,6 @@ docker run -d --restart=always -p 80:3001 --env-file env.list.txt sunchainltd/mu
 chmod +x ./script.sh
 
 ./script.sh
+
+
+docker run -p 6379:6379 -it redis/redis-stack-server:latest

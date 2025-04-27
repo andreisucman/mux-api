@@ -32,7 +32,6 @@ import getInactiveTasks from "routes/getInactiveTasks.js";
 import getAutocomplete from "routes/getAutocomplete.js";
 import getProof from "routes/getProof.js";
 import startProgressAnalysis from "routes/startProgressAnalysis.js";
-import startSubscriptionTrial from "routes/startSubscriptionTrial.js";
 import uploadProgress from "routes/uploadProgress.js";
 import uploadToSpaces from "routes/uploadToSpaces.js";
 import getRoutines from "routes/getRoutines.js";
@@ -46,7 +45,7 @@ import updateAccountDeletion from "routes/updateAccountDeletion.js";
 import updateUserData from "routes/updateUserData.js";
 import updateContentBlurType from "routes/updateContentBlurType.js";
 import updateProofUpload from "routes/updateProofUpload.js";
-import updateSpecialConsiderations from "routes/updateSpecialConsiderations.js";
+import updateSpecialConsiderations from "@/routes/updateRoutineSuggestion.js";
 import updateStatusOfTaskInstance from "@/routes/updateStatusOfTaskInstance.js";
 import uploadProof from "routes/uploadProof.js";
 import metricCapturer from "middleware/metricCapturer.js";
@@ -94,6 +93,10 @@ import submitFeedback from "@/routes/submitFeedback.js";
 import getTasks from "@/routes/getTasks.js";
 import addExampleYoutubeVideo from "@/routes/addExampleYoutubeVideo.js";
 import findExamples from "@/routes/findExamples.js";
+import getRoutineSuggestion from "@/routes/getRoutineSuggestion.js";
+import updateRoutineSuggestion from "@/routes/updateRoutineSuggestion.js";
+import startRoutineSuggestionStream from "@/routes/startRoutineSuggestionStream.js";
+import resumeRoutineSuggestionStream from "@/routes/resumeRoutineSuggestionStream.js";
 
 import { client } from "init.js";
 
@@ -173,6 +176,10 @@ app.use("/deleteToAnalyze", deleteToAnalyze);
 
 // protected routes
 app.use((req, res, next) => checkAccess(req, res, next, false));
+app.use("/updateRoutineSuggestion", updateRoutineSuggestion);
+app.use("/startRoutineSuggestionStream", startRoutineSuggestionStream);
+app.use("/resumeRoutineSuggestionStream", resumeRoutineSuggestionStream);
+app.use("/getRoutineSuggestion", getRoutineSuggestion);
 app.use("/findExamples", findExamples);
 app.use("/addExampleYoutubeVideo", addExampleYoutubeVideo);
 app.use("/getUserData", getUserData);
@@ -184,7 +191,6 @@ app.use("/rescheduleTaskInstance", rescheduleTaskInstance);
 app.use("/rescheduleTask", rescheduleTask);
 app.use("/deleteTaskInstance", deleteTaskInstance);
 app.use("/deleteRoutines", deleteRoutines);
-app.use("/startSubscriptionTrial", startSubscriptionTrial);
 app.use("/subscribeToUpdates", subscribeToUpdates);
 app.use("/getSubscriptionPrice", getSubscriptionPrice);
 app.use("/getRoutineData", getRoutineData);

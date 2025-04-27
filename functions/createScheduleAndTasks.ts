@@ -4,19 +4,17 @@ import incrementProgress from "@/helpers/incrementProgress.js";
 import polishRawSchedule from "./polishRawSchedule.js";
 import createTasks from "./createTasks.js";
 import addDateAndIdsToAllTasks from "@/helpers/addDateAndIdsToAllTasks.js";
-import { AllTaskType, CategoryNameEnum, PartEnum, UserConcernType, UserInfoType } from "@/types.js";
-import { CreateRoutineAllSolutionsType } from "@/types/createRoutineTypes.js";
+import { AllTaskType, CategoryNameEnum, PartEnum, UserConcernType } from "@/types.js";
+import { CreateRoutineAllSolutionsType, CreateRoutineUserInfoType } from "@/types/createRoutineTypes.js";
 import httpError from "@/helpers/httpError.js";
 
 type Props = {
   categoryName: CategoryNameEnum;
   part: PartEnum;
-  specialConsiderations?: string;
   partConcerns: UserConcernType[];
   allTasks: AllTaskType[];
   routineStartDate: string;
-  incrementMultiplier: number;
-  userInfo: UserInfoType;
+  userInfo: CreateRoutineUserInfoType;
   allSolutions: CreateRoutineAllSolutionsType[];
 };
 
@@ -28,8 +26,6 @@ export default async function createScheduleAndTasks({
   partConcerns,
   allTasks,
   routineStartDate,
-  specialConsiderations,
-  incrementMultiplier,
 }: Props) {
   try {
     const rawSchedule = await doWithRetries(async () =>
@@ -42,7 +38,7 @@ export default async function createScheduleAndTasks({
     );
 
     await incrementProgress({
-      value: 5 * incrementMultiplier,
+      value: 5,
       operationKey: "routine",
       userId: String(userInfo._id),
     });
@@ -54,8 +50,6 @@ export default async function createScheduleAndTasks({
         concerns: partConcerns,
         categoryName,
         rawSchedule,
-        incrementMultiplier,
-        specialConsiderations,
       })
     );
 

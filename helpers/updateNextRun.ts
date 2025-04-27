@@ -4,26 +4,23 @@ import httpError from "./httpError.js";
 
 type Props = {
   parts: PartEnum[];
-  nextRoutine: NextActionType[];
+  nextRun: NextActionType[];
 };
 
-export default function updateNextRoutine({ nextRoutine, parts }: Props) {
+export default function updateNextRun({ nextRun, parts }: Props) {
   try {
     const newDate = daysFrom({ days: 7 });
 
     for (const part of parts) {
-      let relevantPart = nextRoutine.find((obj) => obj.part === part);
+      let relevantPart = nextRun.find((obj) => obj.part === part);
       if (relevantPart) {
         relevantPart.date = newDate;
       }
     }
 
-    nextRoutine.sort(
-      (a, b) =>
-        new Date(a.date || 0).getTime() - new Date(b.date || 0).getTime()
-    );
+    nextRun.sort((a, b) => new Date(a.date || 0).getTime() - new Date(b.date || 0).getTime());
 
-    return nextRoutine;
+    return nextRun;
   } catch (err) {
     throw httpError(err);
   }

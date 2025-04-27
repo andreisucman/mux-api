@@ -6,7 +6,7 @@ import askRepeatedly from "./askRepeatedly.js";
 import httpError from "@/helpers/httpError.js";
 
 type Props = {
-  solution: string;
+  task: string;
   concern: string;
   part: string;
   userId: string;
@@ -14,7 +14,7 @@ type Props = {
 };
 
 export default async function createSolutionDescriptionAndInstruction({
-  solution,
+  task,
   concern,
   part,
   userId,
@@ -36,7 +36,7 @@ export default async function createSolutionDescriptionAndInstruction({
         content: [
           {
             type: "text",
-            text: `Name of the actvity: ${solution}`,
+            text: `Name of the actvity: ${task}`,
           },
           {
             type: "text",
@@ -57,7 +57,7 @@ export default async function createSolutionDescriptionAndInstruction({
       functionName: "createTaskFromDescription",
     });
 
-    return { ...response, key: solution };
+    return { ...response, key: task };
   } catch (err) {
     throw httpError(err);
   }

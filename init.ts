@@ -1,6 +1,7 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 import Replicate from "replicate";
+import { createClient } from "redis";
 import Together from "together-ai";
 import OpenAI from "openai";
 import { MongoClient } from "mongodb";
@@ -13,6 +14,12 @@ const client = new MongoClient(process.env.DATABASE_URI);
 const db = client.db(process.env.DATABASE_NAME);
 const adminDb = client.db(process.env.ADMIN_DATABASE_NAME);
 const promClientRegister = new promClient.Registry();
+
+const redis = createClient({ url: process.env.REDIS_URL });
+redis.connect().catch((err) => {
+  console.error("Redis connection failed:", err);
+  process.exit(1);
+});
 
 const s3Client = new S3Client({
   region: process.env.DO_SPACES_REGION,
@@ -64,6 +71,7 @@ global.stopInterval = () => {
 
 export {
   db,
+  redis,
   deepSeek,
   adminDb,
   client,

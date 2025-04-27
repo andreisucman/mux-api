@@ -4,8 +4,12 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import setToMidnight from "@/helpers/setToMidnight.js";
 import { daysFrom } from "helpers/utils.js";
-import { UserInfoType, TaskType, PartEnum, TaskStatusEnum, CategoryNameEnum } from "types.js";
-import { CreateRoutineAllSolutionsType, PersonalizedInfoType } from "types/createRoutineTypes.js";
+import { TaskType, PartEnum, TaskStatusEnum, CategoryNameEnum } from "types.js";
+import {
+  CreateRoutineAllSolutionsType,
+  CreateRoutineUserInfoType,
+  PersonalizedInfoType,
+} from "types/createRoutineTypes.js";
 import httpError from "helpers/httpError.js";
 import { ScheduleTaskType } from "@/helpers/turnTasksIntoSchedule.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
@@ -16,7 +20,7 @@ interface DraftTaskType extends CreateRoutineAllSolutionsType {
 
 type Props = {
   part: PartEnum;
-  userInfo: UserInfoType;
+  userInfo: CreateRoutineUserInfoType;
   finalSchedule: { [key: string]: ScheduleTaskType[] };
   allSolutions: CreateRoutineAllSolutionsType[];
   createOnlyTheseKeys?: string[];
