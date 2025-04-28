@@ -1,6 +1,5 @@
 import * as dotenv from "dotenv";
 dotenv.config();
-
 import { Response } from "express";
 
 export default function signOut(res: Response, status: number, error: string) {

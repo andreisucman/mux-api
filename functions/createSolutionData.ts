@@ -13,17 +13,12 @@ type Props = {
   userId: string;
   part: PartEnum;
   categoryName: CategoryNameEnum;
-  concernsSolutionsAndFrequencies: { [concern: string]: RoutineSuggestionTaskType[] };
+  suggestedTasks: { [concern: string]: RoutineSuggestionTaskType[] };
 };
 
-export default async function createSolutionData({
-  userId,
-  part,
-  categoryName,
-  concernsSolutionsAndFrequencies,
-}: Props) {
+export default async function createSolutionData({ userId, part, categoryName, suggestedTasks }: Props) {
   try {
-    const frequencyMap = Object.values(concernsSolutionsAndFrequencies)
+    const frequencyMap = Object.values(suggestedTasks)
       .flat()
       .reduce((a, c) => {
         if (a[c.task]) {
@@ -34,7 +29,7 @@ export default async function createSolutionData({
         return a;
       }, {});
 
-    const solutionConcernMap = Object.values(concernsSolutionsAndFrequencies)
+    const solutionConcernMap = Object.values(suggestedTasks)
       .flat()
       .reduce((a, c) => {
         if (a[c.task]) {
@@ -63,9 +58,12 @@ export default async function createSolutionData({
 
     const taskInfoPromises = taskKeyDescriptionInstruction.map(({ key, description, instruction }) => {
       const concern = solutionConcernMap[key];
+      const relevantTask = suggestedTasks[concern].find((t) => t.task === key);
 
       return doWithRetries(async () =>
         createSolutionInfo({
+          icon: relevantTask.icon,
+          color: relevantTask.color,
           categoryName,
           concern,
           description,

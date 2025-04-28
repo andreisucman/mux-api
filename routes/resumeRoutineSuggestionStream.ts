@@ -10,29 +10,25 @@ route.get("/:streamId", async (req: CustomRequest, res) => {
   const channel = `sse:${streamId}`;
   const clientSubscriber = redis.duplicate();
 
-  console.log("resume stream streamId", streamId);
-
   try {
     await clientSubscriber.connect();
     const sessionData = await redis.get(streamId);
 
+    setupSSE(res);
+
     if (!sessionData) {
-      res.write("event: error\n\ndata: Please start the analysis anew.\n\n");
+      res.write("Please start the analysis anew");
       res.end();
       return;
     }
 
-    setupSSE(res);
     const session = JSON.parse(sessionData);
 
-    console.log("resume stream session text", session.text);
-
     if (session.text) {
-      res.write(`data: ${session.text}\n\n`);
+      res.write(session.text);
     }
 
     if (session.finished) {
-      res.write("event: close\n\n");
       res.end();
       return;
     }
@@ -41,14 +37,13 @@ route.get("/:streamId", async (req: CustomRequest, res) => {
       const { type, content } = JSON.parse(message);
       switch (type) {
         case "chunk":
-          res.write(`data: ${content}\n\n`);
+          res.write(content);
           break;
         case "close":
-          res.write("event: close\n\n");
           res.end();
           break;
         case "error":
-          res.write("event: error\n\ndata: Stream error\n\n");
+          res.write("Stream error");
           res.end();
           break;
       }
@@ -60,12 +55,12 @@ route.get("/:streamId", async (req: CustomRequest, res) => {
       if (clientSubscriber.isOpen) {
         clientSubscriber.unsubscribe(channel);
         clientSubscriber.quit();
+        if (clientSubscriber?.isOpen) clientSubscriber.quit();
       }
     });
   } catch (error) {
+    if (clientSubscriber?.isOpen) clientSubscriber.quit();
     res.status(500).json({ error: "Internal server error" });
-  } finally {
-    if (clientSubscriber.isOpen) clientSubscriber.quit();
   }
 });
 

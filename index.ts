@@ -95,7 +95,7 @@ import addExampleYoutubeVideo from "@/routes/addExampleYoutubeVideo.js";
 import findExamples from "@/routes/findExamples.js";
 import getRoutineSuggestion from "@/routes/getRoutineSuggestion.js";
 import updateRoutineSuggestion from "@/routes/updateRoutineSuggestion.js";
-import startRoutineSuggestionStream from "@/routes/startRoutineSuggestionStream.js";
+import startRoutineSuggestionStream from "@/routes/startRoutineSuggestionStream/index.js";
 import resumeRoutineSuggestionStream from "@/routes/resumeRoutineSuggestionStream.js";
 
 import { client } from "init.js";

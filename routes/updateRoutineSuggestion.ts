@@ -63,9 +63,12 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     }
 
     const now = setToMidnight({ date: new Date(), timeZone: req.timeZone });
-    const afterSevenDays = daysFrom({ date: now, days: 7 });
+    const lastWeek = daysFrom({ date: now, days: -7 });
 
-    const userInfo = await getUserInfo({ userId: req.userId, projection: { concerns: 1, latestConcernScores: 1 } });
+    const userInfo = await getUserInfo({
+      userId: req.userId,
+      projection: { concerns: 1, latestConcernScores: 1 },
+    });
     const concernNames = userInfo.concerns.map((co) => co.name);
 
     const sanitizedExperience = Object.fromEntries(
@@ -83,33 +86,32 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     const experienceExists = Object.keys(sanitizedExperience).length > 0;
     if (experienceExists) updatePayload.previousExperience = sanitizedExperience;
 
-    const existingSuggestion = await doWithRetries(() =>
-      db
-        .collection("RoutineSuggestion")
-        .find({
-          userId: new ObjectId(req.userId),
-          part,
-          $and: [{ createdAt: { $gte: now } }, { createdAt: { $lte: afterSevenDays } }],
-        })
-        .sort({ createdAt: -1 })
-        .next()
+    const existingWithQuestionsCount = await doWithRetries(async () =>
+      db.collection("RoutineSuggestion").countDocuments({
+        userId: new ObjectId(req.userId),
+        part,
+        createdAt: now,
+        $and: [{ createdAt: { $gte: lastWeek } }, { createdAt: { $lte: now } }],
+        questionsAndAnswers: { $exists: true },
+      })
     );
 
-    res.status(200).end();
-
-    if (!existingSuggestion) {
+    if (!existingWithQuestionsCount) {
       await doWithRetries(async () =>
         db.collection("AnalysisStatus").updateOne(
           {
             userId: new ObjectId(req.userId),
             operationKey: AnalysisStatusEnum.ROUTINE_SUGGESTION,
-            isRunning: true,
           },
-          { $set: { createdAt: new Date() }, $unset: { isError: null } },
+          { $set: { createdAt: new Date(), progress: 0, isRunning: true }, $unset: { isError: null } },
           { upsert: true }
         )
       );
+    }
 
+    res.status(200).end();
+    
+    if (!existingWithQuestionsCount) {
       global.startInterval(() =>
         incrementProgress({ operationKey: AnalysisStatusEnum.ROUTINE_SUGGESTION, value: 25, userId: req.userId })
       );
@@ -149,7 +151,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
           userId: new ObjectId(req.userId),
           part,
           createdAt: now,
-          $and: [{ createdAt: { $gte: now } }, { createdAt: { $lte: afterSevenDays } }],
+          $and: [{ createdAt: { $gte: lastWeek } }, { createdAt: { $lte: now } }],
         },
         {
           $set: updatePayload,

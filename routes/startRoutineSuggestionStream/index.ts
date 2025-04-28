@@ -4,22 +4,42 @@ import { deepSeek, db, redis } from "@/init.js";
 import { daysFrom, setupSSE, toSentenceCase } from "@/helpers/utils.js";
 import doWithRetries from "@/helpers/doWithRetries.js";
 import { ObjectId } from "mongodb";
-import { CustomRequest } from "@/types.js";
+import { CustomRequest, TaskStatusEnum } from "@/types.js";
 import { RoutineSuggestionType } from "@/types/updateRoutineSuggestionTypes.js";
-import { finalizeSuggestion } from "./startRoutineSuggestionStream/functions.js";
+import { finalizeSuggestion } from "./functions.js";
 import updateNextRun from "@/helpers/updateNextRun.js";
 import getUserInfo from "@/functions/getUserInfo.js";
+import moderateContent from "@/functions/moderateContent.js";
+import checkCanAction from "@/helpers/checkCanAction.js";
 
 const route = Router();
 
 route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
   const { routineSuggestionId } = req.params;
+  const { revisionText } = req.body;
   const streamId = `suggestion_${nanoid()}`;
   const channel = `sse:${streamId}`;
   const publisher = redis.duplicate();
 
+  if (revisionText) {
+    const textModerationResponse = await moderateContent({
+      content: [
+        {
+          type: "text",
+          text: revisionText,
+        },
+      ],
+    });
+
+    if (!textModerationResponse.isSafe) {
+      res.write("Your text appears to have inappropriate language. Please revise and try again.");
+      res.end();
+      return;
+    }
+  }
+
   if (!routineSuggestionId) {
-    res.write("event: error\n\ndata: Please start the analysis anew.\n\n");
+    res.write("Please start the analysis anew.");
     res.end();
     return;
   }
@@ -35,21 +55,80 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
         {
           _id: new ObjectId(routineSuggestionId),
         },
-        { projection: { previousExperience: 1, questionsAndAnswers: 1, concernScores: 1, reasoning: 1, part: 1 } }
+        {
+          projection: {
+            previousExperience: 1,
+            questionsAndAnswers: 1,
+            concernScores: 1,
+            reasoning: 1,
+            part: 1,
+            tasks: 1,
+            isRevised: 1,
+          },
+        }
       )
     )) as unknown as RoutineSuggestionType | null;
 
-    if (!latestSuggestion) {
-      res.write("event: error\n\ndata: Please start the analysis anew.\n\n");
+    if (revisionText && latestSuggestion.isRevised) {
+      res.write("This routine has already been revised.");
       res.end();
       return;
     }
 
-    if (latestSuggestion.reasoning) {
-      res.write(`data: ${latestSuggestion.reasoning}\n\n`);
+    if (!latestSuggestion) {
+      res.write("Please start the analysis anew.");
       res.end();
       return;
     }
+
+    if (latestSuggestion.reasoning && !revisionText) {
+      res.write(latestSuggestion.reasoning);
+      res.end();
+      return;
+    }
+
+    if (revisionText) {
+      await doWithRetries(async () =>
+        db.collection("RoutineSuggestion").updateOne(
+          {
+            _id: new ObjectId(routineSuggestionId),
+          },
+          {
+            $set: {
+              isRevised: true,
+              revisionText,
+            },
+            $unset: {
+              tasks: null,
+              summary: null,
+              reasoning: null,
+            },
+          }
+        )
+      );
+    }
+
+    const { checkBackDate, isActionAvailable } = await checkCanAction({
+      nextAction: userInfo.nextRoutineSuggestion,
+      part: latestSuggestion.part,
+    });
+
+    if (!isActionAvailable && !revisionText) {
+      res.write(`You can get another suggestion analysis after ${checkBackDate}.`);
+      res.end();
+      return;
+    }
+
+    const updatedNextRoutineSuggestion = updateNextRun({
+      nextRun: userInfo.nextRoutineSuggestion,
+      parts: [latestSuggestion.part],
+    });
+
+    await doWithRetries(() =>
+      db
+        .collection("User")
+        .updateOne({ _id: new ObjectId(req.userId) }, { $set: { nextRoutineSuggestion: updatedNextRoutineSuggestion } })
+    );
 
     await publisher.connect();
 
@@ -62,11 +141,21 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
       }),
       { EX: 1800 }
     );
-
     setupSSE(res);
-    res.write(`id: ${streamId}\n`);
+    res.write(`id: ${streamId}`);
 
     let systemContent = `You are a dermatologist. Your goal is to come up with a combination of the most effective solutions that the patient can do to improve each of their concerns. In your response: 1. Each solution must represent a standalone individual task with the number of times it has to be done in a month (frequency). 2. Each solution should have a 1-sentence explanation of how it's going to help improve the concern. 3. Consider the severity of the concerns, their description and feedback from the user when deciding which task to suggest. 4. Don't combine tasks.  5. Don't suggest apps, or passive activities such as sleeping.`;
+
+    if (revisionText) {
+      const previousTasks = Object.values(latestSuggestion.tasks)
+        .flat()
+        .map(
+          (t) =>
+            `Concern targeted: ${t.concern}. Task: ${t.task}. Number of times in a month: ${t.numberOfTimesInAMonth}`
+        )
+        .join("\n\n");
+      systemContent += `In the past you have suggested this user the following routine: ###${previousTasks}###. And your reasoning was this: ###${latestSuggestion.reasoning}###. Don't recreate it from scratch, only modify according to the user's request.`;
+    }
 
     const concernsWithSeverities = latestSuggestion.concernScores
       .filter((so) => so.value > 0)
@@ -90,7 +179,7 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
     })
       .filter(([key, value]) => Boolean(value))
       .map(([key, value]) => `${toSentenceCase(key)}: ${value}`)
-      .join("\n");
+      .join(" ");
 
     let userContent = `<-- About me --> \n\n ${userAboutString}`;
 
@@ -105,7 +194,10 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
     const pastTasks = await doWithRetries(async () =>
       db
         .collection("Task")
-        .find({ userId: req.userId, createdAt: { $gt: lastMonth } }, { projection: { key: 1 } })
+        .find(
+          { userId: req.userId, status: TaskStatusEnum.COMPLETED, startsAt: { $gt: lastMonth } },
+          { projection: { key: 1 } }
+        )
         .toArray()
     );
 
@@ -119,13 +211,17 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
         return a;
       }, {});
 
-      userContent += `<-- Here are the tasks I've done in the last month and their count -->\n\n ${JSON.stringify(
+      userContent += `<-- Here are the tasks I've completed in the last month and their count -->\n\n ${JSON.stringify(
         pastTasksMap
       )}`;
     }
 
     if (questionAnswers) {
       userContent += `<-- Here are my answers to the additional questions -->\n\n ${questionAnswers}.`;
+    }
+
+    if (revisionText) {
+      userContent += `<-- Revision request -->\n\n Please revise your prevous routine as follows: ${revisionText}.`;
     }
 
     const messages: any = [
@@ -157,7 +253,7 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
         })
       );
 
-      res.write(`data: ${reasoningChunk}\n\n`);
+      res.write(reasoningChunk);
     }
 
     await publisher.publish(channel, JSON.stringify({ type: "close" }));
@@ -180,17 +276,7 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
       currentData.text
     );
 
-    const updatedNextRoutineSuggestion = updateNextRun({
-      nextRun: userInfo.nextRoutineSuggestion,
-      parts: [latestSuggestion.part],
-    });
-
-    await doWithRetries(() =>
-      db
-        .collection("User")
-        .updateOne({ _id: new ObjectId(req.userId) }, { $set: { nextRoutineSuggestion: updatedNextRoutineSuggestion } })
-    );
-
+    if (publisher?.isOpen) await publisher.quit();
     res.end();
   } catch (err) {
     await publisher.publish(
@@ -208,10 +294,9 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
       }),
       { EX: 1800 }
     );
-    res.write("event: error\n\ndata: Stream error\n\n");
-    res.end();
-  } finally {
     if (publisher?.isOpen) await publisher.quit();
+    res.write("Stream error");
+    res.end();
   }
 });
 

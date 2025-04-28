@@ -4,7 +4,7 @@ dotenv.config();
 import { Response, NextFunction } from "express";
 import { ObjectId } from "mongodb";
 import csrf from "csrf";
-import { db } from "init.js";
+import { db, redis } from "init.js";
 import signOut from "functions/signOut.js";
 import { CustomRequest } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
@@ -38,24 +38,27 @@ async function checkAccess(req: CustomRequest, res: Response, next: NextFunction
   }
 
   try {
-    const session = await doWithRetries(async () =>
-      db.collection("Session").findOne({ accessToken }, { projection: { userId: 1, expiresOn: 1 } })
-    );
+    const savedSesion = await redis.get(accessToken);
+    let session = savedSesion ? JSON.parse(savedSesion) : undefined;
 
     if (!session) {
-      signOut(res, 403, "Invalid or expired access token");
-      return;
-    }
+      session = await doWithRetries(async () =>
+        db.collection("Session").findOne({ accessToken }, { projection: { userId: 1, expiresOn: 1 } })
+      );
 
-    const expired = new Date() > new Date(session?.expiresOn);
+      await redis.set(accessToken, JSON.stringify(session), { EX: 60 });
 
-    if (expired) {
-      signOut(res, 403, "Access token expired");
-      return;
-    }
+      if (!session) {
+        signOut(res, 403, "Invalid or expired access token");
+        return;
+      }
 
-    if (session) {
-      req.userId = session.userId;
+      const expired = new Date() > new Date(session?.expiresOn);
+
+      if (expired) {
+        signOut(res, 403, "Access token expired");
+        return;
+      }
 
       doWithRetries(async () =>
         db
@@ -69,6 +72,8 @@ async function checkAccess(req: CustomRequest, res: Response, next: NextFunction
         db.collection("Session").updateOne({ accessToken }, { $set: { expiresOn: new Date(newExpirationDate) } })
       );
     }
+
+    req.userId = session.userId;
 
     next();
   } catch (err) {

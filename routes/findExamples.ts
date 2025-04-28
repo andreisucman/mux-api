@@ -8,6 +8,7 @@ import { CategoryNameEnum, CustomRequest, TaskType } from "types.js";
 import generateImage from "@/functions/generateImage.js";
 import searchYoutubeVideos from "@/functions/searchYoutubeVideos.js";
 import { db } from "init.js";
+import setToMidnight from "@/helpers/setToMidnight.js";
 
 const route = Router();
 
@@ -26,7 +27,9 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       db.collection("Task").findOne({ _id: new ObjectId(taskId) })
     )) as unknown as TaskType;
 
-    if (taskInfo.startsAt > new Date() || taskInfo.expiresAt > new Date()) {
+    const now = setToMidnight({ date: new Date(), timeZone: req.timeZone });
+
+    if (taskInfo.startsAt > now || taskInfo.expiresAt < now) {
       res.status(400).json({ error: "Bad request" });
       return;
     }

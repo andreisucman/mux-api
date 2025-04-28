@@ -9,7 +9,7 @@ import updateNextRun from "helpers/updateNextRun.js";
 import formatDate from "helpers/formatDate.js";
 import httpError from "@/helpers/httpError.js";
 import getUserInfo from "@/functions/getUserInfo.js";
-import checkCanRoutine from "@/helpers/checkCanRoutine.js";
+import checkCanAction from "@/helpers/checkCanAction.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import { db } from "init.js";
 import { validParts } from "@/data/other.js";
@@ -57,12 +57,52 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       })
     );
 
-    if (analysisAlreadyStarted) {
+    if (analysisAlreadyStarted > 0) {
       res.status(400).json({
         error: "Bad request",
       });
       return;
     }
+
+    const { checkBackDate, isActionAvailable } = await checkCanAction({
+      nextAction: nextRoutine,
+      part,
+    });
+
+    if (!isActionAvailable) {
+      const formattedDate = formatDate({
+        date: new Date(checkBackDate),
+        hideYear: true,
+      });
+
+      addAnalysisStatusError({
+        message: `You can create a routine once a week only. Try again after ${formattedDate}.`,
+        operationKey: "routine",
+        userId: req.userId,
+      });
+      return;
+    }
+
+    const latestSuggestion = (await doWithRetries(() =>
+      db
+        .collection("RoutineSuggestion")
+        .find(
+          {
+            userId: new ObjectId(req.userId),
+            part,
+          },
+          { projection: { tasks: 1 } }
+        )
+        .sort({ createdAt: -1 })
+        .next()
+    )) as unknown as RoutineSuggestionType | null;
+
+    if (!latestSuggestion || !latestSuggestion.tasks) {
+      res.status(400).json({ error: "Bad request" });
+      return;
+    }
+
+    res.status(200).end();
 
     await doWithRetries(async () =>
       db
@@ -81,50 +121,8 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
           userId: req.userId,
           value: 1,
         }),
-      12000
+      5000
     );
-
-    res.status(200).end();
-
-    let { canRoutineDate, availableRoutines } = await checkCanRoutine({
-      nextRoutine,
-      userId: req.userId,
-    });
-
-    availableRoutines = availableRoutines.filter((r) => r.part === part);
-
-    if (availableRoutines.length === 0) {
-      const formattedDate = formatDate({
-        date: new Date(canRoutineDate),
-        hideYear: true,
-      });
-
-      addAnalysisStatusError({
-        message: `You can create a routine once a week only. Try again after ${formattedDate}.`,
-        operationKey: "routine",
-        userId: req.userId,
-      });
-      return;
-    }
-
-    const latestSuggestion = (await doWithRetries(() =>
-      db
-        .collection("RoutineSuggestion")
-        .find(
-          {
-            userId: req.userId,
-            part,
-          },
-          { projection: { tasks: 1 } }
-        )
-        .sort({ createdAt: -1 })
-        .toArray()
-    )) as unknown as RoutineSuggestionType | null;
-
-    if (!latestSuggestion || !latestSuggestion.tasks) {
-      res.status(400).json({ error: "Bad request" });
-      return;
-    }
 
     await makeANewRoutine({
       part,
@@ -138,7 +136,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     const updatedNextRoutine = updateNextRun({
       nextRun: nextRoutine,
-      parts: availableRoutines.map((r) => r.part),
+      parts: [part],
     });
 
     await doWithRetries(async () =>

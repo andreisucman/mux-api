@@ -4,9 +4,10 @@ import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import { z } from "zod";
 import askRepeatedly from "./askRepeatedly.js";
 import httpError from "@/helpers/httpError.js";
-import { generateRandomPastelColor } from "make-random-color";
 
 type Props = {
+  icon: string;
+  color: string;
   task: string;
   concern: string;
   description: string;
@@ -17,6 +18,8 @@ type Props = {
 
 export default async function createSolutionInfo({
   task,
+  icon,
+  color,
   description,
   instruction,
   userId,
@@ -69,6 +72,8 @@ export default async function createSolutionInfo({
 
     const response = {
       ...restData,
+      icon,
+      color,
       key: task,
       concern,
       description,

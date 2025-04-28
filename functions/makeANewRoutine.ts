@@ -35,7 +35,7 @@ export default async function makeANewRoutine({
 
     const { allSolutions, allTasks } = await createSolutionData({
       categoryName,
-      concernsSolutionsAndFrequencies: suggestedTasks,
+      suggestedTasks,
       part,
       userId: String(userId),
     });

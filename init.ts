@@ -16,10 +16,13 @@ const adminDb = client.db(process.env.ADMIN_DATABASE_NAME);
 const promClientRegister = new promClient.Registry();
 
 const redis = createClient({ url: process.env.REDIS_URL });
-redis.connect().catch((err) => {
-  console.error("Redis connection failed:", err);
-  process.exit(1);
-});
+redis
+  .connect()
+  .then(async () => await redis.configSet("maxmemory-policy", "allkeys-lru"))
+  .catch((err) => {
+    console.error("Redis connection failed:", err);
+    process.exit(1);
+  });
 
 const s3Client = new S3Client({
   region: process.env.DO_SPACES_REGION,
