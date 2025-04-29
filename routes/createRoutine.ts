@@ -65,7 +65,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     }
 
     const { checkBackDate, isActionAvailable } = await checkCanAction({
-      nextAction: nextRoutine,
+      nextAction: [nextRoutine],
       part,
     });
 
@@ -135,7 +135,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     });
 
     const updatedNextRoutine = updateNextRun({
-      nextRun: nextRoutine,
+      nextRun: [nextRoutine],
       parts: [part],
     });
 

@@ -15,8 +15,17 @@ const db = client.db(process.env.DATABASE_NAME);
 const adminDb = client.db(process.env.ADMIN_DATABASE_NAME);
 const promClientRegister = new promClient.Registry();
 
-const redis = createClient({ url: process.env.REDIS_SERVER_URL });
+const redis = createClient({
+  url: process.env.REDIS_SERVER_URL,
+  socket: {
+    reconnectStrategy: (retries) => Math.min(retries * 100, 3000),
+  },
+});
 redis
+  .on("error", (err) => console.log("client error", err))
+  .on("connect", () => console.log("client is connect"))
+  .on("reconnecting", () => console.log("client is reconnecting"))
+  .on("ready", () => console.log("client is ready"))
   .connect()
   .then(async () => await redis.configSet("maxmemory-policy", "allkeys-lru"))
   .catch((err) => {
