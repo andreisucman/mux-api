@@ -125,7 +125,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
           userId: req.userId,
           value: Math.min(Math.round(Math.random() * 5), 1),
         }),
-      2000
+      1000
     );
 
     await analyzeAppearance({

@@ -35,13 +35,13 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       return;
     }
 
-    const { isHarmful, explanation } = await isActivityHarmful({
+    const { hasIntentOfHarmOrDefamation, explanation } = await isActivityHarmful({
       text: name,
       userId: req.userId,
       categoryName: CategoryNameEnum.TASKS,
     });
 
-    if (isHarmful) {
+    if (hasIntentOfHarmOrDefamation) {
       await doWithRetries(async () =>
         adminDb.collection("HarmfulTaskDescriptions").insertOne({
           userId: new ObjectId(req.userId),

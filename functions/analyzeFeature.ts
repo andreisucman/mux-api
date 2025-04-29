@@ -21,7 +21,7 @@ type Props = {
 
 export default async function analyzeFeature({ name, part, relevantImages, categoryName, userId }: Props) {
   try {
-    let systemContent = `You are a dermatologist. Rate the severity of the ${name} concern of the user's ${part} on the provided images from 0 to 100, where 0 represents non-existed and 100 represents the most severe condition. Don't assume, base your opinion on the available information only. Don't suggest any solutions or seeing dermatologist. Think step-by-step.`;
+    let systemContent = `You are a dermatologist and fitness coach. Rate the severity of the ${name} concern of the user's ${part} on the provided images from 0 to 100, where 0 represents non-existed and 100 represents the most severe condition. Don't assume, base your opinion on the available information only. Don't suggest any solutions or seeing dermatologist. Think step-by-step.`;
 
     const FeatureResponseFormatType = z.object({
       score: z.number().describe(`Severity score of ${name} from 0 to 100.`),

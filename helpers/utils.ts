@@ -113,6 +113,10 @@ export function convertKeysAndValuesTotoSnakeCase(obj: { [key: string]: any }) {
   return newObj;
 }
 
+export const combineAndDeduplicateArrays = (arr1: any[], arr2: any[], deduplicationKey: string) => {
+  return [...new Map([...arr1, ...arr2].map((item) => [item[deduplicationKey], item])).values()];
+};
+
 export function normalizeString(string: string) {
   if (!string) return "";
   const normalized = string

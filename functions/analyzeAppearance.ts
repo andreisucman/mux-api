@@ -20,7 +20,7 @@ import httpError from "@/helpers/httpError.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import updateAnalytics from "./updateAnalytics.js";
 import updateNextScan from "@/helpers/updateNextScan.js";
-import { delayExecution } from "@/helpers/utils.js";
+import { combineAndDeduplicateArrays, delayExecution } from "@/helpers/utils.js";
 
 type Props = {
   userId: string;
@@ -94,8 +94,6 @@ export default async function analyzeAppearance({
       demographics = { ...(demographics || {}), ...newDemographics };
     }
 
-    await delayExecution(3000);
-
     toUpdateUser.$set.demographics = demographics;
     toUpdateUser.$set.nextScan = updateNextScan({ nextScan, toAnalyze });
 
@@ -119,22 +117,32 @@ export default async function analyzeAppearance({
 
     const analysesResults = await Promise.all(analyzePartPromises);
 
-    await delayExecution(2000);
-
     const partsAnalyzed = analysesResults.map((rec) => rec.part);
 
     const newConcerns = analysesResults.flatMap((rec) => rec.concerns);
+    const zeroValueConcernNames = analysesResults.flatMap((rec) => rec.zeroValueConcerns).map((co) => co.name);
 
-    const restConcerns = allConcerns.filter((co) => !partsAnalyzed.includes(co.part));
-    toUpdateUser.$set.concerns = [...restConcerns, ...newConcerns];
+    const deduplicatedConcerns = combineAndDeduplicateArrays(allConcerns, newConcerns, "name").filter(
+      (co) => !zeroValueConcernNames.includes(co.name)
+    );
+
+    toUpdateUser.$set.concerns = deduplicatedConcerns;
 
     const newLatestConcernScores = analysesResults.reduce((a: { [key: string]: any }, c) => {
-      a[c.part] = c.latestConcernScores;
+      const combined = combineAndDeduplicateArrays(latestConcernScores[c.part], c.latestConcernScores, "name").filter(
+        (cso) => cso.value > 0
+      );
+      a[c.part] = combined;
       return a;
     }, {});
 
     const newLatestConcernScoresDifference = analysesResults.reduce((a: { [key: string]: any }, c) => {
-      a[c.part] = c.concernScoresDifference;
+      const combined = combineAndDeduplicateArrays(
+        latestConcernScoresDifference[c.part],
+        c.concernScoresDifference,
+        "name"
+      ).filter((csdo) => csdo.value > 0);
+      a[c.part] = combined;
       return a;
     }, {});
 
@@ -177,7 +185,7 @@ export default async function analyzeAppearance({
       )
     );
 
-    await delayExecution(10000);
+    await delayExecution(20000);
 
     await doWithRetries(async () =>
       db

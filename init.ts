@@ -15,7 +15,7 @@ const db = client.db(process.env.DATABASE_NAME);
 const adminDb = client.db(process.env.ADMIN_DATABASE_NAME);
 const promClientRegister = new promClient.Registry();
 
-const redis = createClient({ url: process.env.REDIS_URL });
+const redis = createClient({ url: process.env.REDIS_SERVER_URL });
 redis
   .connect()
   .then(async () => await redis.configSet("maxmemory-policy", "allkeys-lru"))

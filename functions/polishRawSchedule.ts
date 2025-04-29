@@ -29,7 +29,7 @@ export default async function polishRawSchedule({ rawSchedule, concerns, userId,
     const listOfConcerns = JSON.stringify(concerns);
 
     let systemContent =
-      "You are a dermatologist. The user gives you their improvement routine. Your goal is 1. Check iIf there are incompatible tasks and if yes separate them in to to a safe distance. 2. Optimize the position (order) of each task within the day for maximum effectiveness. DON'T REMOVE OR MODIFY THE NAMES OF THE TASKS. MAINTAIN THE SCHEMA FORMAT OF THE SCHEDULE. Be concise and to the point.";
+      "You are a dermatologist and fitness coach. The user gives you their improvement routine. Your goal is 1. Check iIf there are incompatible tasks and if yes separate them in to to a safe distance. 2. Optimize the position (order) of each task within the day for maximum effectiveness. DON'T REMOVE OR MODIFY THE NAMES OF THE TASKS. MAINTAIN THE SCHEMA FORMAT OF THE SCHEDULE. Be concise and to the point.";
 
     const userContent: RunType[] = [
       {

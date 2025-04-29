@@ -105,6 +105,7 @@ export default async function analyzePart({
     let concernScores: ScoreType[] = [];
     let concernScoresDifference: ScoreDifferenceType[] = [];
     let newConcerns: string[] = [];
+    let zeroValueConcerns: string[] = [];
 
     let initialProgress = (await doWithRetries(async () =>
       db
@@ -133,6 +134,7 @@ export default async function analyzePart({
     concernScores = response.concernScores;
     concernScoresDifference = response.concernScoresDifference;
     newConcerns = response.concerns;
+    zeroValueConcerns = response.zeroValueConcerns;
 
     const images = partToAnalyze.map((record: ToAnalyzeType) => ({
       mainUrl: record.mainUrl,

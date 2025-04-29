@@ -34,7 +34,7 @@ export default async function analyzeConcerns({ userId, part, currentImages, cat
     const concerns = concernObjects.map((obj) => obj.name);
     const listOfConcerns = concerns.join("\n-");
 
-    const systemContent = `You are a dermatologist. You're given the images of a person. Your goal is to identify which of the concerns from following list are present on the person. List of concerns: ${listOfConcerns}. Think step-by-step. Don't make assumptions, use only the information provided.`;
+    const systemContent = `You are a dermatologist and fitness coach. You're given the images of a person. Your goal is to identify which of the concerns from following list are present on the person. List of concerns: ${listOfConcerns}. Think step-by-step. Don't make assumptions, use only the information provided.`;
 
     const ConcernsResponseType = z.object({
       concerns: z.array(z.string()).describe("array of concerns from the list that are clearly present on the image"),

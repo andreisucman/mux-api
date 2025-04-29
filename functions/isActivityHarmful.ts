@@ -1,5 +1,3 @@
-import z from "zod";
-import { zodResponseFormat } from "openai/helpers/zod.mjs";
 import askRepeatedly from "functions/askRepeatedly.js";
 import { RunType } from "@/types/askOpenaiTypes.js";
 import httpError from "@/helpers/httpError.js";
@@ -11,36 +9,20 @@ type Props = {
   categoryName: CategoryNameEnum;
 };
 
-export default async function isActivityHarmful({
-  userId,
-  text,
-  categoryName,
-}: Props) {
+export default async function isActivityHarmful({ userId, text, categoryName }: Props) {
   try {
-    const systemContent = `The user gives you a description of an activity. Your goal is to check if it has an intent of harming or defaming the person who performs it. An activity has an intent of harming or defaming if it clearly leads to health or dignity damage.`;
-
-    const IsSafeResponseType = z.object({
-      isHarmful: z.boolean().describe("true if harfmul, false if not"),
-      explanation: z
-        .string()
-        .describe(
-          "if harmful one sentence explanation of why you think this text is harmful, else empty string"
-        ),
-    });
+    const systemContent = `The user gives you a description of an activity. Your goal is to check if it has an intent of harming or defaming the person who performs it. An activity has an intent of harming or defaming if it clearly leads to health or dignity damage regardless of how it's performed. Your response is a JSON object with this structure: {hasIntentOfHarmOrDefamation: boolean, explanation: string | null}. If the activity is not harmful return explataion as null`;
 
     const runs = [
       {
-        model: "gpt-4o-mini",
+        model: "deepseek-chat",
         content: [
           {
             type: "text",
             text: `Activity description: ${text}`,
           },
         ],
-        responseFormat: zodResponseFormat(
-          IsSafeResponseType,
-          "IsSafeResponseType"
-        ),
+        responseFormat: { type: "json_object" },
       },
     ];
 

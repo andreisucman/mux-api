@@ -11,7 +11,7 @@ dotenv.config();
 type Props = {
   userId: string;
   part: PartEnum;
-  partConcernScores: ScoreType[];
+  concernScores: ScoreType[];
   previousExperience: { [key: string]: string };
   categoryName: CategoryNameEnum;
 };
@@ -19,17 +19,17 @@ type Props = {
 export default async function createRoutineSuggestionQuestions({
   part,
   previousExperience,
-  partConcernScores,
+  concernScores,
   categoryName,
   userId,
 }: Props) {
   try {
-    const nonZeroPartConcernScores = partConcernScores.filter((so) => so.value > 0);
+    const nonZeroPartConcernScores = concernScores.filter((so) => so.value > 0);
     const concernsAndSeverities = nonZeroPartConcernScores
       .map((co) => `Name: ${co.name}. Severity: ${co.value}. Explanation: ${co.explanation}.`)
       .join("\n");
 
-    let systemContent = `You are a dermatologist. Your patient has the following concerns for their ${part}: ###${concernsAndSeverities}###. Check their past experience and come up with up to 3 questions to discover important missing information for creating an effective routine for improving their concerns. Use only the information available. Don't ask questions about other concerns that are not present. Your response is a JSON object with this structure: { questionsForTheUser: string[]}`;
+    let systemContent = `You are a dermatologist and fitness coach. Your patient has the following concerns for their ${part}: ###${concernsAndSeverities}###. Check their past experience and come up with up to 3 questions to discover important missing information for creating an effective routine for improving their concerns. Use only the information available. Don't ask questions about other concerns that are not present. Your response is a JSON object with this structure: { questionsForTheUser: string[]}`;
 
     const previousExperienceString = Object.entries(previousExperience)
       .map(([concern, explanation]) => `${normalizeString(concern)}: ${explanation}`)

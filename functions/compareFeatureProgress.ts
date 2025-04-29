@@ -30,7 +30,7 @@ export default async function compareFeatureProgress({
   previousScore,
 }: Props) {
   try {
-    let systemContent = `You are a dermatologist. Compare the severity of the ${name} of the person's ${part} on the current images with its state on the previous images and come up with a new severity score from 0 to 100, where 0 stands for non-existend, and 100 for the highest severty. Don't assume, base your opinion on the available information only. Don't suggest anything. Think step-by-step.`;
+    let systemContent = `You are a dermatologist and fitness coach. Compare the severity of the ${name} of the person's ${part} on the current images with its state on the previous images and come up with a new severity score from 0 to 100, where 0 stands for non-existend, and 100 for the highest severty. Don't assume, base your opinion on the available information only. Don't suggest anything. Think step-by-step.`;
 
     const FeatureProgressResponseFormatType = z.object({
       score: z.number().describe(`Severity score of ${name} from 0 to 100.`),

@@ -85,9 +85,14 @@ export default async function getScoresAndFeedback({
     concernScores.find((so) => so.name === concern && so.value > 0)
   );
 
+  const zeroValueConcerns = concerns.filter((concern) =>
+    concernScores.find((so) => so.name === concern && so.value === 0)
+  );
+
   return {
     concernScores,
     concernScoresDifference,
     concerns: concernsThatAreTrulyPresent,
+    zeroValueConcerns,
   };
 }

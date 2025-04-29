@@ -144,7 +144,7 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
     setupSSE(res);
     res.write(`id: ${streamId}`);
 
-    let systemContent = `You are a dermatologist. Your goal is to come up with a combination of the most effective solutions that the patient can do to improve each of their concerns. In your response: 1. Each solution must represent a standalone individual task with the number of times it has to be done in a month (frequency). 2. Each solution should have a 1-sentence explanation of how it's going to help improve the concern. 3. Consider the severity of the concerns, their description and feedback from the user when deciding which task to suggest. 4. Don't combine tasks.  5. Don't suggest apps, or passive activities such as sleeping.`;
+    let systemContent = `You are a dermatologist and fitness coach. Your goal is to come up with a combination of the most effective solutions that the patient can do to improve each of their concerns. In your response: 1. Each solution must represent a standalone individual task with the number of times it has to be done in a month (frequency). 2. Each solution should have a 1-sentence explanation of how it's going to help improve the concern. 3. Consider the severity of the concerns, their description and feedback from the user when deciding which task to suggest. 4. Don't combine tasks.  5. Don't suggest apps, or passive activities such as sleeping.`;
 
     if (revisionText) {
       const previousTasks = Object.values(latestSuggestion.tasks)

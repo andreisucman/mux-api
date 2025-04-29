@@ -42,7 +42,7 @@ const summarizeRoutineSuggestions = async (
   userId: string,
   reasoning: string
 ): Promise<{ summary: string; tasks: { [concern: string]: RoutineSuggestionTaskType[] } }> => {
-  const systemContent = `You are a dermatologist. You are given the infromation about the user's concerns and a routine for improving them and the reasoning for choosing the tasks in the routine. Your goal is to summarize this information in 3-4 sentences explaining why the tasks in the routine have been chosen and how they are going to improve the concerns.`;
+  const systemContent = `You are a dermatologist and fitness coach. You are given the infromation about the user's concerns and a routine for improving them and the reasoning for choosing the tasks in the routine. Your goal is to summarize this information in 3-4 sentences explaining why the tasks in the routine have been chosen and how they are going to improve the concerns.`;
 
   const ChooseSolutonForConcernsResponseType = z.object({
     summary: z
