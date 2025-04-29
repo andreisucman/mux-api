@@ -66,6 +66,10 @@ export default async function getStreaksToIncrement({ userId, part, timeZone, st
         streaksToIncrement["streaks.hairStreak"] = 1;
       }
 
+      if (part === "body") {
+        streaksToIncrement["streaks.bodyStreak"] = 1;
+      }
+
       newStreakDates = {
         ...newStreakDates,
         [part]: todayMidnight,

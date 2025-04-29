@@ -3,10 +3,11 @@ import { ObjectId } from "mongodb";
 
 export type CreateRoutineUserInfoType = {
   _id: ObjectId;
-  nextRoutine: NextActionType[];
   concerns: UserConcernType[];
   name: string;
   timeZone: string;
+  nextRoutine: NextActionType;
+  specialConsiderations: string;
 };
 
 export type TaskExampleType = { type: string; url: string };

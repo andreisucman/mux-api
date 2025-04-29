@@ -13,11 +13,13 @@ export const defaultDemographics: DemographicsType = {
 const defaultNextAction: NextActionType[] = [
   { part: PartEnum.FACE, date: null },
   { part: PartEnum.HAIR, date: null },
+  { part: PartEnum.BODY, date: null },
 ];
 
 const defaultStreaks = {
   faceStreak: 0,
   hairStreak: 0,
+  bodyStreak: 0,
 };
 
 export const defaultLatestScores = {
@@ -51,7 +53,6 @@ export const defaultUser: UserType = {
   streaks: defaultStreaks,
   specialConsiderations: "",
   tosAccepted: false,
-  nextRoutine: defaultNextAction,
   nextScan: defaultNextAction,
   nextRoutineSuggestion: defaultNextAction,
   streakDates: {},

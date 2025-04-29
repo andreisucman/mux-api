@@ -85,7 +85,6 @@ export type UserType = {
   specialConsiderations: string;
   streaks: StreaksType;
   nextScan: NextActionType[];
-  nextRoutine: NextActionType[];
   nextRoutineSuggestion: NextActionType[];
   streakDates: {};
   latestProgressImages: LatestProgressImagesType;
@@ -221,6 +220,7 @@ export enum RoutineStatusEnum {
 export type StreaksType = {
   faceStreak: number;
   hairStreak: number;
+  bodyStreak: number;
 };
 
 export type UserConcernType = {
