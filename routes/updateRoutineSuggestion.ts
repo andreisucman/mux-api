@@ -38,7 +38,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
   if (
     !partIsValid ||
-    concernScores.length === 0 ||
     (routineSuggestionId && !ObjectId.isValid(routineSuggestionId)) ||
     (previousExperience && typeof previousExperience !== "object") ||
     (questionsAndAnswers && typeof questionsAndAnswers !== "object")
@@ -117,7 +116,8 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     res.status(200).end();
 
-    if (!existingWithQuestionsCount) {
+    const createQuestions = concernScores.length === 0 && !experienceExists && !existingWithQuestionsCount;
+    if (createQuestions) {
       const latestExistingSuggestion = await doWithRetries(async () =>
         db
           .collection("RoutineSuggestion")
@@ -139,7 +139,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
       const questions = await createRoutineSuggestionQuestions({
         categoryName: CategoryNameEnum.TASKS,
-        concernScores: latestExistingSuggestion.concernScores,
+        concernScores: latestExistingSuggestion?.concernScores,
         previousExperience,
         userId: req.userId,
         part,

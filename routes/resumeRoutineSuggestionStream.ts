@@ -2,22 +2,28 @@ import { Router } from "express";
 import { redis } from "@/init.js";
 import { setupSSE } from "@/helpers/utils.js";
 import { CustomRequest } from "@/types.js";
+import { Redis } from "ioredis";
 
 const route = Router();
 
-route.get("/:streamId", async (req: CustomRequest, res) => {
+route.get("/:streamId", async (req: CustomRequest, res, next) => {
   const { streamId } = req.params;
   const channel = `sse:${streamId}`;
-  const clientSubscriber = redis.duplicate();
+  const subscriber = new Redis({
+    ...redis.options,
+    lazyConnect: true,
+    maxRetriesPerRequest: null,
+  });
+  subscriber.on("error", (err) => console.error("Subscriber error:", err));
 
   try {
-    await clientSubscriber.connect();
+    await subscriber.connect();
     const sessionData = await redis.get(streamId);
 
     setupSSE(res);
 
     if (!sessionData) {
-      res.write("Please start the analysis anew");
+      res.write("data: Please start the analysis anew\n\n");
       res.end();
       return;
     }
@@ -25,7 +31,7 @@ route.get("/:streamId", async (req: CustomRequest, res) => {
     const session = JSON.parse(sessionData);
 
     if (session.text) {
-      res.write(session.text);
+      res.write(`data: ${session.text}\n\n`);
     }
 
     if (session.finished) {
@@ -34,33 +40,49 @@ route.get("/:streamId", async (req: CustomRequest, res) => {
     }
 
     const messageHandler = (message: string) => {
-      const { type, content } = JSON.parse(message);
-      switch (type) {
-        case "chunk":
-          res.write(content);
-          break;
-        case "close":
-          res.end();
-          break;
-        case "error":
-          res.write("Stream error");
-          res.end();
-          break;
+      try {
+        const { type, content } = JSON.parse(message);
+        switch (type) {
+          case "chunk":
+            res.write(`data: ${content}\n\n`);
+            break;
+          case "close":
+            res.end();
+            break;
+          case "error":
+            res.write("data: Stream error\n\n");
+            res.end();
+            break;
+        }
+      } catch (err) {
+        console.error("Error handling message:", err);
+        res.write("data: Invalid message format\n\n");
+        res.end();
       }
     };
 
-    await clientSubscriber.subscribe(channel, messageHandler);
+    await subscriber.subscribe(channel);
+    subscriber.on("message", (_, message) => {
+      messageHandler(message);
+    });
 
-    req.on("close", () => {
-      if (clientSubscriber.isOpen) {
-        clientSubscriber.unsubscribe(channel);
-        clientSubscriber.quit();
-        if (clientSubscriber?.isOpen) clientSubscriber.quit();
+    req.on("close", async () => {
+      if (subscriber?.status === "ready") {
+        await subscriber.unsubscribe(channel);
+        await subscriber.quit();
       }
     });
   } catch (error) {
-    if (clientSubscriber?.isOpen) clientSubscriber.quit();
-    res.status(500).json({ error: "Internal server error" });
+    if (subscriber?.status === "ready") {
+      await subscriber.unsubscribe(channel);
+      await subscriber.quit();
+    }
+    if (res.headersSent) {
+      res.write("data: Internal server error\n\n");
+      res.end();
+    } else {
+      next(error);
+    }
   }
 });
 

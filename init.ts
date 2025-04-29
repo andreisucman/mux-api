@@ -1,7 +1,7 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 import Replicate from "replicate";
-import { createClient } from "redis";
+import { Redis } from "ioredis";
 import Together from "together-ai";
 import OpenAI from "openai";
 import { MongoClient } from "mongodb";
@@ -15,23 +15,8 @@ const db = client.db(process.env.DATABASE_NAME);
 const adminDb = client.db(process.env.ADMIN_DATABASE_NAME);
 const promClientRegister = new promClient.Registry();
 
-const redis = createClient({
-  url: process.env.REDIS_SERVER_URL,
-  socket: {
-    reconnectStrategy: (retries) => Math.min(retries * 100, 3000),
-  },
-});
-redis
-  .on("error", (err) => console.log("client error", err))
-  .on("connect", () => console.log("client is connect"))
-  .on("reconnecting", () => console.log("client is reconnecting"))
-  .on("ready", () => console.log("client is ready"))
-  .connect()
-  .then(async () => await redis.configSet("maxmemory-policy", "allkeys-lru"))
-  .catch((err) => {
-    console.error("Redis connection failed:", err);
-    process.exit(1);
-  });
+const redis = new Redis(process.env.REDIS_SERVER_URL);
+redis.on('error', (err) => console.error('Redis error:', err));
 
 const s3Client = new S3Client({
   region: process.env.DO_SPACES_REGION,

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { nanoid } from "nanoid";
 import { deepSeek, db, redis } from "@/init.js";
+import { Redis } from "ioredis";
 import { daysFrom, setupSSE, toSentenceCase } from "@/helpers/utils.js";
 import doWithRetries from "@/helpers/doWithRetries.js";
 import { ObjectId } from "mongodb";
@@ -19,28 +20,34 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
   const { revisionText } = req.body;
   const streamId = `suggestion_${nanoid()}`;
   const channel = `sse:${streamId}`;
-  const publisher = redis.duplicate();
+
+  const publisher = new Redis({
+    ...redis.options,
+    lazyConnect: true,
+    maxRetriesPerRequest: null,
+  });
+
+  publisher.on("error", (err) => console.error("Publisher error:", err));
+
+  const sendErrorResponse = (message: string) => {
+    setupSSE(res);
+    res.write(`data: ${JSON.stringify({ error: message })}\n\n`);
+    res.end();
+  };
 
   if (revisionText) {
     const textModerationResponse = await moderateContent({
-      content: [
-        {
-          type: "text",
-          text: revisionText,
-        },
-      ],
+      content: [{ type: "text", text: revisionText }],
     });
 
     if (!textModerationResponse.isSafe) {
-      res.write("Your text appears to have inappropriate language. Please revise and try again.");
-      res.end();
+      sendErrorResponse("Your text appears to have inappropriate language. Please revise and try again.");
       return;
     }
   }
 
-  if (!routineSuggestionId) {
-    res.write("Please start the analysis anew.");
-    res.end();
+  if (!routineSuggestionId || !ObjectId.isValid(routineSuggestionId)) {
+    sendErrorResponse("Please start the analysis anew.");
     return;
   }
 
@@ -52,9 +59,7 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
 
     const latestSuggestion = (await doWithRetries(() =>
       db.collection("RoutineSuggestion").findOne(
-        {
-          _id: new ObjectId(routineSuggestionId),
-        },
+        { _id: new ObjectId(routineSuggestionId) },
         {
           projection: {
             previousExperience: 1,
@@ -69,40 +74,30 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
       )
     )) as unknown as RoutineSuggestionType | null;
 
-    if (revisionText && latestSuggestion.isRevised) {
-      res.write("This routine has already been revised.");
-      res.end();
+    if (revisionText && latestSuggestion?.isRevised) {
+      sendErrorResponse("This routine has already been revised.");
       return;
     }
 
     if (!latestSuggestion) {
-      res.write("Please start the analysis anew.");
-      res.end();
+      sendErrorResponse("Please start the analysis anew.");
       return;
     }
 
     if (latestSuggestion.reasoning && !revisionText) {
-      res.write(latestSuggestion.reasoning);
+      setupSSE(res);
+      res.write(`data: ${latestSuggestion.reasoning}\n\n`);
       res.end();
       return;
     }
 
     if (revisionText) {
-      await doWithRetries(async () =>
+      await doWithRetries(() =>
         db.collection("RoutineSuggestion").updateOne(
+          { _id: new ObjectId(routineSuggestionId) },
           {
-            _id: new ObjectId(routineSuggestionId),
-          },
-          {
-            $set: {
-              isRevised: true,
-              revisionText,
-            },
-            $unset: {
-              tasks: null,
-              summary: null,
-              reasoning: null,
-            },
+            $set: { isRevised: true, revisionText },
+            $unset: { tasks: null, summary: null, reasoning: null },
           }
         )
       );
@@ -114,8 +109,7 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
     });
 
     if (!isActionAvailable && !revisionText) {
-      res.write(`You can get another suggestion analysis after ${checkBackDate}.`);
-      res.end();
+      sendErrorResponse(`You can get another suggestion analysis after ${checkBackDate}.`);
       return;
     }
 
@@ -132,17 +126,10 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
 
     await publisher.connect();
 
-    await redis.set(
-      streamId,
-      JSON.stringify({
-        text: "",
-        finished: false,
-        error: false,
-      }),
-      { EX: 1800 }
-    );
+    await redis.set(streamId, JSON.stringify({ text: "", finished: false, error: false }), "EX", 1800);
+
     setupSSE(res);
-    res.write(`id: ${streamId}`);
+    res.write(`id: ${streamId}\n`);
 
     let systemContent = `You are a dermatologist and fitness coach. Your goal is to come up with a combination of the most effective solutions that the patient can do to improve each of their concerns. In your response: 1. Each solution must represent a standalone individual task with the number of times it has to be done in a month (frequency). 2. Each solution should have a 1-sentence explanation of how it's going to help improve the concern. 3. Consider the severity of the concerns, their description and feedback from the user when deciding which task to suggest. 4. Don't combine tasks.  5. Don't suggest apps, or passive activities such as sleeping.`;
 
@@ -162,12 +149,12 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
       .map((so) => `Name: ${so.name}. Severity: ${so.value}/100. Description of the user's concern: ${so.explanation}.`)
       .join("\n\n");
 
-    const previousExperience = Object.entries(latestSuggestion.previousExperience)
+    const previousExperience = Object.entries(latestSuggestion?.previousExperience || {})
       .filter(([_, description]) => description.length > 0)
       .map(([concern, description]) => `For ${concern}: ${description}.`)
       .join("\n\n");
 
-    const questionAnswers = Object.entries(latestSuggestion.questionsAndAnswers)
+    const questionAnswers = Object.entries(latestSuggestion?.questionsAndAnswers || {})
       .filter(([_, answer]) => answer.length > 0)
       .map(([question, answer]) => `Question: ${question}. Answer: ${answer}`)
       .join("\n\n");
@@ -182,16 +169,12 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
       .join(" ");
 
     let userContent = `<-- About me --> \n\n ${userAboutString}`;
-
     userContent += `<-- My concerns are -->\n\n ${concernsWithSeverities}.`;
 
-    if (previousExperience) {
-      userContent += ` <-- Here is what I've tried -->\n\n ${previousExperience}.`;
-    }
+    if (previousExperience) userContent += ` <-- Here is what I've tried -->\n\n ${previousExperience}.`;
 
     const lastMonth = daysFrom({ days: -30 });
-
-    const pastTasks = await doWithRetries(async () =>
+    const pastTasks = await doWithRetries(() =>
       db
         .collection("Task")
         .find(
@@ -202,27 +185,16 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
     );
 
     if (pastTasks.length > 0) {
-      const pastTasksMap = pastTasks.reduce((a, c) => {
-        if (a[c.key]) {
-          a[c.key] += 1;
-        } else {
-          a[c.key] = 1;
-        }
-        return a;
-      }, {});
-
+      const pastTasksMap = pastTasks.reduce((a, c) => (a[c.key] ? (a[c.key] += 1) : (a[c.key] = 1), a), {});
       userContent += `<-- Here are the tasks I've completed in the last month and their count -->\n\n ${JSON.stringify(
         pastTasksMap
       )}`;
     }
 
-    if (questionAnswers) {
+    if (questionAnswers)
       userContent += `<-- Here are my answers to the additional questions -->\n\n ${questionAnswers}.`;
-    }
-
-    if (revisionText) {
-      userContent += `<-- Revision request -->\n\n Please revise your prevous routine as follows: ${revisionText}.`;
-    }
+    if (revisionText)
+      userContent += `<-- Revision request -->\n\n Please revise your previous routine as follows: ${revisionText}.`;
 
     const messages: any = [
       { role: "system", content: systemContent },
@@ -235,38 +207,25 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
       messages,
     });
 
-    let currentData;
+    let currentData = { text: "", finished: false, error: false };
 
     for await (const part of completion) {
       const reasoningChunk = part.choices[0]?.delta?.reasoning_content || "";
-
-      currentData = JSON.parse(await redis.get(streamId));
       currentData.text += reasoningChunk;
 
-      await redis.set(streamId, JSON.stringify(currentData), { EX: 1800 });
+      await redis.set(streamId, JSON.stringify(currentData), "EX", 1800);
 
-      await publisher.publish(
-        channel,
-        JSON.stringify({
-          type: "chunk",
-          content: reasoningChunk,
-        })
-      );
+      await publisher.publish(channel, JSON.stringify({ type: "chunk", content: reasoningChunk }));
 
-      res.write(reasoningChunk);
+      res.write(`data: ${reasoningChunk}\n\n`);
     }
 
-    await publisher.publish(channel, JSON.stringify({ type: "close" }));
-    await redis.set(
-      streamId,
-      JSON.stringify({
-        text: currentData.text,
-        finished: true,
-      }),
-      { EX: 1800 }
-    );
+    res.write(`event: end\n`);
 
+    await publisher.publish(channel, JSON.stringify({ type: "close" }));
     await publisher.quit();
+
+    await redis.set(streamId, JSON.stringify({ ...currentData, finished: true }), "EX", 1800);
 
     await finalizeSuggestion(
       latestSuggestion._id,
@@ -276,27 +235,24 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
       currentData.text
     );
 
-    if (publisher?.isOpen) await publisher.quit();
     res.end();
   } catch (err) {
-    await publisher.publish(
-      channel,
-      JSON.stringify({
-        type: "error",
-        content: "Stream error",
-      })
-    );
-    await redis.set(
-      streamId,
-      JSON.stringify({
-        finished: true,
-        error: true,
-      }),
-      { EX: 1800 }
-    );
-    if (publisher?.isOpen) await publisher.quit();
-    res.write("Stream error");
+    console.error(err);
+
+    const errorMessage = "Stream error";
+    if (!res.headersSent) {
+      setupSSE(res);
+    }
+    res.write(`data: ${JSON.stringify({ error: errorMessage })}\n\n`);
     res.end();
+
+    await publisher.publish(channel, JSON.stringify({ type: "error", content: errorMessage }));
+    await publisher.quit();
+
+    const currentDataStr = await redis.get(streamId);
+    const currentData = currentDataStr ? JSON.parse(currentDataStr) : { text: "", finished: false, error: false };
+
+    await redis.set(streamId, JSON.stringify({ ...currentData, finished: true, error: true }), "EX", 1800);
   }
 });
 

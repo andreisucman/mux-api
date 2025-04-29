@@ -46,7 +46,7 @@ async function checkAccess(req: CustomRequest, res: Response, next: NextFunction
         db.collection("Session").findOne({ accessToken }, { projection: { userId: 1, expiresOn: 1 } })
       );
 
-      await redis.set(accessToken, JSON.stringify(session), { EX: 60 });
+      await redis.set(accessToken, JSON.stringify(session), "EX", 60);
 
       if (!session) {
         signOut(res, 403, "Invalid or expired access token");

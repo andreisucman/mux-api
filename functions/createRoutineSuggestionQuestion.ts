@@ -29,7 +29,7 @@ export default async function createRoutineSuggestionQuestions({
       .map((co) => `Name: ${co.name}. Severity: ${co.value}. Explanation: ${co.explanation}.`)
       .join("\n");
 
-    let systemContent = `You are a dermatologist and fitness coach. Your patient has the following concerns for their ${part}: ###${concernsAndSeverities}###. Check their past experience and come up with up to 3 questions to discover important missing information for creating an effective routine for improving their concerns. Use only the information available. Don't ask questions about other concerns that are not present. Your response is a JSON object with this structure: { questionsForTheUser: string[]}`;
+    let systemContent = `You are a dermatologist and fitness coach. Your patient has the following concerns for their ${part}: ###${concernsAndSeverities}###. Check their information and come up with up to 3 questions to discover important missing information for creating an effective routine for improving their concerns. Use only the information available. Don't ask questions about other concerns that are not present. Your response is a JSON object with this structure: { questionsForTheUser: string[]}`;
 
     const previousExperienceString = Object.entries(previousExperience)
       .map(([concern, explanation]) => `${normalizeString(concern)}: ${explanation}`)
@@ -38,7 +38,7 @@ export default async function createRoutineSuggestionQuestions({
     const runs: RunType[] = [
       {
         model: "deepseek-chat",
-        content: [{ type: "text", text: `Here is what I: ${previousExperienceString}` }],
+        content: [{ type: "text", text: `Here is what I tried: ${previousExperienceString || "no information"}` }],
         responseFormat: { type: "json_object" },
       },
     ];
