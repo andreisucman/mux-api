@@ -82,17 +82,17 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         });
         return;
       }
-      const { passed, message } = await checkPublishingRequirements({
-        userId: req.userId,
-        part,
-        concern,
-      });
-      if (!passed) {
-        res.status(200).json({
-          error: message,
-        });
-        return;
-      }
+      // const { passed, message } = await checkPublishingRequirements({
+      //   userId: req.userId,
+      //   part,
+      //   concern,
+      // });
+      // if (!passed) {
+      //   res.status(200).json({
+      //     error: message,
+      //   });
+      //   return;
+      // }
     }
 
     for (const text of [name, description]) {

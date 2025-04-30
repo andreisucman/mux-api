@@ -121,7 +121,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
           userId: req.userId,
           value: 1,
         }),
-      5000
+      2500
     );
 
     await makeANewRoutine({

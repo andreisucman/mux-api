@@ -102,6 +102,21 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       })
     );
 
+    const latestExistingSuggestion = await doWithRetries(async () =>
+      db
+        .collection("RoutineSuggestion")
+        .find(
+          {
+            userId: new ObjectId(req.userId),
+            part,
+            $and: [{ createdAt: { $gte: lastWeek } }, { createdAt: { $lte: now } }],
+          },
+          { projection: { concernScores: 1 } }
+        )
+        .sort({ createdAt: -1 })
+        .next()
+    );
+
     if (!existingWithQuestionsCount) {
       await doWithRetries(async () =>
         db.collection("AnalysisStatus").updateOne(
@@ -117,7 +132,8 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     res.status(200).end();
 
-    const createQuestions = concernScores.length === 0 && !existingWithQuestionsCount;
+    const createQuestions =
+      concernScores.length === 0 && latestExistingSuggestion?.concernScores && !existingWithQuestionsCount;
 
     if (createQuestions) {
       const latestTasksMap = await getLatestTasksMap({
@@ -127,28 +143,13 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         $and: [{ startsAt: { $gte: lastWeek } }, { startsAt: { $lte: now } }],
       });
 
-      const latestExistingSuggestion = await doWithRetries(async () =>
-        db
-          .collection("RoutineSuggestion")
-          .find(
-            {
-              userId: new ObjectId(req.userId),
-              part,
-              $and: [{ createdAt: { $gte: lastWeek } }, { createdAt: { $lte: now } }],
-            },
-            { projection: { concernScores: 1 } }
-          )
-          .sort({ createdAt: -1 })
-          .next()
-      );
-
       global.startInterval(() =>
         incrementProgress({ operationKey: AnalysisStatusEnum.ROUTINE_SUGGESTION, value: 25, userId: req.userId })
       );
 
       const questions = await createRoutineSuggestionQuestions({
         categoryName: CategoryNameEnum.TASKS,
-        concernScores: latestExistingSuggestion?.concernScores,
+        concernScores: latestExistingSuggestion.concernScores,
         latestTasksMap,
         previousExperience,
         userId: req.userId,

@@ -42,27 +42,29 @@ const summarizeRoutineSuggestions = async (
   userId: string,
   reasoning: string
 ): Promise<{ summary: string; tasks: { [concern: string]: RoutineSuggestionTaskType[] } }> => {
-  const systemContent = `You are a dermatologist and fitness coach. You are given the infromation about the user's concerns and a routine for improving them and the reasoning for choosing the tasks in the routine. Your goal is to summarize this information in 3-4 sentences explaining why the tasks in the routine have been chosen and how they are going to improve the concerns.`;
+  const systemContent = `You are a dermatologist and fitness coach. Your goal is to format and summarize the information and explain why the tasks in the routine have been chosen and how they are going to improve the concerns. DON'T REMOVE, DUPLICATE OR ADD TASKS. JUST FORMAT AND SUMMARIZE WHAT YOU ARE GIVEN. `;
 
   const ChooseSolutonForConcernsResponseType = z.object({
     summary: z
       .string()
       .describe(
-        "3-4 sentences in 2nd tense (you/your) and simple casual language, summarizing why the following tasks have been chosen and how are they going to help improve the concerns."
+        "4-6 sentences in 2nd tense (you/your) and simple casual language, summarizing why the following tasks have been chosen and how are they going to help improve the concerns."
       ),
-    tasks: z.object(
-      concernScores.reduce((a, c) => {
-        a[c.name] = z
-          .array(
-            z.object({
-              task: z.string().describe("The name of the task in imperative form"),
-              numberOfTimesInAMonth: z.number().describe("The number of times the solution has to be done in a month"),
-            })
-          )
-          .describe(`The array of solutions for the ${c.name} concern`);
-        return a;
-      }, {})
-    ),
+    tasks: z
+      .object(
+        concernScores.reduce((a, c) => {
+          a[c.name] = z
+            .array(
+              z.object({
+                task: z.string().describe("The name of the task in imperative form"),
+                numberOfTimesInAMonth: z.number().describe("The number of times the task has to be done in a month"),
+              })
+            )
+            .describe(`The array of solutions for the ${c.name} concern`);
+          return a;
+        }, {})
+      )
+      .describe("The schedule of unique tasks. The tasks must not repeat."),
   });
 
   const concernsAndDescriptions = concernScores

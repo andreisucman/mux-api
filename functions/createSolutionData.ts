@@ -32,11 +32,7 @@ export default async function createSolutionData({ userId, part, categoryName, s
     const solutionConcernMap = Object.values(suggestedTasks)
       .flat()
       .reduce((a, c) => {
-        if (a[c.task]) {
-          a[c.task] += c.concern;
-        } else {
-          a[c.task] = c.concern;
-        }
+        a[c.task] = c.concern;
         return a;
       }, {});
 
