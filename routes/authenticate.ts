@@ -146,9 +146,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
         userData = await getUserInfo({ userId: String(userId), projection: defaultUserProjection });
       } else {
-        // registration after the analysis
-        const { stripeUserId } = userInfo;
-
         const updatePayload: Partial<UserType> = {
           auth,
           email: finalEmail,
@@ -160,13 +157,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
             storedPassword = await getHashedPassword(password);
             updatePayload.password = storedPassword;
           }
-        }
-
-        if (!stripeUserId) {
-          const stripeUser = await stripe.customers.create({
-            email: finalEmail,
-          });
-          updatePayload.stripeUserId = stripeUser.id;
         }
 
         await doWithRetries(() =>

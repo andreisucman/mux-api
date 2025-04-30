@@ -12,6 +12,7 @@ import {
   LatestScoresType,
   NextActionType,
   LatestProgressImagesType,
+  LatestScoresDifferenceType,
 } from "types.js";
 import analyzePart from "functions/analyzePart.js";
 import { db } from "init.js";
@@ -36,7 +37,7 @@ type Props = {
   allConcerns: UserConcernType[];
   demographics: DemographicsType;
   latestConcernScores: LatestScoresType;
-  latestConcernScoresDifference: LatestScoresType;
+  latestConcernScoresDifference: LatestScoresDifferenceType;
 };
 
 export default async function analyzeAppearance({
@@ -98,7 +99,11 @@ export default async function analyzeAppearance({
     toUpdateUser.$set.nextScan = updateNextScan({ nextScan, toAnalyze });
 
     const analyzePartPromises = parts.map((part) => {
+      const currentPartConcerns = allConcerns.filter((aco) => aco.part === part);
       const partUserUploadedConcernObjects = userUploadedConcerns.filter((co) => co.part === part);
+      const uniqueActivePartConcerns = Array.from(
+        new Set([...currentPartConcerns.map((co) => co.name), ...partUserUploadedConcernObjects.map((co) => co.name)])
+      );
 
       return doWithRetries(async () =>
         analyzePart({
@@ -106,10 +111,10 @@ export default async function analyzeAppearance({
           club,
           part: part as PartEnum,
           userId,
-          partUserUploadedConcerns: partUserUploadedConcernObjects.map((co) => co.name),
           categoryName,
           demographics,
           toAnalyze,
+          partUserUploadedConcerns: uniqueActivePartConcerns,
           specialConsiderations: rephrasedSpecialConsiderations,
         })
       );
@@ -129,19 +134,15 @@ export default async function analyzeAppearance({
     toUpdateUser.$set.concerns = deduplicatedConcerns;
 
     const newLatestConcernScores = analysesResults.reduce((a: { [key: string]: any }, c) => {
-      const combined = combineAndDeduplicateArrays(latestConcernScores[c.part], c.latestConcernScores, "name").filter(
-        (cso) => cso.value > 0
-      );
+      const oldScores = latestConcernScores[c.part] || [];
+      const combined = combineAndDeduplicateArrays(oldScores, c.latestConcernScores, "name");
       a[c.part] = combined;
       return a;
     }, {});
 
     const newLatestConcernScoresDifference = analysesResults.reduce((a: { [key: string]: any }, c) => {
-      const combined = combineAndDeduplicateArrays(
-        latestConcernScoresDifference[c.part],
-        c.concernScoresDifference,
-        "name"
-      ).filter((csdo) => csdo.value > 0);
+      const oldDifferences = latestConcernScoresDifference[c.part] || [];
+      const combined = combineAndDeduplicateArrays(oldDifferences, c.concernScoresDifference, "name");
       a[c.part] = combined;
       return a;
     }, {});

@@ -30,10 +30,19 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
   try {
     const userInfo = await getUserInfo({
       userId: req.userId,
-      projection: { stripeUserId: 1 },
+      projection: { stripeUserId: 1, email: 1 },
     });
 
-    const { stripeUserId } = userInfo;
+    let { stripeUserId, email } = userInfo;
+
+    if (!stripeUserId) {
+      const stripeUser = await stripe.customers.create({
+        email,
+      });
+      stripeUserId = stripeUser.id;
+
+      await doWithRetries(() => db.collection("User").updateOne({ email }, { $set: { stripeUserId } }));
+    }
 
     const plans = await doWithRetries(async () => db.collection("Plan").find().toArray());
 

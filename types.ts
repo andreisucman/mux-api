@@ -85,6 +85,7 @@ export type UserType = {
   specialConsiderations: string;
   streaks: StreaksType;
   nextScan: NextActionType[];
+  nextRoutine: NextActionType[];
   nextRoutineSuggestion: NextActionType[];
   streakDates: {};
   latestProgressImages: LatestProgressImagesType;

@@ -31,7 +31,7 @@ route.get("/:streamId", async (req: CustomRequest, res, next) => {
     const session = JSON.parse(sessionData);
 
     if (session.text) {
-      res.write(`data: ${session.text}\n\n`);
+      res.write(`data: ${session.text}`);
     }
 
     if (session.finished) {
@@ -44,7 +44,7 @@ route.get("/:streamId", async (req: CustomRequest, res, next) => {
         const { type, content } = JSON.parse(message);
         switch (type) {
           case "chunk":
-            res.write(`data: ${content}\n\n`);
+            res.write(`data: ${content}`);
             break;
           case "close":
             res.end();

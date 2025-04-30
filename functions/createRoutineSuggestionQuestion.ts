@@ -11,6 +11,7 @@ dotenv.config();
 type Props = {
   userId: string;
   part: PartEnum;
+  latestTasksMap?: { [name: string]: number };
   concernScores: ScoreType[];
   previousExperience: { [key: string]: string };
   categoryName: CategoryNameEnum;
@@ -18,6 +19,7 @@ type Props = {
 
 export default async function createRoutineSuggestionQuestions({
   part,
+  latestTasksMap,
   previousExperience,
   concernScores,
   categoryName,
@@ -35,10 +37,15 @@ export default async function createRoutineSuggestionQuestions({
       .map(([concern, explanation]) => `${normalizeString(concern)}: ${explanation}`)
       .join("\n");
 
+    let text;
+
+    if (previousExperienceString) text += `\n\nHere is my experience: ${previousExperienceString}`;
+    if (latestTasksMap) text += `\n\nThe tasks I've completed within the last week: ${JSON.stringify(latestTasksMap)}.`;
+
     const runs: RunType[] = [
       {
         model: "deepseek-chat",
-        content: [{ type: "text", text: `Here is what I tried: ${previousExperienceString || "no information"}` }],
+        content: [{ type: "text", text: text || "no information" }],
         responseFormat: { type: "json_object" },
       },
     ];

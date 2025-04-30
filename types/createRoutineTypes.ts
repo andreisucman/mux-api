@@ -6,7 +6,7 @@ export type CreateRoutineUserInfoType = {
   concerns: UserConcernType[];
   name: string;
   timeZone: string;
-  nextRoutine: NextActionType;
+  nextRoutine: NextActionType[];
   specialConsiderations: string;
 };
 

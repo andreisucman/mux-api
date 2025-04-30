@@ -4,7 +4,7 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import { db } from "init.js";
-import { AnalysisStatusEnum, CategoryNameEnum, CustomRequest, PartEnum, ScoreType } from "types.js";
+import { AnalysisStatusEnum, CategoryNameEnum, CustomRequest, PartEnum, ScoreType, TaskStatusEnum } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
@@ -13,6 +13,7 @@ import createRoutineSuggestionQuestions from "@/functions/createRoutineSuggestio
 import incrementProgress from "@/helpers/incrementProgress.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
 import { daysFrom } from "@/helpers/utils.js";
+import getLatestTasksMap from "@/functions/getLatestTasksMap.js";
 
 const route = Router();
 
@@ -116,8 +117,16 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     res.status(200).end();
 
-    const createQuestions = concernScores.length === 0 && !experienceExists && !existingWithQuestionsCount;
+    const createQuestions = concernScores.length === 0 && !existingWithQuestionsCount;
+
     if (createQuestions) {
+      const latestTasksMap = await getLatestTasksMap({
+        userId: new ObjectId(req.userId),
+        part,
+        status: TaskStatusEnum.COMPLETED,
+        $and: [{ startsAt: { $gte: lastWeek } }, { startsAt: { $lte: now } }],
+      });
+
       const latestExistingSuggestion = await doWithRetries(async () =>
         db
           .collection("RoutineSuggestion")
@@ -140,6 +149,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       const questions = await createRoutineSuggestionQuestions({
         categoryName: CategoryNameEnum.TASKS,
         concernScores: latestExistingSuggestion?.concernScores,
+        latestTasksMap,
         previousExperience,
         userId: req.userId,
         part,

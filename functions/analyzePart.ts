@@ -156,7 +156,7 @@ export default async function analyzePart({
       isPublic: false,
       userName: name,
       concerns: newConcerns,
-      concernScores: concernScores,
+      concernScores,
       concernScoresDifference,
       specialConsiderations,
       moderationStatus: ModerationStatusEnum.ACTIVE,
@@ -191,10 +191,11 @@ export default async function analyzePart({
 
     await Promise.all(updateBAPromises);
 
+    partResult.latestProgressImages = images;
     partResult.latestConcernScores = concernScores;
     partResult.concernScoresDifference = concernScoresDifference;
-    partResult.latestProgressImages = images;
     partResult.concerns = newConcerns.map((name) => ({ name, part }));
+    partResult.zeroValueConcerns = zeroValueConcerns.map((name) => ({ name, part }));
 
     if (moderationResults.length > 0) {
       addModerationAnalyticsData({

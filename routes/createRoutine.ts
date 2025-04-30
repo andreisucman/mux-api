@@ -17,8 +17,8 @@ import { checkDateValidity, delayExecution } from "@/helpers/utils.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
 import updateRoutineDataStats from "@/functions/updateRoutineDataStats.js";
 import makeANewRoutine from "@/functions/makeANewRoutine.js";
-import { CreateRoutineUserInfoType } from "@/types/createRoutineTypes.js";
 import { RoutineSuggestionType } from "@/types/updateRoutineSuggestionTypes.js";
+import { CreateRoutineUserInfoType } from "@/types/createRoutineTypes.js";
 
 const route = Router();
 
@@ -41,7 +41,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     const userInfo = (await getUserInfo({
       userId: req.userId,
       projection: { nextRoutine: 1, concerns: 1, name: 1, timeZone: 1 },
-    })) as CreateRoutineUserInfoType;
+    })) as unknown as CreateRoutineUserInfoType;
 
     if (!userInfo) throw httpError("User not found");
 
@@ -65,7 +65,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     }
 
     const { checkBackDate, isActionAvailable } = await checkCanAction({
-      nextAction: [nextRoutine],
+      nextAction: nextRoutine,
       part,
     });
 
@@ -135,7 +135,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     });
 
     const updatedNextRoutine = updateNextRun({
-      nextRun: [nextRoutine],
+      nextRuns: nextRoutine,
       parts: [part],
     });
 

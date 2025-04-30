@@ -12,6 +12,8 @@ import updateNextRun from "@/helpers/updateNextRun.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import moderateContent from "@/functions/moderateContent.js";
 import checkCanAction from "@/helpers/checkCanAction.js";
+import getLatestTasksMap from "@/functions/getLatestTasksMap.js";
+import setToMidnight from "@/helpers/setToMidnight.js";
 
 const route = Router();
 
@@ -31,7 +33,7 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
 
   const sendErrorResponse = (message: string) => {
     setupSSE(res);
-    res.write(`data: ${JSON.stringify({ error: message })}\n\n`);
+    res.write(`data: ${message}\n\n`);
     res.end();
   };
 
@@ -114,7 +116,7 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
     }
 
     const updatedNextRoutineSuggestion = updateNextRun({
-      nextRun: userInfo.nextRoutineSuggestion,
+      nextRuns: userInfo.nextRoutineSuggestion,
       parts: [latestSuggestion.part],
     });
 
@@ -141,7 +143,7 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
             `Concern targeted: ${t.concern}. Task: ${t.task}. Number of times in a month: ${t.numberOfTimesInAMonth}`
         )
         .join("\n\n");
-      systemContent += `In the past you have suggested this user the following routine: ###${previousTasks}###. And your reasoning was this: ###${latestSuggestion.reasoning}###. Don't recreate it from scratch, only modify according to the user's request.`;
+      systemContent += `Previously you have suggested the user the following this routine: ###${previousTasks}###. And your reasoning was this: ###${latestSuggestion.reasoning}###. Don't recreate the routine from scratch, only modify it according to the user's request.`;
     }
 
     const concernsWithSeverities = latestSuggestion.concernScores
@@ -173,21 +175,19 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
 
     if (previousExperience) userContent += ` <-- Here is what I've tried -->\n\n ${previousExperience}.`;
 
-    const lastMonth = daysFrom({ days: -30 });
-    const pastTasks = await doWithRetries(() =>
-      db
-        .collection("Task")
-        .find(
-          { userId: req.userId, status: TaskStatusEnum.COMPLETED, startsAt: { $gt: lastMonth } },
-          { projection: { key: 1 } }
-        )
-        .toArray()
-    );
+    const now = setToMidnight({ date: new Date(), timeZone: req.timeZone });
+    const lastMonth = daysFrom({ date: now, days: -30 });
 
-    if (pastTasks.length > 0) {
-      const pastTasksMap = pastTasks.reduce((a, c) => (a[c.key] ? (a[c.key] += 1) : (a[c.key] = 1), a), {});
+    const latestTasksMap = await getLatestTasksMap({
+      userId: new ObjectId(req.userId),
+      part: latestSuggestion.part,
+      status: TaskStatusEnum.COMPLETED,
+      $and: [{ startsAt: { $gte: lastMonth } }, { startsAt: { $lte: now } }],
+    });
+
+    if (latestTasksMap) {
       userContent += `<-- Here are the tasks I've completed in the last month and their count -->\n\n ${JSON.stringify(
-        pastTasksMap
+        latestTasksMap
       )}`;
     }
 
@@ -217,7 +217,7 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
 
       await publisher.publish(channel, JSON.stringify({ type: "chunk", content: reasoningChunk }));
 
-      res.write(`data: ${reasoningChunk}\n\n`);
+      res.write(`data: ${reasoningChunk}`);
     }
 
     res.write(`event: end\n`);
@@ -243,7 +243,7 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
     if (!res.headersSent) {
       setupSSE(res);
     }
-    res.write(`data: ${JSON.stringify({ error: errorMessage })}\n\n`);
+    res.write(`data: ${errorMessage}\n\n`);
     res.end();
 
     await publisher.publish(channel, JSON.stringify({ type: "error", content: errorMessage }));

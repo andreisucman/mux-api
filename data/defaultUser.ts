@@ -10,7 +10,7 @@ export const defaultDemographics: DemographicsType = {
   skinType: null,
 };
 
-const defaultNextAction: NextActionType[] = [
+export const defaultNextAction: NextActionType[] = [
   { part: PartEnum.FACE, date: null },
   { part: PartEnum.HAIR, date: null },
   { part: PartEnum.BODY, date: null },
@@ -54,6 +54,7 @@ export const defaultUser: UserType = {
   specialConsiderations: "",
   tosAccepted: false,
   nextScan: defaultNextAction,
+  nextRoutine: defaultNextAction,
   nextRoutineSuggestion: defaultNextAction,
   streakDates: {},
   password: null,
