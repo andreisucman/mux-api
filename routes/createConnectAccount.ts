@@ -9,7 +9,7 @@ import { CustomRequest, ModerationStatusEnum } from "types.js";
 import { ConnectParamsType } from "types/createConnectAccountTypes.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
-import { fullServiceAgreementCountries } from "@/data/other.js"; // Fixed spelling
+import { fullServiceAgreementCountries, supportedCountries } from "@/data/other.js"; // Fixed spelling
 
 const route = Router();
 
@@ -94,7 +94,26 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     const { connectId } = payouts || {};
 
     if (!country) {
-      res.status(400).json({ error: "Country information is required" });
+      res.status(200).json({ error: "Country information is required" });
+      return;
+    }
+
+    const countrySupported = supportedCountries.includes(country.toUpperCase());
+
+    if (!countrySupported) {
+      res.status(200).json({
+        error: `Banks from ${country} are not supported. You can create a Wise, Payoneer, or similar online banking account in USD and use their address as your country.`,
+      });
+
+      await doWithRetries(() =>
+        db.collection("User").updateOne(
+          {
+            _id: new ObjectId(req.userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
+          },
+          { $unset: { country: null } }
+        )
+      );
       return;
     }
 
@@ -140,7 +159,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     });
 
     if (errorText) {
-      res.status(400).json({ error: errorText });
+      res.status(200).json({ error: errorText });
       return;
     }
 

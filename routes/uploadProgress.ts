@@ -167,7 +167,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     let { toAnalyze = [] } = userInfo;
 
-    if (toAnalyze.length >= 3) {
+    if (toAnalyze.length > 3) {
       res.status(400).json({ error: "Bad request" });
       return;
     }

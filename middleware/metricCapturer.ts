@@ -1,50 +1,82 @@
 import { Request, Response, NextFunction } from "express";
 import * as promClient from "prom-client";
 import { promClientRegister } from "@/init.js";
-import httpError from "@/helpers/httpError.js";
 
-const httpRequestDurationMilliseconds = new promClient.Histogram({
+function getBasePath(url: string) {
+  const pathWithoutQuery = url.split("?")[0];
+  const segments = pathWithoutQuery.split("/").filter(Boolean);
+  return segments.length > 0 ? `/${segments[0]}` : "/";
+}
+
+const serverLabel = "api";
+
+const httpRequestDuration = new promClient.Histogram({
   name: "http_request_duration_ms",
-  help: "Histogram of HTTP request duration in milliseconds",
-  buckets: [50, 100, 200, 500, 1000, 2000, 5000, 10000, 50000, 200000], // response time buckets in ms
-  labelNames: ["route", "status_code"],
+  help: "Duration of HTTP requests in milliseconds",
+  labelNames: ["server", "method", "route", "status_code"],
+  buckets: [50, 100, 200, 500, 1000, 2000, 5000],
 });
 
-promClientRegister.registerMetric(httpRequestDurationMilliseconds);
-
-const httpResponseCodeCounter = new promClient.Counter({
-  name: "http_response_codes_total",
-  help: "Total count of HTTP response codes by status code",
-  labelNames: ["status_code", "route"],
+const httpStatusCounter = new promClient.Counter({
+  name: "http_responses_total",
+  help: "Total HTTP responses by status code",
+  labelNames: ["server", "method", "route", "status_code"],
 });
 
-promClientRegister.registerMetric(httpResponseCodeCounter);
+const httpRequestSizeBytes = new promClient.Histogram({
+  name: "http_request_size_bytes",
+  help: "Size of HTTP request bodies in bytes",
+  labelNames: ["server", "method", "route"],
+  buckets: [100, 1000, 5000, 10000, 50000, 100000],
+});
 
-promClient.collectDefaultMetrics({ register: promClientRegister });
+const httpResponseSizeBytes = new promClient.Histogram({
+  name: "http_response_size_bytes",
+  help: "Size of HTTP response bodies in bytes",
+  labelNames: ["server", "method", "route", "status_code"],
+  buckets: [100, 1000, 5000, 10000, 50000, 100000],
+});
 
-export default async function metricCapturer(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
-  try {
-    const start = Date.now();
+const httpErrorCounter = new promClient.Counter({
+  name: "http_errors_total",
+  help: "Total HTTP errors (4xx and 5xx)",
+  labelNames: ["server", "method", "route", "status_code"],
+});
 
-    res.on("finish", () => {
-      const duration = Date.now() - start;
-      const statusCode = res.statusCode;
-      const route = req.route ? req.route.path : req.url;
+[httpRequestDuration, httpStatusCounter, httpRequestSizeBytes, httpResponseSizeBytes, httpErrorCounter].forEach(
+  (metric) => promClientRegister.registerMetric(metric)
+);
 
-      httpRequestDurationMilliseconds.observe(
-        { route, status_code: statusCode },
-        duration
-      );
+promClient.collectDefaultMetrics({
+  register: promClientRegister,
+  labels: { server: serverLabel },
+});
 
-      httpResponseCodeCounter.inc({ status_code: statusCode });
-    });
+export default function metricsMiddleware(req: Request, res: Response, next: NextFunction) {
+  const startTime = Date.now();
+  const { method, url } = req;
+  const route = getBasePath(url);
 
-    next();
-  } catch (err) {
-    next(err);
+  if (method !== "GET" && req.headers["content-length"]) {
+    const contentLength = parseInt(req.headers["content-length"], 10) || 0;
+    httpRequestSizeBytes.labels(serverLabel, method, route).observe(contentLength);
   }
+
+  res.on("finish", () => {
+    const duration = Date.now() - startTime;
+    const statusCode = res.statusCode;
+    const isError = statusCode >= 400;
+
+    httpRequestDuration.labels(serverLabel, method, route, String(statusCode)).observe(duration);
+    httpStatusCounter.labels(serverLabel, method, route, String(statusCode)).inc();
+
+    if (isError) {
+      httpErrorCounter.labels(serverLabel, method, route, String(statusCode)).inc();
+    }
+
+    const contentLength = parseInt(res.getHeader("content-length")?.toString() || "0", 10) || 0;
+    httpResponseSizeBytes.labels(serverLabel, method, route, String(statusCode)).observe(contentLength);
+  });
+
+  next();
 }
