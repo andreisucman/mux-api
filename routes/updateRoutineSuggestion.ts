@@ -19,10 +19,10 @@ const route = Router();
 
 type Props = {
   part: PartEnum;
-  routineSuggestionId?: string;
   concernScores: ScoreType[];
   previousExperience: { [key: string]: string };
   questionsAndAnswers: { [key: string]: string };
+  specialConsiderations?: string;
 };
 
 const validParts = [PartEnum.BODY, PartEnum.FACE, PartEnum.HAIR];
@@ -30,16 +30,15 @@ const validParts = [PartEnum.BODY, PartEnum.FACE, PartEnum.HAIR];
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
   let {
     part,
-    routineSuggestionId,
     concernScores = [],
     previousExperience = {},
     questionsAndAnswers = {},
+    specialConsiderations,
   }: Props = req.body;
   const partIsValid = validParts.includes(part);
 
   if (
     !partIsValid ||
-    (routineSuggestionId && !ObjectId.isValid(routineSuggestionId)) ||
     (previousExperience && typeof previousExperience !== "object") ||
     (questionsAndAnswers && typeof questionsAndAnswers !== "object")
   ) {
@@ -88,6 +87,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     );
 
     const updatePayload: { [key: string]: any } = {};
+    if (specialConsiderations) updatePayload.specialConsiderations = specialConsiderations;
     if (concernScores.length > 0) updatePayload.concernScores = concernScores;
 
     const experienceExists = Object.keys(sanitizedExperience).length > 0;
@@ -151,6 +151,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         categoryName: CategoryNameEnum.TASKS,
         concernScores: latestExistingSuggestion.concernScores,
         latestTasksMap,
+        specialConsiderations,
         previousExperience,
         userId: req.userId,
         part,

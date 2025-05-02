@@ -13,6 +13,7 @@ type Props = {
   part: PartEnum;
   latestTasksMap?: { [name: string]: number };
   concernScores: ScoreType[];
+  specialConsiderations?: string;
   previousExperience: { [key: string]: string };
   categoryName: CategoryNameEnum;
 };
@@ -21,6 +22,7 @@ export default async function createRoutineSuggestionQuestions({
   part,
   latestTasksMap,
   previousExperience,
+  specialConsiderations,
   concernScores,
   categoryName,
   userId,
@@ -31,7 +33,7 @@ export default async function createRoutineSuggestionQuestions({
       .map((co) => `Name: ${co.name}. Severity: ${co.value}. Explanation: ${co.explanation}.`)
       .join("\n");
 
-    let systemContent = `You are a dermatologist and fitness coach. Your patient has the following concerns for their ${part}: ###${concernsAndSeverities}###. Check their information and come up with up to 3 questions to discover important missing information for creating an effective routine for improving their concerns. Use only the information available. Don't ask questions about other concerns that are not present. Your response is a JSON object with this structure: { questionsForTheUser: string[]}`;
+    let systemContent = `You are a dermatologist and fitness coach. Your patient has the following concerns for their ${part}: ###${concernsAndSeverities}###. Check their information and come up with questions to discover important missing information for creating an effective routine for improving their concerns. Not more than 5 questions. Use only the information available. Your response is a JSON object with this structure: { questionsForTheUser: string[]}`;
 
     const previousExperienceString = Object.entries(previousExperience)
       .map(([concern, explanation]) => `${normalizeString(concern)}: ${explanation}`)
@@ -39,8 +41,9 @@ export default async function createRoutineSuggestionQuestions({
 
     let text;
 
-    if (previousExperienceString) text += `\n\nHere is my experience: ${previousExperienceString}`;
+    if (previousExperienceString) text += `\n\nHere is my experience: ${previousExperienceString}.`;
     if (latestTasksMap) text += `\n\nThe tasks I've completed within the last week: ${JSON.stringify(latestTasksMap)}.`;
+    if (specialConsiderations) text += `\n\nMy special considerations: ${specialConsiderations}.`;
 
     const runs: RunType[] = [
       {

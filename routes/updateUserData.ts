@@ -55,13 +55,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       updatePayload.nextAvatarUpdateAt = daysFrom({ days: 30 });
     }
 
-    if (name || intro || socials) {
-      let text = "";
-      if (name) text += `<-->${name}<-->`;
-      if (intro) text += `<-->${intro}<-->`;
-      if (socials) text += `<-->${JSON.stringify(socials)}<-->`;
-    }
-
     if (name) {
       const verdict = await checkTextSafety({
         userId: req.userId,
@@ -163,7 +156,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       if (name) updatePublicityPayload.userName = name;
       if (avatar) updatePublicityPayload.avatar = avatar;
 
-      const response = await updateContent({
+      await updateContent({
         filter: {
           userId: new ObjectId(req.userId),
         },

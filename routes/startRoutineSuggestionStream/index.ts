@@ -66,6 +66,7 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
           projection: {
             previousExperience: 1,
             questionsAndAnswers: 1,
+            specialConsiderations: 1,
             concernScores: 1,
             reasoning: 1,
             part: 1,
@@ -173,7 +174,9 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
     let userContent = `<-- About me --> \n\n ${userAboutString}`;
     userContent += `<-- My concerns are -->\n\n ${concernsWithSeverities}.`;
 
-    if (previousExperience) userContent += ` <-- Here is what I've tried -->\n\n ${previousExperience}.`;
+    if (previousExperience) userContent += `<-- Here is what I've tried -->\n\n ${previousExperience}.`;
+    if (latestSuggestion.specialConsiderations)
+      userContent += `<-- My special considerations -->\n\n ${latestSuggestion.specialConsiderations}`;
 
     const now = setToMidnight({ date: new Date(), timeZone: req.timeZone });
     const lastMonth = daysFrom({ date: now, days: -30 });

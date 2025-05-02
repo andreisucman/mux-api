@@ -35,7 +35,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     instruction,
     startDate,
     frequency,
-    exampleVideoId,
     returnTasks,
     returnRoutine,
     selectedDestinationRoutine,
