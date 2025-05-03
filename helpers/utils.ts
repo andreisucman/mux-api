@@ -227,3 +227,14 @@ export function deepsekJsonParser(str) {
       .trim()
   );
 }
+
+export function checkIfCanDeductConnectFee(date: Date | null) {
+  if (!date) return true;
+
+  const inputDate = new Date(date);
+  const now = new Date();
+
+  const isCurrentMonth = inputDate.getFullYear() === now.getFullYear() && inputDate.getMonth() === now.getMonth();
+
+  return !isCurrentMonth;
+}

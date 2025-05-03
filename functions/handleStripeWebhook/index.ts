@@ -12,13 +12,11 @@ import getUserInfo from "../getUserInfo.js";
 import updateAnalytics from "../updateAnalytics.js";
 import getEmailContent from "@/helpers/getEmailContent.js";
 import sendEmail from "../sendEmail.js";
+import { checkIfCanDeductConnectFee } from "@/helpers/utils.js";
 
 // Cache plans for 5 minutes to reduce database load
 let cachedPlans: any[] = [];
 let lastPlanFetch = 0;
-
-// Helper to sanitize plan names for MongoDB keys
-const sanitizePlanName = (name: string) => name.replace(/\./g, "_");
 
 async function createRoutinePurchase(routineDataId: string, buyerId: string, paymentIntentId: string) {
   try {
@@ -85,6 +83,7 @@ async function createRoutinePurchase(routineDataId: string, buyerId: string, pay
         {
           $set: {
             "club.payouts.balance": { available, pending },
+            "club.payouts.lastSaleDate": new Date(),
           },
         }
       )
@@ -146,44 +145,6 @@ async function fetchRoutineData(routineDataId: string) {
   }
 }
 
-async function updateUsersPlatformSubscription(subscription: Stripe.Subscription, plans: any[]) {
-  try {
-    const customerId = subscription.customer as string;
-    const priceId = subscription.items.data[0].price.id;
-
-    const plan = plans.find((p) => p.priceId === priceId);
-    if (!plan) return;
-
-    await updateUserSubscriptionPlan(customerId, subscription, plan);
-  } catch (err) {
-    throw httpError(err);
-  }
-}
-
-async function updateUserSubscriptionPlan(customerId: string, subscription: Stripe.Subscription, plan: any) {
-  try {
-    const validUntil = new Date(subscription.current_period_end * 1000);
-    const sanitizedPlanName = sanitizePlanName(plan.name);
-
-    await doWithRetries(() =>
-      db.collection("User").updateOne(
-        { stripeUserId: customerId },
-        {
-          $set: {
-            [`subscriptions.${sanitizedPlanName}`]: {
-              subscriptionId: subscription.id,
-              validUntil,
-              priceId: plan.priceId,
-            },
-          },
-        }
-      )
-    );
-  } catch (err) {
-    throw httpError(err);
-  }
-}
-
 async function handleInvoicePayment(invoice: Stripe.Invoice) {
   try {
     const subscriptionId = invoice.subscription as string;
@@ -197,7 +158,10 @@ async function handleInvoicePayment(invoice: Stripe.Invoice) {
     if (routineDataId) {
       const newSubscribedUntil = new Date(subscription.current_period_end * 1000);
 
-      const sellerInfo = await fetchUserInfo({ _id: new ObjectId(sellerId) }, { "club.payouts.connectId": 1 });
+      const sellerInfo = await fetchUserInfo(
+        { _id: new ObjectId(sellerId) },
+        { "club.payouts.connectId": 1, "club.payouts.lastSaleDate": 1 }
+      );
 
       await updatePurchaseSubscriptionData(
         newSubscribedUntil,
@@ -207,50 +171,22 @@ async function handleInvoicePayment(invoice: Stripe.Invoice) {
         subscriptionId
       );
 
+      const canDeduct = checkIfCanDeductConnectFee(
+        sellerInfo.payouts.lastSaleDate ? new Date(sellerInfo.payouts.lastSaleDate) : null
+      );
+
       const chargeId = invoice.charge;
-      const amountToTransfer = invoice.amount_paid - Number(process.env.PLATFORM_FEE_PERCENT) * invoice.amount_paid;
+      let amountToTransfer = invoice.amount_paid - Number(process.env.PLATFORM_FEE_PERCENT) * invoice.amount_paid;
+      if (canDeduct) amountToTransfer -= 200;
 
-      await stripe.transfers.create({
-        amount: amountToTransfer,
-        currency: invoice.currency,
-        destination: sellerInfo.club.payouts.connectId,
-        source_transaction: chargeId as string,
-      });
-    } else {
-      const plans = await getCachedPlans(lastPlanFetch, cachedPlans);
-
-      await updateUsersPlatformSubscription(subscription, plans);
-
-      const buyerInfo = await fetchUserInfo({ stripeUserId: subscription.customer }, { _id: 1 });
-
-      const sessionList = await stripe.checkout.sessions.list({
-        subscription: subscription.id,
-        limit: 1,
-      });
-
-      const session = sessionList.data[0];
-      if (!session) return;
-
-      const expandedSession = await stripe.checkout.sessions.retrieve(session.id, {
-        expand: ["line_items.data"],
-      });
-
-      const planQuantities = expandedSession.line_items.data.reduce((acc, line) => {
-        const plan = plans.find((p) => p.priceId === line.price?.id);
-        if (plan) acc[plan.name] = (acc[plan.name] || 0) + (line.quantity ?? 1);
-        return acc;
-      }, {} as Record<string, number>);
-
-      const analyticsUpdate = Object.entries(planQuantities).reduce((a, [planName, quantity]) => {
-        const key = `overview.subscription.purchased.${sanitizePlanName(planName)}`;
-        a[key] = (a[key] || 0) + quantity;
-        return a;
-      }, {} as Record<string, number>);
-
-      updateAnalytics({
-        userId: String(buyerInfo._id),
-        incrementPayload: analyticsUpdate,
-      });
+      if (amountToTransfer > 0) {
+        await stripe.transfers.create({
+          amount: amountToTransfer,
+          currency: invoice.currency,
+          destination: sellerInfo.club.payouts.connectId,
+          source_transaction: chargeId as string,
+        });
+      }
     }
   } catch (err) {
     throw httpError(err);

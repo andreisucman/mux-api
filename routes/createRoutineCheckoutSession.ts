@@ -9,7 +9,7 @@ import updateAnalytics from "@/functions/updateAnalytics.js";
 import doWithRetries from "@/helpers/doWithRetries.js";
 import { ObjectId } from "mongodb";
 import formatAmountForStripe from "@/helpers/formatAmountForStripe.js";
-import { normalizeString } from "@/helpers/utils.js";
+import { normalizeString, checkIfCanDeductConnectFee } from "@/helpers/utils.js";
 
 const route = Router();
 
@@ -69,14 +69,18 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     const sellerInfo = await getUserInfo({
       userId: sellerId,
-      projection: { "club.payouts.connectId": 1 },
+      projection: { "club.payouts.connectId": 1, "club.payouts.lastSaleDate": 1 },
     });
 
     const { club } = sellerInfo;
     const { payouts } = club;
-    const { connectId: sellerConnectId } = payouts;
+    const { connectId: sellerConnectId, lastSaleDate } = payouts;
 
-    const feeAmount = formatAmountForStripe(Number(process.env.PLATFORM_FEE_PERCENT) * price, "usd");
+    const canDeduct = checkIfCanDeductConnectFee(lastSaleDate ? new Date(lastSaleDate) : null);
+    let fee = Number(process.env.PLATFORM_FEE_PERCENT) * price;
+    if (canDeduct) fee += 2;
+
+    const feeAmount = formatAmountForStripe(fee, "usd");
 
     const metadata = {
       routineDataId: String(routineDataId),

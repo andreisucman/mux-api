@@ -136,6 +136,7 @@ export type ClubPayoutDataType = {
   payoutsEnabled: boolean;
   detailsSubmitted: boolean;
   disabledReason: string;
+  lastSaleDate: Date | null;
 };
 
 export type ClubDataType = {

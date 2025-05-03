@@ -53,6 +53,8 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
     return;
   }
 
+  let part;
+
   try {
     const userInfo = await getUserInfo({
       userId: req.userId,
@@ -76,6 +78,8 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
         }
       )
     )) as unknown as RoutineSuggestionType | null;
+
+    part = latestSuggestion.part;
 
     if (revisionText && latestSuggestion?.isRevised) {
       sendErrorResponse("This routine has already been revised.");
@@ -256,6 +260,12 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
     const currentData = currentDataStr ? JSON.parse(currentDataStr) : { text: "", finished: false, error: false };
 
     await redis.set(streamId, JSON.stringify({ ...currentData, finished: true, error: true }), "EX", 1800);
+
+    await doWithRetries(() =>
+      db
+        .collection("User")
+        .updateOne({ _id: new ObjectId(req.userId) }, { $set: { [`nextRoutineSuggestion.$.${part}`]: null } })
+    );
   }
 });
 
