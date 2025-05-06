@@ -94,6 +94,7 @@ export default async function checkForTwins({
     const twinIds = twinDocuments.map((doc) => String(doc._id));
 
     if (twinIds.length === 0) {
+      // if no twins, add the first record
       const updatePayload: { [key: string]: any } = {};
 
       if (image) updatePayload.image = image;

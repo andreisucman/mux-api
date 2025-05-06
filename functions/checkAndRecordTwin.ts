@@ -47,15 +47,25 @@ export default async function checkAndRecordTwin({
       // dont change the requestUserId to finalUserId here
       if (requestUserId && embedding) {
         // add a twin record if logged in and twin exists
-        const updates = [String(requestUserId), ...twinIds].map((id) => ({
+
+        const updates: any[] = twinIds.map((id) => ({
           updateOne: {
             filter: { _id: new ObjectId(id) },
             update: {
-              $addToSet: { twinIds: id },
+              $addToSet: { twinIds: String(requestUserId) },
               $set: { twinCount: twinIds.length },
             },
           },
         }));
+
+        updates.push({
+          updateOne: {
+            filter: { _id: new ObjectId(requestUserId) },
+            update: {
+              $set: { twinIds, twinCount: twinIds.length },
+            },
+          },
+        });
 
         doWithRetries(async () => db.collection("User").bulkWrite(updates));
       } else {

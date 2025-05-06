@@ -43,14 +43,27 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
           ])
           .toArray()
       );
-      const isAnythingSold = await doWithRetries(() =>
-        db.collection("Purchase").countDocuments({
-          part: { $in: partsAvailable.map((p) => p.part) },
-          sellerId: new ObjectId(req.userId),
-        })
+      const latestSale = await doWithRetries(() =>
+        db
+          .collection("Purchase")
+          .find({
+            part: { $in: partsAvailable.map((p) => p.part) },
+            sellerId: new ObjectId(req.userId),
+          })
+          .sort({ createdAt: -1 })
+          .next()
       );
-      const days = isAnythingSold ? 365 : 7;
-      const deleteOn = daysFrom({ days });
+
+      let deleteOn = daysFrom({ days: 7 });
+
+      if (latestSale) {
+        const finalDate = daysFrom({ date: latestSale.createdAt, days: 365 });
+
+        if (finalDate > deleteOn) {
+          deleteOn = finalDate;
+        }
+      }
+
       payload.deleteOn = deleteOn;
       payload.isPublic = false;
     }
