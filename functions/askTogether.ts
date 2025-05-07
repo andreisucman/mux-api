@@ -71,6 +71,7 @@ async function askTogether({
       unitCost,
       units,
       userId,
+      userType: "user"
     });
 
     const content = completion.choices[0].message.content;

@@ -64,6 +64,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         moderationResults,
         isSuspicious,
         userId: req.userId,
+        userType: "user",
       });
 
       res.status(200).json({
@@ -160,6 +161,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         moderationResults,
         isSuspicious,
         userId: req.userId,
+        userType: "user",
       });
 
       if (isSuspicious) {

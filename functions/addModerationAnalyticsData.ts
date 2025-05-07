@@ -13,6 +13,7 @@ type Props = {
   isSuspicious: boolean;
   isSafe: boolean;
   userId: string;
+  userType: "user" | "client";
 };
 
 export default async function addModerationAnalyticsData({
@@ -21,43 +22,38 @@ export default async function addModerationAnalyticsData({
   isSuspicious,
   isSafe,
   userId,
+  userType,
 }: Props) {
   try {
     let analyticIncrementPayload: {
       [key: string]: number;
     } = {
-      "overview.moderation.totalUploaded": 1,
+      [`overview.${userType}.moderation.totalUploaded`]: 1,
     };
 
-    analyticIncrementPayload[
-      `overview.moderation.uploaded.${categoryName}`
-    ] = 1;
+    analyticIncrementPayload[`overview.${userType}.moderation.uploaded.${categoryName}`] = 1;
 
     if (!isSafe) {
-      analyticIncrementPayload["overview.moderation.totalBlocked"] = 1;
-      analyticIncrementPayload[
-        `overview.moderation.blocked.${categoryName}`
-      ] = 1;
+      analyticIncrementPayload[`overview.${userType}.moderation.totalBlocked`] = 1;
+      analyticIncrementPayload[`overview.${userType}.moderation.blocked.${categoryName}`] = 1;
 
       const blockedReasons = getModerationLabelsOverThreshold({
         moderationResults,
         upperBoundary: Number(process.env.MODERATION_UPPER_BOUNDARY),
-        key: "overview.moderation.blockedReasons",
+        key: `overview.${userType}.moderation.blockedReasons`,
       });
 
       analyticIncrementPayload = { ...blockedReasons };
     } else {
       if (isSuspicious) {
-        analyticIncrementPayload["overview.moderation.totalSuspicious"] = 1;
-        analyticIncrementPayload[
-          `overview.moderation.suspicious.${categoryName}`
-        ] = 1;
+        analyticIncrementPayload[`overview.${userType}.moderation.totalSuspicious`] = 1;
+        analyticIncrementPayload[`overview.${userType}.moderation.suspicious.${categoryName}`] = 1;
 
         const suspiciousReasons = getModerationLabelsOverThreshold({
           moderationResults,
           upperBoundary: Number(process.env.MODERATION_UPPER_BOUNDARY),
           lowerBoundary: Number(process.env.MODERATION_LOWER_BOUNDARY),
-          key: "overview.moderation.suspiciousReasons",
+          key: `overview.${userType}.moderation.suspiciousReasons`,
         });
 
         analyticIncrementPayload = { ...suspiciousReasons };

@@ -55,6 +55,7 @@ async function askAi({ messages, seed, model, functionName, categoryName, userId
       unitCost,
       units,
       userId,
+      userType: "user",
     });
 
     return responseFormat

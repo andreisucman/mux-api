@@ -125,9 +125,9 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     updateAnalytics({
       userId: String(userInfo._id),
       incrementPayload: {
-        "accounting.totalReward": rewardValue,
-        "overview.accounting.totalReward": rewardValue,
-        [`overview.usage.rewards.${rewardKey}`]: 1,
+        "accounting.user.totalReward": rewardValue,
+        "overview.user.accounting.totalReward": rewardValue,
+        [`overview.user.usage.rewards.${rewardKey}`]: 1,
       },
     });
 

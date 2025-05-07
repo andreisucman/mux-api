@@ -69,19 +69,19 @@ export default async function getDemographics({ toAnalyze, userId, categoryName,
     const { sex, ethnicity, skinType, ageInterval } = response;
 
     if (sex) {
-      analyticsPayload[`overview.demographics.sex.${sex}`] = 1;
+      analyticsPayload[`overview.user.demographics.sex.${sex}`] = 1;
     }
 
     if (ethnicity) {
-      analyticsPayload[`overview.demographics.ethnicity.${ethnicity}`] = 1;
+      analyticsPayload[`overview.user.demographics.ethnicity.${ethnicity}`] = 1;
     }
 
     if (skinType) {
-      analyticsPayload[`overview.demographics.skinType.${skinType}`] = 1;
+      analyticsPayload[`overview.user.demographics.skinType.${skinType}`] = 1;
     }
 
     if (ageInterval) {
-      analyticsPayload[`overview.demographics.ageInterval.${ageInterval}`] = 1;
+      analyticsPayload[`overview.user.demographics.ageInterval.${ageInterval}`] = 1;
     }
 
     updateAnalytics({

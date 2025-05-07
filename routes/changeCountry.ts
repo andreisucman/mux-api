@@ -55,12 +55,12 @@ route.post(
 
       const payload: any = {
         userId: req.userId,
-        incrementPayload: { [`overview.club.country.${newCountry}`]: 1 },
+        incrementPayload: { [`overview.user.club.country.${newCountry}`]: 1 },
       };
 
       if (existingCountry) {
         payload.decrementPayload = {
-          [`overview.club.country.${existingCountry}`]: -1,
+          [`overview.user.club.country.${existingCountry}`]: -1,
         };
       }
 

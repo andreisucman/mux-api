@@ -83,6 +83,7 @@ export default async function analyzePart({
           moderationResults,
           isSuspicious,
           userId,
+          userType: "user",
         });
         throw httpError(`It looks like your image contains inappropriate content. Try a different one.`);
       }
@@ -204,6 +205,7 @@ export default async function analyzePart({
         moderationResults,
         isSuspicious,
         userId,
+        userType: "user",
       });
 
       if (isSuspicious) {

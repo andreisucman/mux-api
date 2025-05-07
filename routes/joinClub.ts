@@ -60,7 +60,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     if (clubData) {
       clubData.isActive = true;
       clubData.intro = "I love skincare and living healthy";
-      incrementPayload = { "overview.club.rejoined": 1 };
+      incrementPayload = { "overview.user.club.rejoined": 1 };
     } else {
       clubData = {
         isActive: true,
@@ -69,7 +69,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         payouts: defaultClubPayoutData,
       };
 
-      incrementPayload = { "overview.club.joined": 1 };
+      incrementPayload = { "overview.user.club.joined": 1 };
     }
 
     await doWithRetries(() =>

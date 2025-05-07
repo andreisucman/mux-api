@@ -38,7 +38,7 @@ async function createUser(props: Partial<UserType>) {
 
     updateAnalytics({
       userId: String(userId),
-      incrementPayload: { "overview.user.count.totalUsers": 1 },
+      incrementPayload: { "overview.user.user.count.totalUsers": 1 },
     });
 
     return { ...updatePayload, _id: userId };

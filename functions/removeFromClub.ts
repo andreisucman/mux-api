@@ -42,7 +42,7 @@ export default async function removeFromClub(userId: string) {
 
     updateAnalytics({
       userId: String(userId),
-      incrementPayload: { "overview.club.left": 1 },
+      incrementPayload: { "overview.user.club.left": 1 },
     });
 
     updateContent({

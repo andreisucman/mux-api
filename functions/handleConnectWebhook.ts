@@ -90,18 +90,18 @@ async function handleAccountUpdated(event: Stripe.AccountUpdatedEvent) {
       if (isRejected) {
         emailType = "payoutsRejected";
         shouldSendEmail = userInfo.club.payouts?.lastInformed !== "rejected";
-        Object.assign(analyticsUpdate, { "overview.club.payoutsRejected": 1 });
+        Object.assign(analyticsUpdate, { "overview.user.club.payoutsRejected": 1 });
         Object.assign(updatePayload, {
           "club.payouts.lastInformed": "rejected",
         });
       } else if (isPaused) {
         emailType = "payoutsPaused";
         shouldSendEmail = userInfo.club.payouts?.lastInformed !== "paused";
-        Object.assign(analyticsUpdate, { "overview.club.payoutsPaused": 1 });
+        Object.assign(analyticsUpdate, { "overview.user.club.payoutsPaused": 1 });
         Object.assign(updatePayload, { "club.payouts.lastInformed": "paused" });
       } else {
         shouldSendEmail = userInfo.club.payouts?.lastInformed !== "disabled";
-        Object.assign(analyticsUpdate, { "overview.club.payoutsDisabled": 1 });
+        Object.assign(analyticsUpdate, { "overview.user.club.payoutsDisabled": 1 });
         Object.assign(updatePayload, {
           "club.payouts.lastInformed": "disabled",
         });
@@ -126,7 +126,7 @@ async function handleAccountUpdated(event: Stripe.AccountUpdatedEvent) {
 
     if (!currentPayoutsEnabled && account.payouts_enabled) {
       shouldSendEmail = userInfo.club.payouts?.lastInformed !== "enabled";
-      Object.assign(analyticsUpdate, { "overview.club.payoutsEnabled": 1 });
+      Object.assign(analyticsUpdate, { "overview.user.club.payoutsEnabled": 1 });
       Object.assign(updatePayload, { "club.payouts.lastInformed": "enabled" });
     }
 
@@ -148,7 +148,7 @@ async function handleAccountUpdated(event: Stripe.AccountUpdatedEvent) {
     );
 
     if (!currentDetailsSubmitted && account.details_submitted) {
-      Object.assign(analyticsUpdate, { "overview.club.detailsSubmitted": 1 });
+      Object.assign(analyticsUpdate, { "overview.user.club.detailsSubmitted": 1 });
     }
 
     updateAnalytics({

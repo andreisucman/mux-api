@@ -140,7 +140,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         updateAnalytics({
           userId: req.userId,
           incrementPayload: {
-            [`overview.acquisition.signIn.${parsedState.referrer}`]: 1,
+            [`overview.user.acquisition.signIn.${parsedState.referrer}`]: 1,
           },
         });
 
@@ -182,7 +182,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       updateAnalytics({
         userId: req.userId,
         incrementPayload: {
-          [`overview.acquisition.signUps.${parsedState.referrer}`]: 1,
+          [`overview.user.acquisition.signUps.${parsedState.referrer}`]: 1,
         },
       });
     } else {
@@ -219,8 +219,8 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       updateAnalytics({
         userId: localUserId,
         incrementPayload: {
-          "overview.user.count.registeredUsers": 1,
-          [`overview.acquisition.signUps.${parsedState.referrer}`]: 1,
+          "overview.user.user.count.registeredUsers": 1,
+          [`overview.user.acquisition.signUps.${parsedState.referrer}`]: 1,
         },
       });
     }

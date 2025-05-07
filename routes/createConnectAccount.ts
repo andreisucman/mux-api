@@ -56,7 +56,7 @@ async function createAccountAndLink({ userId, params, country, disableRepetition
       updateAnalytics({
         userId,
         incrementPayload: {
-          [`overview.club.unsupportedCountry.${country}`]: 1,
+          [`overview.user.club.unsupportedCountry.${country}`]: 1,
         },
       });
       return { account, accountLink, errorText };
@@ -175,7 +175,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     updateAnalytics({
       userId: req.userId,
-      incrementPayload: { [`overview.club.country.${country}`]: 1 },
+      incrementPayload: { [`overview.user.club.country.${country}`]: 1 },
     });
 
     res.json({ message: accountLink.url });

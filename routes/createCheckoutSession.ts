@@ -64,7 +64,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         updateAnalytics({
           userId: req.userId,
           incrementPayload: {
-            [`overview.payment.added.${relatedPlan.name}`]: 1,
+            [`overview.user.payment.checkout.platform`]: 1,
           },
         });
       }

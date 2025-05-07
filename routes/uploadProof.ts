@@ -212,6 +212,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
             moderationResults,
             isSuspicious,
             userId: req.userId,
+            userType: "user",
           });
 
           await addAnalysisStatusError({
@@ -243,6 +244,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
             moderationResults,
             isSuspicious,
             userId: req.userId,
+            userType: "user",
           });
           await addAnalysisStatusError({
             message: "Audio contains prohibited content.",
@@ -400,6 +402,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         moderationResults,
         isSuspicious,
         userId: req.userId,
+        userType: "user",
       });
 
       if (isSuspicious) {

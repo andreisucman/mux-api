@@ -16,11 +16,7 @@ type Props = {
   categoryName: CategoryNameEnum;
 };
 
-export default async function generateImage({
-  description,
-  categoryName,
-  userId,
-}: Props) {
+export default async function generateImage({ description, categoryName, userId }: Props) {
   try {
     const messages = [
       {
@@ -55,8 +51,7 @@ export default async function generateImage({
           n: 1,
           width,
           height,
-          negative_prompt:
-            "deformed, scary, blurred, unrealistic, nsfw, sexual, pornographic, nude",
+          negative_prompt: "deformed, scary, blurred, unrealistic, nsfw, sexual, pornographic, nude",
         })
     );
 
@@ -70,6 +65,7 @@ export default async function generateImage({
       functionName: "generateImage",
       modelName: model.split(".").join("_"),
       categoryName,
+      userType: "user",
     });
 
     const image = imageResponse.data[0].url;

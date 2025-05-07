@@ -20,7 +20,7 @@ export default async function updateTasksAnalytics({
       ? tasksToInsert
           .map((t) => t.part)
           .reduce((a: { [key: string]: number }, c: string) => {
-            const key = `overview.tasks.part.${keyOne}.${c}`; // tasksCreated
+            const key = `overview.user.tasks.part.${keyOne}.${c}`; // tasksCreated
             if (a[key]) {
               a[key] += 1;
             } else {
@@ -36,7 +36,7 @@ export default async function updateTasksAnalytics({
           .filter((t) => t.isCreated)
           .map((t) => t.part)
           .reduce((a: { [key: string]: number }, c: string) => {
-            const key = `overview.tasks.part.${keyTwo}.${c}`; // manualTasksCreated
+            const key = `overview.user.tasks.part.${keyTwo}.${c}`; // manualTasksCreated
             if (a[key]) {
               a[key] += 1;
             } else {
@@ -50,7 +50,7 @@ export default async function updateTasksAnalytics({
     updateAnalytics({
       userId: String(userId),
       incrementPayload: {
-        [`overview.usage.tasks.${keyOne}`]: tasksToInsert.length,
+        [`overview.user.usage.tasks.${keyOne}`]: tasksToInsert.length,
         ...partsCreatedTasks,
         ...partsCreatedManualTasks,
       },

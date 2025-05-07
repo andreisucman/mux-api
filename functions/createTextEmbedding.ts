@@ -44,6 +44,7 @@ export default async function createTextEmbedding({
       functionName: "createTextEmbedding",
       modelName: model,
       categoryName,
+      userType: "user",
     });
 
     return embeddingObject.data[0].embedding;

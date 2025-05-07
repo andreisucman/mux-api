@@ -197,7 +197,7 @@ export default async function analyzeAppearance({
         )
     );
 
-    const partScansIncrementPayload = partsAnalyzed.map((p) => `overview.usage.scans.scanParts.${p}`);
+    const partScansIncrementPayload = partsAnalyzed.map((p) => `overview.user.usage.scans.scanParts.${p}`);
 
     const partScansIncrementMap = partScansIncrementPayload.reduce((a, c) => {
       a[c] = 1;
@@ -208,7 +208,7 @@ export default async function analyzeAppearance({
       userId,
       incrementPayload: {
         ...partScansIncrementMap,
-        "overview.usage.scans.totalScans": 1,
+        "overview.user.usage.scans.totalScans": 1,
       },
     });
 

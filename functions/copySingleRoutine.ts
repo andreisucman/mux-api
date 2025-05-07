@@ -136,8 +136,8 @@ export default async function copySingleRoutine({
       updateAnalytics({
         userId,
         incrementPayload: {
-          "overview.usage.routinesStolen": 1,
-          [`overview.tasks.part.routinesStolen.${hostRoutine.part}`]: 1,
+          "overview.user.usage.routinesStolen": 1,
+          [`overview.user.tasks.part.routinesStolen.${hostRoutine.part}`]: 1,
         },
       });
     }

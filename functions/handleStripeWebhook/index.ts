@@ -64,7 +64,7 @@ async function createRoutinePurchase(routineDataId: string, buyerId: string, pay
     updateAnalytics({
       userId: String(buyerInfo._id),
       incrementPayload: {
-        [`overview.payment.purchase.routines.oneTime`]: 1,
+        [`overview.user.payment.purchase.routines.oneTime`]: 1,
       },
     });
 
@@ -145,7 +145,7 @@ async function fetchRoutineData(routineDataId: string) {
   }
 }
 
-async function handleInvoicePayment(invoice: Stripe.Invoice) {
+async function handleInvoicePayment(invoice: Stripe.Invoice, buyerConnectId: string) {
   try {
     const subscriptionId = invoice.subscription as string;
     if (!subscriptionId) return;
@@ -167,6 +167,7 @@ async function handleInvoicePayment(invoice: Stripe.Invoice) {
         newSubscribedUntil,
         new ObjectId(routineDataId),
         sellerId,
+        buyerConnectId,
         sellerInfo.club.payouts.connectId,
         subscriptionId
       );
@@ -242,6 +243,7 @@ async function updatePurchaseSubscriptionData(
   newSubscribedUntil: Date,
   routineDataId: ObjectId,
   sellerId: string,
+  buyerId: string,
   sellerConnectId: string,
   subscriptionId?: string
 ) {
@@ -277,6 +279,13 @@ async function updatePurchaseSubscriptionData(
         }
       )
     );
+
+    updateAnalytics({
+      userId: String(buyerId),
+      incrementPayload: {
+        [`overview.user.payment.purchase.routines.subscription`]: 1,
+      },
+    });
   } catch (err) {
     throw httpError(err);
   }
@@ -326,7 +335,7 @@ async function handleOneTimePayment(session: Stripe.Checkout.Session) {
       const relatedUser = await fetchUserInfo({ stripeUserId: customerId }, { nextScan: 1 });
 
       const updatePayload: { [key: string]: any } = {};
-      const incrementPayload: { [key: string]: any } = { [`overview.payment.purchase.platform`]: 1 };
+      const incrementPayload: { [key: string]: any } = { [`overview.user.payment.purchase.platform`]: 1 };
 
       if (isResetScan) {
         const updatedScans = relatedUser.nextScan.map((obj) => (obj.part === part ? { ...obj, date: null } : obj));
@@ -369,7 +378,7 @@ async function handleStripeWebhook(event: Stripe.Event) {
 
     switch (type) {
       case "invoice.payment_succeeded": // fires each time a subscription is renewed whether platform or routine subscription
-        await handleInvoicePayment(data.object);
+        await handleInvoicePayment(data.object, event.account);
         break;
 
       case "customer.subscription.deleted":

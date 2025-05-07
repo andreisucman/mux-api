@@ -12,6 +12,7 @@ type Props = {
   modelName: string;
   units: number;
   unitCost: number;
+  userType: "user" | "client";
 };
 
 export default async function updateSpend({
@@ -21,28 +22,29 @@ export default async function updateSpend({
   modelName,
   units,
   unitCost,
+  userType,
 }: Props) {
   const createdAt = setToUtcMidnight(new Date());
 
   const totalCost = units * unitCost;
 
   const incrementPayload = {
-    "overview.accounting.totalCost": totalCost,
-    "accounting.totalCost": totalCost,
-    "accounting.totalUnits": units,
-    [`accounting.units.functions.${functionName}`]: units,
-    [`accounting.cost.functions.${functionName}`]: totalCost,
-    [`accounting.units.models.${modelName}`]: units,
-    [`accounting.cost.models.${modelName}`]: totalCost,
-    [`accounting.units.categories.${categoryName}`]: units,
-    [`accounting.cost.categories.${categoryName}`]: totalCost,
+    [`overview.${userType}.accounting.totalCost`]: totalCost,
+    [`accounting.${userType}.totalCost`]: totalCost,
+    [`accounting.${userType}.totalUnits`]: units,
+    [`accounting.${userType}.units.functions.${functionName}`]: units,
+    [`accounting.${userType}.cost.functions.${functionName}`]: totalCost,
+    [`accounting.${userType}.units.models.${modelName}`]: units,
+    [`accounting.${userType}.cost.models.${modelName}`]: totalCost,
+    [`accounting.${userType}.units.categories.${categoryName}`]: units,
+    [`accounting.${userType}.cost.categories.${categoryName}`]: totalCost,
   };
 
   try {
     if (userId) {
       await doWithRetries(async () =>
         adminDb.collection("UserAnalytics").updateOne(
-          { userId: new ObjectId(userId), createdAt },
+          { userId: new ObjectId(userId), userType, createdAt },
           {
             $inc: incrementPayload,
           },
@@ -54,19 +56,20 @@ export default async function updateSpend({
 
       if (isNaN(totalCost)) throw new Error("totalCost is NaN");
 
-      await doWithRetries(async () =>
-        db.collection("User").updateOne(
-          { _id: new ObjectId(userId) },
-          {
-            $inc: { netBenefit: totalCost * -1 },
-          }
-        )
-      );
+      if (userType === "user")
+        await doWithRetries(async () =>
+          db.collection("User").updateOne(
+            { _id: new ObjectId(userId) },
+            {
+              $inc: { netBenefit: totalCost * -1 },
+            }
+          )
+        );
     }
 
     await doWithRetries(async () =>
       adminDb.collection("TotalAnalytics").updateOne(
-        { createdAt },
+        { createdAt, userType },
         {
           $inc: incrementPayload,
         },

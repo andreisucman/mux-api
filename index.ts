@@ -104,6 +104,8 @@ client.connect();
 
 const app = express();
 app.set("trust proxy", 1);
+app.use(logCapturer);
+app.use(metricCapturer);
 
 const corsOptions = {
   origin: process.env.ALLOWED_ORIGINS?.split(","),
@@ -121,9 +123,6 @@ const limiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
-
-app.use(logCapturer);
-app.use(metricCapturer);
 
 app.use("/stripeWebhook", stripeWebhook);
 app.use("/connectWebhook", connectWebhook);
