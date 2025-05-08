@@ -45,6 +45,36 @@ async function handleUpdateBalance(connectId: string | undefined) {
   }
 }
 
+async function handlePayoutFailed(event: Stripe.PayoutFailedEvent) {
+  try {
+    const connectId = event.account;
+    const data = event.data;
+
+    const userInfo = await fetchUserInfo(
+      { "club.payouts.connectId": connectId },
+      {
+        _id: 1,
+        email: 1,
+      }
+    );
+
+    const { title, body } = await getEmailContent({
+      accessToken: null,
+      emailType: "payoutFailed",
+    });
+
+    const updatedBody = body.replace("{{reason}}", data.object.failure_message);
+
+    await sendEmail({
+      to: userInfo.email,
+      subject: title,
+      html: updatedBody,
+    });
+  } catch (err) {
+    throw httpError(err);
+  }
+}
+
 async function handleAccountUpdated(event: Stripe.AccountUpdatedEvent) {
   try {
     const connectId = event.account;
@@ -166,6 +196,7 @@ const allowedEvents = [
   "transfer.reversed",
   "balance.available",
   "account.updated",
+  "payout.failed",
 ];
 
 async function handleConnectWebhook(event: Stripe.Event) {
@@ -182,6 +213,9 @@ async function handleConnectWebhook(event: Stripe.Event) {
 
       case "account.updated":
         await handleAccountUpdated(event);
+        break;
+      case "payout.failed":
+        await handlePayoutFailed(event);
         break;
     }
   } catch (err) {

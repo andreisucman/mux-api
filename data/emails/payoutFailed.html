@@ -1,0 +1,94 @@
+<html style="font-family: 'Open Sans', sans-serif; font-size: 16px">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Poppins:wght@600&display=swap&subset=latin"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body
+    style="
+      min-height: 400px;
+      display: flex;
+      font-size: 16px;
+      padding: 16px;
+      color: #242424;
+      background-color: #ffffff;
+      margin: auto;
+    "
+    crossorigin="anonymous"
+  >
+    <div
+      class="content"
+      style="
+        padding: 24px 16px 16px;
+        border-radius: 16px;
+        margin: auto;
+        gap: 16px;
+        color: #242424;
+        background-color: #f8f9fa;
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 400px;
+        text-align: center;
+      "
+    >
+      <img
+        src="https://mux.nyc3.cdn.digitaloceanspaces.com/logo.png"
+        style="margin: auto"
+        alt="muxout logo"
+        width="50"
+        height="50"
+        style="margin: unset; object-fit: contain; object-position: center"
+        crossorigin="anonymous"
+      />
+      <h1 style="margin: 24px 0; font-family: 'Poppins', sans-serif; font-size: 24px; font-weight: 600; color: #242424">
+        Payout failed
+      </h1>
+      <p
+        style="line-height: 24px; font-size: 16px; margin: 16px 0; font-family: 'Open Sans', sans-serif; color: #242424"
+      >
+        Your payout has failed for the following reason:
+      </p>
+      <p
+        style="
+          line-height: 24px;
+          font-size: 16px;
+          margin: 16px 0;
+          padding: 16px;
+          font-family: 'Open Sans', sans-serif;
+          background-color: #eeeff0;
+          border-radius: 16px;
+          color: #242424;
+        "
+      >
+        {{reason}}
+      </p>
+      <p
+        style="line-height: 24px; font-size: 16px; margin: 16px 0; font-family: 'Open Sans', sans-serif; color: #242424"
+      >
+        To change your payout method login to your wallet. We will retry your payout automatically.
+      </p>
+      <p
+        style="
+          display: block;
+          font-size: 14px;
+          padding: 0;
+          margin-bottom: 0;
+          text-decoration: none;
+          color: #242424;
+          background-color: #f8f9fa;
+          font-family: 'Open Sans', sans-serif;
+          text-decoration: none;
+        "
+      >
+        Muxout team
+      </p>
+    </div>
+  </body>
+</html>

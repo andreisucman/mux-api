@@ -12,6 +12,7 @@ type Props = {
   accessToken: string | null;
   emailType:
     | "passwordReset"
+    | "payoutFailed"
     | "confirmationCode"
     | "payoutsDisabled"
     | "yourPlanPurchased"
@@ -43,6 +44,10 @@ export default async function getEmailContent({ accessToken, emailType }: Props)
       case "payoutsDisabled":
         title = "Muxout - Payouts disabled";
         bodyPath = path.join(baseEmailPath, "payoutsDisabled.html");
+        break;
+      case "payoutFailed":
+        title = "Muxout - Payout failed";
+        bodyPath = path.join(baseEmailPath, "payoutFailed.html");
         break;
       case "payoutsRejected":
         title = "Muxout - Payouts rejected";
