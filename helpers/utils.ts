@@ -212,11 +212,10 @@ export function calculateScoreDifferences(initialScores: ScoreType[], currentSco
 }
 
 export function setupSSE(res: Response) {
-  res.writeHead(200, {
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    Connection: "keep-alive",
-  });
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders?.();
 }
 
 export function deepsekJsonParser(str) {

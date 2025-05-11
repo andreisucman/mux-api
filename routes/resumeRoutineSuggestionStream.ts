@@ -23,7 +23,7 @@ route.get("/:streamId", async (req: CustomRequest, res, next) => {
     setupSSE(res);
 
     if (!sessionData) {
-      res.write("data: Please start the analysis anew\n\n");
+      res.write("Please start the analysis anew");
       res.end();
       return;
     }
@@ -31,10 +31,11 @@ route.get("/:streamId", async (req: CustomRequest, res, next) => {
     const session = JSON.parse(sessionData);
 
     if (session.text) {
-      res.write(`data: ${session.text}`);
+      res.write(session.text);
     }
 
     if (session.finished) {
+      res.write(`event: end\n`);
       res.end();
       return;
     }
@@ -44,19 +45,20 @@ route.get("/:streamId", async (req: CustomRequest, res, next) => {
         const { type, content } = JSON.parse(message);
         switch (type) {
           case "chunk":
-            res.write(`data: ${content}`);
+            res.write(content);
             break;
           case "close":
+            res.write(`event: end\n`);
             res.end();
             break;
           case "error":
-            res.write("data: Stream error\n\n");
+            res.write("Stream error");
             res.end();
             break;
         }
       } catch (err) {
         console.error("Error handling message:", err);
-        res.write("data: Invalid message format\n\n");
+        res.write("Invalid message format");
         res.end();
       }
     };
@@ -78,7 +80,7 @@ route.get("/:streamId", async (req: CustomRequest, res, next) => {
       await subscriber.quit();
     }
     if (res.headersSent) {
-      res.write("data: Internal server error\n\n");
+      res.write("Internal server error");
       res.end();
     } else {
       next(error);

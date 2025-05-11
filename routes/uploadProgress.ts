@@ -130,7 +130,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     }
 
     if (beforeImage && image) {
-      const { isValidForComparison, explanation } = await checkAngleAndPartBetweenImages({
+      const { isValidForComparison } = await checkAngleAndPartBetweenImages({
         beforeImage,
         afterImage: image,
         part,
@@ -140,10 +140,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
       if (!isValidForComparison) {
         res.status(200).json({
-          error:
-            "Your current photo is too different from the previous. " +
-            explanation +
-            " Click on the 'Overlay previous' checkbox in the top left to see the previous image.",
+          error: "not similar",
         });
         return;
       }
@@ -175,7 +172,9 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     const contentUrlTypes: BlurredUrlType[] = [{ name: "original" as "original", url: image }];
     let mainUrl = { url: image, name: "original" };
 
-    const analyticsPayload: { [key: string]: number } = { [`overview.user.usage.scans.progressImageUploads.${part}`]: 1 };
+    const analyticsPayload: { [key: string]: number } = {
+      [`overview.user.usage.scans.progressImageUploads.${part}`]: 1,
+    };
 
     if (blurDots.length) {
       analyticsPayload["overview.user.usage.blur.blurred"] = 1;

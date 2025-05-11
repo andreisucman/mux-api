@@ -29,11 +29,6 @@ export default async function checkAngleAndPositioningOfImages({
 
     const CheckImagePositionResponseType = z.object({
       isValidForComparison: z.boolean().describe("true if yes, false if not"),
-      explanation: z
-        .string()
-        .describe(
-          "If false, describe in 1-sentence in 2nd tense (you/your) how the user should take the image do to make it match. If true, return empty string."
-        ),
     });
 
     const runs: RunType[] = [

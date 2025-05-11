@@ -33,7 +33,7 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
 
   const sendErrorResponse = (message: string) => {
     setupSSE(res);
-    res.write(`data: ${message}\n\n`);
+    res.write(message);
     res.end();
   };
 
@@ -93,7 +93,7 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
 
     if (latestSuggestion.reasoning && !revisionText) {
       setupSSE(res);
-      res.write(`data: ${latestSuggestion.reasoning}\n\n`);
+      res.write(latestSuggestion.reasoning);
       res.end();
       return;
     }
@@ -224,15 +224,10 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
 
       await publisher.publish(channel, JSON.stringify({ type: "chunk", content: reasoningChunk }));
 
-      res.write(`data: ${reasoningChunk}`);
+      res.write(reasoningChunk);
     }
 
     res.write(`event: end\n`);
-
-    await publisher.publish(channel, JSON.stringify({ type: "close" }));
-    await publisher.quit();
-
-    await redis.set(streamId, JSON.stringify({ ...currentData, finished: true }), "EX", 1800);
 
     await finalizeSuggestion(
       latestSuggestion._id,
@@ -242,6 +237,11 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
       currentData.text
     );
 
+    await publisher.publish(channel, JSON.stringify({ type: "close" }));
+    await publisher.quit();
+
+    await redis.set(streamId, JSON.stringify({ ...currentData, finished: true }), "EX", 1800);
+
     res.end();
   } catch (err) {
     console.error(err);
@@ -250,7 +250,7 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
     if (!res.headersSent) {
       setupSSE(res);
     }
-    res.write(`data: ${errorMessage}\n\n`);
+    res.write(errorMessage);
     res.end();
 
     await publisher.publish(channel, JSON.stringify({ type: "error", content: errorMessage }));
