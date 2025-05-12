@@ -313,6 +313,7 @@ export type TaskType = {
   isCreated: boolean;
   isDish: boolean;
   isFood: boolean;
+  requiresProof: boolean;
   previousRecipe: RecipeType | null;
   examples: TaskExampleType[];
   productTypes: string[] | null;

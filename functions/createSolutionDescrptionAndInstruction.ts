@@ -23,7 +23,7 @@ export default async function createSolutionDescriptionAndInstruction({
   try {
     const systemContent = `The user gives you the info about an activity. Your goal is to create a task based on this info.
                   Here is what you should to:
-                  1. Create a 2-3 sentence description for the activity that tells what it is and why it is important.
+                  1. Create a 1 sentence description for the activity that tells what it is and why it is important for the user.
                   2. Create a concise step-by-step instruction for the activity where each step is on a new line (separated by \n).`;
 
     const TaskType = z.object({
@@ -43,8 +43,7 @@ export default async function createSolutionDescriptionAndInstruction({
             text: `Concern targeted: ${concern}. Relevant part of the body: ${part}.`,
           },
         ],
-        model:
-          "ft:gpt-4o-mini-2024-07-18:personal:create-task-from-description:AHtZHgUJ",
+        model: "ft:gpt-4o-mini-2024-07-18:personal:create-task-from-description:BWQpM6ui",
         responseFormat: zodResponseFormat(TaskType, "task"),
       },
     ];

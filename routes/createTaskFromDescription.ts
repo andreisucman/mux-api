@@ -58,7 +58,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     const systemContent = `The user gives you the name of an activity. Your goal is to create a task based on this info.
     Here is what you should to:
-    1. Create a 2-sentence description for the activity that tells what it is and why it is important (up to 300 characters).
+    1. Create a 1-sentence description for the activity that tells what it is and why it is important for the user (up to 300 characters).
     2. Create a concise (up to 300 characters) step-by-step instruction for the activity where each step is on a new line (separated by \n).`;
 
     const TaskType = z.object({
@@ -78,7 +78,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
             text: `Concern targeted: ${concern}. Relevant part of the body: ${part}.`,
           },
         ],
-        model: "ft:gpt-4o-mini-2024-07-18:personal:create-task-from-description:AHtZHgUJ",
+        model: "ft:gpt-4o-mini-2024-07-18:personal:create-task-from-description:BWQpM6ui",
         responseFormat: zodResponseFormat(TaskType, "task"),
       },
     ];

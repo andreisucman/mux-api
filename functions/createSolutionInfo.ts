@@ -40,7 +40,6 @@ export default async function createSolutionInfo({
 
     const TaskResponseType = z.object({
       name: z.string().describe("The name of the task in imperative form"),
-      requisite: z.string().describe("The requisite that the user has to provide to prove the completion of the task"),
       restDays: z.number().describe("Number of days the user should rest before repeating this activity"),
       isDish: z.boolean().describe("true if this activity is a dish that has to be prepared before eating"),
       isFood: z.boolean().describe("true if this activity is a food"),
@@ -70,6 +69,8 @@ export default async function createSolutionInfo({
 
     const { isFood, ...restData } = data;
 
+    const productTypes = data.productTypes.filter((s: string) => s);
+
     const response = {
       ...restData,
       icon,
@@ -78,9 +79,14 @@ export default async function createSolutionInfo({
       concern,
       description,
       instruction,
-      productTypes: data.productTypes.filter((s: string) => s),
+      productTypes,
+      requiresProof: productTypes.length > 0,
       examples: [],
     };
+
+    if (response.requiresProof) {
+      response.requisite = "Take a picture or record a video of the product you have used.";
+    }
 
     if (data.isFood) {
       response.previousRecipe = null;

@@ -136,7 +136,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     const TaskResponseType = z.object({
       name: z.string().describe("The name of the task in an imperative form"),
-      requisite: z.string().describe("The requisite that the user has to provide to prove the completion of the task"),
       restDays: z.number().describe("Number of days the user should rest before repeating this activity"),
       isDish: z.boolean().describe("true if this activity is a dish that has to be prepared before eating"),
       isFood: z.boolean().describe("true if this activity is a food"),
@@ -171,6 +170,8 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       projection: { name: 1 },
     });
 
+    const productTypes = response.productTypes.filter((s: string) => s);
+
     const generalTaskInfo: TaskType = {
       ...response,
       userId: new ObjectId(req.userId),
@@ -186,8 +187,13 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       concern,
       nearestConcerns: [concern],
       examples: [],
-      productTypes: response.productTypes.filter((s: string) => s),
+      productTypes,
+      requiresProof: productTypes.length > 0,
     };
+
+    if (generalTaskInfo.requiresProof) {
+      generalTaskInfo.requisite = "Take a picture or record a video of the product you have used.";
+    }
 
     const iconsMap = await findEmoji({
       userId: req.userId,
