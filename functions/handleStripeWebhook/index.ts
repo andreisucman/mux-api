@@ -106,8 +106,6 @@ async function fetchRoutineData(routineDataId: string) {
         { _id: new ObjectId(routineDataId) },
         {
           projection: {
-            updatePrice: 1,
-            price: 1,
             concern: 1,
             name: 1,
             part: 1,

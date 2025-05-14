@@ -16,7 +16,6 @@ export type PurchaseType = { concern: string; part: string; contentEndDate: Date
 export type PriceDataType = {
   name: string;
   description: string;
-  price: number;
   concern: string;
   part: string;
   stats: RoutineDataStatsType;
@@ -40,7 +39,7 @@ export default async function getPurchasedFilters({ userName, userId, concern, p
           .find(
             { userId: new ObjectId(sellerIdObj?._id), status: "public" },
             {
-              projection: { name: 1, description: 1, price: 1, concern: 1, part: 1, stats: 1 },
+              projection: { name: 1, description: 1, concern: 1, part: 1, stats: 1 },
             }
           )
           .toArray() as unknown as PriceDataType[]

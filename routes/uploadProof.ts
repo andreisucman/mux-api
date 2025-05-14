@@ -38,11 +38,26 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
   if (!url || !ObjectId.isValid(taskId) || !validExtensions.includes(urlExtension)) {
     res.status(400).json({
       error: "Bad request",
-    });
+    }); 
     return;
   }
 
   try {
+      const analysisAlreadyStarted = await doWithRetries(async () =>
+        db.collection("AnalysisStatus").countDocuments({
+          userId: new ObjectId(req.userId),
+          operationKey: taskId,
+          isRunning: true,
+        })
+    );
+
+    if (analysisAlreadyStarted) {
+      res.status(200).json({
+        error: "The analysis has already started.",
+      });
+      return;
+    }
+
     const taskInfo = (await doWithRetries(() =>
       db.collection("Task").findOne(
         { _id: new ObjectId(taskId), userId: new ObjectId(req.userId), status: TaskStatusEnum.ACTIVE },
@@ -73,21 +88,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       return;
     }
 
-    const analysisAlreadyStarted = await doWithRetries(async () =>
-      db.collection("AnalysisStatus").countDocuments({
-        userId: new ObjectId(req.userId),
-        operationKey: taskId,
-        isRunning: true,
-      })
-    );
-
-    if (analysisAlreadyStarted) {
-      res.status(400).json({
-        error: "Bad request",
-      });
-      return;
-    }
-
     await doWithRetries(async () =>
       db.collection("AnalysisStatus").updateOne(
         { userId: new ObjectId(req.userId), operationKey: taskId },
@@ -101,8 +101,8 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     res.status(200).end();
 
-    const userInfo = (await doWithRetries(async () =>
-      db.collection("User").findOne(
+    const userInfo = await doWithRetries(async () =>
+      db.collection<UploadProofUserType>("User").findOne(
         {
           _id: new ObjectId(req.userId),
           moderationStatus: ModerationStatusEnum.ACTIVE,
@@ -117,7 +117,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
           },
         }
       )
-    )) as unknown as UploadProofUserType;
+    )
 
     if (!userInfo) throw httpError(`User ${req.userId} not found`);
 

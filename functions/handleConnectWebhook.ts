@@ -81,6 +81,8 @@ async function handleAccountUpdated(event: Stripe.AccountUpdatedEvent) {
     const data = event.data;
     const account = data.object;
 
+    console.log("account line 84", account)
+
     const userInfo = await fetchUserInfo(
       { "club.payouts.connectId": connectId },
       {
@@ -166,6 +168,7 @@ async function handleAccountUpdated(event: Stripe.AccountUpdatedEvent) {
         emailType: emailType as "payoutsEnabled",
       });
 
+      console.log("userInfo line 169", userInfo)
       await sendEmail({
         to: userInfo.email,
         subject: title,
@@ -181,11 +184,12 @@ async function handleAccountUpdated(event: Stripe.AccountUpdatedEvent) {
       Object.assign(analyticsUpdate, { "overview.user.club.detailsSubmitted": 1 });
     }
 
-    updateAnalytics({
-      userId: String(userInfo._id),
-      incrementPayload: analyticsUpdate,
-    });
+  if (Object.keys(analyticsUpdate).length) {
+    updateAnalytics({ userId: String(userInfo._id), incrementPayload: analyticsUpdate });
+  }
+
   } catch (err) {
+    console.error("event that caused error:", err)
     throw httpError(err);
   }
 }
@@ -202,7 +206,6 @@ const allowedEvents = [
 async function handleConnectWebhook(event: Stripe.Event) {
   try {
     if (!allowedEvents.includes(event.type)) return;
-
     switch (event.type) {
       case "transfer.created":
       case "transfer.updated":

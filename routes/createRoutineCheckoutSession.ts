@@ -27,7 +27,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         { _id: new ObjectId(dataId) },
         {
           projection: {
-            price: 1,
             concern: 1,
             name: 1,
             userId: 1,

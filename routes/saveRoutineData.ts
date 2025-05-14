@@ -28,21 +28,15 @@ export type RoutineDataType = {
   name: string;
   status: string;
   description: string;
-  price: number;
-  updatePrice: number;
   stats?: RoutineDataStatsType;
 };
 
 const route = Router();
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { status, concern, part, name, description, price, updatePrice } = req.body;
+  const { status, concern, part, name, description } = req.body;
 
   if (
-    Number(price) < 5 ||
-    Number(updatePrice) < 2 ||
-    isNaN(Number(price)) ||
-    isNaN(Number(updatePrice)) ||
     !concern ||
     !part ||
     name.length > 50 ||
@@ -66,8 +60,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       status,
       name,
       description,
-      price,
-      updatePrice,
       userName: userInfo.name,
     };
 
