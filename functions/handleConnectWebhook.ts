@@ -81,8 +81,6 @@ async function handleAccountUpdated(event: Stripe.AccountUpdatedEvent) {
     const data = event.data;
     const account = data.object;
 
-    console.log("account line 84", account)
-
     const userInfo = await fetchUserInfo(
       { "club.payouts.connectId": connectId },
       {
@@ -113,27 +111,36 @@ async function handleAccountUpdated(event: Stripe.AccountUpdatedEvent) {
     if (currentPayoutsEnabled && !account.payouts_enabled) {
       emailType = "payoutsDisabled";
 
-      const isRejected = ["rejected.other", "rejected.fraud", "rejected.tos"].includes(
-        account.requirements?.disabled_reason
-      );
+      const isRejected = [
+        "rejected.other",
+        "rejected.fraud",
+        "rejected.tos",
+      ].includes(account.requirements?.disabled_reason);
 
-      const isPaused = account.requirements?.disabled_reason === "platform_paused";
+      const isPaused =
+        account.requirements?.disabled_reason === "platform_paused";
 
       if (isRejected) {
         emailType = "payoutsRejected";
         shouldSendEmail = userInfo.club.payouts?.lastInformed !== "rejected";
-        Object.assign(analyticsUpdate, { "overview.user.club.payoutsRejected": 1 });
+        Object.assign(analyticsUpdate, {
+          "overview.user.club.payoutsRejected": 1,
+        });
         Object.assign(updatePayload, {
           "club.payouts.lastInformed": "rejected",
         });
       } else if (isPaused) {
         emailType = "payoutsPaused";
         shouldSendEmail = userInfo.club.payouts?.lastInformed !== "paused";
-        Object.assign(analyticsUpdate, { "overview.user.club.payoutsPaused": 1 });
+        Object.assign(analyticsUpdate, {
+          "overview.user.club.payoutsPaused": 1,
+        });
         Object.assign(updatePayload, { "club.payouts.lastInformed": "paused" });
       } else {
         shouldSendEmail = userInfo.club.payouts?.lastInformed !== "disabled";
-        Object.assign(analyticsUpdate, { "overview.user.club.payoutsDisabled": 1 });
+        Object.assign(analyticsUpdate, {
+          "overview.user.club.payoutsDisabled": 1,
+        });
         Object.assign(updatePayload, {
           "club.payouts.lastInformed": "disabled",
         });
@@ -149,16 +156,23 @@ async function handleAccountUpdated(event: Stripe.AccountUpdatedEvent) {
         await doWithRetries(() =>
           db
             .collection("RoutineData")
-            .updateMany({ userId: new ObjectId(userInfo._id) }, { $set: { status: "hidden" } })
+            .updateMany(
+              { userId: new ObjectId(userInfo._id) },
+              { $set: { status: "hidden" } }
+            )
         );
 
-        await cancelRoutineSubscribers({ sellerId: new ObjectId(userInfo._id) });
+        await cancelRoutineSubscribers({
+          sellerId: new ObjectId(userInfo._id),
+        });
       }
     }
 
     if (!currentPayoutsEnabled && account.payouts_enabled) {
       shouldSendEmail = userInfo.club.payouts?.lastInformed !== "enabled";
-      Object.assign(analyticsUpdate, { "overview.user.club.payoutsEnabled": 1 });
+      Object.assign(analyticsUpdate, {
+        "overview.user.club.payoutsEnabled": 1,
+      });
       Object.assign(updatePayload, { "club.payouts.lastInformed": "enabled" });
     }
 
@@ -168,7 +182,6 @@ async function handleAccountUpdated(event: Stripe.AccountUpdatedEvent) {
         emailType: emailType as "payoutsEnabled",
       });
 
-      console.log("userInfo line 169", userInfo)
       await sendEmail({
         to: userInfo.email,
         subject: title,
@@ -177,19 +190,28 @@ async function handleAccountUpdated(event: Stripe.AccountUpdatedEvent) {
     }
 
     await doWithRetries(() =>
-      db.collection("User").updateOne({ "club.payouts.connectId": connectId }, { $set: updatePayload })
+      db
+        .collection("User")
+        .updateOne(
+          { "club.payouts.connectId": connectId },
+          { $set: updatePayload }
+        )
     );
 
     if (!currentDetailsSubmitted && account.details_submitted) {
-      Object.assign(analyticsUpdate, { "overview.user.club.detailsSubmitted": 1 });
+      Object.assign(analyticsUpdate, {
+        "overview.user.club.detailsSubmitted": 1,
+      });
     }
 
-  if (Object.keys(analyticsUpdate).length) {
-    updateAnalytics({ userId: String(userInfo._id), incrementPayload: analyticsUpdate });
-  }
-
+    if (Object.keys(analyticsUpdate).length) {
+      updateAnalytics({
+        userId: String(userInfo._id),
+        incrementPayload: analyticsUpdate,
+      });
+    }
   } catch (err) {
-    console.error("event that caused error:", err)
+    console.error("event that caused error:", err);
     throw httpError(err);
   }
 }
@@ -213,7 +235,6 @@ async function handleConnectWebhook(event: Stripe.Event) {
       case "balance.available":
         await handleUpdateBalance(event.account);
         break;
-
       case "account.updated":
         await handleAccountUpdated(event);
         break;

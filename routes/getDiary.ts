@@ -9,93 +9,59 @@ import { ModerationStatusEnum } from "types.js";
 import { DiaryType } from "@/types/saveDiaryRecordTypes.js";
 import { CustomRequest } from "types.js";
 import { daysFrom } from "@/helpers/utils.js";
-import getPurchasedFilters, { PriceDataType, PurchaseType } from "@/functions/getPurchasedFilters.js";
-import { maskDiaryRow } from "@/helpers/mask.js";
 import { db } from "init.js";
 
 const route = Router();
 
-route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { userName } = req.params;
-  const { filter, sort, skip } = aqp(req.query as any) as AqpQuery;
-  const { dateFrom, dateTo, part, concern } = filter;
+route.get(
+  "/:userName?",
+  async (req: CustomRequest, res: Response, next: NextFunction) => {
+    const { userName } = req.params;
+    const { filter, sort, skip } = aqp(req.query as any) as AqpQuery;
+    const { dateFrom, dateTo, part, concern } = filter;
 
-  try {
-    let purchases: PurchaseType[] = [];
-    let notPurchased: string[] = [];
-    let priceData: PriceDataType[] = [];
-    let diary = [];
+    try {
+      let diary = [];
 
-    let finalFilters: { [key: string]: any } = {
-      moderationStatus: ModerationStatusEnum.ACTIVE,
-    };
+      let finalFilters: { [key: string]: any } = {
+        moderationStatus: ModerationStatusEnum.ACTIVE,
+        deletedOn: { $exists: false },
+      };
 
-    if (userName) {
-      finalFilters.userName = userName;
-
-      const response = await getPurchasedFilters({
-        userId: req.userId,
-        userName,
-        concern,
-        part,
-      });
-      purchases = response.purchases;
-      priceData = response.priceData;
-      notPurchased = response.notPurchased;
-
-      if (priceData.length === 0) {
+      if (userName) {
+        finalFilters.userName = userName;
         finalFilters.isPublic = true;
       } else {
+        if (req.userId) finalFilters.userId = new ObjectId(req.userId);
+      }
+
+      if (concern) finalFilters.concern = concern;
+      if (part) finalFilters.part = part;
+
+      if (dateFrom && dateTo) {
         finalFilters.$and = [
-          { concern: { $in: priceData.map((o) => o.concern) } },
-          { part: { $in: priceData.map((o) => o.part) } },
+          { createdAt: { $gte: dateFrom } },
+          { createdAt: { $lte: daysFrom({ date: dateTo, days: 1 }) } },
         ];
-        if (concern) finalFilters.$and.push({ concern: { $in: [concern] } });
-        if (part) finalFilters.$and.push({ part: { $in: [part] } });
       }
-    } else {
-      if (req.userId) {
-        finalFilters.userId = new ObjectId(req.userId);
-        finalFilters.deletedOn = { $exists: false };
-      } else {
-        finalFilters.isPublic = true;
-        finalFilters.deletedOn = { $exists: false };
-      }
+
+      diary = await doWithRetries(async () =>
+        db
+          .collection<DiaryType>("Diary")
+          .find(finalFilters)
+          .sort((sort as Sort) || { _id: -1 })
+          .skip(skip || 0)
+          .limit(21)
+          .toArray()
+      );
+
+      res.status(200).json({
+        message: { data: diary },
+      });
+    } catch (err) {
+      next(err);
     }
-
-    if (part) {
-      finalFilters.part = part;
-    }
-
-    if (concern) {
-      finalFilters.concern = concern;
-    }
-
-    if (dateFrom && dateTo) {
-      finalFilters.$and = [
-        { createdAt: { $gte: dateFrom } },
-        { createdAt: { $lte: daysFrom({ date: dateTo, days: 1 }) } },
-      ];
-    }
-
-    diary = (await doWithRetries(async () =>
-      db
-        .collection("Diary")
-        .find(finalFilters)
-        .sort((sort as Sort) || { _id: -1 })
-        .skip(skip || 0)
-        .limit(21)
-        .toArray()
-    )) as unknown as DiaryType[];
-
-    if (!purchases.length && userName) diary = diary.map((r) => maskDiaryRow(r as DiaryType));
-
-    res.status(200).json({
-      message: { data: diary, purchases, notPurchased, priceData },
-    });
-  } catch (err) {
-    next(err);
   }
-});
+);
 
 export default route;
