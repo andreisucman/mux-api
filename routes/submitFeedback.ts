@@ -12,7 +12,7 @@ import doWithRetries from "@/helpers/doWithRetries.js";
 const route = Router();
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { text, screenShots = [] } = req.body;
+  const { text, screenShots = [], videos=[] } = req.body;
 
   if (!text || !Array.isArray(screenShots)) {
     res.status(400).json({ error: "Bad request" });
@@ -38,6 +38,15 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       updatedHtml = updatedHtml.replace("{{images}}", "");
     }
 
+    if (videos.length >0) {
+      const videoLinks = videos
+        .map((url,i) => `<a href="${url}">${`Video ${i+1}`}</a>`)
+        .join("\n");
+      updatedHtml = updatedHtml.replace("{{videos}}", `<div>${videoLinks}</div>`);
+    } else {
+       updatedHtml = updatedHtml.replace("{{videos}}", "");
+    }
+
     const subjectSnippet = text.length > 25 ? `${text.slice(0, 25)}...` : text;
     await sendEmail({
       to: "info@muxout.com",
@@ -49,7 +58,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     await doWithRetries(() =>
       adminDb
         .collection("Feedback")
-        .insertOne({ userId: userInfo._id, email: userInfo.email, text, images: screenShots, createdAt: new Date() })
+        .insertOne({ userId: userInfo._id, email: userInfo.email, text, images: screenShots, videos, createdAt: new Date() })
     );
 
     res.status(200).end();

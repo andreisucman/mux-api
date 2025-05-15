@@ -102,7 +102,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     res.status(200).end();
 
     const userInfo = (await doWithRetries(async () =>
-      db.collection("User").findOne(
+      db.collection<UploadProofUserType>("User").findOne(
         {
           _id: new ObjectId(req.userId),
           moderationStatus: ModerationStatusEnum.ACTIVE,
@@ -110,14 +110,13 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         {
           projection: {
             club: 1,
-            name: 1,
             nutrition: 1,
             streakDates: 1,
             latestScoresDifference: 1,
           },
         }
       )
-    )) as unknown as UploadProofUserType;
+    ))
 
     if (!userInfo) throw httpError(`User ${req.userId} not found`);
 
@@ -286,6 +285,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     const { verdict: proofAccepted, message: verdictExplanation } = await checkProofImage({
       userId: req.userId,
+      name: taskInfo.name,
       requisite: taskInfo.requisite,
       image: proofImage,
       categoryName: CategoryNameEnum.PROOF,
