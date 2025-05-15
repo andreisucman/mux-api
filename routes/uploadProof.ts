@@ -7,11 +7,23 @@ import checkProofImage from "functions/checkProofImage.js";
 import { urlToBase64 } from "helpers/utils.js";
 import isMajorityOfImagesIdentical from "functions/isMajorityOfImagesIdentical.js";
 import { extensionTypeMap } from "data/extensionTypeMap.js";
-import addSuspiciousRecord, { SuspiciousRecordCollectionEnum } from "@/functions/addSuspiciousRecord.js";
+import addSuspiciousRecord, {
+  SuspiciousRecordCollectionEnum,
+} from "@/functions/addSuspiciousRecord.js";
 import incrementProgress from "@/helpers/incrementProgress.js";
-import { CustomRequest, ProofType, TaskStatusEnum, CategoryNameEnum, TaskType, BlurTypeEnum } from "types.js";
+import {
+  CustomRequest,
+  ProofType,
+  TaskStatusEnum,
+  CategoryNameEnum,
+  TaskType,
+  BlurTypeEnum,
+} from "types.js";
 import { db } from "init.js";
-import { UploadProofUserType, UploadProofTaskType } from "types/uploadProofTypes.js";
+import {
+  UploadProofUserType,
+  UploadProofTaskType,
+} from "types/uploadProofTypes.js";
 import moderateContent from "@/functions/moderateContent.js";
 import { ModerationStatusEnum } from "types.js";
 import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
@@ -30,34 +42,21 @@ const route = Router();
 
 const validExtensions = ["jpg", "webm", "mp4", "webp"];
 
-route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { taskId, url } = req.body;
+route.post(
+  "/",
+  async (req: CustomRequest, res: Response, next: NextFunction) => {
+    const { taskId, url } = req.body;
 
-  const urlExtension = url.includes(".") ? url.split(".").pop() : "";
+    const urlExtension = url.includes(".") ? url.split(".").pop() : "";
 
   if (!url || !ObjectId.isValid(taskId) || !validExtensions.includes(urlExtension)) {
     res.status(400).json({
       error: "Bad request",
-    }); 
+    });
     return;
   }
 
   try {
-      const analysisAlreadyStarted = await doWithRetries(async () =>
-        db.collection("AnalysisStatus").countDocuments({
-          userId: new ObjectId(req.userId),
-          operationKey: taskId,
-          isRunning: true,
-        })
-    );
-
-    if (analysisAlreadyStarted) {
-      res.status(200).json({
-        error: "The analysis has already started.",
-      });
-      return;
-    }
-
     const taskInfo = (await doWithRetries(() =>
       db.collection("Task").findOne(
         { _id: new ObjectId(taskId), userId: new ObjectId(req.userId), status: TaskStatusEnum.ACTIVE },
@@ -81,27 +80,42 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       )
     )) as unknown as UploadProofTaskType;
 
-    if (!taskInfo) throw httpError(`Task ${taskId} not found`);
+      if (!taskInfo) throw httpError(`Task ${taskId} not found`);
 
     if (taskInfo.startsAt > new Date()) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
 
-    await doWithRetries(async () =>
-      db.collection("AnalysisStatus").updateOne(
-        { userId: new ObjectId(req.userId), operationKey: taskId },
-        {
-          $set: { isRunning: true, progress: 1 },
-          $unset: { isError: null, message: "", createdAt: null },
-        },
-        { upsert: true }
-      )
+    const analysisAlreadyStarted = await doWithRetries(async () =>
+      db.collection("AnalysisStatus").countDocuments({
+        userId: new ObjectId(req.userId),
+        operationKey: taskId,
+        isRunning: true,
+      })
     );
 
-    res.status(200).end();
+    if (analysisAlreadyStarted) {
+      res.status(400).json({
+        error: "Bad request",
+      });
+      return;
+    }
 
-    const userInfo = await doWithRetries(async () =>
+      await doWithRetries(async () =>
+        db.collection("AnalysisStatus").updateOne(
+          { userId: new ObjectId(req.userId), operationKey: taskId },
+          {
+            $set: { isRunning: true, progress: 1 },
+            $unset: { isError: null, message: "", createdAt: null },
+          },
+          { upsert: true }
+        )
+      );
+
+      res.status(200).end();
+
+    const userInfo = (await doWithRetries(async () =>
       db.collection<UploadProofUserType>("User").findOne(
         {
           _id: new ObjectId(req.userId),
@@ -110,331 +124,365 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         {
           projection: {
             club: 1,
-            name: 1,
             nutrition: 1,
             streakDates: 1,
             latestScoresDifference: 1,
           },
         }
       )
-    )
+    ))
 
-    if (!userInfo) throw httpError(`User ${req.userId} not found`);
+      if (!userInfo) throw httpError(`User ${req.userId} not found`);
 
-    /* get the previous images of the same task */
-    const oldProofsArray = await doWithRetries(async () =>
-      db
-        .collection("Proof")
-        .find(
-          {
-            taskKey: taskInfo.key,
-            moderationStatus: ModerationStatusEnum.ACTIVE,
-          },
-          {
-            projection: { proofImages: 1 },
-          }
-        )
-        .sort({ _id: -1 })
-        .limit(2)
-        .toArray()
-    );
+      /* get the previous images of the same task */
+      const oldProofsArray = await doWithRetries(async () =>
+        db
+          .collection("Proof")
+          .find(
+            {
+              taskKey: taskInfo.key,
+              moderationStatus: ModerationStatusEnum.ACTIVE,
+            },
+            {
+              projection: { proofImages: 1 },
+            }
+          )
+          .sort({ _id: -1 })
+          .limit(2)
+          .toArray()
+      );
 
-    const oldProofImages = oldProofsArray.flatMap((proof) => proof.proofImages).filter(Boolean);
+      const oldProofImages = oldProofsArray
+        .flatMap((proof) => proof.proofImages)
+        .filter(Boolean);
 
-    await incrementProgress({
-      operationKey: taskId,
-      value: Math.round(Math.random() * 20 + 1),
-      userId: req.userId,
-    });
-
-    const iId = setInterval(async () => {
       await incrementProgress({
         operationKey: taskId,
-        value: Math.round(Math.random() * 5 + 1),
+        value: Math.round(Math.random() * 20 + 1),
         userId: req.userId,
       });
-    }, 5000);
 
-    let transcription;
-    let proofImages;
-    const urlType = extensionTypeMap[urlExtension];
-
-    try {
-      if (urlType === "video") {
-        const { status, message, error } = await extractImagesAndTextFromVideo({
-          cookies: req.cookies,
-          url,
+      const iId = setInterval(async () => {
+        await incrementProgress({
+          operationKey: taskId,
+          value: Math.round(Math.random() * 5 + 1),
+          userId: req.userId,
         });
+      }, 5000);
 
-        if (status) {
-          transcription = message.transcription;
-          proofImages = message.urls;
-        } else {
-          await addAnalysisStatusError({
-            message: error,
-            userId: req.userId,
-            operationKey: taskId,
-          });
-          return;
+      let transcription;
+      let proofImages;
+      const urlType = extensionTypeMap[urlExtension];
+
+      try {
+        if (urlType === "video") {
+          const { status, message, error } =
+            await extractImagesAndTextFromVideo({
+              cookies: req.cookies,
+              url,
+            });
+
+          if (status) {
+            transcription = message.transcription;
+            proofImages = message.urls;
+          } else {
+            await addAnalysisStatusError({
+              message: error,
+              userId: req.userId,
+              operationKey: taskId,
+            });
+            return;
+          }
+        } else if (urlType === "image") {
+          proofImages = [url];
         }
-      } else if (urlType === "image") {
-        proofImages = [url];
+      } catch (err) {
+        throw httpError(err);
+      } finally {
+        clearInterval(iId);
       }
-    } catch (err) {
-      throw httpError(err);
-    } finally {
-      clearInterval(iId);
-    }
 
-    let moderationResults = [];
-    let isSafe = false;
-    let isSuspicious = false;
+      let moderationResults = [];
+      let isSafe = false;
+      let isSuspicious = false;
 
-    if (proofImages) {
-      for (const image of proofImages) {
-        const imageModerationResponse = await moderateContent({
-          content: [
-            {
-              type: "image_url",
-              image_url: { url: await urlToBase64(image) },
-            },
-          ],
-        });
-
-        isSafe = imageModerationResponse.isSafe;
-        isSuspicious = imageModerationResponse.isSuspicious;
-        moderationResults.push(...imageModerationResponse.moderationResults);
-
-        if (!isSafe) {
-          addModerationAnalyticsData({
-            categoryName: CategoryNameEnum.PROOF,
-            isSafe,
-            moderationResults,
-            isSuspicious,
-            userId: req.userId,
-            userType: "user",
+      if (proofImages) {
+        for (const image of proofImages) {
+          const imageModerationResponse = await moderateContent({
+            content: [
+              {
+                type: "image_url",
+                image_url: { url: await urlToBase64(image) },
+              },
+            ],
           });
 
-          await addAnalysisStatusError({
-            message: "Video contains prohibited content.",
-            userId: req.userId,
-            operationKey: taskId,
+          isSafe = imageModerationResponse.isSafe;
+          isSuspicious = imageModerationResponse.isSuspicious;
+          moderationResults.push(...imageModerationResponse.moderationResults);
+
+          if (!isSafe) {
+            addModerationAnalyticsData({
+              categoryName: CategoryNameEnum.PROOF,
+              isSafe,
+              moderationResults,
+              isSuspicious,
+              userId: req.userId,
+              userType: "user",
+            });
+
+            await addAnalysisStatusError({
+              message: "Video contains prohibited content.",
+              userId: req.userId,
+              operationKey: taskId,
+            });
+            return;
+          }
+        }
+        if (transcription) {
+          const audioModerationResponse = await moderateContent({
+            content: [
+              {
+                type: "text",
+                text: transcription,
+              },
+            ],
           });
-          return;
+
+          isSafe = audioModerationResponse.isSafe;
+          isSuspicious = audioModerationResponse.isSuspicious;
+          moderationResults.push(...audioModerationResponse.moderationResults);
+
+          if (!isSafe) {
+            addModerationAnalyticsData({
+              categoryName: CategoryNameEnum.PROOF,
+              isSafe,
+              moderationResults,
+              isSuspicious,
+              userId: req.userId,
+              userType: "user",
+            });
+            await addAnalysisStatusError({
+              message: "Audio contains prohibited content.",
+              userId: req.userId,
+              operationKey: taskId,
+            });
+            return;
+          }
         }
       }
-      if (transcription) {
-        const audioModerationResponse = await moderateContent({
-          content: [
-            {
-              type: "text",
-              text: transcription,
-            },
-          ],
-        });
 
-        isSafe = audioModerationResponse.isSafe;
-        isSuspicious = audioModerationResponse.isSuspicious;
-        moderationResults.push(...audioModerationResponse.moderationResults);
-
-        if (!isSafe) {
-          addModerationAnalyticsData({
-            categoryName: CategoryNameEnum.PROOF,
-            isSafe,
-            moderationResults,
-            isSuspicious,
-            userId: req.userId,
-            userType: "user",
-          });
-          await addAnalysisStatusError({
-            message: "Audio contains prohibited content.",
-            userId: req.userId,
-            operationKey: taskId,
-          });
-          return;
-        }
-      }
-    }
-
-    await incrementProgress({
-      operationKey: taskId,
-      value: Math.round(Math.random() * 30 + 15),
-      userId: req.userId,
-    });
-
-    const validSubmission = await isMajorityOfImagesIdentical(...proofImages, ...oldProofImages);
-
-    if (!validSubmission) {
-      await addAnalysisStatusError({
-        message: "This appears to be a copy of the previous content. Please upload a new proof.",
-        userId: req.userId,
+      await incrementProgress({
         operationKey: taskId,
+        value: Math.round(Math.random() * 30 + 15),
+        userId: req.userId,
       });
-      return;
-    }
 
-    let proofImage = proofImages[0];
+      const validSubmission = await isMajorityOfImagesIdentical(
+        ...proofImages,
+        ...oldProofImages
+      );
 
-    if (proofImages.length > 1) {
-      const selectedProofImages = selectItemsAtEqualDistances(proofImages, 9);
+      if (!validSubmission) {
+        await addAnalysisStatusError({
+          message:
+            "This appears to be a copy of the previous content. Please upload a new proof.",
+          userId: req.userId,
+          operationKey: taskId,
+        });
+        return;
+      }
 
-      proofImage = await createImageCollage({
-        images: selectedProofImages,
-        collageSize: 1024,
-      });
-    }
+      let proofImage = proofImages[0];
+
+      if (proofImages.length > 1) {
+        const selectedProofImages = selectItemsAtEqualDistances(proofImages, 9);
+
+        proofImage = await createImageCollage({
+          images: selectedProofImages,
+          collageSize: 1024,
+        });
+      }
 
     const { verdict: proofAccepted, message: verdictExplanation } = await checkProofImage({
       userId: req.userId,
+      name: taskInfo.name,
       requisite: taskInfo.requisite,
       image: proofImage,
       categoryName: CategoryNameEnum.PROOF,
     });
 
-    if (!proofAccepted) {
-      await addAnalysisStatusError({
-        userId: String(req.userId),
-        operationKey: taskId,
-        message: verdictExplanation,
-      });
-      return;
-    }
+      if (!proofAccepted) {
+        await addAnalysisStatusError({
+          userId: String(req.userId),
+          operationKey: taskId,
+          message: verdictExplanation,
+        });
+        return;
+      }
 
-    let mainThumbnail = { name: BlurTypeEnum.ORIGINAL, url: proofImages[0] };
-    let mainUrl = { name: BlurTypeEnum.ORIGINAL, url };
+      let mainThumbnail = { name: BlurTypeEnum.ORIGINAL, url: proofImages[0] };
+      let mainUrl = { name: BlurTypeEnum.ORIGINAL, url };
 
-    const { name: taskName, key, part, color, icon, concern, requisite, routineId } = taskInfo || {};
-    const { name } = userInfo || {};
-
-    /* add a new proof */
-    const newProof: ProofType = {
-      _id: new ObjectId(),
-      userId: new ObjectId(req.userId),
-      routineId: new ObjectId(routineId),
-      createdAt: new Date(),
-      taskKey: key,
-      taskName,
-      requisite,
-      contentType: urlType as "video",
-      mainUrl,
-      icon,
-      part,
-      color,
-      taskId: new ObjectId(taskId),
-      concern,
-      mainThumbnail,
-      proofImages,
-      userName: name,
-      isPublic: false,
-      moderationStatus: ModerationStatusEnum.ACTIVE,
-    };
-
-    const isPublicResponse = await checkIfPublic({ userId: req.userId, concern });
-
-    newProof.isPublic = isPublicResponse.isPublic;
-
-    const userUpdatePayload: { [key: string]: any } = {};
-
-    const { streakDates } = userInfo;
-    const { newStreakDates, streaksToIncrement } =
-      (await getStreaksToIncrement({
-        userId: req.userId,
+      const {
+        name: taskName,
+        key,
         part,
+        color,
+        icon,
+        concern,
+        requisite,
+        routineId,
+      } = taskInfo || {};
+      const { name } = userInfo || {};
+
+      /* add a new proof */
+      const newProof: ProofType = {
+        _id: new ObjectId(),
+        userId: new ObjectId(req.userId),
+        routineId: new ObjectId(routineId),
+        createdAt: new Date(),
+        taskKey: key,
+        taskName,
+        requisite,
+        contentType: urlType as "video",
+        mainUrl,
+        icon,
+        part,
+        color,
+        taskId: new ObjectId(taskId),
+        concern,
+        mainThumbnail,
+        proofImages,
+        userName: name,
+        isPublic: false,
+        moderationStatus: ModerationStatusEnum.ACTIVE,
+      };
+
+      const isPublicResponse = await checkIfPublic({
+        userId: req.userId,
+        concern,
+      });
+
+      newProof.isPublic = isPublicResponse.isPublic;
+
+      const userUpdatePayload: { [key: string]: any } = {};
+
+      const { streakDates } = userInfo;
+      const { newStreakDates, streaksToIncrement } =
+        (await getStreaksToIncrement({
+          userId: req.userId,
+          part,
+          timeZone: req.timeZone,
+          streakDates,
+        })) || {};
+
+      if (streaksToIncrement) userUpdatePayload.$inc = streaksToIncrement;
+      if (newStreakDates)
+        userUpdatePayload.$set = { streakDates: newStreakDates };
+
+      const todayMidnight = setToMidnight({
+        date: new Date(),
         timeZone: req.timeZone,
-        streakDates,
-      })) || {};
+      });
 
-    if (streaksToIncrement) userUpdatePayload.$inc = streaksToIncrement;
-    if (newStreakDates) userUpdatePayload.$set = { streakDates: newStreakDates };
+      const taskUpdate = {
+        $set: {
+          proofId: newProof._id,
+          completedAt: todayMidnight,
+          status: TaskStatusEnum.COMPLETED,
+        },
+      };
 
-    const todayMidnight = setToMidnight({ date: new Date(), timeZone: req.timeZone });
+      updateTasksAnalytics({
+        userId: req.userId,
+        tasksToInsert: [taskInfo] as Partial<TaskType>[],
+        keyOne: "tasksCompleted",
+        keyTwo: "manualTasksCompleted",
+      });
 
-    const taskUpdate = {
-      $set: {
-        proofId: newProof._id,
-        completedAt: todayMidnight,
-        status: TaskStatusEnum.COMPLETED,
-      },
-    };
+      if (Object.keys(userUpdatePayload).length > 0)
+        await doWithRetries(async () =>
+          db.collection("User").updateOne(
+            {
+              _id: new ObjectId(req.userId),
+              moderationStatus: ModerationStatusEnum.ACTIVE,
+            },
+            userUpdatePayload
+          )
+        );
 
-    updateTasksAnalytics({
-      userId: req.userId,
-      tasksToInsert: [taskInfo] as Partial<TaskType>[],
-      keyOne: "tasksCompleted",
-      keyTwo: "manualTasksCompleted",
-    });
-
-    if (Object.keys(userUpdatePayload).length > 0)
       await doWithRetries(async () =>
-        db.collection("User").updateOne(
+        db
+          .collection("Task")
+          .updateOne({ _id: new ObjectId(taskId) }, taskUpdate)
+      );
+
+      await doWithRetries(async () =>
+        db.collection("Proof").insertOne(newProof)
+      );
+
+      await doWithRetries(async () =>
+        db.collection("Routine").updateOne(
           {
-            _id: new ObjectId(req.userId),
-            moderationStatus: ModerationStatusEnum.ACTIVE,
+            _id: new ObjectId(routineId),
+            "allTasks.ids._id": new ObjectId(taskId),
+            userId: new ObjectId(req.userId),
           },
-          userUpdatePayload
+          {
+            $set: {
+              "allTasks.$.ids.$[element].status": TaskStatusEnum.COMPLETED,
+            },
+          },
+          { arrayFilters: [{ "element._id": new ObjectId(taskId) }] }
         )
       );
 
-    await doWithRetries(async () => db.collection("Task").updateOne({ _id: new ObjectId(taskId) }, taskUpdate));
+      if (moderationResults.length > 0) {
+        addModerationAnalyticsData({
+          categoryName: CategoryNameEnum.PROOF,
+          isSafe,
+          moderationResults,
+          isSuspicious,
+          userId: req.userId,
+          userType: "user",
+        });
 
-    await doWithRetries(async () => db.collection("Proof").insertOne(newProof));
+        if (isSuspicious) {
+          addSuspiciousRecord({
+            collection: SuspiciousRecordCollectionEnum.PROOF,
+            moderationResults,
+            contentId: String(newProof._id),
+            userId: req.userId,
+          });
+        }
+      }
 
-    await doWithRetries(async () =>
-      db.collection("Routine").updateOne(
-        {
-          _id: new ObjectId(routineId),
-          "allTasks.ids._id": new ObjectId(taskId),
-          userId: new ObjectId(req.userId),
-        },
-        {
-          $set: {
-            "allTasks.$.ids.$[element].status": TaskStatusEnum.COMPLETED,
-          },
-        },
-        { arrayFilters: [{ "element._id": new ObjectId(taskId) }] }
-      )
-    );
-
-    if (moderationResults.length > 0) {
-      addModerationAnalyticsData({
-        categoryName: CategoryNameEnum.PROOF,
-        isSafe,
-        moderationResults,
-        isSuspicious,
+      await updateRoutineDataStats({
         userId: req.userId,
-        userType: "user",
+        part,
+        concerns: [concern],
       });
 
-      if (isSuspicious) {
-        addSuspiciousRecord({
-          collection: SuspiciousRecordCollectionEnum.PROOF,
-          moderationResults,
-          contentId: String(newProof._id),
-          userId: req.userId,
-        });
-      }
+      await doWithRetries(async () =>
+        db.collection("AnalysisStatus").updateOne(
+          { userId: new ObjectId(req.userId), operationKey: taskId },
+          {
+            $set: { isRunning: false, progress: 0 },
+            $unset: { isError: "", message: "", createdAt: null },
+          }
+        )
+      );
+    } catch (err) {
+      await addAnalysisStatusError({
+        userId: String(req.userId),
+        operationKey: taskId,
+        message: "An unexpected error occured. Please try again.",
+        originalMessage: err.message,
+      });
+      next(err);
     }
-
-    await updateRoutineDataStats({ userId: req.userId, part, concerns: [concern] });
-
-    await doWithRetries(async () =>
-      db.collection("AnalysisStatus").updateOne(
-        { userId: new ObjectId(req.userId), operationKey: taskId },
-        {
-          $set: { isRunning: false, progress: 0 },
-          $unset: { isError: "", message: "", createdAt: null },
-        }
-      )
-    );
-  } catch (err) {
-    await addAnalysisStatusError({
-      userId: String(req.userId),
-      operationKey: taskId,
-      message: "An unexpected error occured. Please try again.",
-      originalMessage: err.message,
-    });
-    next(err);
   }
-});
+);
 
 export default route;
