@@ -6,7 +6,6 @@ import httpError from "@/helpers/httpError.js";
 import { daysFrom } from "@/helpers/utils.js";
 import { db } from "init.js";
 import updateAnalytics from "./updateAnalytics.js";
-import cancelRoutineSubscribers from "./cancelRoutineSubscribers.js";
 
 export default async function removeFromClub(userId: string) {
   try {
@@ -50,8 +49,6 @@ export default async function removeFromClub(userId: string) {
       collections: ["BeforeAfter", "Progress", "Proof", "Diary", "Routine"],
       updatePayload: { isPublic: false, userName: null, avatar: null },
     });
-
-    cancelRoutineSubscribers({ sellerId: new ObjectId(userId) });
   } catch (err) {
     throw httpError(err);
   }

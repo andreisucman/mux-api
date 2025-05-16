@@ -69,7 +69,7 @@ import changeCountry from "routes/changeCountry.js";
 import copyTaskInstance from "routes/copyTaskInstance.js";
 import signOut from "routes/signOut.js";
 import getRoutineData from "routes/getRoutineData.js";
-import saveRoutineData from "routes/saveRoutineData.js";
+import changeRoutineDataStatus from "routes/changeRoutineDataStatus.js";
 import getPublicUserData from "routes/getPublicUserData.js";
 import createTaskFromDescription from "routes/createTaskFromDescription.js";
 import updateTaskExamples from "routes/updateTaskExamples.js";
@@ -94,6 +94,8 @@ import getRoutineSuggestion from "routes/getRoutineSuggestion.js";
 import updateRoutineSuggestion from "routes/updateRoutineSuggestion.js";
 import startRoutineSuggestionStream from "routes/startRoutineSuggestionStream/index.js";
 import resumeRoutineSuggestionStream from "routes/resumeRoutineSuggestionStream.js";
+import changeMonetizationStatus from "routes/changeMonetizationStatus.js";
+import getViews from "routes/getViews.js";
 
 import { client } from "init.js";
 
@@ -107,7 +109,13 @@ app.use(metricCapturer);
 const corsOptions = {
   origin: process.env.ALLOWED_ORIGINS?.split(","),
   methods: ["GET", "POST", "OPTIONS", "HEAD"],
-  allowedHeaders: ["Content-Type", "Timezone", "Authorization", "X-CSRF-Token", "Access-Control-Allow-Credentials"],
+  allowedHeaders: [
+    "Content-Type",
+    "Timezone",
+    "Authorization",
+    "X-CSRF-Token",
+    "Access-Control-Allow-Credentials",
+  ],
   credentials: true,
   optionsSuccessStatus: 200,
 };
@@ -173,6 +181,7 @@ app.use("/deleteToAnalyze", deleteToAnalyze);
 // protected routes
 app.use((req, res, next) => checkAccess(req, res, next, false));
 app.use("/createRoutine", createRoutine);
+app.use("/getViews", getViews);
 app.use("/updateRoutineSuggestion", updateRoutineSuggestion);
 app.use("/startRoutineSuggestionStream", startRoutineSuggestionStream);
 app.use("/resumeRoutineSuggestionStream", resumeRoutineSuggestionStream);
@@ -189,7 +198,8 @@ app.use("/rescheduleTask", rescheduleTask);
 app.use("/deleteTaskInstance", deleteTaskInstance);
 app.use("/deleteRoutines", deleteRoutines);
 app.use("/getRoutineData", getRoutineData);
-app.use("/saveRoutineData", saveRoutineData);
+app.use("/changeRoutineDataStatus", changeRoutineDataStatus);
+app.use("/changeMonetizationStatus", changeMonetizationStatus);
 app.use("/deleteContent", deleteContent);
 app.use("/copyTaskInstance", copyTaskInstance);
 app.use("/changeCountry", changeCountry);

@@ -11,7 +11,6 @@ import httpError from "@/helpers/httpError.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import copySingleRoutine from "@/functions/copySingleRoutine.js";
 import checkPurchaseAccess from "@/functions/checkPurchaseAccess.js";
-import updateRoutineDataStats from "@/functions/updateRoutineDataStats.js";
 
 const route = Router();
 
@@ -21,68 +20,72 @@ type Props = {
   ignoreIncompleteTasks?: boolean;
 };
 
-route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { routineId, startDate, ignoreIncompleteTasks }: Props = req.body;
+route.post(
+  "/",
+  async (req: CustomRequest, res: Response, next: NextFunction) => {
+    const { routineId, startDate, ignoreIncompleteTasks }: Props = req.body;
 
-  const { isValidDate, isFutureDate } = checkDateValidity(startDate, req.timeZone);
+    const { isValidDate, isFutureDate } = checkDateValidity(
+      startDate,
+      req.timeZone
+    );
 
-  if (!routineId || !isValidDate || !isFutureDate) {
-    res.status(400).json({ error: "Bad request" });
-    return;
-  }
-
-  try {
-    const userInfo = await getUserInfo({
-      userId: req.userId,
-      projection: { name: 1 },
-    });
-
-    if (!userInfo) throw httpError(`User ${req.userId} not found`);
-
-    const routineToAdd = (await doWithRetries(async () =>
-      db.collection("Routine").findOne({
-        _id: new ObjectId(routineId),
-      })
-    )) as unknown as RoutineType;
-
-    if (!routineToAdd) throw httpError(`Routine ${routineId} not found`);
-
-    const accessObject = await checkPurchaseAccess({
-      parts: [routineToAdd.part],
-      concerns: routineToAdd.concerns,
-      targetUserId: String(routineToAdd.userId),
-      userId: req.userId,
-    });
-
-    const hasAccess = accessObject.parts.length > 0 && accessObject.concerns.length > 0;
-
-    if (!hasAccess) {
+    if (!routineId || !isValidDate || !isFutureDate) {
       res.status(400).json({ error: "Bad request" });
       return;
     }
 
-    const daysDifference = calculateDaysDifference(new Date(routineToAdd.startsAt), new Date(startDate));
-
-    const clonedRoutine = await doWithRetries(() =>
-      copySingleRoutine({
-        hostRoutine: routineToAdd,
+    try {
+      const userInfo = await getUserInfo({
         userId: req.userId,
-        userName: userInfo.name,
-        ignoreIncompleteTasks,
-        daysDifference,
-      })
-    );
+        projection: { name: 1 },
+      });
 
-    updateRoutineDataStats({
-      userId: req.userId,
-      part: routineToAdd.part as PartEnum,
-      concerns: routineToAdd.concerns,
-    });
+      if (!userInfo) throw httpError(`User ${req.userId} not found`);
 
-    res.status(200).json({ message: [clonedRoutine] });
-  } catch (error) {
-    next(error);
+      const routineToAdd = (await doWithRetries(async () =>
+        db.collection("Routine").findOne({
+          _id: new ObjectId(routineId),
+        })
+      )) as unknown as RoutineType;
+
+      if (!routineToAdd) throw httpError(`Routine ${routineId} not found`);
+
+      const accessObject = await checkPurchaseAccess({
+        parts: [routineToAdd.part],
+        concerns: routineToAdd.concerns,
+        targetUserId: String(routineToAdd.userId),
+        userId: req.userId,
+      });
+
+      const hasAccess =
+        accessObject.parts.length > 0 && accessObject.concerns.length > 0;
+
+      if (!hasAccess) {
+        res.status(400).json({ error: "Bad request" });
+        return;
+      }
+
+      const daysDifference = calculateDaysDifference(
+        new Date(routineToAdd.startsAt),
+        new Date(startDate)
+      );
+
+      const clonedRoutine = await doWithRetries(() =>
+        copySingleRoutine({
+          hostRoutine: routineToAdd,
+          userId: req.userId,
+          userName: userInfo.name,
+          ignoreIncompleteTasks,
+          daysDifference,
+        })
+      );
+
+      res.status(200).json({ message: [clonedRoutine] });
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 export default route;

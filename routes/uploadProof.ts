@@ -35,7 +35,6 @@ import addModerationAnalyticsData from "@/functions/addModerationAnalyticsData.j
 import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
 import { checkIfPublic } from "./checkIfPublic.js";
 import createImageCollage from "@/functions/createImageCollage.js";
-import updateRoutineDataStats from "@/functions/updateRoutineDataStats.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
 
 const route = Router();
@@ -49,58 +48,66 @@ route.post(
 
     const urlExtension = url.includes(".") ? url.split(".").pop() : "";
 
-  if (!url || !ObjectId.isValid(taskId) || !validExtensions.includes(urlExtension)) {
-    res.status(400).json({
-      error: "Bad request",
-    });
-    return;
-  }
-
-  try {
-    const taskInfo = (await doWithRetries(() =>
-      db.collection("Task").findOne(
-        { _id: new ObjectId(taskId), userId: new ObjectId(req.userId), status: TaskStatusEnum.ACTIVE },
-        {
-          projection: {
-            startsAt: 1,
-            name: 1,
-            key: 1,
-            color: 1,
-            part: 1,
-            icon: 1,
-            examples: 1,
-            concern: 1,
-            instruction: 1,
-            requisite: 1,
-            routineId: 1,
-            restDays: 1,
-            isCreated: 1,
-          },
-        }
-      )
-    )) as unknown as UploadProofTaskType;
-
-      if (!taskInfo) throw httpError(`Task ${taskId} not found`);
-
-    if (taskInfo.startsAt > new Date()) {
-      res.status(400).json({ error: "Bad request" });
-      return;
-    }
-
-    const analysisAlreadyStarted = await doWithRetries(async () =>
-      db.collection("AnalysisStatus").countDocuments({
-        userId: new ObjectId(req.userId),
-        operationKey: taskId,
-        isRunning: true,
-      })
-    );
-
-    if (analysisAlreadyStarted) {
+    if (
+      !url ||
+      !ObjectId.isValid(taskId) ||
+      !validExtensions.includes(urlExtension)
+    ) {
       res.status(400).json({
         error: "Bad request",
       });
       return;
     }
+
+    try {
+      const taskInfo = (await doWithRetries(() =>
+        db.collection("Task").findOne(
+          {
+            _id: new ObjectId(taskId),
+            userId: new ObjectId(req.userId),
+            status: TaskStatusEnum.ACTIVE,
+          },
+          {
+            projection: {
+              startsAt: 1,
+              name: 1,
+              key: 1,
+              color: 1,
+              part: 1,
+              icon: 1,
+              examples: 1,
+              concern: 1,
+              instruction: 1,
+              requisite: 1,
+              routineId: 1,
+              restDays: 1,
+              isCreated: 1,
+            },
+          }
+        )
+      )) as unknown as UploadProofTaskType;
+
+      if (!taskInfo) throw httpError(`Task ${taskId} not found`);
+
+      if (taskInfo.startsAt > new Date()) {
+        res.status(400).json({ error: "Bad request" });
+        return;
+      }
+
+      const analysisAlreadyStarted = await doWithRetries(async () =>
+        db.collection("AnalysisStatus").countDocuments({
+          userId: new ObjectId(req.userId),
+          operationKey: taskId,
+          isRunning: true,
+        })
+      );
+
+      if (analysisAlreadyStarted) {
+        res.status(400).json({
+          error: "Bad request",
+        });
+        return;
+      }
 
       await doWithRetries(async () =>
         db.collection("AnalysisStatus").updateOne(
@@ -115,22 +122,22 @@ route.post(
 
       res.status(200).end();
 
-    const userInfo = (await doWithRetries(async () =>
-      db.collection<UploadProofUserType>("User").findOne(
-        {
-          _id: new ObjectId(req.userId),
-          moderationStatus: ModerationStatusEnum.ACTIVE,
-        },
-        {
-          projection: {
-            club: 1,
-            nutrition: 1,
-            streakDates: 1,
-            latestScoresDifference: 1,
+      const userInfo = await doWithRetries(async () =>
+        db.collection<UploadProofUserType>("User").findOne(
+          {
+            _id: new ObjectId(req.userId),
+            moderationStatus: ModerationStatusEnum.ACTIVE,
           },
-        }
-      )
-    ))
+          {
+            projection: {
+              club: 1,
+              nutrition: 1,
+              streakDates: 1,
+              latestScoresDifference: 1,
+            },
+          }
+        )
+      );
 
       if (!userInfo) throw httpError(`User ${req.userId} not found`);
 
@@ -304,13 +311,14 @@ route.post(
         });
       }
 
-    const { verdict: proofAccepted, message: verdictExplanation } = await checkProofImage({
-      userId: req.userId,
-      name: taskInfo.name,
-      requisite: taskInfo.requisite,
-      image: proofImage,
-      categoryName: CategoryNameEnum.PROOF,
-    });
+      const { verdict: proofAccepted, message: verdictExplanation } =
+        await checkProofImage({
+          userId: req.userId,
+          name: taskInfo.name,
+          requisite: taskInfo.requisite,
+          image: proofImage,
+          categoryName: CategoryNameEnum.PROOF,
+        });
 
       if (!proofAccepted) {
         await addAnalysisStatusError({
@@ -457,12 +465,6 @@ route.post(
           });
         }
       }
-
-      await updateRoutineDataStats({
-        userId: req.userId,
-        part,
-        concerns: [concern],
-      });
 
       await doWithRetries(async () =>
         db.collection("AnalysisStatus").updateOne(

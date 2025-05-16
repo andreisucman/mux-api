@@ -1,7 +1,7 @@
 import doWithRetries from "@/helpers/doWithRetries.js";
 import { normalizeString } from "@/helpers/utils.js";
 import { db } from "@/init.js";
-import { ProgressType, RoutineStatusEnum } from "@/types.js";
+import { ProgressType } from "@/types.js";
 import { ObjectId } from "mongodb";
 
 type Props = {
@@ -10,11 +10,21 @@ type Props = {
   concern: string;
 };
 
-const checkPublishingRequirements = async ({ userId, part, concern }: Props) => {
+const checkPublishingRequirements = async ({
+  userId,
+  part,
+  concern,
+}: Props) => {
   const response = { passed: false, message: "" };
 
   const numberOfProgresses = await doWithRetries(() =>
-    db.collection("Progress").countDocuments({ userId: new ObjectId(userId), part, concerns: { $in: [concern] } })
+    db
+      .collection("Progress")
+      .countDocuments({
+        userId: new ObjectId(userId),
+        part,
+        concerns: { $in: [concern] },
+      })
   );
 
   const concernName = normalizeString(concern).toLowerCase();
@@ -24,47 +34,30 @@ const checkPublishingRequirements = async ({ userId, part, concern }: Props) => 
     return response;
   }
 
-  const routineCount = await doWithRetries(() =>
-    db.collection("Routine").countDocuments({
-      userId: new ObjectId(userId),
-      part,
-      status: { $ne: RoutineStatusEnum.CANCELED },
-      concerns: { $in: [concern] },
-      deletedOn: { $exists: false },
-    })
-  ) || 1;
-
-  const diaryRecords =
-    (await doWithRetries(() =>
-      db.collection("Diary").countDocuments({
-        userId: new ObjectId(userId),
-        part,
-        concern,
-      })
-    )) || 0;
-
-  if (diaryRecords < 1) {
-    response.message = `You have to have at least ${routineCount} diary record${
-      routineCount > 1 ? "s" : ""
-    } that includes an activity about ${concernName}.`;
-    return response;
-  }
-
   const earliestConcernScoreRecord = (await doWithRetries(() =>
     db
       .collection("Progress")
-      .find({ userId: new ObjectId(userId), part, concerns: { $in: [concern] } })
+      .find({
+        userId: new ObjectId(userId),
+        part,
+        concerns: { $in: [concern] },
+      })
       .project({ concernScores: 1 })
       .sort({ createdAt: 1 })
       .next()
   )) as unknown as Partial<ProgressType>;
 
-  const { concernScores: firstConcernScoresObject } = earliestConcernScoreRecord;
+  const { concernScores: firstConcernScoresObject } =
+    earliestConcernScoreRecord;
 
   const latestConcernScoreRecord = (await doWithRetries(() =>
     db
       .collection("Progress")
-      .find({ userId: new ObjectId(userId), part, concerns: { $in: [concern] } })
+      .find({
+        userId: new ObjectId(userId),
+        part,
+        concerns: { $in: [concern] },
+      })
       .project({ concernScores: 1 })
       .sort({ createdAt: -1 })
       .next()
@@ -72,12 +65,19 @@ const checkPublishingRequirements = async ({ userId, part, concern }: Props) => 
 
   const { concernScores: lastConcernScoresObject } = latestConcernScoreRecord;
 
-  const relevantFirstConcernScoreObject = firstConcernScoresObject.find((co) => co.name === concern);
-  const relevantLastConcernScoreObject = lastConcernScoresObject.find((co) => co.name === concern);
+  const relevantFirstConcernScoreObject = firstConcernScoresObject.find(
+    (co) => co.name === concern
+  );
+  const relevantLastConcernScoreObject = lastConcernScoresObject.find(
+    (co) => co.name === concern
+  );
 
-  const differenceInScores = relevantLastConcernScoreObject.value - relevantFirstConcernScoreObject.value;
+  const differenceInScores =
+    relevantLastConcernScoreObject.value -
+    relevantFirstConcernScoreObject.value;
 
-  const improvementTresholdPassed = differenceInScores <= Number(process.env.IMPROVEMENT_RATE_TRESHOLD) * -1;
+  const improvementTresholdPassed =
+    differenceInScores <= Number(process.env.IMPROVEMENT_RATE_TRESHOLD) * -1;
 
   if (!improvementTresholdPassed) {
     response.message = `You have to have at least ${Number(

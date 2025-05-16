@@ -11,7 +11,6 @@ import getEmailContent from "@/helpers/getEmailContent.js";
 import sendEmail from "./sendEmail.js";
 import updateContent from "./updateContent.js";
 import { fetchUserInfo } from "./handleStripeWebhook/index.js";
-import cancelRoutineSubscribers from "./cancelRoutineSubscribers.js";
 
 async function handleUpdateBalance(connectId: string | undefined) {
   if (!connectId) return;
@@ -161,10 +160,6 @@ async function handleAccountUpdated(event: Stripe.AccountUpdatedEvent) {
               { $set: { status: "hidden" } }
             )
         );
-
-        await cancelRoutineSubscribers({
-          sellerId: new ObjectId(userInfo._id),
-        });
       }
     }
 
