@@ -34,6 +34,13 @@ route.get(
         if (req.userId) finalFilters.userId = new ObjectId(req.userId);
       }
 
+      if (part) finalFilters.part = part;
+
+      if (concern)
+        finalFilters.concerns = {
+          $in: Array.isArray(concern) ? [concern[0]] : [concern],
+        };
+
       const hasProjection = Object.keys(projection || {}).length > 0;
 
       const finalProjecton = hasProjection

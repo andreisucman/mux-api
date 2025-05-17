@@ -77,7 +77,6 @@ import updateRoutineStatus from "routes/updateRoutineStatus.js";
 import rescheduleRoutine from "routes/rescheduleRoutine.js";
 import rescheduleTask from "routes/rescheduleTask.js";
 import createRoutine from "routes/createRoutine.js";
-import createRoutineCheckoutSession from "routes/createRoutineCheckoutSession.js";
 import deleteTaskInstance from "routes/deleteTaskInstance.js";
 import deleteRoutines from "routes/deleteRoutines.js";
 import deleteTask from "routes/deleteTask.js";
@@ -95,8 +94,9 @@ import updateRoutineSuggestion from "routes/updateRoutineSuggestion.js";
 import startRoutineSuggestionStream from "routes/startRoutineSuggestionStream/index.js";
 import resumeRoutineSuggestionStream from "routes/resumeRoutineSuggestionStream.js";
 import changeMonetizationStatus from "routes/changeMonetizationStatus.js";
-import getViews from "routes/getViews.js";
-
+import getTotalViews from "@/routes/getTotalViews.js";
+import getGrandTotalViews from "@/routes/getGrandTotalViews.js";
+import registerView from "@/routes/registerView.js";
 import { client } from "init.js";
 
 client.connect();
@@ -149,11 +149,12 @@ app.use("/metrics", metrics);
 app.use("/sendPasswordResetEmail", sendPasswordResetEmail);
 app.use("/setPassword", setPassword);
 app.use("/getConcerns", getConcerns);
+app.use("/registerView", registerView);
+app.use("/getGrandTotalViews", getGrandTotalViews);
 
 app.use((req, res, next) => checkAccess(req, res, next, true));
 app.use("/authorize", authorize);
 app.use("/authenticate", authenticate);
-app.use("/createRoutineCheckoutSession", createRoutineCheckoutSession);
 app.use("/getPublicUserData", getPublicUserData);
 app.use("/getRoutines", getRoutines);
 app.use("/getProof", getProof);
@@ -181,7 +182,7 @@ app.use("/deleteToAnalyze", deleteToAnalyze);
 // protected routes
 app.use((req, res, next) => checkAccess(req, res, next, false));
 app.use("/createRoutine", createRoutine);
-app.use("/getViews", getViews);
+app.use("/getTotalViews", getTotalViews);
 app.use("/updateRoutineSuggestion", updateRoutineSuggestion);
 app.use("/startRoutineSuggestionStream", startRoutineSuggestionStream);
 app.use("/resumeRoutineSuggestionStream", resumeRoutineSuggestionStream);

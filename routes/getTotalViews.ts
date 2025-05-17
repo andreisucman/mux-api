@@ -22,19 +22,38 @@ export type ViewRecordType = {
 route.get(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { skip, sort } = aqp(req.query as any) as AqpQuery;
+    const { skip, filter, sort } = aqp(req.query as any) as AqpQuery;
+    const { interval = "day" } = filter;
 
     try {
-      const filter: { [key: string]: any } = {
+      const finalFilter: { [key: string]: any } = {
         userId: new ObjectId(req.userId),
       };
 
+      const projection: { [key: string]: any } = { concern: 1, part: 1 };
+
+      switch (interval) {
+        case "day":
+          projection.viewsDay = 1;
+          projection.earnedDay = 1;
+          break;
+        case "week":
+          projection.viewsWeek = 1;
+          projection.earnedWeek = 1;
+          break;
+        case "month":
+          projection.viewsMonth = 1;
+          projection.earnedMonth = 1;
+          break;
+      }
+
       const viewRecords = await doWithRetries(() =>
         db
-          .collection("View")
-          .find(filter)
+          .collection("ViewTotal")
+          .find(finalFilter)
           .skip(skip || 0)
           .sort((sort || { views: -1 }) as Sort)
+          .project(projection)
           .toArray()
       );
 

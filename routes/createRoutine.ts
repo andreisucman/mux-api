@@ -55,8 +55,6 @@ route.post(
 
       const { nextRoutine, concerns: existingConcerns = [] } = userInfo;
 
-      const partConcerns = existingConcerns.filter((co) => co.part === part);
-
       const analysisAlreadyStarted = await doWithRetries(async () =>
         db.collection("AnalysisStatus").countDocuments({
           userId: new ObjectId(req.userId),
@@ -110,23 +108,26 @@ route.post(
         return;
       }
 
+      const selectedConcernKeys = Object.keys(latestSuggestion.tasks);
+      const partConcerns = existingConcerns.filter((co) =>
+        selectedConcernKeys.includes(co.name)
+      );
+
       res.status(200).end();
 
       await doWithRetries(async () =>
-        db
-          .collection("AnalysisStatus")
-          .updateOne(
-            { userId: new ObjectId(req.userId), operationKey: "routine" },
-            {
-              $set: {
-                isRunning: true,
-                progress: 1,
-                isError: false,
-                createdAt: new Date(),
-              },
+        db.collection("AnalysisStatus").updateOne(
+          { userId: new ObjectId(req.userId), operationKey: "routine" },
+          {
+            $set: {
+              isRunning: true,
+              progress: 1,
+              isError: false,
+              createdAt: new Date(),
             },
-            { upsert: true }
-          )
+          },
+          { upsert: true }
+        )
       );
 
       global.startInterval(
@@ -180,15 +181,13 @@ route.post(
       await delayExecution(5000);
 
       await doWithRetries(async () =>
-        db
-          .collection("AnalysisStatus")
-          .updateOne(
-            { userId: new ObjectId(req.userId), operationKey: "routine" },
-            {
-              $set: { isRunning: false, progress: 0 },
-              $unset: { createdAt: null },
-            }
-          )
+        db.collection("AnalysisStatus").updateOne(
+          { userId: new ObjectId(req.userId), operationKey: "routine" },
+          {
+            $set: { isRunning: false, progress: 0 },
+            $unset: { createdAt: null },
+          }
+        )
       );
 
       global.stopInterval();

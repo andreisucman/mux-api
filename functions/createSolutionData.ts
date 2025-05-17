@@ -16,7 +16,12 @@ type Props = {
   suggestedTasks: { [concern: string]: RoutineSuggestionTaskType[] };
 };
 
-export default async function createSolutionData({ userId, part, categoryName, suggestedTasks }: Props) {
+export default async function createSolutionData({
+  userId,
+  part,
+  categoryName,
+  suggestedTasks,
+}: Props) {
   try {
     const frequencyMap = Object.values(suggestedTasks)
       .flat()
@@ -50,27 +55,35 @@ export default async function createSolutionData({ userId, part, categoryName, s
       )
     );
 
-    const taskKeyDescriptionInstruction = await Promise.all(descriptionAndInstructionsPromises);
+    const taskKeyDescriptionInstruction = await Promise.all(
+      descriptionAndInstructionsPromises
+    );
 
-    const taskInfoPromises = taskKeyDescriptionInstruction.map(({ key, description, instruction }) => {
-      const concern = solutionConcernMap[key];
-      const relevantTask = suggestedTasks[concern].find((t) => t.task === key);
+    const taskInfoPromises = taskKeyDescriptionInstruction.map(
+      ({ key, description, instruction }) => {
+        const concern = solutionConcernMap[key];
+        const relevantTask = suggestedTasks[concern].find(
+          (t) => t.task === key
+        );
 
-      return doWithRetries(async () =>
-        createSolutionInfo({
-          icon: relevantTask.icon,
-          color: relevantTask.color,
-          categoryName,
-          concern,
-          description,
-          instruction,
-          task: key,
-          userId,
-        })
-      );
-    });
+        return doWithRetries(async () =>
+          createSolutionInfo({
+            icon: relevantTask.icon,
+            color: relevantTask.color,
+            categoryName,
+            concern,
+            description,
+            instruction,
+            task: key,
+            userId,
+          })
+        );
+      }
+    );
 
-    let taskInfoRecords: CreateRoutineAllSolutionsType[] = await Promise.all(taskInfoPromises);
+    let taskInfoRecords: CreateRoutineAllSolutionsType[] = await Promise.all(
+      taskInfoPromises
+    );
 
     /* change names of solutions to snake case */
     const valuesWithConcerns: AllTaskType[] = [];
@@ -83,7 +96,9 @@ export default async function createSolutionData({ userId, part, categoryName, s
       const { name, icon, color } = relevantSolution;
 
       const total = Math.max(
-        Math.round(Number(frequencyMap[key]) / 4.285714301020408), // needed to turn monthly frequency into weekly
+        Math.round(
+          Number(frequencyMap[key]) / Number(process.env.WEEKLY_MULTIPLIER)
+        ), // needed to turn monthly frequency into weekly
         1
       );
 
