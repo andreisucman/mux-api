@@ -3,8 +3,9 @@ dotenv.config();
 
 import aqp, { AqpQuery } from "api-query-params";
 import { Router, Response, NextFunction } from "express";
-import { CustomRequest } from "types.js";
 import doWithRetries from "@/helpers/doWithRetries.js";
+import getUserInfo from "@/functions/getUserInfo.js";
+import { CustomRequest } from "types.js";
 import { db } from "@/init.js";
 
 const route = Router();
@@ -17,8 +18,10 @@ route.get(
     const { userName } = req.params;
 
     try {
+      const userInfo = await getUserInfo({ userName, projection: { _id: 1 } });
+
       const finalFilter: { [key: string]: any } = {
-        userName,
+        userId: userInfo._id,
         page,
       };
 

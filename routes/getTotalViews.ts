@@ -16,7 +16,6 @@ export type ViewRecordType = {
   concern: string;
   updatedAt: Date;
   views: number;
-  earned: number;
 };
 
 route.get(

@@ -97,6 +97,7 @@ import changeMonetizationStatus from "routes/changeMonetizationStatus.js";
 import getTotalViews from "@/routes/getTotalViews.js";
 import getGrandTotalViews from "@/routes/getGrandTotalViews.js";
 import registerView from "@/routes/registerView.js";
+import getBalance from "@/routes/getBalance.js";
 import { client } from "init.js";
 
 client.connect();
@@ -181,6 +182,7 @@ app.use("/deleteToAnalyze", deleteToAnalyze);
 
 // protected routes
 app.use((req, res, next) => checkAccess(req, res, next, false));
+app.use("/getBalance", getBalance);
 app.use("/createRoutine", createRoutine);
 app.use("/getTotalViews", getTotalViews);
 app.use("/updateRoutineSuggestion", updateRoutineSuggestion);

@@ -6,6 +6,7 @@ import { CustomRequest } from "types.js";
 import verifyTurnstileToken from "@/functions/verifyTurnstileToken.js";
 import doWithRetries from "@/helpers/doWithRetries.js";
 import { db, redis } from "@/init.js";
+import getUserInfo from "@/functions/getUserInfo.js";
 
 const route = Router();
 
@@ -16,16 +17,10 @@ route.post(
     const ipHeader = req.headers["cf-connecting-ip"] as string;
     const userIP = ipHeader || req.ip;
 
-    console.log("req.body", req.body);
-
     try {
       const redisKey = `fp:${fingerprint}-ip:${userIP}-nm:${userName}`;
 
-      console.log("redisKey", redisKey);
-
       const exists = await redis.get(redisKey);
-
-      console.log("exists", exists);
 
       if (exists) {
         res.status(200).end();
@@ -33,18 +28,25 @@ route.post(
       }
 
       const tokenIsValid = await verifyTurnstileToken(token, userIP);
-
-      console.log("tokenIsValid", tokenIsValid);
+      const userInfo = await getUserInfo({
+        userName,
+        projection: { _id: 1, "club.payouts.connectId": 1 },
+      });
 
       if (tokenIsValid) {
         await doWithRetries(() =>
-          db
-            .collection("View")
-            .updateOne(
-              { userName, part, concern, page },
-              { $inc: { views: 1 } },
-              { upsert: true }
-            )
+          db.collection("View").updateOne(
+            {
+              userId: userInfo._id,
+              connectId: userInfo.club.payouts.connectId,
+              userName,
+              part,
+              concern,
+              page,
+            },
+            { $inc: { views: 1 } },
+            { upsert: true }
+          )
         );
         await redis.set(redisKey, 1, "EX", 43200);
       }
