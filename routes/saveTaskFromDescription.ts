@@ -30,6 +30,7 @@ import { validParts } from "@/data/other.js";
 import getUsersImages from "@/functions/getUserImages.js";
 import getLatestTasks from "@/functions/getLatestTasks.js";
 import { checkIfPublic } from "./checkIfPublic.js";
+import createRoutineData from "@/functions/createRoutineData.js";
 
 const route = Router();
 
@@ -346,6 +347,17 @@ route.post(
         await doWithRetries(async () =>
           db.collection("Routine").insertOne(routinePayload)
         );
+
+        const routineDataPromises = routinePayload.concerns.map((concern) =>
+          createRoutineData({
+            part,
+            concern,
+            userId: new ObjectId(routinePayload.userId),
+            userName: routinePayload.userName,
+          })
+        );
+
+        await Promise.all(routineDataPromises);
       }
 
       if (draftTasks.length > 0)

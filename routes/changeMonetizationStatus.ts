@@ -9,12 +9,6 @@ import doWithRetries from "helpers/doWithRetries.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import checkPublishingRequirements from "@/functions/checkRoutineDataPublishingRequirements.js";
 
-export type RoutineDataType = {
-  concern: string;
-  part: string;
-  monetization?: "enabled" | "disabled";
-};
-
 const route = Router();
 
 route.post(

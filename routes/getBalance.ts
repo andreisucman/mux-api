@@ -36,7 +36,6 @@ route.get(
               features: {
                 instant_payouts: true,
                 standard_payouts: true,
-                edit_payout_schedule: true,
               },
             },
           },

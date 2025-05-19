@@ -56,7 +56,10 @@ route.get(
         }
       }
 
-      if (concern) finalFilter.concern = concern;
+      if (concern)
+        finalFilter.concerns = {
+          $in: Array.isArray(concern) ? concern : [concern],
+        };
       if (part) finalFilter.part = part;
 
       progress = await doWithRetries(async () =>

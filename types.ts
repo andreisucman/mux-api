@@ -106,14 +106,9 @@ export type SubscriptionType = {
   isTrialUsed: boolean;
 };
 
-type BalanceRecordType = {
-  amount: number;
-  currency: string;
-};
-
 export type ClubPayoutDataType = {
   connectId: string;
-  balance: { pending: BalanceRecordType; available: BalanceRecordType };
+  balance: number;
   payoutsEnabled: boolean;
   detailsSubmitted: boolean;
   disabledReason: string;

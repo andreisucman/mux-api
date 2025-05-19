@@ -5,6 +5,7 @@ import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import {
   CustomRequest,
+  PartEnum,
   RoutineStatusEnum,
   RoutineType,
   TaskStatusEnum,
@@ -20,6 +21,7 @@ import getUserInfo from "@/functions/getUserInfo.js";
 import httpError from "@/helpers/httpError.js";
 import { checkIfPublic } from "./checkIfPublic.js";
 import updateTasksAnalytics from "@/functions/updateTasksAnalytics.js";
+import createRoutineData from "@/functions/createRoutineData.js";
 
 const route = Router();
 
@@ -193,6 +195,17 @@ route.post(
         await doWithRetries(async () =>
           db.collection("Routine").insertOne(newRoutine)
         );
+
+        const routineDataPromises = newRoutine.concerns.map((concern) =>
+          createRoutineData({
+            part: newRoutine.part as PartEnum,
+            concern,
+            userId: new ObjectId(req.userId),
+            userName: newRoutine.userName,
+          })
+        );
+
+        await Promise.all(routineDataPromises);
       }
 
       resetTask.routineId = updateRoutineId;

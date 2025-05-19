@@ -1,6 +1,12 @@
 import { ObjectId } from "mongodb";
 import doWithRetries from "helpers/doWithRetries.js";
-import { UserConcernType, PartEnum, CategoryNameEnum, RoutineStatusEnum, RoutineType } from "types.js";
+import {
+  UserConcernType,
+  PartEnum,
+  CategoryNameEnum,
+  RoutineStatusEnum,
+  RoutineType,
+} from "types.js";
 import { CreateRoutineUserInfoType } from "types/createRoutineTypes.js";
 import { db } from "init.js";
 import httpError from "helpers/httpError.js";
@@ -10,6 +16,7 @@ import createSolutionData from "./createSolutionData.js";
 import createScheduleAndTasks from "./createScheduleAndTasks.js";
 import { checkIfPublic } from "@/routes/checkIfPublic.js";
 import { RoutineSuggestionTaskType } from "@/types/updateRoutineSuggestionTypes.js";
+import createRoutineData from "./createRoutineData.js";
 
 type Props = {
   userId: string;
@@ -40,17 +47,20 @@ export default async function makeANewRoutine({
       userId: String(userId),
     });
 
-    const { allTasksWithDateAndIds, tasksToInsert } = await createScheduleAndTasks({
-      allSolutions,
-      allTasks,
-      categoryName,
-      part,
-      partConcerns,
-      routineStartDate,
-      userInfo,
-    });
+    const { allTasksWithDateAndIds, tasksToInsert } =
+      await createScheduleAndTasks({
+        allSolutions,
+        allTasks,
+        categoryName,
+        part,
+        partConcerns,
+        routineStartDate,
+        userInfo,
+      });
 
-    const { minDate, maxDate } = getMinAndMaxRoutineDates(allTasksWithDateAndIds);
+    const { minDate, maxDate } = getMinAndMaxRoutineDates(
+      allTasksWithDateAndIds
+    );
 
     const concernNames = partConcerns.map((c) => c.name);
 
@@ -73,7 +83,9 @@ export default async function makeANewRoutine({
       isPublic: isPublicResponse.isPublic,
     };
 
-    const newRoutineObject = await doWithRetries(async () => db.collection("Routine").insertOne(newRoutine));
+    const newRoutineObject = await doWithRetries(async () =>
+      db.collection("Routine").insertOne(newRoutine)
+    );
 
     const tasksToInsertWithRoutineId = tasksToInsert.map((rt) => ({
       ...rt,
@@ -81,7 +93,20 @@ export default async function makeANewRoutine({
     }));
 
     if (tasksToInsert.length > 0)
-      await doWithRetries(async () => db.collection("Task").insertMany(tasksToInsertWithRoutineId));
+      await doWithRetries(async () =>
+        db.collection("Task").insertMany(tasksToInsertWithRoutineId)
+      );
+
+    const routineDataPromises = concernNames.map((concern) =>
+      createRoutineData({
+        part,
+        concern,
+        userId: new ObjectId(userId),
+        userName,
+      })
+    );
+
+    await Promise.all(routineDataPromises);
 
     updateTasksAnalytics({
       userId,

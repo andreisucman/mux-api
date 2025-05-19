@@ -4,14 +4,11 @@ export const validParts = [PartEnum.FACE, PartEnum.HAIR, PartEnum.BODY];
 
 export const defaultClubPayoutData: ClubPayoutDataType = {
   connectId: null,
-  balance: {
-    pending: { amount: 0, currency: "" },
-    available: { amount: 0, currency: "" },
-  },
+  balance: 0,
   payoutsEnabled: false,
   detailsSubmitted: false,
   disabledReason: null,
-  lastSaleDate: null
+  lastSaleDate: null,
 };
 
 export const supportedCountries = [

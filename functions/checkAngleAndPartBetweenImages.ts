@@ -25,7 +25,7 @@ export default async function checkAngleAndPositioningOfImages({
   categoryName,
 }: Props) {
   try {
-    const systemContent = `You are given two images, before and after of ${part}. Is the second image valid for the before-after comparison with the first image? The capture of ${part} on the second image should be similar to the first in terms of angle. Don't be too strict, if most matches return yes.`;
+    const systemContent = `You are given two images of ${part}, before and after. Is the direction, light and position of the person on the image similar between the two? Don't be precise, your goal is to ensure the images are relatively comparable, i.e. - to detect entirely different captures.`;
 
     const CheckImagePositionResponseType = z.object({
       isValidForComparison: z.boolean().describe("true if yes, false if not"),
@@ -44,7 +44,10 @@ export default async function checkAngleAndPositioningOfImages({
             image_url: { url: await urlToBase64(afterImage), detail: "low" },
           },
         ],
-        responseFormat: zodResponseFormat(CheckImagePositionResponseType, "CheckImagePositionResponseType"),
+        responseFormat: zodResponseFormat(
+          CheckImagePositionResponseType,
+          "CheckImagePositionResponseType"
+        ),
       },
     ];
 

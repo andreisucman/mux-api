@@ -14,6 +14,9 @@ export type RoutineDataType = {
   concern: string;
   part: string;
   status: string;
+  userId: ObjectId;
+  userName: string;
+  monetization?: "enabled" | "disabled";
 };
 
 const route = Router();
@@ -43,83 +46,44 @@ route.post(
         userName: userInfo.name,
       };
 
-      const existingRecord = await doWithRetries(async () =>
-        db
-          .collection("RoutineData")
-          .findOne({ userId: new ObjectId(req.userId), concern, part })
-      );
+      if (status === "hidden") updatePayload.monetization = "disabled";
 
-      if (existingRecord) {
-        await doWithRetries(async () =>
-          db.collection("RoutineData").updateOne(
-            { _id: existingRecord._id },
-            {
-              $set: updatePayload,
-            }
-          )
+      if (status === "public") {
+        const concernBeforeAfterCount = await doWithRetries(() =>
+          db.collection("BeforeAfter").countDocuments({
+            userId: new ObjectId(req.userId),
+            concerns: { $in: [concern] },
+            part,
+          })
         );
-      } else {
-        if (status === "public") {
-          const firstRoutineOfConcern = await doWithRetries(async () =>
-            db
-              .collection("Routine")
-              .find({
-                userId: new ObjectId(req.userId),
-                concerns: { $in: [concern] },
-                part,
-              })
-              .sort({ createdAt: 1 })
-              .next()
-          );
 
-          updatePayload.contentStartDate = firstRoutineOfConcern.createdAt;
-
-          const concernBeforeAfterCount = await doWithRetries(() =>
-            db.collection("BeforeAfter").countDocuments({
-              userId: new ObjectId(req.userId),
-              concern,
-              part,
-            })
-          );
-
-          if (concernBeforeAfterCount === 0) {
-            const { name: userName, avatar } =
-              (await getUserInfo({
-                userId: req.userId,
-                projection: { name: 1, avatar: 1 },
-              })) || {};
-
-            publishBeforeAfter({
+        if (concernBeforeAfterCount === 0) {
+          const { name: userName, avatar } =
+            (await getUserInfo({
               userId: req.userId,
-              userName,
-              avatar,
-              concern,
-              part,
-              isPublic: status === "public",
-            });
-          }
-        }
+              projection: { name: 1, avatar: 1 },
+            })) || {};
 
-        await doWithRetries(async () =>
-          db.collection("RoutineData").updateOne(
-            { userId: new ObjectId(req.userId), concern, part },
-            {
-              $set: updatePayload,
-            },
-            { upsert: true }
-          )
-        );
+          publishBeforeAfter({
+            userId: req.userId,
+            userName,
+            avatar,
+            concern,
+            part,
+            isPublic: status === "public",
+          });
+        }
       }
 
       res.status(200).end();
 
-      const payload: { [key: string]: any } = {
+      const contentPayload: { [key: string]: any } = {
         isPublic: status === "public",
       };
 
       await updateContent({
-        collections: ["BeforeAfter", "Progress", "Proof", "Diary"],
-        updatePayload: payload,
+        collections: ["Proof", "Diary", "BeforeAfter"],
+        updatePayload: contentPayload,
         filter: {
           userId: new ObjectId(req.userId),
           concern,
@@ -127,13 +91,23 @@ route.post(
       });
 
       await updateContent({
-        collections: ["Routine"],
-        updatePayload: payload,
+        collections: ["Routine", "Progress"],
+        updatePayload: contentPayload,
         filter: {
           userId: new ObjectId(req.userId),
           concerns: { $in: [concern] },
         },
       });
+
+      await doWithRetries(async () =>
+        db.collection("RoutineData").updateOne(
+          { userId: new ObjectId(req.userId), concern, part },
+          {
+            $set: updatePayload,
+          },
+          { upsert: true }
+        )
+      );
 
       const publicRoutinesCount = await doWithRetries(async () =>
         db.collection("RoutineData").countDocuments({

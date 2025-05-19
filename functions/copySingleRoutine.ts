@@ -2,12 +2,19 @@ import doWithRetries from "@/helpers/doWithRetries.js";
 import getMinAndMaxRoutineDates from "@/helpers/getMinAndMaxRoutineDates.js";
 import httpError from "@/helpers/httpError.js";
 import { daysFrom } from "@/helpers/utils.js";
-import { RoutineStatusEnum, RoutineType, TaskStatusEnum, TaskType } from "@/types.js";
+import {
+  PartEnum,
+  RoutineStatusEnum,
+  RoutineType,
+  TaskStatusEnum,
+  TaskType,
+} from "@/types.js";
 import { ObjectId } from "mongodb";
 import { db } from "@/init.js";
 import updateAnalytics from "./updateAnalytics.js";
 import updateTasksAnalytics from "./updateTasksAnalytics.js";
 import { checkIfPublic } from "@/routes/checkIfPublic.js";
+import createRoutineData from "./createRoutineData.js";
 
 type Props = {
   userId: string;
@@ -30,7 +37,10 @@ export default async function copySingleRoutine({
     };
 
     if (ignoreIncompleteTasks) {
-      filter.$or = [{ status: TaskStatusEnum.COMPLETED }, { status: TaskStatusEnum.ACTIVE }];
+      filter.$or = [
+        { status: TaskStatusEnum.COMPLETED },
+        { status: TaskStatusEnum.ACTIVE },
+      ];
     }
 
     let replacementTasks = (await doWithRetries(async () =>
@@ -72,8 +82,11 @@ export default async function copySingleRoutine({
           status: TaskStatusEnum.ACTIVE,
         }));
 
-      const relevantInfoTask = replacementTasks.find((task) => task.key === taskKey);
-      const { name, key, icon, color, concern, description, instruction } = relevantInfoTask;
+      const relevantInfoTask = replacementTasks.find(
+        (task) => task.key === taskKey
+      );
+      const { name, key, icon, color, concern, description, instruction } =
+        relevantInfoTask;
 
       const total = replacementTasks.filter((t) => t.key === key).length;
 
@@ -115,9 +128,24 @@ export default async function copySingleRoutine({
 
     if (userName) newRoutine.copiedFrom = hostRoutine.userName;
 
-    await doWithRetries(async () => db.collection("Routine").insertOne(newRoutine));
+    await doWithRetries(async () =>
+      db.collection("Routine").insertOne(newRoutine)
+    );
 
-    await doWithRetries(async () => db.collection("Task").insertMany(replacementTasks));
+    await doWithRetries(async () =>
+      db.collection("Task").insertMany(replacementTasks)
+    );
+
+    const routineDataPromises = newRoutine.concerns.map((concern) =>
+      createRoutineData({
+        part: newRoutine.part as PartEnum,
+        concern,
+        userId: new ObjectId(userId),
+        userName,
+      })
+    );
+
+    await Promise.all(routineDataPromises);
 
     updateTasksAnalytics({
       userId,
