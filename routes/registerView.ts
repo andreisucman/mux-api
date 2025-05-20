@@ -18,7 +18,7 @@ route.post(
     const userIP = ipHeader || req.ip;
 
     try {
-      const redisKey = `fp:${fingerprint}-ip:${userIP}-nm:${userName}`;
+      const redisKey = `fp:${fingerprint}-ip:${userIP}-nm:${userName}-pg:${page}`;
 
       const exists = await redis.get(redisKey);
 
@@ -28,27 +28,31 @@ route.post(
       }
 
       const tokenIsValid = await verifyTurnstileToken(token, userIP);
-      const userInfo = await getUserInfo({
-        userName,
-        projection: { _id: 1, "club.payouts.connectId": 1 },
-      });
 
       if (tokenIsValid) {
+        const userInfo = await getUserInfo({
+          userName,
+          projection: { _id: 1 },
+        });
+
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+
         await doWithRetries(() =>
           db.collection("View").updateOne(
             {
               userId: userInfo._id,
-              connectId: userInfo.club.payouts.connectId,
               userName,
-              part,
               concern,
+              part,
               page,
+              createdAt: now,
             },
             { $inc: { views: 1 } },
             { upsert: true }
           )
         );
-        await redis.set(redisKey, 1, "EX", 43200);
+        await redis.set(redisKey, 1, "EX", 28800);
       }
 
       res.status(200).end();

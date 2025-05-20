@@ -8,7 +8,8 @@ export const defaultClubPayoutData: ClubPayoutDataType = {
   payoutsEnabled: false,
   detailsSubmitted: false,
   disabledReason: null,
-  lastSaleDate: null,
+  lastTransferDate: null,
+  minPayoutAmount: 0,
 };
 
 export const supportedCountries = [

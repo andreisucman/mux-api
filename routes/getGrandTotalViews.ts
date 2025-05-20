@@ -23,35 +23,23 @@ route.get(
       const finalFilter: { [key: string]: any } = {
         userId: userInfo._id,
         page,
+        interval,
       };
 
       const pipeline: any[] = [{ $match: finalFilter }];
 
-      let key = "";
-      const group: { [key: string]: any } = { _id: null };
+      const group: { [key: string]: any } = {
+        _id: null,
+        total: { $sum: "$views" },
+      };
 
-      switch (interval) {
-        case "day":
-          key = "totalViewsDay";
-          group[key] = { $sum: "$viewsDay" };
-          break;
-        case "week":
-          key = "totalViewsWeek";
-          group[key] = { $sum: "$viewsWeek" };
-          break;
-        case "month":
-          key = "totalViewsMonth";
-          group[key] = { $sum: "$viewsMonth" };
-          break;
-      }
+      pipeline.push({ $group: group }, { $project: { total: 1 } });
 
-      pipeline.push({ $group: group }, { $project: { [key]: 1 } });
-
-      const total = await doWithRetries(() =>
+      const result = await doWithRetries(() =>
         db.collection("ViewTotal").aggregate(pipeline).next()
       );
 
-      res.status(200).json({ message: total?.[key] ?? 0 });
+      res.status(200).json({ message: result?.total ?? 0 });
     } catch (err) {
       next(err);
     }

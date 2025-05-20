@@ -27,24 +27,15 @@ route.get(
     try {
       const finalFilter: { [key: string]: any } = {
         userId: new ObjectId(req.userId),
+        interval,
       };
 
-      const projection: { [key: string]: any } = { concern: 1, part: 1 };
-
-      switch (interval) {
-        case "day":
-          projection.viewsDay = 1;
-          projection.earnedDay = 1;
-          break;
-        case "week":
-          projection.viewsWeek = 1;
-          projection.earnedWeek = 1;
-          break;
-        case "month":
-          projection.viewsMonth = 1;
-          projection.earnedMonth = 1;
-          break;
-      }
+      const projection: { [key: string]: any } = {
+        concern: 1,
+        part: 1,
+        views: 1,
+        earned: 1,
+      };
 
       const viewRecords = await doWithRetries(() =>
         db

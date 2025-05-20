@@ -11,38 +11,7 @@ import getEmailContent from "@/helpers/getEmailContent.js";
 import sendEmail from "./sendEmail.js";
 import updateContent from "./updateContent.js";
 import { fetchUserInfo } from "./handleStripeWebhook/index.js";
-
-async function handleUpdateBalance(connectId: string | undefined) {
-  if (!connectId) return;
-
-  try {
-    const userInfo = await fetchUserInfo({
-      "club.payouts.connectId": connectId,
-    });
-
-    const stripeBalance = await doWithRetries(async () =>
-      stripe.balance.retrieve({
-        stripeAccount: connectId,
-      })
-    );
-
-    const available = stripeBalance.available[0];
-    const pending = stripeBalance.pending[0];
-
-    await doWithRetries(() =>
-      db.collection("User").updateOne(
-        { _id: new ObjectId(userInfo._id) },
-        {
-          $set: {
-            "club.payouts.balance": { available, pending },
-          },
-        }
-      )
-    );
-  } catch (err) {
-    throw httpError(err);
-  }
-}
+import { handlePayoutPaid } from "./handlePayoutPaid.js";
 
 async function handlePayoutFailed(event: Stripe.PayoutFailedEvent) {
   try {
@@ -211,30 +180,52 @@ async function handleAccountUpdated(event: Stripe.AccountUpdatedEvent) {
   }
 }
 
+async function handleTransfer(event: Stripe.TransferUpdatedEvent) {
+  const transfer = event.data.object;
+
+  if (transfer.metadata?.source !== "cron.transferEarnings") return;
+
+  const idempotencyKey = `payout_from_${transfer.id}`;
+
+  try {
+    await stripe.payouts.create(
+      {
+        amount: transfer.amount,
+        currency: transfer.currency,
+        metadata: { transferId: transfer.id },
+      },
+      {
+        stripeAccount: transfer.destination as string,
+        idempotencyKey,
+      }
+    );
+  } catch (err: any) {
+    throw httpError(err);
+  }
+}
+
 const allowedEvents = [
-  "transfer.created",
-  "transfer.updated",
-  "transfer.reversed",
-  "balance.available",
   "account.updated",
   "payout.failed",
+  "transfer.updated",
+  "payout.paid",
 ];
 
 async function handleConnectWebhook(event: Stripe.Event) {
   try {
     if (!allowedEvents.includes(event.type)) return;
     switch (event.type) {
-      case "transfer.created":
-      case "transfer.updated":
-      case "transfer.reversed":
-      case "balance.available":
-        await handleUpdateBalance(event.account);
-        break;
       case "account.updated":
         await handleAccountUpdated(event);
         break;
       case "payout.failed":
         await handlePayoutFailed(event);
+        break;
+      case "transfer.updated":
+        await handleTransfer(event);
+        break;
+      case "payout.paid":
+        await handlePayoutPaid(event);
         break;
     }
   } catch (err) {

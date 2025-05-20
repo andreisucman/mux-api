@@ -8,6 +8,7 @@ import { CustomRequest } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import checkPublishingRequirements from "@/functions/checkRoutineDataPublishingRequirements.js";
+import { monetizationCountries, payoutMinimums } from "@/data/monetization.js";
 
 const route = Router();
 
@@ -24,11 +25,27 @@ route.post(
     try {
       const userInfo = await getUserInfo({
         userId: req.userId,
-        projection: { "club.payouts.payoutsEnabled": 1, name: 1 },
+        projection: { "club.payouts.payoutsEnabled": 1, name: 1, country: 1 },
       });
 
       if (!userInfo.club) {
         res.status(400).json({ error: "Bad request" });
+      }
+
+      const monetizationSupported = monetizationCountries.includes(
+        userInfo.country
+      );
+
+      if (!monetizationSupported) {
+        const countryObj = payoutMinimums.find(
+          (co) => co.code === userInfo.country
+        );
+        res.status(200).json({
+          error: `Monetization is not supported for ${
+            countryObj?.name || userInfo.country
+          } yet.`,
+        });
+        return;
       }
 
       const existingRecord = await doWithRetries(async () =>
@@ -67,6 +84,15 @@ route.post(
       await doWithRetries(async () =>
         db.collection("RoutineData").updateOne(
           { _id: existingRecord._id },
+          {
+            $set: { monetization },
+          }
+        )
+      );
+
+      await doWithRetries(async () =>
+        db.collection("View").updateOne(
+          { userId: new ObjectId(req.userId), part, concern },
           {
             $set: { monetization },
           }

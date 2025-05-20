@@ -8,7 +8,7 @@ RUN npm cache clean --force && npm install --production=false
 
 COPY . .
 
-RUN rm -rf dist && npm run build
+RUN rm -rf dist && NODE_OPTIONS="--max-old-space-size=4096" npm run build
 
 FROM node:lts-alpine
 
