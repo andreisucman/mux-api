@@ -5,6 +5,6 @@ export type PartResultType = {
   concerns: UserConcernType[];
   latestConcernScores: ScoreType[];
   concernScoresDifference: ScoreDifferenceType[];
-  latestProgressImages: ProgressImageType[];
+  initialProgressImages: ProgressImageType[];
   zeroValueConcerns: UserConcernType[]
 };

@@ -79,7 +79,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
             nutrition: 1,
             country: 1,
             timeZone: 1,
-            latestProgressImages: 1,
+            initialProgressImages: 1,
             specialConsiderations: 1,
             latestConcernScores: 1,
             latestConcernScoresDifference: 1,
@@ -98,7 +98,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       club,
       concerns,
       demographics,
-      latestProgressImages,
+      initialProgressImages,
       latestConcernScores,
       latestConcernScoresDifference,
       specialConsiderations,
@@ -140,7 +140,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
       toAnalyze,
       latestConcernScores,
       latestConcernScoresDifference,
-      latestProgressImages,
+      initialProgressImages,
       newSpecialConsiderations: specialConsiderations,
     });
 

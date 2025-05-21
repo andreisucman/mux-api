@@ -33,7 +33,7 @@ type Props = {
   userUploadedConcerns: UserConcernType[];
   toAnalyze: ToAnalyzeType[];
   newSpecialConsiderations: string;
-  latestProgressImages: LatestProgressImagesType;
+  initialProgressImages: LatestProgressImagesType;
   allConcerns: UserConcernType[];
   demographics: DemographicsType;
   latestConcernScores: LatestScoresType;
@@ -47,7 +47,7 @@ export default async function analyzeAppearance({
   nextScan,
   allConcerns,
   categoryName,
-  latestProgressImages,
+  initialProgressImages,
   defaultToUpdateUser,
   latestConcernScores,
   userUploadedConcerns,
@@ -155,7 +155,7 @@ export default async function analyzeAppearance({
     });
 
     const newLatestProgressImages = analysesResults.reduce((a: { [key: string]: any }, c) => {
-      a[c.part] = c.latestProgressImages;
+      a[c.part] = c.initialProgressImages;
       return a;
     }, {});
 
@@ -169,8 +169,8 @@ export default async function analyzeAppearance({
       ...newLatestConcernScoresDifference,
     };
 
-    toUpdateUser.$set.latestProgressImages = {
-      ...latestProgressImages,
+    toUpdateUser.$set.initialProgressImages = {
+      ...initialProgressImages,
       ...newLatestProgressImages,
     };
 

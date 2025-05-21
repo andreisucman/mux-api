@@ -16,13 +16,11 @@ function updateObject(overallObject: { [key: string]: any }) {
 type Props = {
   latestConcernScores: LatestScoresType;
   latestConcernScoresDifference: LatestScoresDifferenceType;
-  substituteProgressImagesRecord: ProgressImageType[];
 };
 
 export default async function recalculateLatestProgress({
   latestConcernScores,
   latestConcernScoresDifference,
-  substituteProgressImagesRecord,
 }: Props) {
   try {
     const finalLatestScores = updateObject(latestConcernScores);
@@ -30,7 +28,6 @@ export default async function recalculateLatestProgress({
     const finalLatestScoresDifference = updateObject(latestConcernScoresDifference);
 
     return {
-      latestProgressImages: substituteProgressImagesRecord,
       latestConcernScores: finalLatestScores,
       latestConcernScoresDifference: finalLatestScoresDifference,
     };

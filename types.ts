@@ -69,7 +69,7 @@ export type UserType = {
   nextRoutine: NextActionType[];
   nextRoutineSuggestion: NextActionType[];
   streakDates: {};
-  latestProgressImages: LatestProgressImagesType;
+  initialProgressImages: LatestProgressImagesType;
   concerns: UserConcernType[] | null;
   tosAccepted: boolean;
   latestConcernScores: LatestScoresType;

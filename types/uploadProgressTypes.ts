@@ -18,7 +18,7 @@ export type UploadProgressUserInfo = {
   timeZone: string;
   nextScan: NextActionType[];
   specialConsiderations?: string;
-  latestProgressImages: LatestProgressImagesType;
+  initialProgressImages: LatestProgressImagesType;
   latestConcernScores: LatestScoresType;
   latestConcernScoresDifference: LatestScoresType;
   club: ClubDataType;

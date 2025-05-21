@@ -13,7 +13,9 @@ import {
   ProgressType,
 } from "types.js";
 import addModerationAnalyticsData from "./addModerationAnalyticsData.js";
-import addSuspiciousRecord, { SuspiciousRecordCollectionEnum } from "./addSuspiciousRecord.js";
+import addSuspiciousRecord, {
+  SuspiciousRecordCollectionEnum,
+} from "./addSuspiciousRecord.js";
 import { ModerationStatusEnum } from "types.js";
 import moderateContent, { ModerationResultType } from "./moderateContent.js";
 import { PartResultType } from "@/types/analyzePartTypes.js";
@@ -73,7 +75,9 @@ export default async function analyzePart({
       });
 
       isSafe = moderationResponse.isSafe;
-      isSuspicious = isSuspicious ? isSuspicious : moderationResponse.isSuspicious;
+      isSuspicious = isSuspicious
+        ? isSuspicious
+        : moderationResponse.isSuspicious;
       moderationResults.push(...moderationResponse.moderationResults);
 
       if (!isSafe) {
@@ -85,7 +89,9 @@ export default async function analyzePart({
           userId,
           userType: "user",
         });
-        throw httpError(`It looks like your image contains inappropriate content. Try a different one.`);
+        throw httpError(
+          `It looks like your image contains inappropriate content. Try a different one.`
+        );
       }
 
       const isSelf = await checkIfSelf({
@@ -163,17 +169,29 @@ export default async function analyzePart({
       moderationStatus: ModerationStatusEnum.ACTIVE,
     };
 
-    const progressResponse = await doWithRetries(async () => db.collection("Progress").insertOne(recordOfProgress));
+    const progressResponse = await doWithRetries(async () =>
+      db.collection("Progress").insertOne(recordOfProgress)
+    );
 
-    const baPublicityPromises = concernScores.map((so) => checkIfPublic({ userId, concern: so.name }));
+    const baPublicityPromises = concernScores.map((so) =>
+      checkIfPublic({ userId, concern: so.name })
+    );
     const baPublicityResults = await Promise.all(baPublicityPromises);
 
-    recordOfProgress.isPublic = baPublicityResults.some((co) => Boolean(co.isPublic));
+    recordOfProgress.isPublic = baPublicityResults.some((co) =>
+      Boolean(co.isPublic)
+    );
 
     const updateBAPromises = newConcerns.map((concern) => {
-      const relevantConcernScore = concernScores.find((c) => c.name === concern);
-      const relevantConcernScoreDifference = concernScoresDifference.find((c) => c.name === concern);
-      const relevantPublicityVerdict = baPublicityResults.find((o) => o.concern === concern);
+      const relevantConcernScore = concernScores.find(
+        (c) => c.name === concern
+      );
+      const relevantConcernScoreDifference = concernScoresDifference.find(
+        (c) => c.name === concern
+      );
+      const relevantPublicityVerdict = baPublicityResults.find(
+        (o) => o.concern === concern
+      );
 
       const beforeAfterUpdate: Partial<BeforeAfterType> = {
         images,
@@ -186,17 +204,25 @@ export default async function analyzePart({
       return doWithRetries(async () =>
         db
           .collection("BeforeAfter")
-          .updateOne({ userId: new ObjectId(userId), concern, part }, { $set: beforeAfterUpdate })
+          .updateOne(
+            { userId: new ObjectId(userId), concern, part },
+            { $set: beforeAfterUpdate }
+          )
       );
     });
 
     await Promise.all(updateBAPromises);
 
-    partResult.latestProgressImages = images;
+    if (initialProgress) {
+      partResult.initialProgressImages = initialProgress.images;
+    }
     partResult.latestConcernScores = concernScores;
     partResult.concernScoresDifference = concernScoresDifference;
     partResult.concerns = newConcerns.map((name) => ({ name, part }));
-    partResult.zeroValueConcerns = zeroValueConcerns.map((name) => ({ name, part }));
+    partResult.zeroValueConcerns = zeroValueConcerns.map((name) => ({
+      name,
+      part,
+    }));
 
     if (moderationResults.length > 0) {
       addModerationAnalyticsData({

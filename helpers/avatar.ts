@@ -47,6 +47,21 @@ const facialHairCollection = ["scuff", "beard"];
 
 const eyeBrowsCollection = ["down", "eyelashesDown", "eyelashesUp", "up"];
 
+const bgColors = [
+  "dc2d3c",
+  "fc8c0c",
+  "7b2eda",
+  "00b5ff",
+  "d9d02f",
+  "5d4037",
+  "f018e8",
+  "c91a52",
+  "6bd731",
+  "63687c",
+  "1f32c4",
+  "f06418",
+];
+
 const pickRandomValue = (array: string[]) => {
   const maxValue = array.length;
   const randomValue = Math.random() * maxValue;
@@ -69,7 +84,7 @@ export default function generateAvatarParams(ethnicity?: string) {
     shirtColor: [randomColor.slice(1)],
     earrings: [pickRandomValue(earringsCollection)],
     facialHair: [pickRandomValue(facialHairCollection)],
-    backgroundColor: ["dc2d3c", "fc8c0c"],
+    backgroundColor: [pickRandomValue(bgColors)],
     backgroundType: ["gradientLinear"],
   };
 }

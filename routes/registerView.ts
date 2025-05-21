@@ -13,8 +13,9 @@ const route = Router();
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { token, fingerprint, part, concern, page, userName } = req.body;
+    const { fingerprint, part, concern, page, userName } = req.body;
     const ipHeader = req.headers["cf-connecting-ip"] as string;
+    const clearanceCookie = req.cookies["cf_clearance"];
     const userIP = ipHeader || req.ip;
 
     try {
@@ -27,9 +28,7 @@ route.post(
         return;
       }
 
-      const tokenIsValid = await verifyTurnstileToken(token, userIP);
-
-      if (tokenIsValid) {
+      if (clearanceCookie) {
         const userInfo = await getUserInfo({
           userName,
           projection: { _id: 1 },
@@ -42,7 +41,6 @@ route.post(
           db.collection("View").updateOne(
             {
               userId: userInfo._id,
-              userName,
               concern,
               part,
               page,
