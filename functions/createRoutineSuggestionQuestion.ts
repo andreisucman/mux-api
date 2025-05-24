@@ -30,20 +30,34 @@ export default async function createRoutineSuggestionQuestions({
   try {
     const nonZeroPartConcernScores = concernScores.filter((so) => so.value > 0);
     const concernsAndSeverities = nonZeroPartConcernScores
-      .map((co) => `Name: ${co.name}. Severity: ${co.value}. Explanation: ${co.explanation}.`)
+      .map(
+        (co) =>
+          `Name: ${co.name}. Severity: ${co.value}. Explanation: ${co.explanation}.`
+      )
       .join("\n");
 
     let systemContent = `You are a dermatologist and fitness coach. Your patient has the following concerns for their ${part}: ###${concernsAndSeverities}###. Check their information and come up with questions to discover important missing information for creating an effective routine for improving their concerns. Not more than 5 questions. Use only the information available. Your response is a JSON object with this structure: { questionsForTheUser: string[]}`;
 
     const previousExperienceString = Object.entries(previousExperience)
-      .map(([concern, explanation]) => `${normalizeString(concern)}: ${explanation}`)
+      .map(
+        ([concern, explanation]) =>
+          `${normalizeString(concern)}: ${explanation}`
+      )
       .join("\n");
 
     let text;
 
-    if (previousExperienceString) text += `\n\nHere is my experience: ${previousExperienceString}.`;
-    if (latestTasksMap) text += `\n\nThe tasks I've completed within the last week: ${JSON.stringify(latestTasksMap)}.`;
-    if (specialConsiderations) text += `\n\nMy special considerations: ${specialConsiderations}.`;
+    if (previousExperienceString)
+      text += `\n\nHere is my experience: ${previousExperienceString}.`;
+    if (latestTasksMap) {
+      text += `\n\nThe tasks I've completed within the last week: ${JSON.stringify(
+        latestTasksMap
+      )}.`;
+    } else {
+      text += `\n\nI don't have any skin or hair routines at the moment.`;
+    }
+    if (specialConsiderations)
+      text += `\n\nMy special considerations: ${specialConsiderations}.`;
 
     const runs: RunType[] = [
       {
