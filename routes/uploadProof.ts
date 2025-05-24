@@ -87,7 +87,10 @@ route.post(
         )
       )) as unknown as UploadProofTaskType;
 
-      if (!taskInfo) throw httpError(`Task ${taskId} not found`);
+      if (!taskInfo) {
+        res.status(200).json({ error: "This task is not active." });
+        return;
+      }
 
       if (taskInfo.startsAt > new Date()) {
         res.status(400).json({ error: "Bad request" });

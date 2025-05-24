@@ -22,59 +22,63 @@ const collectionMap: { [key: string]: string } = {
 const removeUserIdCollections = ["concern"];
 const addModerationStatusCollections = ["progress", "proof", "diary"];
 
-route.get("/:userName?", async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { userName } = req.params;
-  const { filter, projection } = aqp(req.query as any) as AqpQuery;
-  const { collection, ...rest } = filter;
+route.get(
+  "/:userName?",
+  async (req: CustomRequest, res: Response, next: NextFunction) => {
+    const { userName } = req.params;
+    const { filter, projection } = aqp(req.query as any) as AqpQuery;
+    const { collection, ...rest } = filter;
 
-  if (!collection) {
-    res.status(400).json({ error: "Bad request" });
-    return;
-  }
-
-  try {
-    const fields = Object.keys(projection);
-
-    let match: { [key: string]: any } = {};
-
-    if (filter) match = { ...rest };
-
-    if (addModerationStatusCollections.includes(collection)) match.moderationStatus = ModerationStatusEnum.ACTIVE;
-
-    if (userName) {
-      match.userName = userName;
-    } else if (!removeUserIdCollections.includes(collection)) {
-      match.userId = new ObjectId(req.userId);
+    if (!collection) {
+      res.status(400).json({ error: "Bad request" });
+      return;
     }
 
-    const pipeline = [
-      { $match: match },
-      ...fields.map((f) => ({ $unwind: `$${f}` })),
-      {
-        $group: {
-          _id: null,
-          ...fields.reduce((a, c) => {
-            a[c] = { $addToSet: `$${c}` };
-            return a;
-          }, {}),
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          ...projection,
-        },
-      },
-    ];
+    try {
+      const fields = Object.keys(projection);
 
-    const filters = await doWithRetries(async () =>
-      db.collection(collectionMap[collection]).aggregate(pipeline).next()
-    );
+      let match: { [key: string]: any } = {};
 
-    res.status(200).json({ message: filters });
-  } catch (err) {
-    next(err);
+      if (filter) match = { ...rest };
+
+      if (addModerationStatusCollections.includes(collection))
+        match.moderationStatus = ModerationStatusEnum.ACTIVE;
+
+      if (userName) {
+        match.userName = userName;
+      } else if (!removeUserIdCollections.includes(collection)) {
+        match.userId = new ObjectId(req.userId);
+      }
+
+      const pipeline = [
+        { $match: match },
+        ...fields.map((f) => ({ $unwind: `$${f}` })),
+        {
+          $group: {
+            _id: null,
+            ...fields.reduce((a, c) => {
+              a[c] = { $addToSet: `$${c}` };
+              return a;
+            }, {}),
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            ...projection,
+          },
+        },
+      ];
+
+      const filters = await doWithRetries(async () =>
+        db.collection(collectionMap[collection]).aggregate(pipeline).next()
+      );
+
+      res.status(200).json({ message: filters });
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 export default route;

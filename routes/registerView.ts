@@ -3,7 +3,6 @@ dotenv.config();
 
 import { Router, Response, NextFunction } from "express";
 import { CustomRequest } from "types.js";
-import verifyTurnstileToken from "@/functions/verifyTurnstileToken.js";
 import doWithRetries from "@/helpers/doWithRetries.js";
 import { db, redis } from "@/init.js";
 import getUserInfo from "@/functions/getUserInfo.js";
