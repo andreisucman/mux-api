@@ -9,7 +9,11 @@ export function delayExecution(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export function getExponentialBackoffDelay(attempt: number, baseDelay = 3000, maxDelay = 15000) {
+export function getExponentialBackoffDelay(
+  attempt: number,
+  baseDelay = 3000,
+  maxDelay = 15000
+) {
   const rawDelay = baseDelay * Math.pow(2, attempt);
   const jitter = Math.random() * baseDelay - baseDelay / 2;
   return Math.min(rawDelay + jitter, maxDelay);
@@ -33,7 +37,9 @@ export function toSnakeCase(value: any): string {
     return value;
   }
 
-  const words = value.trim().split(/[\s-_]+/);
+  const noPunctuation = value.replace(/[.,!?;:'"()[\]{}<>]/g, "");
+
+  const words = noPunctuation.trim().split(/[\s_]+/);
   return words.map((word) => word.toLowerCase()).join("_");
 }
 
@@ -43,13 +49,20 @@ export function toSentenceCase(value: any): string {
   return value.trim().replace(/^\w/, (char) => char.toUpperCase());
 }
 
-export function sortObjectByNumberValue(obj: { [key: string]: number }, isAscending: boolean) {
+export function sortObjectByNumberValue(
+  obj: { [key: string]: number },
+  isAscending: boolean
+) {
   return Object.fromEntries(
-    isAscending ? Object.entries(obj).sort(([, a], [, b]) => a - b) : Object.entries(obj).sort(([, a], [, b]) => b - a)
+    isAscending
+      ? Object.entries(obj).sort(([, a], [, b]) => a - b)
+      : Object.entries(obj).sort(([, a], [, b]) => b - a)
   );
 }
 
-export const getHashedPassword = async (password?: string): Promise<string | null> => {
+export const getHashedPassword = async (
+  password?: string
+): Promise<string | null> => {
   return password ? await bcrypt.hash(password, 10) : null;
 };
 
@@ -57,7 +70,10 @@ export function minutesFromNow(minutes: number) {
   return new Date(Math.round(new Date().getTime() + minutes * 60000));
 }
 
-export function calculateDaysDifference(dateFrom: Date | string, dateTo: Date | string) {
+export function calculateDaysDifference(
+  dateFrom: Date | string,
+  dateTo: Date | string
+) {
   try {
     const from = new Date(dateFrom).getTime();
     const to = new Date(dateTo).getTime();
@@ -82,7 +98,10 @@ export const isValidYouTubeEmbedUrl = async (url) => {
   }
 };
 
-export function arrayElementExistsWithinArray(arrayOne: string[], arrayTwo: string[]) {
+export function arrayElementExistsWithinArray(
+  arrayOne: string[],
+  arrayTwo: string[]
+) {
   return arrayOne.some((record) => arrayTwo.includes(record));
 }
 
@@ -96,7 +115,13 @@ export function convertKeysAndValuesTotoSnakeCase(obj: { [key: string]: any }) {
 
       if (Array.isArray(obj[key])) {
         toSnakeCaseValues = obj[key].map(
-          ({ task, numberOfTimesInAMonth }: { task: string; numberOfTimesInAMonth: number }) => ({
+          ({
+            task,
+            numberOfTimesInAMonth,
+          }: {
+            task: string;
+            numberOfTimesInAMonth: number;
+          }) => ({
             task: toSnakeCase(task),
             numberOfTimesInAMonth,
             concern: key,
@@ -113,8 +138,16 @@ export function convertKeysAndValuesTotoSnakeCase(obj: { [key: string]: any }) {
   return newObj;
 }
 
-export const combineAndDeduplicateArrays = (arr1: any[], arr2: any[], deduplicationKey: string) => {
-  return [...new Map([...arr1, ...arr2].map((item) => [item[deduplicationKey], item])).values()];
+export const combineAndDeduplicateArrays = (
+  arr1: any[],
+  arr2: any[],
+  deduplicationKey: string
+) => {
+  return [
+    ...new Map(
+      [...arr1, ...arr2].map((item) => [item[deduplicationKey], item])
+    ).values(),
+  ];
 };
 
 export function normalizeString(string: string) {
@@ -133,13 +166,19 @@ export function combineSolutions(
   const combinedSolutions: { [key: string]: string[] } = {};
 
   for (const [concern, task] of Object.entries(findSolutionsResponse)) {
-    combinedSolutions[concern] = [task, ...(findAdditionalSolutionsResponse[task] || [])];
+    combinedSolutions[concern] = [
+      task,
+      ...(findAdditionalSolutionsResponse[task] || []),
+    ];
   }
 
   return combinedSolutions;
 }
 
-export default function selectItemsAtEqualDistances(arr: any[], numberOfImages: number) {
+export default function selectItemsAtEqualDistances(
+  arr: any[],
+  numberOfImages: number
+) {
   if (arr.length <= numberOfImages) {
     return arr;
   }
@@ -179,11 +218,16 @@ export async function urlToBase64(url: string): Promise<string> {
 }
 
 export function setToUtcMidnight(date: Date) {
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  return new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+  );
 }
 
 export function checkDateValidity(date: Date | string, timeZone: string) {
-  const dateObj = typeof date === "string" ? DateTime.fromISO(date, { zone: timeZone }).toJSDate() : date;
+  const dateObj =
+    typeof date === "string"
+      ? DateTime.fromISO(date, { zone: timeZone }).toJSDate()
+      : date;
 
   const isValidDate = !isNaN(dateObj.getTime());
 
@@ -198,13 +242,21 @@ export function checkDateValidity(date: Date | string, timeZone: string) {
   return { isValidDate, isFutureDate };
 }
 
-export function calculateScoreDifferences(initialScores: ScoreType[], currentScores: ScoreType[]) {
+export function calculateScoreDifferences(
+  initialScores: ScoreType[],
+  currentScores: ScoreType[]
+) {
   return initialScores
     .map((obj) => {
-      const relevantNewScoreObject = currentScores.find((newObj) => newObj.name === obj.name);
+      const relevantNewScoreObject = currentScores.find(
+        (newObj) => newObj.name === obj.name
+      );
 
       if (relevantNewScoreObject) {
-        return { name: obj.name, value: relevantNewScoreObject.value - obj.value };
+        return {
+          name: obj.name,
+          value: relevantNewScoreObject.value - obj.value,
+        };
       }
       return null;
     })
@@ -233,7 +285,9 @@ export function checkIfCanDeductConnectFee(date: Date | null) {
   const inputDate = new Date(date);
   const now = new Date();
 
-  const isCurrentMonth = inputDate.getFullYear() === now.getFullYear() && inputDate.getMonth() === now.getMonth();
+  const isCurrentMonth =
+    inputDate.getFullYear() === now.getFullYear() &&
+    inputDate.getMonth() === now.getMonth();
 
   return !isCurrentMonth;
 }

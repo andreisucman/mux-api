@@ -31,11 +31,13 @@ route.get(
         stripe.accountSessions.create({
           account: connectId,
           components: {
-            balances: {
+            payouts: {
               enabled: payoutsEnabled,
               features: {
-                instant_payouts: true,
-                standard_payouts: true,
+                instant_payouts: false,
+                standard_payouts: false,
+                edit_payout_schedule: false,
+                external_account_collection: true,
               },
             },
           },
