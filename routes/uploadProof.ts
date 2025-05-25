@@ -197,7 +197,8 @@ route.post(
             proofImages = message.urls;
           } else {
             await addAnalysisStatusError({
-              message: error,
+              message: "Error while processing the video",
+              originalMessage: error,
               userId: req.userId,
               operationKey: taskId,
             });

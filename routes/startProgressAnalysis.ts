@@ -57,6 +57,7 @@ route.post(
         return;
       }
 
+      console.log("userUploadedConcerns", userUploadedConcerns);
       if (userUploadedConcerns.length > 0) {
         const sanitatedUserUploadedConcerns = await doWithRetries(() =>
           db
@@ -108,7 +109,7 @@ route.post(
 
       let {
         name,
-        toAnalyze,
+        toAnalyze = [],
         nextScan,
         club,
         concerns,
@@ -120,15 +121,20 @@ route.post(
       } = userInfo;
 
       const initialPartProgressImages = initialProgressImages[part];
-      const differenceInImages =
-        toAnalyze.length - initialPartProgressImages.length;
 
-      if (Math.abs(differenceInImages) > 0) {
-        res.status(400).json({ error: "Bad request" });
-        console.error(
-          `The image count doesn't match the previous record for ${req.userId}.`
-        );
-        return;
+      if (initialPartProgressImages) {
+        console.log("toAnalyze", toAnalyze);
+
+        const differenceInImages =
+          toAnalyze.length - initialPartProgressImages.length;
+
+        if (Math.abs(differenceInImages) > 0) {
+          res.status(400).json({ error: "Bad request" });
+          console.error(
+            `The image count doesn't match the previous record for ${req.userId}.`
+          );
+          return;
+        }
       }
 
       await doWithRetries(async () =>

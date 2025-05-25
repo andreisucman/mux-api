@@ -213,9 +213,7 @@ export default async function analyzePart({
 
     await Promise.all(updateBAPromises);
 
-    if (initialProgress) {
-      partResult.initialProgressImages = initialProgress.images;
-    }
+    partResult.initialProgressImages = initialImages;
     partResult.latestConcernScores = concernScores;
     partResult.concernScoresDifference = concernScoresDifference;
     partResult.concerns = newConcerns.map((name) => ({ name, part }));

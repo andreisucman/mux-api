@@ -20,6 +20,11 @@ route.get(
     try {
       const userInfo = await getUserInfo({ userName, projection: { _id: 1 } });
 
+      if (!userInfo) {
+        res.status(400).json({ error: "Bad request" });
+        return;
+      }
+
       const finalFilter: { [key: string]: any } = {
         userId: userInfo._id,
         page,
