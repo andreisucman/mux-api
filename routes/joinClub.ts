@@ -75,12 +75,6 @@ route.post(
           payouts: defaultClubPayoutData,
         };
 
-        const payoutCountryMinimum = payoutMinimums.find(
-          (obj) => obj.code === country
-        );
-        const minPayoutAmount = payoutCountryMinimum.min + 2;
-        clubData.payouts.minPayoutAmount = minPayoutAmount;
-
         incrementPayload = { "overview.user.club.joined": 1 };
       }
 

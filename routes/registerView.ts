@@ -6,6 +6,7 @@ import { CustomRequest } from "types.js";
 import doWithRetries from "@/helpers/doWithRetries.js";
 import { db, redis } from "@/init.js";
 import getUserInfo from "@/functions/getUserInfo.js";
+import { ObjectId } from "mongodb";
 
 const route = Router();
 
@@ -33,6 +34,15 @@ route.post(
           projection: { _id: 1 },
         });
 
+        const routineData = await doWithRetries(() =>
+          db
+            .collection("RoutineData")
+            .findOne(
+              { concern, part, userId: new ObjectId(req.userId) },
+              { projection: { monetization: 1 } }
+            )
+        );
+
         const now = new Date();
         now.setHours(0, 0, 0, 0);
 
@@ -45,7 +55,10 @@ route.post(
               page,
               createdAt: now,
             },
-            { $inc: { views: 1 } },
+            {
+              $inc: { views: 1 },
+              $set: { monetization: routineData.monetization },
+            },
             { upsert: true }
           )
         );

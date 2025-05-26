@@ -119,4 +119,5 @@ export const payoutMinimums = [
   { code: "UY", min: 1, name: "Uruguay" },
   { code: "UZ", min: 31, name: "Uzbekistan" },
   { code: "VN", min: 31, name: "Vietnam" },
+  { code: "US", min: 3, name: "Vietnam" },
 ];

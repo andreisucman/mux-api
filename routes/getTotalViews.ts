@@ -22,12 +22,13 @@ route.get(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { skip, filter, sort } = aqp(req.query as any) as AqpQuery;
-    const { interval = "day" } = filter;
+    const { interval = "day", page = "routines" } = filter;
 
     try {
       const finalFilter: { [key: string]: any } = {
         userId: new ObjectId(req.userId),
         interval,
+        page,
       };
 
       const projection: { [key: string]: any } = {

@@ -7,6 +7,7 @@ import getUserInfo from "@/functions/getUserInfo.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
 import { defaultClubPayoutData } from "@/data/other.js";
 import httpError from "@/helpers/httpError.js";
+import { payoutMinimums } from "@/data/monetization.js";
 
 const route = Router();
 
@@ -30,6 +31,17 @@ route.post(
 
       const { country: existingCountry } = userInfo;
 
+      const userUpdatePayload: { [key: string]: any } = {
+        country: newCountry,
+        "club.payouts": defaultClubPayoutData,
+      };
+
+      const payoutCountryMinimum = payoutMinimums.find(
+        (obj) => obj.code.toLowerCase() === newCountry.toLowerCase()
+      );
+      const minPayoutAmount = payoutCountryMinimum.min + 2;
+      defaultClubPayoutData.minPayoutAmount = minPayoutAmount;
+
       await doWithRetries(async () =>
         db.collection("User").updateOne(
           {
@@ -37,10 +49,7 @@ route.post(
             moderationStatus: ModerationStatusEnum.ACTIVE,
           },
           {
-            $set: {
-              country: newCountry,
-              "club.payouts": defaultClubPayoutData,
-            },
+            $set: userUpdatePayload,
           }
         )
       );

@@ -43,7 +43,7 @@ export default async function checkAndRecordTwin({
       categoryName,
     });
 
-    if (twinIds.length > 0) {
+    if (twinIds && twinIds.length > 0) {
       // dont change the requestUserId to finalUserId here
       if (requestUserId && embedding) {
         // add a twin record if logged in and twin exists

@@ -20,6 +20,7 @@ const publishBeforeAfter = async ({
   avatar,
   userName,
 }: PublishBeforeAfterProps) => {
+  
   const earliestProgressRecord = (await doWithRetries(() =>
     db
       .collection("Progress")
@@ -37,6 +38,8 @@ const publishBeforeAfter = async ({
       .next()
   )) as unknown as ProgressType | null;
 
+  console.log("earliestProgressRecord", earliestProgressRecord);
+
   if (earliestProgressRecord) {
     const latestProgressRecord = (await doWithRetries(() =>
       db
@@ -49,6 +52,8 @@ const publishBeforeAfter = async ({
         .sort({ _id: -1 })
         .next()
     )) as unknown as ProgressType | null;
+
+    console.log("latestProgressRecord", latestProgressRecord);
 
     if (latestProgressRecord) {
       const relevantLatestConcernScore =

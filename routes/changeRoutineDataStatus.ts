@@ -52,10 +52,12 @@ route.post(
         const concernBeforeAfterCount = await doWithRetries(() =>
           db.collection("BeforeAfter").countDocuments({
             userId: new ObjectId(req.userId),
-            concerns: { $in: [concern] },
+            concern,
             part,
           })
         );
+
+        console.log("concernBeforeAfterCount", concernBeforeAfterCount);
 
         if (concernBeforeAfterCount === 0) {
           const { name: userName, avatar } =

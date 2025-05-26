@@ -57,7 +57,6 @@ route.post(
         return;
       }
 
-      console.log("userUploadedConcerns", userUploadedConcerns);
       if (userUploadedConcerns.length > 0) {
         const sanitatedUserUploadedConcerns = await doWithRetries(() =>
           db
@@ -123,8 +122,6 @@ route.post(
       const initialPartProgressImages = initialProgressImages[part];
 
       if (initialPartProgressImages) {
-        console.log("toAnalyze", toAnalyze);
-
         const differenceInImages =
           toAnalyze.length - initialPartProgressImages.length;
 
