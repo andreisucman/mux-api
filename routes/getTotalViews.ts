@@ -29,6 +29,7 @@ route.get(
         userId: new ObjectId(req.userId),
         interval,
         page,
+        status: "public",
       };
 
       const projection: { [key: string]: any } = {

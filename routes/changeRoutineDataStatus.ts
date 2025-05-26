@@ -21,6 +21,9 @@ export type RoutineDataType = {
 
 const route = Router();
 
+const now = new Date();
+now.setUTCHours(0, 0, 0, 0);
+
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
@@ -57,8 +60,6 @@ route.post(
           })
         );
 
-        console.log("concernBeforeAfterCount", concernBeforeAfterCount);
-
         if (concernBeforeAfterCount === 0) {
           const { name: userName, avatar } =
             (await getUserInfo({
@@ -66,14 +67,20 @@ route.post(
               projection: { name: 1, avatar: 1 },
             })) || {};
 
-          publishBeforeAfter({
-            userId: req.userId,
-            userName,
-            avatar,
-            concern,
-            part,
-            isPublic: status === "public",
-          });
+          const { error } =
+            (await publishBeforeAfter({
+              userId: req.userId,
+              userName,
+              avatar,
+              concern,
+              part,
+              isPublic: status === "public",
+            })) || {};
+
+          if (error) {
+            res.status(200).json({ error });
+            return;
+          }
         }
       }
 
@@ -120,6 +127,20 @@ route.post(
 
       const isUserPublic =
         publicRoutinesCount > 0 ? true : status === "public" ? true : false;
+
+      await doWithRetries(async () =>
+        db.collection("View").updateOne(
+          {
+            userId: new ObjectId(req.userId),
+            part,
+            concern,
+            createdAt: { $gte: now },
+          },
+          {
+            $set: { status },
+          }
+        )
+      );
 
       await doWithRetries(() =>
         db

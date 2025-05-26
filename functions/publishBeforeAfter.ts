@@ -20,7 +20,8 @@ const publishBeforeAfter = async ({
   avatar,
   userName,
 }: PublishBeforeAfterProps) => {
-  
+  let error;
+
   const earliestProgressRecord = (await doWithRetries(() =>
     db
       .collection("Progress")
@@ -38,51 +39,51 @@ const publishBeforeAfter = async ({
       .next()
   )) as unknown as ProgressType | null;
 
-  console.log("earliestProgressRecord", earliestProgressRecord);
+  if (!earliestProgressRecord) {
+    error = "You have to have at least one progress image.";
+    return { error };
+  }
 
-  if (earliestProgressRecord) {
-    const latestProgressRecord = (await doWithRetries(() =>
-      db
-        .collection("Progress")
-        .find({
-          userId: new ObjectId(userId),
-          concerns: { $in: [concern] },
-          part,
-        })
-        .sort({ _id: -1 })
-        .next()
-    )) as unknown as ProgressType | null;
-
-    console.log("latestProgressRecord", latestProgressRecord);
-
-    if (latestProgressRecord) {
-      const relevantLatestConcernScore =
-        latestProgressRecord.concernScores.find((co) => co.name === concern);
-      const relevantLatestConcernScoreDifference =
-        latestProgressRecord.concernScoresDifference.find(
-          (co) => co.name === concern
-        );
-
-      const newBARecord: BeforeAfterType = {
+  const latestProgressRecord = (await doWithRetries(() =>
+    db
+      .collection("Progress")
+      .find({
         userId: new ObjectId(userId),
-        concern,
+        concerns: { $in: [concern] },
         part,
-        images: latestProgressRecord.images,
-        demographics: latestProgressRecord.demographics,
-        isPublic,
-        avatar,
-        userName,
-        concernScore: relevantLatestConcernScore,
-        concernScoreDifference: relevantLatestConcernScoreDifference,
-        updatedAt: latestProgressRecord.createdAt,
-        initialDate: earliestProgressRecord.createdAt,
-        initialImages: earliestProgressRecord.images,
-      };
+      })
+      .sort({ _id: -1 })
+      .next()
+  )) as unknown as ProgressType | null;
 
-      await doWithRetries(async () =>
-        db.collection("BeforeAfter").insertOne(newBARecord)
+  if (latestProgressRecord) {
+    const relevantLatestConcernScore = latestProgressRecord.concernScores.find(
+      (co) => co.name === concern
+    );
+    const relevantLatestConcernScoreDifference =
+      latestProgressRecord.concernScoresDifference.find(
+        (co) => co.name === concern
       );
-    }
+
+    const newBARecord: BeforeAfterType = {
+      userId: new ObjectId(userId),
+      concern,
+      part,
+      images: latestProgressRecord.images,
+      demographics: latestProgressRecord.demographics,
+      isPublic,
+      avatar,
+      userName,
+      concernScore: relevantLatestConcernScore,
+      concernScoreDifference: relevantLatestConcernScoreDifference,
+      updatedAt: latestProgressRecord.createdAt,
+      initialDate: earliestProgressRecord.createdAt,
+      initialImages: earliestProgressRecord.images,
+    };
+
+    await doWithRetries(async () =>
+      db.collection("BeforeAfter").insertOne(newBARecord)
+    );
   }
 };
 

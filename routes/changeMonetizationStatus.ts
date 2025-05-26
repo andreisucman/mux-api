@@ -12,6 +12,9 @@ import { monetizationCountries, payoutMinimums } from "@/data/monetization.js";
 
 const route = Router();
 
+const now = new Date();
+now.setUTCHours(0, 0, 0, 0);
+
 route.post(
   "/",
   async (req: CustomRequest, res: Response, next: NextFunction) => {
@@ -92,7 +95,12 @@ route.post(
 
       await doWithRetries(async () =>
         db.collection("View").updateOne(
-          { userId: new ObjectId(req.userId), part, concern },
+          {
+            userId: new ObjectId(req.userId),
+            part,
+            concern,
+            createdAt: { $gte: now },
+          },
           {
             $set: { monetization },
           }

@@ -145,15 +145,12 @@ route.post(
           categoryName: CategoryNameEnum.SCAN,
         });
 
-        console.log("beforeImage", beforeImage);
-        console.log("after image", image);
-
-        // if (!isValidForComparison) {
-        //   res.status(200).json({
-        //     error: "not similar",
-        //   });
-        //   return;
-        // }
+        if (!isValidForComparison) {
+          res.status(200).json({
+            error: "not similar",
+          });
+          return;
+        }
       }
 
       const userInfo = (await doWithRetries(async () =>

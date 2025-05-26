@@ -39,12 +39,12 @@ route.post(
             .collection("RoutineData")
             .findOne(
               { concern, part, userId: new ObjectId(req.userId) },
-              { projection: { monetization: 1 } }
+              { projection: { monetization: 1, status: 1 } }
             )
         );
 
         const now = new Date();
-        now.setHours(0, 0, 0, 0);
+        now.setUTCHours(0, 0, 0, 0);
 
         await doWithRetries(() =>
           db.collection("View").updateOne(
@@ -57,7 +57,10 @@ route.post(
             },
             {
               $inc: { views: 1 },
-              $set: { monetization: routineData.monetization },
+              $set: {
+                monetization: routineData.monetization,
+                status: routineData.status,
+              },
             },
             { upsert: true }
           )

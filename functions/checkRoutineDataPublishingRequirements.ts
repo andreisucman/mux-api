@@ -18,19 +18,17 @@ const checkPublishingRequirements = async ({
   const response = { passed: false, message: "" };
 
   const numberOfProgresses = await doWithRetries(() =>
-    db
-      .collection("Progress")
-      .countDocuments({
-        userId: new ObjectId(userId),
-        part,
-        concerns: { $in: [concern] },
-      })
+    db.collection("Progress").countDocuments({
+      userId: new ObjectId(userId),
+      part,
+      concerns: { $in: [concern] },
+    })
   );
 
   const concernName = normalizeString(concern).toLowerCase();
 
   if (numberOfProgresses < 2) {
-    response.message = `You have to have at least one pair of before-after images for the ${concernName} concern.`;
+    response.message = `You have to have at least one pair of before-after images for the ${concernName} concern. Try again after you make your 2nd scan.`;
     return response;
   }
 
