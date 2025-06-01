@@ -10,12 +10,11 @@ import { getTimezoneOffset, daysFrom } from "helpers/utils.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import createUser from "@/functions/createUser.js";
 import checkIfUserExists, { defaultUserProjection } from "functions/checkIfUserExists.js";
-import { CategoryNameEnum, CustomRequest, ModerationStatusEnum, UserType } from "types.js";
+import { CustomRequest, ModerationStatusEnum, UserType } from "types.js";
 import sendConfirmationCode from "@/functions/sendConfirmationCode.js";
 import { getHashedPassword } from "helpers/utils.js";
 import createCsrf from "@/functions/createCsrf.js";
 import { defaultUser } from "@/data/defaultUser.js";
-import checkIfSuspended from "@/functions/checkIfSuspended.js";
 import getOAuthAuthenticationData from "@/functions/getOAuthAuthenticationData.js";
 import updateAnalytics from "@/functions/updateAnalytics.js";
 import getUserInfo from "@/functions/getUserInfo.js";
@@ -24,7 +23,7 @@ const route = Router();
 
 const allowedReferrers = [
   "scan",
-  "analysis",
+  "suggestion",
   "clubRoutines",
   "clubProgress",
   "clubProof",
@@ -49,18 +48,6 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
 
     if (!allowedReferrers.includes(referrer)) {
       res.status(400).json({ error: "Bad request" });
-      return;
-    }
-
-    const isSuspended = await checkIfSuspended({
-      userId: localUserId,
-      categoryName: CategoryNameEnum.OTHER,
-    });
-
-    if (isSuspended) {
-      res.status(200).json({
-        error: "Sorry, but you can't use the platform. For details contact us at info@muxout.com.",
-      });
       return;
     }
 

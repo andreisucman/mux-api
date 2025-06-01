@@ -9,11 +9,13 @@ const route = Router();
 route.get("/:streamId", async (req: CustomRequest, res, next) => {
   const { streamId } = req.params;
   const channel = `sse:${streamId}`;
+
   const subscriber = new Redis({
     ...redis.options,
     lazyConnect: true,
     maxRetriesPerRequest: null,
   });
+
   subscriber.on("error", (err) => console.error("Subscriber error:", err));
 
   try {

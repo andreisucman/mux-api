@@ -14,6 +14,8 @@ export default function getOauthRedirectUri(redirectPath: string) {
     case "/club/routines":
       redirectUrl = process.env.CLUB_ROUTINES_REDIRECT_URI;
       break;
+    case "/suggest/result":
+      redirectUrl = process.env.SUGGEST_RESULT_URI;
     case "/club/progress":
       redirectUrl = process.env.CLUB_PROGRESS_REDIRECT_URI;
       break;

@@ -110,13 +110,7 @@ app.use(metricCapturer);
 const corsOptions = {
   origin: process.env.ALLOWED_ORIGINS?.split(","),
   methods: ["GET", "POST", "OPTIONS", "HEAD"],
-  allowedHeaders: [
-    "Content-Type",
-    "Timezone",
-    "Authorization",
-    "X-CSRF-Token",
-    "Access-Control-Allow-Credentials",
-  ],
+  allowedHeaders: ["Content-Type", "Timezone", "Authorization", "X-CSRF-Token", "Access-Control-Allow-Credentials"],
   credentials: true,
   optionsSuccessStatus: 200,
 };
@@ -147,6 +141,7 @@ app.use("/getIsFromEu", getIsFromEu);
 app.use(timeout("2m"));
 app.use("/metrics", metrics);
 
+app.use("/transcribe", transcribe);
 app.use("/sendPasswordResetEmail", sendPasswordResetEmail);
 app.use("/setPassword", setPassword);
 app.use("/getConcerns", getConcerns);
@@ -154,6 +149,10 @@ app.use("/registerView", registerView);
 app.use("/getGrandTotalViews", getGrandTotalViews);
 
 app.use((req, res, next) => checkAccess(req, res, next, true));
+app.use("/updateRoutineSuggestion", updateRoutineSuggestion);
+app.use("/startRoutineSuggestionStream", startRoutineSuggestionStream);
+app.use("/resumeRoutineSuggestionStream", resumeRoutineSuggestionStream);
+app.use("/getRoutineSuggestion", getRoutineSuggestion);
 app.use("/authorize", authorize);
 app.use("/authenticate", authenticate);
 app.use("/getPublicUserData", getPublicUserData);
@@ -185,10 +184,6 @@ app.use((req, res, next) => checkAccess(req, res, next, false));
 app.use("/getPayouts", getPayouts);
 app.use("/createRoutine", createRoutine);
 app.use("/getTotalViews", getTotalViews);
-app.use("/updateRoutineSuggestion", updateRoutineSuggestion);
-app.use("/startRoutineSuggestionStream", startRoutineSuggestionStream);
-app.use("/resumeRoutineSuggestionStream", resumeRoutineSuggestionStream);
-app.use("/getRoutineSuggestion", getRoutineSuggestion);
 app.use("/findExamples", findExamples);
 app.use("/addExampleYoutubeVideo", addExampleYoutubeVideo);
 app.use("/getUserData", getUserData);
@@ -236,7 +231,6 @@ app.use("/updateSpecialConsiderations", updateSpecialConsiderations);
 app.use("/updateStatusOfTaskInstance", updateStatusOfTaskInstance);
 app.use("/uploadProof", uploadProof);
 app.use("/signOut", signOut);
-app.use("/transcribe", transcribe);
 app.use("/rescheduleRoutine", rescheduleRoutine);
 app.use("/updateRoutineStatus", updateRoutineStatus);
 

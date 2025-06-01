@@ -11,12 +11,16 @@ const route = Router();
 
 route.get("/:part", async (req: CustomRequest, res: Response, next: NextFunction) => {
   const { part } = req.params;
+  const { userId } = req.query;
+
+  const finalUserId = req.userId || userId as string;
+  
   try {
     const latestSuggestion = await doWithRetries(() =>
       db
         .collection("RoutineSuggestion")
         .find({
-          userId: new ObjectId(req.userId),
+          userId: new ObjectId(finalUserId),
           part,
         })
         .sort({ createdAt: -1 })

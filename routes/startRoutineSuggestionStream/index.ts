@@ -19,7 +19,7 @@ const route = Router();
 
 route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
   const { routineSuggestionId } = req.params;
-  const { revisionText } = req.body;
+  const { revisionText, userId } = req.body;
   const streamId = `suggestion_${nanoid()}`;
   const channel = `sse:${streamId}`;
 
@@ -28,6 +28,15 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
     lazyConnect: true,
     maxRetriesPerRequest: null,
   });
+
+  const finalUserId = req.userId || userId;
+
+  console.log("finalUserId", finalUserId);
+
+  if (!finalUserId) {
+    res.status(400).json({ error: "Bad request" });
+    return;
+  }
 
   publisher.on("error", (err) => console.error("Publisher error:", err));
 
@@ -55,9 +64,11 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
 
   let part;
 
+  console.log("line 67");
+
   try {
     const userInfo = await getUserInfo({
-      userId: req.userId,
+      userId: finalUserId,
       projection: { nextRoutineSuggestion: 1, demographics: 1, country: 1, timeZone: 1 },
     });
 
@@ -98,6 +109,8 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
       return;
     }
 
+    console.log("line 112");
+
     if (revisionText) {
       await doWithRetries(() =>
         db.collection("RoutineSuggestion").updateOne(
@@ -125,10 +138,12 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
       parts: [latestSuggestion.part],
     });
 
+    console.log("line 141");
+
     await doWithRetries(() =>
       db
         .collection("User")
-        .updateOne({ _id: new ObjectId(req.userId) }, { $set: { nextRoutineSuggestion: updatedNextRoutineSuggestion } })
+        .updateOne({ _id: new ObjectId(finalUserId) }, { $set: { nextRoutineSuggestion: updatedNextRoutineSuggestion } })
     );
 
     await publisher.connect();
@@ -166,6 +181,8 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
       .map(([question, answer]) => `Question: ${question}. Answer: ${answer}`)
       .join("\n\n");
 
+    console.log("line 184");
+
     const userAboutString = Object.entries({
       ...userInfo.demographics,
       country: userInfo.country,
@@ -186,7 +203,7 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
     const lastMonth = daysFrom({ date: now, days: -30 });
 
     const latestTasksMap = await getLatestTasksMap({
-      userId: new ObjectId(req.userId),
+      userId: new ObjectId(finalUserId),
       part: latestSuggestion.part,
       status: TaskStatusEnum.COMPLETED,
       $and: [{ startsAt: { $gte: lastMonth } }, { startsAt: { $lte: now } }],
@@ -197,6 +214,8 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
         latestTasksMap
       )}`;
     }
+
+    console.log("line 218");
 
     if (questionAnswers)
       userContent += `<-- Here are my answers to the additional questions -->\n\n ${questionAnswers}.`;
@@ -233,7 +252,7 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
       latestSuggestion._id,
       latestSuggestion.concernScores,
       currentData.text,
-      req.userId,
+      finalUserId,
       currentData.text
     );
 
@@ -264,7 +283,7 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
     await doWithRetries(() =>
       db
         .collection("User")
-        .updateOne({ _id: new ObjectId(req.userId) }, { $set: { [`nextRoutineSuggestion.$.${part}`]: null } })
+        .updateOne({ _id: new ObjectId(finalUserId) }, { $set: { [`nextRoutineSuggestion.$.${part}`]: null } })
     );
   }
 });

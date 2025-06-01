@@ -44,7 +44,7 @@ route.post(
 
       const analysisAlreadyStarted = await doWithRetries(async () =>
         db.collection("AnalysisStatus").countDocuments({
-          userId: new ObjectId(req.userId),
+          userId: new ObjectId(finalUserId),
           operationKey: "progress",
           isRunning: true,
         })

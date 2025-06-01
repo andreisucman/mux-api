@@ -4,21 +4,21 @@ dotenv.config();
 import { ObjectId } from "mongodb";
 import { Router, Response, NextFunction } from "express";
 import { db } from "init.js";
-import { AnalysisStatusEnum, CategoryNameEnum, CustomRequest, PartEnum, ScoreType, TaskStatusEnum } from "types.js";
+import { daysFrom } from "@/helpers/utils.js";
+import { CategoryNameEnum, CustomRequest, PartEnum, ScoreType, TaskStatusEnum } from "types.js";
 import doWithRetries from "helpers/doWithRetries.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import setToMidnight from "@/helpers/setToMidnight.js";
 import moderateContent from "@/functions/moderateContent.js";
 import createRoutineSuggestionQuestions from "@/functions/createRoutineSuggestionQuestion.js";
-import incrementProgress from "@/helpers/incrementProgress.js";
-import addAnalysisStatusError from "@/functions/addAnalysisStatusError.js";
-import { daysFrom } from "@/helpers/utils.js";
 import getLatestTasksMap from "@/functions/getLatestTasksMap.js";
 
 const route = Router();
 
 type Props = {
   part: PartEnum;
+  userId?: string;
+  isCreate?: boolean;
   concernScores: ScoreType[];
   previousExperience: { [key: string]: string };
   questionsAndAnswers: { [key: string]: string };
@@ -30,12 +30,16 @@ const validParts = [PartEnum.BODY, PartEnum.FACE, PartEnum.HAIR];
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
   let {
     part,
+    userId,
+    isCreate,
     concernScores = [],
     previousExperience = {},
     questionsAndAnswers = {},
     specialConsiderations,
   }: Props = req.body;
   const partIsValid = validParts.includes(part);
+
+  const finalUserId = req.userId || userId;
 
   if (
     !partIsValid ||
@@ -73,7 +77,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     const lastWeek = daysFrom({ date: now, days: -7 });
 
     const userInfo = await getUserInfo({
-      userId: req.userId,
+      userId: finalUserId,
       projection: { concerns: 1 },
     });
     const concernNames = userInfo.concerns.map((co) => co.name);
@@ -93,59 +97,33 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
     const experienceExists = Object.keys(sanitizedExperience).length > 0;
     if (experienceExists) updatePayload.previousExperience = sanitizedExperience;
 
-    const existingWithQuestionsCount = await doWithRetries(async () =>
-      db.collection("RoutineSuggestion").countDocuments({
-        userId: new ObjectId(req.userId),
-        part,
-        $and: [{ createdAt: { $gte: lastWeek } }, { createdAt: { $lte: now } }],
-        questionsAndAnswers: { $exists: true },
-      })
-    );
-
     const latestExistingSuggestion = await doWithRetries(async () =>
       db
         .collection("RoutineSuggestion")
         .find(
           {
-            userId: new ObjectId(req.userId),
+            userId: new ObjectId(finalUserId),
             part,
             $and: [{ createdAt: { $gte: lastWeek } }, { createdAt: { $lte: now } }],
           },
-          { projection: { concernScores: 1 } }
+          { projection: { concernScores: 1, questionsAndAnswers: 1 } }
         )
         .sort({ createdAt: -1 })
         .next()
     );
 
-    if (!existingWithQuestionsCount) {
-      await doWithRetries(async () =>
-        db.collection("AnalysisStatus").updateOne(
-          {
-            userId: new ObjectId(req.userId),
-            operationKey: AnalysisStatusEnum.ROUTINE_SUGGESTION,
-          },
-          { $set: { createdAt: new Date(), progress: 0, isRunning: true }, $unset: { isError: null } },
-          { upsert: true }
-        )
-      );
-    }
-
-    res.status(200).end();
-
     const createQuestions =
-      concernScores.length === 0 && latestExistingSuggestion?.concernScores && !existingWithQuestionsCount;
+      concernScores.length === 0 &&
+      latestExistingSuggestion?.concernScores &&
+      !latestExistingSuggestion?.questionsAndAnswers;
 
     if (createQuestions) {
       const latestTasksMap = await getLatestTasksMap({
-        userId: new ObjectId(req.userId),
+        userId: new ObjectId(finalUserId),
         part,
         status: TaskStatusEnum.COMPLETED,
         $and: [{ startsAt: { $gte: lastWeek } }, { startsAt: { $lte: now } }],
       });
-
-      global.startInterval(() =>
-        incrementProgress({ operationKey: AnalysisStatusEnum.ROUTINE_SUGGESTION, value: 25, userId: req.userId })
-      );
 
       const questions = await createRoutineSuggestionQuestions({
         categoryName: CategoryNameEnum.TASKS,
@@ -153,7 +131,7 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         latestTasksMap,
         specialConsiderations,
         previousExperience,
-        userId: req.userId,
+        userId: finalUserId,
         part,
       });
 
@@ -161,27 +139,15 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         a[c] = "";
         return a;
       }, {});
-
-      global.stopInterval();
-
-      await doWithRetries(async () =>
-        db.collection("AnalysisStatus").updateOne(
-          {
-            userId: new ObjectId(req.userId),
-            operationKey: AnalysisStatusEnum.ROUTINE_SUGGESTION,
-          },
-          { $set: { isRunning: false, progress: 0 }, $unset: { createdAt: null, isError: null } }
-        )
-      );
     }
 
     const questionsAndAnswersExist = Object.keys(sanitizedQuestionsAndAnswers).length > 0;
     if (questionsAndAnswersExist) updatePayload.questionsAndAnswers = sanitizedQuestionsAndAnswers;
 
-    await doWithRetries(async () =>
+    const updateResponse = await doWithRetries(async () =>
       db.collection("RoutineSuggestion").updateOne(
         {
-          userId: new ObjectId(req.userId),
+          userId: new ObjectId(finalUserId),
           part,
           createdAt: now,
           $and: [{ createdAt: { $gte: lastWeek } }, { createdAt: { $lte: now } }],
@@ -189,17 +155,16 @@ route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) =>
         {
           $set: updatePayload,
         },
-        { upsert: true }
+        { upsert: isCreate }
       )
     );
+
+    const message = isCreate
+      ? { ...updatePayload, _id: updateResponse.upsertedId }
+      : { ...latestExistingSuggestion, ...updatePayload };
+
+    res.status(200).json(message);
   } catch (err) {
-    addAnalysisStatusError({
-      operationKey: AnalysisStatusEnum.ROUTINE_SUGGESTION,
-      userId: String(req.userId),
-      message: "An unexpected error occured. Please try again and inform us if the error persists.",
-      originalMessage: err.message,
-    });
-    global.stopInterval();
     next(err);
   }
 });
