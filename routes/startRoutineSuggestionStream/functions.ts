@@ -48,7 +48,7 @@ const summarizeRoutineSuggestions = async (
     summary: z
       .string()
       .describe(
-        "4-6 sentences in 2nd tense (you/your) and simple casual language, summarizing why the following tasks have been chosen and how are they going to help improve the concerns."
+        "Explanation in a simple casual language and 2nd tense (you/your), summarizing why the following tasks have been chosen and how are they going to help improve the concerns."
       ),
     tasks: z
       .object(
@@ -56,8 +56,8 @@ const summarizeRoutineSuggestions = async (
           a[c.name] = z
             .array(
               z.object({
-                task: z.string().describe("The name of the task in imperative form"),
-                numberOfTimesInAMonth: z.number().describe("The number of times the task has to be done in a month"),
+                task: z.string().describe("The short name of the task in imperative form"),
+                numberOfTimesInAWeek: z.number().describe("The number of times the task has to be done in a month"),
               })
             )
             .describe(`The array of solutions for the ${c.name} concern`);
@@ -83,7 +83,7 @@ const summarizeRoutineSuggestions = async (
     },
   ];
 
-  const response: { summary: string; tasks: { [concern: string]: { task: string; numberOfTimesInAMonth: number }[] } } =
+  const response: { summary: string; tasks: { [concern: string]: { task: string; numberOfTimesInAWeek: number }[] } } =
     await askRepeatedly({
       runs,
       categoryName: CategoryNameEnum.TASKS,
@@ -102,13 +102,20 @@ const summarizeRoutineSuggestions = async (
 
   const namesWithIcons = taskNames.map((n) => ({ task: n, icon: icons[n] }));
 
-  const tasksWithIcons = Object.fromEntries(
-    Object.entries(snakeCaseTasks).map(([concern, tasksArray]) => [
+  const tasksWithIcons: { [key: string]: RoutineSuggestionTaskType[] } = Object.fromEntries(
+    Object.entries(snakeCaseTasks).map(([concern, tasksArray]: [string, any[]]) => [
       concern,
       tasksArray.map((t) => {
         const nameIconObject = namesWithIcons.find((obj) => obj.task === t.task);
         const color = generateRandomPastelColor();
-        return { ...t, concern, icon: nameIconObject.icon, color };
+
+        return {
+          task: t.task,
+          concern,
+          icon: nameIconObject.icon,
+          color,
+          numberOfTimesInAWeek: Math.round(t.numberOfTimesInAWeek / Number(process.env.WEEKLY_TASK_MULTIPLIER)),
+        };
       }),
     ])
   );

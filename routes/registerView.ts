@@ -58,8 +58,8 @@ route.post(
             {
               $inc: { views: 1 },
               $set: {
-                monetization: routineData.monetization,
-                status: routineData.status,
+                monetization: routineData?.monetization,
+                status: routineData?.status,
               },
             },
             { upsert: true }

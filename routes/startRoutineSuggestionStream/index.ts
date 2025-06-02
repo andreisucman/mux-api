@@ -31,8 +31,6 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
 
   const finalUserId = req.userId || userId;
 
-  console.log("finalUserId", finalUserId);
-
   if (!finalUserId) {
     res.status(400).json({ error: "Bad request" });
     return;
@@ -63,8 +61,6 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
   }
 
   let part;
-
-  console.log("line 67");
 
   try {
     const userInfo = await getUserInfo({
@@ -109,8 +105,6 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
       return;
     }
 
-    console.log("line 112");
-
     if (revisionText) {
       await doWithRetries(() =>
         db.collection("RoutineSuggestion").updateOne(
@@ -138,12 +132,13 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
       parts: [latestSuggestion.part],
     });
 
-    console.log("line 141");
-
     await doWithRetries(() =>
       db
         .collection("User")
-        .updateOne({ _id: new ObjectId(finalUserId) }, { $set: { nextRoutineSuggestion: updatedNextRoutineSuggestion } })
+        .updateOne(
+          { _id: new ObjectId(finalUserId) },
+          { $set: { nextRoutineSuggestion: updatedNextRoutineSuggestion } }
+        )
     );
 
     await publisher.connect();
@@ -153,15 +148,15 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
     setupSSE(res);
     res.write(`id: ${streamId}\n`);
 
-    let systemContent = `You are a dermatologist and fitness coach. Your goal is to come up with a combination of the most effective solutions that the patient can do to improve each of their concerns. In your response: 1. Each solution must represent a standalone individual task with the number of times it has to be done in a month (frequency). 2. Each solution should have a 1-sentence explanation of how it's going to help improve the concern. 3. Consider the severity of the concerns, their description and feedback from the user when deciding which task to suggest. 4. Don't combine tasks.  5. Don't suggest apps, or passive activities such as sleeping.`;
+    let systemContent = `You are a dermatologist and fitness coach. Your goal is to come up with a combination of the most effective solutions that the patient can do to improve each of their concerns. In your response: 1. Each solution must represent a standalone individual task with the number of times it has to be done in a month (frequency). 2. Each solution should have a 1-sentence explanation of how it's going to help improve the concern. 3. Consider the severity of the concerns, their description and feedback from the user when deciding which task to suggest. 4. Don't combine tasks. 5. Don't suggest apps, or passive activities such as sleeping.`;
 
     if (revisionText) {
       const previousTasks = Object.values(latestSuggestion.tasks)
         .flat()
-        .map(
-          (t) =>
-            `Concern targeted: ${t.concern}. Task: ${t.task}. Number of times in a month: ${t.numberOfTimesInAMonth}`
-        )
+        .map((t) => {
+          const timesInAMonth = t.numberOfTimesInAWeek * Number(process.env.WEEKLY_TASK_MULTIPLIER);
+          return `Concern targeted: ${t.concern}. Task: ${t.task}. Number of times in a month: ${timesInAMonth}`;
+        })
         .join("\n\n");
       systemContent += `Previously you have suggested the user the following this routine: ###${previousTasks}###. And your reasoning was this: ###${latestSuggestion.reasoning}###. Don't recreate the routine from scratch, only modify it according to the user's request.`;
     }
@@ -180,8 +175,6 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
       .filter(([_, answer]) => answer.length > 0)
       .map(([question, answer]) => `Question: ${question}. Answer: ${answer}`)
       .join("\n\n");
-
-    console.log("line 184");
 
     const userAboutString = Object.entries({
       ...userInfo.demographics,
@@ -214,8 +207,6 @@ route.post("/:routineSuggestionId", async (req: CustomRequest, res) => {
         latestTasksMap
       )}`;
     }
-
-    console.log("line 218");
 
     if (questionAnswers)
       userContent += `<-- Here are my answers to the additional questions -->\n\n ${questionAnswers}.`;

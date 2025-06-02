@@ -24,8 +24,6 @@ route.post("/", async (req: CustomRequest, res, next: NextFunction) => {
 
     const body = await response.json();
 
-    console.log("body", body);
-
     if (!response.ok) {
       throw httpError(body.message);
     }

@@ -99,9 +99,9 @@ export function convertKeysAndValuesTotoSnakeCase(obj: { [key: string]: any }) {
 
       if (Array.isArray(obj[key])) {
         toSnakeCaseValues = obj[key].map(
-          ({ task, numberOfTimesInAMonth }: { task: string; numberOfTimesInAMonth: number }) => ({
+          ({ task, numberOfTimesInAWeek }: { task: string; numberOfTimesInAWeek: number }) => ({
             task: toSnakeCase(task),
-            numberOfTimesInAMonth,
+            numberOfTimesInAWeek,
             concern: key,
           })
         );
@@ -254,9 +254,9 @@ export const updateRoutineTaskCount = (
       tasks
         .map((tO) => ({
           ...tO,
-          numberOfTimesInAMonth: Math.min(taskCountMap[tO.task] * Number(process.env.WEEKLY_TASK_MULTIPLIER), 150),
+          numberOfTimesInAWeek: Math.min(taskCountMap[tO.task] * Number(process.env.WEEKLY_TASK_MULTIPLIER), 150),
         }))
-        .filter((tO) => tO.numberOfTimesInAMonth > 0),
+        .filter((tO) => tO.numberOfTimesInAWeek > 0),
     ])
   );
 };

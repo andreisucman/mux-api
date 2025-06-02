@@ -4,7 +4,7 @@ import { ObjectId } from "mongodb";
 export type RoutineSuggestionTaskType = {
   icon: string;
   task: string;
-  numberOfTimesInAMonth: number;
+  numberOfTimesInAWeek: number;
   concern: string;
   color: string;
 };

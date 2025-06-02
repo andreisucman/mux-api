@@ -22,9 +22,9 @@ export default async function createSolutionData({ userId, part, categoryName, s
       .flat()
       .reduce((a, c) => {
         if (a[c.task]) {
-          a[c.task] += c.numberOfTimesInAMonth;
+          a[c.task] += c.numberOfTimesInAWeek;
         } else {
-          a[c.task] = c.numberOfTimesInAMonth;
+          a[c.task] = c.numberOfTimesInAWeek;
         }
         return a;
       }, {});

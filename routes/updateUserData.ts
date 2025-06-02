@@ -14,8 +14,17 @@ import { db, stripe } from "init.js";
 import getUserInfo from "@/functions/getUserInfo.js";
 import checkTextSafety from "@/functions/checkTextSafety.js";
 import { SuspiciousRecordCollectionEnum } from "@/functions/addSuspiciousRecord.js";
+import validateConcerns from "@/functions/validateConcerns.js";
 
 const route = Router();
+
+const checkValidObject = (partConcern: { [key: string]: any }) => {
+  const values = Object.values(partConcern);
+  const formatValid = values.every((v) => typeof v === "number" && Number.isFinite(v));
+  const withinBounds = values.every((v) => v > 0 && v <= 100);
+
+  return formatValid && withinBounds;
+};
 
 route.post("/", async (req: CustomRequest, res: Response, next: NextFunction) => {
   const { name, avatar, intro, socials } = req.body;
